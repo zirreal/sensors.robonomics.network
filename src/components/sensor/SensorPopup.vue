@@ -125,7 +125,9 @@ export default {
   computed: {
     isLocationRussion() {
       return (
-        this.address.country === "Россия" || this.address.country === "Russia"
+        this.address.country === "Россия" ||
+        this.address.country === "Russia" ||
+        this.address.country === "Ρωσία"
       );
     },
     measure() {

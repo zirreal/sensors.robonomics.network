@@ -11,12 +11,13 @@
           <select v-model="locale">
             <option value="en">English</option>
             <option value="ru">Русский</option>
+            <option value="el">Ελληνικά</option>
           </select>
           <font-awesome-icon icon="fa-solid fa-sort" />
         </div>
 
         <div class="menu-link" tabindex="0">
-          <details :open="!helper">
+          <details>
             <summary>
               <font-awesome-icon icon="fa-solid fa-circle-question" />
             </summary>
@@ -43,7 +44,6 @@ export default {
   data() {
     return {
       locale: this.localeCurrent,
-      helper: localStorage.getItem("helper"),
     };
   },
   watch: {
@@ -59,9 +59,6 @@ export default {
       document.body.querySelectorAll("details").forEach((e) => {
         if (e !== current) {
           e.open = false;
-          if (!this.helper) {
-            localStorage.setItem("helper", true);
-          }
         }
       });
     };

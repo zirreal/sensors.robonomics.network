@@ -166,7 +166,6 @@ export default {
         });
     });
 
-    // matomo analytics
     this.$matomo && this.$matomo.disableCookies();
     this.$matomo && this.$matomo.trackPageView();
   },

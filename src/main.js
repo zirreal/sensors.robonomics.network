@@ -10,7 +10,7 @@ window.Buffer = Buffer;
 
 const app = createApp(App).use(VueMatomo, {
   host: "https://matomo.robonomics.network/",
-  siteId: 5,
+  siteId: 6,
 }); // matomo analytics
 usePlugins(app);
 
