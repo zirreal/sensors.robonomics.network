@@ -6,7 +6,7 @@ export default {
       "/dns4/3.pubsub.aira.life/tcp/443/wss/ipfs/QmWZSKTEQQ985mnNzMqhGCrwQ1aTA6sxVsorsycQz9cQrw",
     ],
   },
-  REMOTE_PROVIDER: "https://roseman.airalab.org/",
+  REMOTE_PROVIDER: "https://roseman.iotlab.cloud/",
   // REMOTE_PROVIDER: "http://localhost:3000/",
   WIND_PROVIDER: "https://wind.airalab.org/latest",
   MAP: {
