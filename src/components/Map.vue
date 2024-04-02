@@ -7,7 +7,6 @@
 <script>
 import { useStore } from "@/store";
 import { watchEffect } from "vue";
-import config from "../config";
 import { init, setTheme } from "../utils/map/instance";
 import { init as initMarkers } from "../utils/map/marker";
 import { getCityByPos } from "../utils/map/utils";
@@ -48,7 +47,7 @@ export default {
       this.$router.replace({
         name: "main",
         params: {
-          provider: this.$route.params.provider || config.DEFAUL_TYPE_PROVIDER,
+          provider: this.$route.params.provider || "remote",
           type: this.$route.params.type || "pm10",
           zoom: e.target.getZoom(),
           lat: pos.lat.toFixed(4),
@@ -76,8 +75,7 @@ export default {
         .replace({
           name: "main",
           params: {
-            provider:
-              this.$route.params.provider || config.DEFAUL_TYPE_PROVIDER,
+            provider: this.$route.params.provider || "remote",
             type: this.$route.params.type || "pm10",
             zoom: e.target.getZoom(),
             lat: pos.lat.toFixed(4),
@@ -115,11 +113,6 @@ export default {
 .leaflet-bottom {
   bottom: 70px;
 }
-
-#map.inactive {
-  filter: grayscale(100%);
-}
-
 @media screen and (max-width: 680px) {
   .leaflet-bottom {
     bottom: 0px;

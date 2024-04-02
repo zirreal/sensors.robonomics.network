@@ -14,7 +14,6 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,json,vue,txt,woff2}"],
         cleanupOutdatedCaches: false,
-        maximumFileSizeToCacheInBytes: 9000000,
       },
       manifest: {
         name: "Robonomics Sensors CY",
