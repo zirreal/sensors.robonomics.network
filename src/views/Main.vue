@@ -2,10 +2,10 @@
   <div class="sensors-screen">
     <div class="sensors-screen-layers">
       <div class="sensors-screen-layers--center">
+        <InstallPWA />
         <Header :localeCurrent="$i18n.locale" :city="city" />
 
         <div class="container sensors-container">
-          <!-- <Measures :current="type.toLowerCase()" /> -->
           <ColorfulScale :type="type" />
 
           <template v-if="point">
@@ -16,6 +16,7 @@
             />
             <SensorPopup
               v-else
+              :currentProvider="provider"
               :sender="point.sender"
               :sensor_id="point.sensor_id"
               :log="point.log"
@@ -52,13 +53,14 @@
 </template>
 
 <script>
+import { useStore } from "@/store";
 import moment from "moment";
 import Loader from "../components/Loader.vue";
 import Map from "../components/Map.vue";
 import ColorfulScale from "../components/colorfulScale/ColorfulScale.vue";
 import Footer from "../components/footer/Footer.vue";
 import Header from "../components/header/Header.vue";
-import Measures from "../components/measures/Measures.vue";
+import InstallPWA from "../components/header/InstallPWA.vue";
 import MessagePopup from "../components/message/MessagePopup.vue";
 import SensorPopup from "../components/sensor/SensorPopup.vue";
 import config from "../config";
@@ -68,14 +70,12 @@ import * as markers from "../utils/map/marker";
 import { getAddressByPos } from "../utils/map/utils";
 import { getMapPosiotion } from "../utils/utils";
 
-import { useStore } from "@/store";
-
 const mapPosition = getMapPosiotion();
 
 export default {
   props: {
     provider: {
-      default: "remote",
+      default: config.DEFAUL_TYPE_PROVIDER,
     },
     type: {
       default: "pm10",
@@ -96,12 +96,12 @@ export default {
   components: {
     Header,
     Map,
-    Measures,
     ColorfulScale,
     Footer,
     SensorPopup,
     Loader,
     MessagePopup,
+    InstallPWA,
   },
 
   metaInfo() {
@@ -130,9 +130,26 @@ export default {
       );
     },
   },
-  mounted() {
+  async mounted() {
     if (this.provider === "remote") {
       this.providerObj = new providers.Remote(config.REMOTE_PROVIDER);
+      if (!(await this.providerObj.status())) {
+        window.location.href =
+          window.location.origin +
+          "/" +
+          this.$router.resolve({
+            name: this.$route.name,
+            params: {
+              provider: "realtime",
+              type: this.$route.params.type,
+              zoom: this.$route.params.zoom,
+              lat: this.$route.params.lat,
+              lng: this.$route.params.lng,
+              sensor: this.$route.params.sensor,
+            },
+          }).href;
+        return;
+      }
     } else {
       this.providerObj = new providers.Libp2p(config.LIBP2P);
     }
@@ -255,6 +272,8 @@ export default {
           this.providerObj.start,
           this.providerObj.end
         );
+        // adds b&W filter from the map
+        this.store.colorMap();
       } else {
         log = await this.providerObj.getHistoryBySensor(point.sensor_id);
       }
@@ -272,6 +291,11 @@ export default {
       };
     },
     handlerClose() {
+      // removes b&W filter from the map
+      this.store.removeColorMap();
+      // removes all active graphs tabs in sensor popup
+      this.store.removeAllCurrentMeasures();
+      this.store.removeActiveCurrentMeasure();
       if (this.point) {
         markers.hidePath(this.point.sensor_id);
       }
@@ -286,6 +310,7 @@ export default {
     },
     handlerCloseInfo() {
       this.isShowInfo = false;
+      // removing b&w filter form the map after popup closes
     },
     handlerModal(modal) {
       if (modal === "info") {
