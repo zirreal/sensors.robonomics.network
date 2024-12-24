@@ -42,7 +42,8 @@
       </section>
 
       <section>
-        <Chart :point="point" :log="log" />
+        <div v-if="isLoad">Load...</div>
+        <Chart v-else :point="point" :log="log" />
       </section>
 
       <section>
@@ -157,6 +158,7 @@ export default {
       rttime: null /* used for realtime view */,
       rtdata: [] /* used for realtime view */,
       shared: false /* status for share button */,
+      isLoad: false,
     };
   },
   computed: {
@@ -345,6 +347,7 @@ export default {
       if (this.realtime) {
         return;
       }
+      this.isLoad = true;
       this.$emit("history", {
         sensor_id: this.sensor_id,
         start: this.startTimestamp,
@@ -430,6 +433,7 @@ export default {
     },
     log() {
       this.updatert();
+      this.isLoad = false;
     },
   },
   mounted() {
