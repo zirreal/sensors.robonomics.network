@@ -9,14 +9,10 @@
       </div>
       <button class="popovercontrol" :class="bookmarks && bookmarks.length > 0 ? 'active' : null" popovertarget="bookmarks"><font-awesome-icon icon="fa-solid fa-bookmark" /></button>
 
-      <input
-        type="date"
-        v-model="start"
-        :max="maxDate"
-        :disabled="currentProvider == 'realtime'"
-      />
+      <input type="date" v-model="start" :max="maxDate" :disabled="currentProvider == 'realtime'" />
 
       <Measures :current="measuretype.toLowerCase()" />
+      <div v-if="isLoad">{{ $t("isLoad") }}</div>
     </div>
 
     <div class="flexline">
@@ -58,7 +54,7 @@ import Bookmarks from "../../components/Bookmarks.vue";
 
 export default {
   emits: ["history"],
-  props: ["currentProvider", "canHistory", "measuretype"],
+  props: ["currentProvider", "canHistory", "measuretype", "isLoad"],
   components: { HistoryImport, Measures, Bookmarks },
 
   data() {

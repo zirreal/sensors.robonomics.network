@@ -24,6 +24,7 @@
     :measuretype="type"
     :historyready="canHistory"
     :historyhandler="handlerHistory"
+    :isLoad="isLoad"
     @clickMarker="handlerClick"
   />
 
@@ -90,6 +91,7 @@ export default {
       },
       start: null,
       end: null,
+      isLoad: false,
     };
   },
   computed: {
@@ -119,6 +121,7 @@ export default {
   },
   methods: {
     async handlerHistory({ start, end }) {
+      this.isLoad = true;
       this.start = start;
       this.end = end;
       this.status = "history";
@@ -144,6 +147,7 @@ export default {
       for (const message in messages) {
         this.handlerNewPoint(messages[message]);
       }
+      this.isLoad = false;
     },
     async handlerNewPoint(point) {
       if (!point.model || !markers.isReadyLayers()) {

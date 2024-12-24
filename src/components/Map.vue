@@ -5,6 +5,7 @@
     :canHistory="historyready"
     @history="historyhandler"
     :measuretype="measuretype"
+    :isLoad="isLoad"
   >
 
   <button
@@ -36,7 +37,7 @@ import { getTypeProvider } from "../utils/utils";
 
 export default {
   emits: ["city", "clickMarker", "close"],
-  props: ["measuretype", "historyready", "historyhandler"],
+  props: ["measuretype", "historyready", "historyhandler", "isLoad"],
   components: { Footer },
   data() {
     return {

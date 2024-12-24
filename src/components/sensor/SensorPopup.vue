@@ -42,7 +42,7 @@
       </section>
 
       <section>
-        <div v-if="isLoad">Load...</div>
+        <div v-if="isLoad">{{ $t("isLoad") }}</div>
         <Chart v-else :point="point" :log="log" />
       </section>
 
