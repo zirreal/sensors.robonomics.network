@@ -16,6 +16,7 @@
       @modal="handlerModal"
       @close="handlerClose"
       @history="handlerHistoryLog"
+      :startTime="start"
     />
   </template>
 
@@ -87,6 +88,8 @@ export default {
         timeout: 5000,
         maximumAge: 0,
       },
+      start: null,
+      end: null,
     };
   },
   computed: {
@@ -116,6 +119,8 @@ export default {
   },
   methods: {
     async handlerHistory({ start, end }) {
+      this.start = start;
+      this.end = end;
       this.status = "history";
       this.providerObj.watch(null);
       this.handlerClose();
