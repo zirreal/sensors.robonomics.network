@@ -152,6 +152,7 @@ export default {
       measurement: this.type,
       isShowPath: false,
       store: useStore(),
+      start: moment().format("YYYY-MM-DD"),
       maxDate: moment().format("YYYY-MM-DD"),
       provider: this.$route.params.provider,
       rttime: null /* used for realtime view */,
@@ -161,12 +162,6 @@ export default {
     };
   },
   computed: {
-    start() {
-      return this.startTime
-        ? moment.unix(this.startTime).format("YYYY-MM-DD")
-        : moment().format("YYYY-MM-DD");
-    },
-
     locale() {
       return localStorage.getItem("locale") || this.$i18n.locale || "en";
     },
@@ -438,10 +433,15 @@ export default {
     },
     log() {
       this.updatert();
+
       this.isLoad = false;
     },
   },
   mounted() {
+    this.start = this.startTime
+      ? moment.unix(this.startTime).format("YYYY-MM-DD")
+      : moment().format("YYYY-MM-DD");
+
     this.updatert();
   },
 };
