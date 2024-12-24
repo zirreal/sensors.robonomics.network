@@ -6,6 +6,7 @@
 import Highcharts from "highcharts";
 import { Chart } from "highcharts-vue";
 import stockInit from "highcharts/modules/stock";
+import config from "../../config";
 import unitsettings from "../../measurements";
 
 Highcharts.seriesTypes.spline.prototype.drawLegendSymbol = function (legend, item) {
@@ -44,9 +45,15 @@ export default {
                 name: keyname,
                 data: [[item.timestamp * 1000, parseFloat(item.data[keyname])]],
                 zones: unitsettingsLowerCase[keyname]?.zones,
+                visible: true,
               });
             }
           }
+        }
+      }
+      for (const measurement of result) {
+        if (measurement.data.length > config.SERIES_MAX_VISIBLE) {
+          measurement.visible = false;
         }
       }
       return result;
