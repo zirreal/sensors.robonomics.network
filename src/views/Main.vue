@@ -187,6 +187,7 @@ export default {
       }
     },
     async handlerClick(point) {
+      this.isLoad = true;
       this.point = null;
       let log = [];
       if (this.status === "history") {
@@ -208,6 +209,7 @@ export default {
         address,
         log: [...log],
       };
+      this.isLoad = false;
     },
     async handlerHistoryLog({ sensor_id, start, end }) {
       if (this.status === "history") {
