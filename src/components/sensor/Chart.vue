@@ -46,6 +46,9 @@ export default {
                 data: [[item.timestamp * 1000, parseFloat(item.data[keyname])]],
                 zones: unitsettingsLowerCase[keyname]?.zones,
                 visible: true,
+                dataGrouping: {
+                  enabled: false,
+                },
               });
             }
           }
@@ -54,6 +57,9 @@ export default {
       for (const measurement of result) {
         if (measurement.data.length > config.SERIES_MAX_VISIBLE) {
           measurement.visible = false;
+          measurement.dataGrouping = {
+            approximation: "high",
+          };
         }
       }
       return result;
@@ -145,7 +151,8 @@ export default {
       plotOptions: {
         series: {
           dataGrouping: {
-            enabled: false,
+            enabled: true,
+            units: [["minute", [5]]],
           },
         },
       },
