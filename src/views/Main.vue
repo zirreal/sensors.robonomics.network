@@ -309,12 +309,6 @@ export default {
       this.providerObj = new providers.Libp2p(config.LIBP2P);
     }
 
-    const result = await providers.Remote.getMeasurements(
-      moment().startOf("day").format("X"),
-      moment().format("X")
-    );
-    console.log(result);
-
     this.providerObj.ready().then(() => {
       this.providerReady = true;
       this.providerObj.watch(this.handlerNewPoint);
