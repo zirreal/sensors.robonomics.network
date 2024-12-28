@@ -127,7 +127,7 @@ export default {
     opengeotip(msg) {
 
       this.closegeotip();
-      
+
       this.geomsg = msg;
       this.geomsgopened = true;
 
@@ -140,7 +140,6 @@ export default {
     getlocalmappos() {
       // console.log("Geolocation setting up default values");
       const lastsettings = localStorage.getItem("map-position") || JSON.stringify({"lat": config.MAP.position.lat, "lng": config.MAP.position.lng, "zoom": config.MAP.zoom });
-      const savelocally = true;
       let savelocally = true;
 
       /* We don't need to save position loacally if there is set from config */
@@ -208,7 +207,7 @@ export default {
             this.geoavailable = false;
             reject("Geolocation is not available");
           }
-        
+
       });
     },
 
@@ -229,7 +228,7 @@ export default {
 
     async loadMap() {
       this.geoisloading = false;
-      
+
       this.map = init([this.lat, this.lng], this.zoom, this.theme);
       this.relocatemap(this.lat, this.lng, this.zoom, "reload");
 
@@ -315,7 +314,7 @@ export default {
       this.loadMap();
     });
     /* - Operate with a map */
-    
+
   },
 };
 </script>
@@ -456,8 +455,8 @@ export default {
 
 .popoovergeo-tip:after {
   content: "";
-  width: 0; 
-  height: 0; 
+  width: 0;
+  height: 0;
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
   border-top: 10px solid color-mix(in srgb, var(--color-dark) 70%, transparent);
