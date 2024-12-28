@@ -141,6 +141,7 @@ export default {
       // console.log("Geolocation setting up default values");
       const lastsettings = localStorage.getItem("map-position") || JSON.stringify({"lat": config.MAP.position.lat, "lng": config.MAP.position.lng, "zoom": config.MAP.zoom });
       const savelocally = true;
+      let savelocally = true;
 
       /* We don't need to save position loacally if there is set from config */
       if(!localStorage.getItem("map-position")) {
