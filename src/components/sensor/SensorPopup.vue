@@ -14,15 +14,31 @@
           <input v-if="!realtime" type="date" v-model="start" :max="maxDate" />
           <Bookmark
             v-if="sensor_id"
+            :id="sensor_id"
             :address="address?.address && address?.address.join(', ')"
             :link="sensor_id"
             :geo="geo"
           />
         </div>
-        <button @click="shareData" class="button">
-          <font-awesome-icon icon="fa-solid fa-share-from-square" v-if="!shared" />
-          <font-awesome-icon icon="fa-solid fa-check" v-if="shared" />
-        </button>
+        <div class="shared-container">
+          <button @click="shareData" class="button">
+            <font-awesome-icon
+              icon="fa-solid fa-share-from-square"
+              v-if="!shared"
+            />
+            <font-awesome-icon icon="fa-solid fa-check" v-if="shared" />
+          </button>
+          <button @click="shareLink" class="button">
+            <span v-if="!simpleShared">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
+                <path
+                  d="M579.8 267.7c56.5-56.5 56.5-148 0-204.5c-50-50-128.8-56.5-186.3-15.4l-1.6 1.1c-14.4 10.3-17.7 30.3-7.4 44.6s30.3 17.7 44.6 7.4l1.6-1.1c32.1-22.9 76-19.3 103.8 8.6c31.5 31.5 31.5 82.5 0 114L422.3 334.8c-31.5 31.5-82.5 31.5-114 0c-27.9-27.9-31.5-71.8-8.6-103.8l1.1-1.6c10.3-14.4 6.9-34.4-7.4-44.6s-34.4-6.9-44.6 7.4l-1.1 1.6C206.5 251.2 213 330 263 380c56.5 56.5 148 56.5 204.5 0L579.8 267.7zM60.2 244.3c-56.5 56.5-56.5 148 0 204.5c50 50 128.8 56.5 186.3 15.4l1.6-1.1c14.4-10.3 17.7-30.3 7.4-44.6s-30.3-17.7-44.6-7.4l-1.6 1.1c-32.1 22.9-76 19.3-103.8-8.6C74 372 74 321 105.5 289.5L217.7 177.2c31.5-31.5 82.5-31.5 114 0c27.9 27.9 31.5 71.8 8.6 103.9l-1.1 1.6c-10.3 14.4-6.9 34.4 7.4 44.6s34.4 6.9 44.6-7.4l1.1-1.6C433.5 260.8 427 182 377 132c-56.5-56.5-148-56.5-204.5 0L60.2 244.3z"
+                />
+              </svg>
+            </span>
+            <font-awesome-icon icon="fa-solid fa-check" v-if="simpleShared" />
+          </button>
+        </div>
       </section>
 
       <section v-if="realtime" class="flexline">
@@ -34,7 +50,10 @@
         <template v-if="rtdata">
           <div v-for="item in rtdata" :key="item">
             <div class="rt-unit">{{ item.label }}</div>
-            <div class="rt-number" :style="item.color ? 'color:' + item.color : ''">
+            <div
+              class="rt-number"
+              :style="item.color ? 'color:' + item.color : ''"
+            >
               {{ item.measure }} {{ item.unit }}
             </div>
           </div>
@@ -49,7 +68,9 @@
       <section>
         <h3>{{ $t("sensorpopup.infotitle") }}</h3>
         <div class="infoline flexline" v-if="sensor_id">
-          <div class="infoline-title">{{ $t("sensorpopup.infosensorid") }}:</div>
+          <div class="infoline-title">
+            {{ $t("sensorpopup.infosensorid") }}:
+          </div>
           <div class="infoline-info">
             {{ $filters.collapse(sensor_id) }}
             <Copy
@@ -61,19 +82,25 @@
         </div>
 
         <div class="infoline flexline" v-if="geo">
-          <div class="infoline-title">{{ $t("sensorpopup.infosensorgeo") }}:</div>
+          <div class="infoline-title">
+            {{ $t("sensorpopup.infosensorgeo") }}:
+          </div>
           <div class="infoline-info">{{ geo.lat }}, {{ geo.lng }}</div>
         </div>
 
         <div class="infoline flexline" v-if="link">
-          <div class="infoline-title">{{ $t("sensorpopup.infosensorowner") }}:</div>
+          <div class="infoline-title">
+            {{ $t("sensorpopup.infosensorowner") }}:
+          </div>
           <div class="infoline-info">
             <a :href="link" rel="noopener" target="_blank">{{ link }}</a>
           </div>
         </div>
 
         <div class="infoline flexline" v-if="donated_by">
-          <div class="infoline-title">{{ $t("sensorpopup.infosensordonated") }}:</div>
+          <div class="infoline-title">
+            {{ $t("sensorpopup.infosensordonated") }}:
+          </div>
           <div class="infoline-info">{{ donated_by }}</div>
         </div>
 
@@ -81,7 +108,9 @@
         <div v-if="model === 3" class="infoline flexline">
           <div class="infoline-title">
             <label for="realtime"></label>
-            <span class="sensors-switcher-text"> {{ $t("details.showpath") }} </span>:
+            <span class="sensors-switcher-text">
+              {{ $t("details.showpath") }} </span
+            >:
           </div>
           <div class="infoline-info">
             <input type="checkbox" id="realtime" v-model="isShowPath" />
@@ -95,7 +124,9 @@
           <div v-for="item in scales" :key="item.label">
             <template v-if="item?.zones && (item.name || item.label)">
               <p>
-                <b v-if="item.name">{{ locale === "en" ? item.name.en : item.name.ru }}</b>
+                <b v-if="item.name">{{
+                  locale === "en" ? item.name.en : item.name.ru
+                }}</b>
                 <b v-else>{{ item.label }}</b>
                 ({{ item.unit }})
               </p>
@@ -106,7 +137,9 @@
                   :style="`--color: ${zone.color}`"
                 >
                   <b>{{ locale === "en" ? zone.label.en : zone.label.ru }}</b>
-                  (<template v-if="zone.value">{{ $t("scales.upto") }} {{ zone.value }}</template>
+                  (<template v-if="zone.value"
+                    >{{ $t("scales.upto") }} {{ zone.value }}</template
+                  >
                   <template v-else>{{ $t("scales.above") }}</template
                   >)
                 </div>
@@ -122,7 +155,11 @@
       </div>
     </div>
 
-    <button @click.prevent="closesensor" aria-label="Close sensor" class="close">
+    <button
+      @click.prevent="closesensor"
+      aria-label="Close sensor"
+      class="close"
+    >
       <font-awesome-icon icon="fa-solid fa-xmark" />
     </button>
   </div>
@@ -158,6 +195,7 @@ export default {
       rttime: null /* used for realtime view */,
       rtdata: [] /* used for realtime view */,
       shared: false /* status for share button */,
+      simpleShared: false /* status for simple (not os) share button */,
       isLoad: false,
     };
   },
@@ -205,7 +243,9 @@ export default {
       return bufer;
     },
     isLocationRussion() {
-      return this.address.country === "Россия" || this.address.country === "Russia";
+      return (
+        this.address.country === "Россия" || this.address.country === "Russia"
+      );
     },
     measure() {
       return this.items.find((item) => this.select === item.text);
@@ -218,18 +258,25 @@ export default {
       );
     },
     hasIcon() {
-      return (type) => measurements[type.toLowerCase()] && measurements[type.toLowerCase()].icon;
+      return (type) =>
+        measurements[type.toLowerCase()] &&
+        measurements[type.toLowerCase()].icon;
     },
     icon: function () {
       return (type) => {
-        return this.hasIcon(type) ? measurements[type.toLowerCase()].icon : "vial";
+        return this.hasIcon(type)
+          ? measurements[type.toLowerCase()].icon
+          : "vial";
       };
     },
     items() {
       const items = [];
       for (const item of Object.keys(this.last.data)) {
         let scale = null;
-        if (measurements[item.toLowerCase()] && measurements[item.toLowerCase()].colors) {
+        if (
+          measurements[item.toLowerCase()] &&
+          measurements[item.toLowerCase()].colors
+        ) {
           scale = generate(
             measurements[item.toLowerCase()].colors,
             measurements[item.toLowerCase()].range
@@ -242,7 +289,9 @@ export default {
           state: getState(
             scale,
             this.last.data[item],
-            measurements[item.toLowerCase()] ? measurements[item.toLowerCase()].states : undefined
+            measurements[item.toLowerCase()]
+              ? measurements[item.toLowerCase()].states
+              : undefined
           ),
         });
       }
@@ -289,10 +338,14 @@ export default {
       return moment(this.last.timestamp, "X").format("DD.MM.YYYY HH:mm:ss");
     },
     startTimestamp: function () {
-      return Number(moment(this.start + " 00:00:00", "YYYY-MM-DD HH:mm:ss").format("X"));
+      return Number(
+        moment(this.start + " 00:00:00", "YYYY-MM-DD HH:mm:ss").format("X")
+      );
     },
     endTimestamp: function () {
-      return Number(moment(this.start + " 23:59:59", "YYYY-MM-DD HH:mm:ss").format("X"));
+      return Number(
+        moment(this.start + " 23:59:59", "YYYY-MM-DD HH:mm:ss").format("X")
+      );
     },
     units() {
       /* + Possible units for the sensor */
@@ -343,6 +396,19 @@ export default {
         });
       }
     },
+    shareLink() {
+      navigator.clipboard
+        .writeText(this.linkSensor)
+        .then(() => {
+          this.simpleShared = true;
+          setTimeout(() => {
+            this.simpleShared = false;
+          }, 5000);
+        })
+        .catch((e) => {
+          console.log("not coppied", e);
+        });
+    },
     getHistory() {
       if (this.realtime) {
         return;
@@ -376,18 +442,26 @@ export default {
                 bufer.measure = data[datakey];
                 bufer.label = measurements[item].label;
                 bufer.unit = measurements[item].unit;
-                if (measurements[item].zones.find((i) => bufer.measure < i.value)) {
-                  bufer.color = measurements[item].zones.find((i) => bufer.measure < i.value).color;
+                if (
+                  measurements[item].zones.find((i) => bufer.measure < i.value)
+                ) {
+                  bufer.color = measurements[item].zones.find(
+                    (i) => bufer.measure < i.value
+                  ).color;
                 }
 
                 /* check for upper measure */
                 if (!bufer.color) {
                   if (
                     bufer.measure >
-                    measurements[item].zones[measurements[item].zones.length - 2].value
+                    measurements[item].zones[
+                      measurements[item].zones.length - 2
+                    ].value
                   ) {
                     bufer.color =
-                      measurements[item].zones[measurements[item].zones.length - 1].color;
+                      measurements[item].zones[
+                        measurements[item].zones.length - 1
+                      ].color;
                   }
                 }
 
@@ -528,6 +602,34 @@ h3.flexline {
 .infoline-title {
   font-weight: bold;
 }
+
+/* shared container */
+.shared-container button:first-of-type {
+  margin-right: 10px;
+}
+
+.shared-container span {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.shared-container span svg {
+  fill: var(--color-light);
+}
+
+@media screen and (max-width: 570px) {
+  .shared-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .shared-container button:first-of-type {
+    margin-right: 0;
+  }
+}
+/* shared container */
 
 /* + scales */
 .scalegrid {

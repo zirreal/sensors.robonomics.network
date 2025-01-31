@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "@chainsafe/libp2p-noise": "^13.0.1",
-    "@fortawesome/fontawesome-svg-core": "^6.2.0",
-    "@fortawesome/free-solid-svg-icons": "^6.2.0",
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/vue-fontawesome": "^3.0.1",
     "@kyvg/vue3-notification": "^2.9.1",
     "@libp2p/bootstrap": "^9.0.6",
