@@ -443,25 +443,21 @@ export default {
                 bufer.label = measurements[item].label;
                 bufer.unit = measurements[item].unit;
                 if (
+                  measurements[item].zones &&
                   measurements[item].zones.find((i) => bufer.measure < i.value)
                 ) {
-                  bufer.color = measurements[item].zones.find(
-                    (i) => bufer.measure < i.value
-                  ).color;
+                  bufer.color = measurements[item].zones.find((i) => bufer.measure < i.value).color;
                 }
 
                 /* check for upper measure */
                 if (!bufer.color) {
                   if (
+                    measurements[item].zones &&
                     bufer.measure >
-                    measurements[item].zones[
-                      measurements[item].zones.length - 2
-                    ].value
+                      measurements[item].zones[measurements[item].zones.length - 2].value
                   ) {
                     bufer.color =
-                      measurements[item].zones[
-                        measurements[item].zones.length - 1
-                      ].color;
+                      measurements[item].zones[measurements[item].zones.length - 1].color;
                   }
                 }
 
