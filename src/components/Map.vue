@@ -161,15 +161,30 @@ export default {
       // }
     },
 
+    checkPosFromURI() {
+      if (this.$route.params.lat || this.$route.params.lng || this.$route.params.zoom) {
+        return true;
+      }
+      return false;
+    },
+    setPosFromURI() {
+      const lat = this.$route.params.lat || config.MAP.position.lat;
+      const lng = this.$route.params.lng || config.MAP.position.lng;
+      const zoom = this.$route.params.zoom || config.MAP.zoom;
+      this.store.setmapposition(lat, lng, zoom, true);
+    },
+
     setgeo(forse = false) {
       return new Promise((resolve, reject) => {
         this.geoisloading = true;
 
         if ("geolocation" in navigator) {
-
           this.geoavailable = true;
 
-          if(localStorage.getItem("map-position") && !forse) {
+          if (this.checkPosFromURI() && !forse) {
+            this.setPosFromURI();
+            resolve("Geolocation is set from url params");
+          } else if (localStorage.getItem("map-position") && !forse) {
             this.getlocalmappos();
             resolve("Geolocation is set from local data");
           } else {
