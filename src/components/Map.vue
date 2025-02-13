@@ -7,21 +7,24 @@
     :measuretype="measuretype"
     :isLoad="isLoad"
   >
+    <button
+      class="popovercontrol popoovergeo"
+      v-if="geoavailable"
+      @click.prevent="resetgeo"
+      :area-label="$t('showlocation')"
+      :title="geoisloading ? $t('locationloading') : $t('showlocation')"
+    >
+      <font-awesome-icon icon="fa-solid fa-location-arrow" :fade="geoisloading" />
 
-  <button
-    class="popovercontrol popoovergeo"
-    v-if="geoavailable"
-    @click.prevent="resetgeo"
-    :area-label="$t('showlocation')"
-    :title="geoisloading ? $t('locationloading') : $t('showlocation')"
-  >
-    <font-awesome-icon icon="fa-solid fa-location-arrow" :fade="geoisloading" />
-
-    <div class="popoovergeo-tip" v-if="geomsg !== ''" :class="geomsgopened ? 'opened' : 'closed'">
-      {{geomsg}}
-      <font-awesome-icon icon="fa-solid fa-xmark" class="popoovergeo-tipclose" @click.stop="geomsg = ''" />
-    </div>
-  </button>
+      <div class="popoovergeo-tip" v-if="geomsg !== ''" :class="geomsgopened ? 'opened' : 'closed'">
+        {{ geomsg }}
+        <font-awesome-icon
+          icon="fa-solid fa-xmark"
+          class="popoovergeo-tipclose"
+          @click.stop="geomsg = ''"
+        />
+      </div>
+    </button>
   </Footer>
 </template>
 
@@ -47,7 +50,7 @@ export default {
       userposition: null,
       geoavailable: false,
       geoisloading: false,
-      geomsg: '',
+      geomsg: "",
       geomsgopened: false,
       geomsgopenedtime: 5000, // 5 seconds
       geomsgopenedtimer: null,
@@ -87,7 +90,7 @@ export default {
     },
 
     relocatemap(lat, lng, zoom, type = "default") {
-      console.log('relocatemap', lat, lng, zoom, type)
+      console.log("relocatemap", lat, lng, zoom, type);
       const options = {
         name: "main",
         params: {
@@ -116,7 +119,7 @@ export default {
     },
 
     closegeotip() {
-      this.geomsg = '';
+      this.geomsg = "";
       this.geomsgopened = false;
 
       if (this.geomsgopenedtimer) {
@@ -125,25 +128,30 @@ export default {
     },
 
     opengeotip(msg) {
-
       this.closegeotip();
 
       this.geomsg = msg;
       this.geomsgopened = true;
 
       this.geomsgopenedtimer = setTimeout(() => {
-        this.geomsg = '';
+        this.geomsg = "";
         this.geomsgopened = false;
       }, this.geomsgopenedtime);
     },
 
     getlocalmappos() {
       // console.log("Geolocation setting up default values");
-      const lastsettings = localStorage.getItem("map-position") || JSON.stringify({"lat": config.MAP.position.lat, "lng": config.MAP.position.lng, "zoom": config.MAP.zoom });
+      const lastsettings =
+        localStorage.getItem("map-position") ||
+        JSON.stringify({
+          lat: config.MAP.position.lat,
+          lng: config.MAP.position.lng,
+          zoom: config.MAP.zoom,
+        });
       let savelocally = true;
 
       /* We don't need to save position loacally if there is set from config */
-      if(!localStorage.getItem("map-position")) {
+      if (!localStorage.getItem("map-position")) {
         savelocally = false;
       }
 
@@ -153,12 +161,6 @@ export default {
         JSON.parse(lastsettings).zoom,
         savelocally
       );
-
-      // if(localStorage.getItem("map-position")) {
-      //   this.geomsg += "Geolocation is set from saved data";
-      // } else {
-      //   this.geomsg += "Geolocation is set by default";
-      // }
     },
 
     setgeo(forse = false) {
@@ -166,12 +168,11 @@ export default {
         this.geoisloading = true;
 
         if ("geolocation" in navigator) {
-
           this.geoavailable = true;
 
-          if(localStorage.getItem("map-position") && !forse) {
+          if (localStorage.getItem("map-position") && !forse) {
             this.getlocalmappos();
-            resolve("Geolocation is set from local data");
+            resolve(this.$t("geolocationlocal"));
           } else {
             navigator.geolocation.getCurrentPosition(
               (position) => {
@@ -183,47 +184,40 @@ export default {
                   drawuser(this.userposition, this.zoom);
                 }
 
-                resolve('Geolocation is determined');
+                resolve(this.$t("geolocationisdetermined"));
               },
               (e) => {
-                reject(`Geolocation is not established [code - ${e.code}]`);
+                reject(`${this.$t("geolocationerror")} ${e.code}]`);
               },
               {
                 enableHighAccuracy: true,
                 timeout: 5000,
-                maximumAge: 5 * 60 * 1000
+                maximumAge: 5 * 60 * 1000,
               }
             );
           }
-
-          // navigator.permissions.query({ name: "geolocation" }).then((result) => {
-          //   console.log('permission', result.state);
-
-          //   result.onchange( () => {
-          //     console.log('permission changed', result.state);
-          //   })
-          // });
-          } else {
-            this.geoavailable = false;
-            reject("Geolocation is not available");
-          }
-
+        } else {
+          this.geoavailable = false;
+          reject(this.$t("geolocationnotavailable"));
+        }
       });
     },
 
     resetgeo() {
       this.closegeotip();
 
-      this.setgeo(true).then((m) => {
-        // console.log("Geolocation set succesfully");
-        this.relocatemap(this.lat, this.lng, this.zoom, "reload");
-        this.geoisloading = false;
-        this.opengeotip(m);
-      }).catch((m) => {
-        // console.log("Error in 'resetgeo': ", e);
-        this.geoisloading = false;
-        this.opengeotip(m);
-      })
+      this.setgeo(true)
+        .then((m) => {
+          // console.log("Geolocation set succesfully");
+          this.relocatemap(this.lat, this.lng, this.zoom, "reload");
+          this.geoisloading = false;
+          this.opengeotip(m);
+        })
+        .catch((m) => {
+          // console.log("Error in 'resetgeo': ", e);
+          this.geoisloading = false;
+          this.opengeotip(m);
+        });
     },
 
     async loadMap() {
@@ -246,8 +240,8 @@ export default {
       });
 
       this.map.on("moveend", (e) => {
-        /* setTimeout for mobiles (whne swiping up app, it causes unpleasant map moving before closing app) */
-        setTimeout( () => {
+        /* setTimeout for mobiles (when swiping up app, it causes unpleasant map moving before closing app) */
+        setTimeout(() => {
           this.relocatemap(
             e.target.getCenter().lat.toFixed(4),
             e.target.getCenter().lng.toFixed(4),
@@ -258,7 +252,7 @@ export default {
             e.target.getCenter().lng.toFixed(4),
             e.target.getZoom()
           );
-        }, 50)
+        }, 50);
       });
 
       initMarkers(toRaw(this.map), this.measuretype, (data) => {
@@ -271,7 +265,7 @@ export default {
 
       /* get bookmarks and listenning for broadcast from DB */
       await this.store.idbBookmarkGet();
-    }
+    },
   },
 
   unmounted() {
@@ -279,15 +273,14 @@ export default {
   },
   watch: {
     geoisloading(v) {
-      console.log('geoisloading changed', v)
+      console.log("geoisloading changed", v);
     },
     geomsg(v) {
-      console.log('geomsg changed', v)
-    }
+      console.log("geomsg changed", v);
+    },
   },
 
   async mounted() {
-
     /* + get user's system theme */
     if (window.matchMedia) {
       window
@@ -299,22 +292,20 @@ export default {
     }
     /* - get user's system theme */
 
-
     /* + Operate with a map */
 
     /* retrieve coordinates */
     this.setgeo()
-    .then(async (m) => {
-      this.opengeotip(m);
-      this.loadMap();
-    })
-    .catch((m) => {
-      /* Если нет возможности "geolocation", то проверяем локальное хранилище */
-      this.opengeotip(m + ', setting up default position...');
-      this.loadMap();
-    });
+      .then(async (m) => {
+        this.opengeotip(m);
+        this.loadMap();
+      })
+      .catch((m) => {
+        /* Если нет возможности "geolocation", то проверяем локальное хранилище */
+        this.opengeotip(m + `, ${this.$t("geolocationdefaultsetup")}`);
+        this.loadMap();
+      });
     /* - Operate with a map */
-
   },
 };
 </script>
@@ -422,8 +413,8 @@ export default {
 }
 
 .popoovergeo-tip {
-  --gettime: v-bind('geomsgopenedtime');
-  --openedtime: calc(var(--gettime)/1000 * 1s);
+  --gettime: v-bind("geomsgopenedtime");
+  --openedtime: calc(var(--gettime) / 1000 * 1s);
   position: absolute;
   padding: 5px 25px 5px 10px;
   background-color: color-mix(in srgb, var(--color-dark) 70%, transparent);

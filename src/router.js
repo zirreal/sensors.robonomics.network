@@ -16,9 +16,7 @@ const router = createRouter({
       name: "main",
       component: Main,
       props: (route) => {
-        return Object.fromEntries(
-          Object.entries(route.params).filter(([_, v]) => v !== "")
-        );
+        return Object.fromEntries(Object.entries(route.params).filter(([_, v]) => v !== ""));
       },
     },
     {

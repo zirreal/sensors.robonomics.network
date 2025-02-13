@@ -1,7 +1,7 @@
 <template>
-  <Header :localeCurrent="$i18n.locale" />
+  <Header />
   <section class="air-measurements container-pagetext">
-    <h1>Air measurements information</h1>
+    <h1>{{ $t("measures.title") }}</h1>
 
     <div class="air-measurements__wrapper" id="PM10">
       <div class="air-measurements__header">
@@ -197,6 +197,10 @@ export default {
 </script>
 
 <style scoped>
+header {
+  width: 99vw;
+}
+
 .mb {
   margin-bottom: calc(var(--gap) * 2) !important;
 }
