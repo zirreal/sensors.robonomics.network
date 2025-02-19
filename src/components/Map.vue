@@ -173,6 +173,14 @@ export default {
       const zoom = this.$route.params.zoom || config.MAP.zoom;
       this.store.setmapposition(lat, lng, zoom, true);
     },
+    setPosDefault() {
+      this.store.setmapposition(
+        config.MAP.position.lat,
+        config.MAP.position.lng,
+        config.MAP.zoom,
+        true
+      );
+    },
 
     setgeo(forse = false) {
       return new Promise((resolve, reject) => {
@@ -187,6 +195,9 @@ export default {
           } else if (localStorage.getItem("map-position") && !forse) {
             this.getlocalmappos();
             resolve("Geolocation is set from local data");
+          } else if (!forse) {
+            this.setPosDefault();
+            resolve("Geolocation is set default data");
           } else {
             navigator.geolocation.getCurrentPosition(
               (position) => {
