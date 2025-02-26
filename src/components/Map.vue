@@ -161,6 +161,33 @@ export default {
         JSON.parse(lastsettings).zoom,
         savelocally
       );
+
+      // if(localStorage.getItem("map-position")) {
+      //   this.geomsg += "Geolocation is set from saved data";
+      // } else {
+      //   this.geomsg += "Geolocation is set by default";
+      // }
+    },
+
+    checkPosFromURI() {
+      if (this.$route.params.lat || this.$route.params.lng || this.$route.params.zoom) {
+        return true;
+      }
+      return false;
+    },
+    setPosFromURI() {
+      const lat = this.$route.params.lat || config.MAP.position.lat;
+      const lng = this.$route.params.lng || config.MAP.position.lng;
+      const zoom = this.$route.params.zoom || config.MAP.zoom;
+      this.store.setmapposition(lat, lng, zoom, true);
+    },
+    setPosDefault() {
+      this.store.setmapposition(
+        config.MAP.position.lat,
+        config.MAP.position.lng,
+        config.MAP.zoom,
+        true
+      );
     },
 
     setgeo(forse = false) {
@@ -170,9 +197,15 @@ export default {
         if ("geolocation" in navigator) {
           this.geoavailable = true;
 
-          if (localStorage.getItem("map-position") && !forse) {
+          if (this.checkPosFromURI() && !forse) {
+            this.setPosFromURI();
+            resolve("Geolocation is set from url params");
+          } else if (localStorage.getItem("map-position") && !forse) {
             this.getlocalmappos();
-            resolve(this.$t("geolocationlocal"));
+            resolve("Geolocation is set from local data");
+          } else if (!forse) {
+            this.setPosDefault();
+            resolve("Geolocation is set default data");
           } else {
             navigator.geolocation.getCurrentPosition(
               (position) => {

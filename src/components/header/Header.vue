@@ -9,7 +9,9 @@
 
     <div class="flexline">
       <select v-model="locale">
-        <option v-for="l in locales" :key="l.key" :value="l.key">{{ l.value }}</option>
+        <option v-for="lang in languages" :key="lang.code" :value="lang.code">
+          {{ lang.title }}
+        </option>
       </select>
 
       <div id="about" class="popover popover-top-right" popover>
@@ -73,6 +75,7 @@
 
 <script>
 import { useStore } from "@/store";
+import { languages } from "@/translate";
 import IconSensor from "../icons/Sensor.vue";
 
 import { locales } from "../../translations/languages";
