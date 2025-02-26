@@ -22,10 +22,7 @@
         </div>
         <div class="shared-container">
           <button @click="shareData" class="button">
-            <font-awesome-icon
-              icon="fa-solid fa-share-from-square"
-              v-if="!shared"
-            />
+            <font-awesome-icon icon="fa-solid fa-share-from-square" v-if="!shared" />
             <font-awesome-icon icon="fa-solid fa-check" v-if="shared" />
           </button>
           <button @click="shareLink" class="button">
@@ -50,10 +47,7 @@
         <template v-if="rtdata">
           <div v-for="item in rtdata" :key="item">
             <div class="rt-unit">{{ item.label }}</div>
-            <div
-              class="rt-number"
-              :style="item.color ? 'color:' + item.color : ''"
-            >
+            <div class="rt-number" :style="item.color ? 'color:' + item.color : ''">
               {{ item.measure }} {{ item.unit }}
             </div>
           </div>
@@ -68,9 +62,7 @@
       <section>
         <h3>{{ $t("sensorpopup.infotitle") }}</h3>
         <div class="infoline flexline" v-if="sensor_id">
-          <div class="infoline-title">
-            {{ $t("sensorpopup.infosensorid") }}:
-          </div>
+          <div class="infoline-title">{{ $t("sensorpopup.infosensorid") }}:</div>
           <div class="infoline-info">
             {{ $filters.collapse(sensor_id) }}
             <Copy
@@ -82,25 +74,19 @@
         </div>
 
         <div class="infoline flexline" v-if="geo">
-          <div class="infoline-title">
-            {{ $t("sensorpopup.infosensorgeo") }}:
-          </div>
+          <div class="infoline-title">{{ $t("sensorpopup.infosensorgeo") }}:</div>
           <div class="infoline-info">{{ geo.lat }}, {{ geo.lng }}</div>
         </div>
 
         <div class="infoline flexline" v-if="link">
-          <div class="infoline-title">
-            {{ $t("sensorpopup.infosensorowner") }}:
-          </div>
+          <div class="infoline-title">{{ $t("sensorpopup.infosensorowner") }}:</div>
           <div class="infoline-info">
             <a :href="link" rel="noopener" target="_blank">{{ link }}</a>
           </div>
         </div>
 
         <div class="infoline flexline" v-if="donated_by">
-          <div class="infoline-title">
-            {{ $t("sensorpopup.infosensordonated") }}:
-          </div>
+          <div class="infoline-title">{{ $t("sensorpopup.infosensordonated") }}:</div>
           <div class="infoline-info">{{ donated_by }}</div>
         </div>
 
@@ -108,9 +94,7 @@
         <div v-if="model === 3" class="infoline flexline">
           <div class="infoline-title">
             <label for="realtime"></label>
-            <span class="sensors-switcher-text">
-              {{ $t("details.showpath") }} </span
-            >:
+            <span class="sensors-switcher-text"> {{ $t("details.showpath") }} </span>:
           </div>
           <div class="infoline-info">
             <input type="checkbox" id="realtime" v-model="isShowPath" />
@@ -124,9 +108,7 @@
           <div v-for="item in scales" :key="item.label">
             <template v-if="item?.zones && (item.name || item.label)">
               <p>
-                <b v-if="item.name">{{
-                  locale === "en" ? item.name.en : item.name.ru
-                }}</b>
+                <b v-if="item.name">{{ item.name[locale] ? item.name[locale] : item.name.en }}</b>
                 <b v-else>{{ item.label }}</b>
                 ({{ item.unit }})
               </p>
@@ -136,10 +118,8 @@
                   v-if="zone.color && zone.label"
                   :style="`--color: ${zone.color}`"
                 >
-                  <b>{{ locale === "en" ? zone.label.en : zone.label.ru }}</b>
-                  (<template v-if="zone.value"
-                    >{{ $t("scales.upto") }} {{ zone.value }}</template
-                  >
+                  <b>{{ zone.label[locale] ? zone.label[locale] : zone.label.en }}</b>
+                  (<template v-if="zone.value">{{ $t("scales.upto") }} {{ zone.value }}</template>
                   <template v-else>{{ $t("scales.above") }}</template
                   >)
                 </div>
@@ -155,11 +135,7 @@
       </div>
     </div>
 
-    <button
-      @click.prevent="closesensor"
-      aria-label="Close sensor"
-      class="close"
-    >
+    <button @click.prevent="closesensor" aria-label="Close sensor" class="close">
       <font-awesome-icon icon="fa-solid fa-xmark" />
     </button>
   </div>
@@ -243,9 +219,7 @@ export default {
       return bufer;
     },
     isLocationRussion() {
-      return (
-        this.address.country === "Россия" || this.address.country === "Russia"
-      );
+      return this.address.country === "Россия" || this.address.country === "Russia";
     },
     measure() {
       return this.items.find((item) => this.select === item.text);
@@ -258,25 +232,13 @@ export default {
       );
     },
     hasIcon() {
-      return (type) =>
-        measurements[type.toLowerCase()] &&
-        measurements[type.toLowerCase()].icon;
-    },
-    icon: function () {
-      return (type) => {
-        return this.hasIcon(type)
-          ? measurements[type.toLowerCase()].icon
-          : "vial";
-      };
+      return (type) => measurements[type.toLowerCase()] && measurements[type.toLowerCase()].icon;
     },
     items() {
       const items = [];
       for (const item of Object.keys(this.last.data)) {
         let scale = null;
-        if (
-          measurements[item.toLowerCase()] &&
-          measurements[item.toLowerCase()].colors
-        ) {
+        if (measurements[item.toLowerCase()] && measurements[item.toLowerCase()].colors) {
           scale = generate(
             measurements[item.toLowerCase()].colors,
             measurements[item.toLowerCase()].range
@@ -289,9 +251,7 @@ export default {
           state: getState(
             scale,
             this.last.data[item],
-            measurements[item.toLowerCase()]
-              ? measurements[item.toLowerCase()].states
-              : undefined
+            measurements[item.toLowerCase()] ? measurements[item.toLowerCase()].states : undefined
           ),
         });
       }
@@ -338,14 +298,10 @@ export default {
       return moment(this.last.timestamp, "X").format("DD.MM.YYYY HH:mm:ss");
     },
     startTimestamp: function () {
-      return Number(
-        moment(this.start + " 00:00:00", "YYYY-MM-DD HH:mm:ss").format("X")
-      );
+      return Number(moment(this.start + " 00:00:00", "YYYY-MM-DD HH:mm:ss").format("X"));
     },
     endTimestamp: function () {
-      return Number(
-        moment(this.start + " 23:59:59", "YYYY-MM-DD HH:mm:ss").format("X")
-      );
+      return Number(moment(this.start + " 23:59:59", "YYYY-MM-DD HH:mm:ss").format("X"));
     },
     units() {
       /* + Possible units for the sensor */
@@ -481,12 +437,6 @@ export default {
       this.$emit("close");
     },
   },
-  /* Causes some error, needs to be checked */
-  // updated() {
-  //   setTimeout(() => {
-  //     this.$refs.content.scrollTop = 0;
-  //   }, 100);
-  // },
   watch: {
     sensor_id() {
       this.isShowPath = false;

@@ -1,45 +1,25 @@
 export default {
   header: {
-    title: "Blockchain sensors map",
-    subtitleAbout: "About",
-    description1:
-      "Welcome to the decentralized opensource sensors map which operates with the sole intent of serving the",
-    description2:
-      ", without any beneficiaries. It offers two distinct layers of decentralization at your choise: peer-to-peer connectivity for direct access to sensor data, and the federative concept for accumulating sensor data and displaying measurement history. For more information, please visit the following",
-    descriptionLink1: "free will of individuals",
-    descriptionLink2: "link",
-    subtitleSupport: "Support",
-    create: "How to  create your own map",
-    connect: "How to connect",
-    fork: "GitHub repository",
-    city: {
-      togliatti: "Togliatti",
-    },
-    subtitleOther: "Other links",
-    policy: "Privacy policy",
-    measurements: "Air measurements information",
-    subtitleJoin: "Add your sensor on this map",
-    description3: "You can",
-    description4: "your own sensor using components available on the free market. Follow",
-    description5:
-      "provided to connect your sensor to the map. We welcome your participation and look forward to expanding our community together. Join us today!",
-    descriptionLink3: "assemble",
-    descriptionLink4: "the instructions",
-    subtitleAdditionalSupport: "Additional support",
-    assembly: "YouTube video guide",
-    additionalSupportText: "Ask any questions about map using GitHub issues in",
-    additionalSupportLink: "core repository",
-    subtitleFork: "Create your own map",
-    description6:
-      "Feel free to fork the GitHub repository of this map and deploy it on any domain of your choice. With this flexibility, you have the option to display all sensors or set up your own customized service. Take control and make it your own!",
-    descriptionLink5: "GitHub repository",
-    descriptionLink6: "Instructions",
+    title: "Web3 public sensors map",
+    text1:
+      "Welcome to the decentralized opensource sensors map which operates with the sole intent of serving",
+    link1: "the free will of individuals",
+    text2:
+      ", without any beneficiaries. It offers two distinct layers of decentralization at your choise: peer-to-peer connectivity for direct access to sensor data, and the federative concept for accumulating sensor data and displaying measurement history. Click",
+    link2: "here",
+    text3: "for further technical details.",
+    addSensorTitle: "Add your sensor on this map",
+    addSensorText1: "You can",
+    addSensorLink1: "assemble your own sensor",
+    addSensorText2:
+      "using components available on the free market. Follow the instructions provided to",
+    addSensorLink2: "connect your sensor to the map",
+    addSensorText3:
+      ". We welcome your participation and look forward to expanding our community together. Join us today!",
+    addSensorLink3: "YouTube video guide",
   },
   measures: {
-    pollutionScale: "Pollution scale",
-    recommendations: "Recommendations",
-    popupTitle: "Air measurements information",
-    popupPage: "Open measures page",
+    title: "Air measurements information",
     PM10: "PM 10 (Particulate Matter 10) consists of atmospheric particles with a size of up to 10 micrometers, including dust, soot, and other pollutants. They can cause health problems by affecting breathing and contributing to respiratory diseases. Sources of PM 10 include industrial emissions, road dust, and fuel combustion. Monitoring and reducing PM 10 levels are important for maintaining clean air and promoting health.",
     pollutionScalePM10: {
       1: "0-50 µg/m³: Good air quality",
@@ -158,10 +138,8 @@ export default {
   layer: {
     wind: "Wind",
     messages: "Messages",
-    help: "The wind layer is available in real time mode",
   },
   details: {
-    sensor: "Sensor",
     user: "User #",
     photos: "Photos",
     showpath: "Show route",
@@ -173,7 +151,6 @@ export default {
     currentDay: "Current day",
     currentMonth: "Last month",
     chooseDates: "Select dates",
-    usecity: "Select locality",
     title: "Import data",
     button: "Download csv file",
   },
@@ -186,7 +163,6 @@ export default {
     bookmarkplaceholder: "A name for sensor",
     bookmarkbutton: "Add to Bookmarks",
     infosensorid: "Sensor id",
-    infosensormodel: "Sensor model",
     infosensorgeo: "Sensor geoposition",
     infosensorowner: "Sensor owner",
     infosensordonated: "Donated by",
@@ -208,4 +184,64 @@ export default {
   showlocation: "Show my location",
   locationloading: "Trying to get your location",
   isLoad: "Load...",
+  geolocationdefault: "Geolocation is set default data",
+  geolocationfromparams: "Geolocation is set from url params",
+  geolocationlocal: "Geolocation is set from local data",
+  geolocationisdetermined: "Geolocation is determined",
+  geolocationerror: "Geolocation is not established [code -",
+  geolocationnotavailable: "Geolocation is not available",
+  geolocationdefaultsetup: "setting up default position...",
+  privacypolicy: {
+    title: "Privacy Policy",
+    description:
+      "This Policy describes the information we collect from you, how we use that information and our legal basis for doing so. It also covers whether and how that information may be shared and your rights and choices regarding the information you provide to us.",
+    subtitle1: "Where are those annoying cookie consent pop-ups?",
+    text1: "We don't need cookie consent is needed because:",
+    listitem1: "Tracking cookies are not used",
+    listitem2: "The data is not used for any other purpose than analytics",
+    listitem3: "Visitors aren’t tracked across websites",
+    listitem4: "A user cannot be tracked across days within the same website",
+    subtitle2: "What We Collect and Receive",
+    text2:
+      "In order for us to provide you the best possible experience on our websites, we need to collect and process certain information. Depending on your use of the Services, that may include:",
+    listitem5bold: "Contact us via email",
+    listitem5:
+      "— for example, when you submit our forms, send us questions or comments, or report a problem, we will collect your name, email address, message, etc. We use this data solely in connection with answering the queries we receive.",
+    listitem6bold: "Usage data",
+    listitem6text1:
+      "— when you visit our website, we will store: the URL from which you visited us from, web pages of our website you visit, the date and duration of your visit, your anonymized IP address, the device specifications (device type, operating system, screen resolution, language, country you are located in, and web browser type) you used during your visit, and",
+    listitem6link1: "other",
+    listitem6text2:
+      "non-personal data. We process this usage data only on our server, not passing it to third-parties with",
+    listitem6link2: "Matomo",
+    listitem6text3:
+      " web analytics platform that gives us 100% data ownership. This analytics helps us to improve user experience with our website and to recognize and stop any misuse.",
+    listitem7bold: "Non-personalized cookies",
+    listitem7:
+      "— we use non-tracking cookies (small data files transferred onto computers or devices by sites) for record-keeping purposes and to enhance functionality on our website. You may deactivate or restrict the transmission of these cookies by changing the settings of your web browser or by opt-out on this page in the form below. Cookies that are already stored may be deleted at any time.",
+    subtitle3: "Your Rights",
+    text3:
+      "You have the right to be informed of Personal Data processed by Matomo, a right to rectification/correction, erasure and restriction of processing. You also have the right to ask from us a structured, common and machine-readable format of Personal Data you provided to us.",
+    text4:
+      "We can only identify you via your email address and we can only adhere to your request and provide information if we have Personal Data about you through you having made contact with us directly and/or you using our site and/or service. We cannot provide, rectify or delete any data that we store on behalf of our users or customers.",
+    text5:
+      "To exercise any of the rights mentioned in this Privacy Policy and/or in the event of questions or comments relating to the use of Personal Data you may contact us.",
+    text6:
+      "In addition, you have the right to lodge a complaint with the data protection authority in your jurisdiction.",
+    subtitle4: "Retention of data",
+    text7:
+      "We will retain your information as long as necessary to provide you with the services or as otherwise set forth in this Policy. We will also retain and use this information as necessary for the purposes set out in this Policy and to the extent necessary to comply with our legal obligations, resolve disputes, enforce our agreements and protect Robonomics Cloud legal rights.",
+    text8:
+      "We also collect and maintain aggregated, anonymized or pseudonymized information which we may retain indefinitely to protect the safety and security of our Site, improve our Services or comply with legal obligations.",
+    matomooptout: "Opt-out of website tracking",
+    matomodescription: "You can opt out of being tracked by our Matomo Analytics instance below:",
+    matomolabel1: "You are currently opted out. Click here to opt in.",
+    matomotext1:
+      "Opt-out complete; your visits to this website will not be recorded by the Web Analytics tool. Note that if you clear your cookies, delete the opt-out cookie, or if you change computers or Web browsers, you will need to perform the opt-out procedure again.",
+    matomotext2: "Please click below to opt in:",
+    matomolabel2: "You are currently opted in. Click here to opt out.",
+    matomotext3:
+      "You may choose not to have a unique web analytics cookie identification number assigned to your computer to avoid the aggregation and analysis of data collected on this website.",
+    matomotext4: "To make that choice, please click below to receive an opt-out cookie",
+  },
 };

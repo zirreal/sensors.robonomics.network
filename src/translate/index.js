@@ -8,4 +8,4 @@ export const languages = [
   { code: "ru", title: "Русский" },
 ];
 
-export const defaultLanguage = localStorage.getItem("locale") || "en";
+export const defaultLocale = localStorage.getItem("locale") || "en";

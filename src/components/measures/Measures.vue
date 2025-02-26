@@ -2,7 +2,6 @@
   <select v-model="type" v-if="store.sensors.length > 0">
     <option v-for="opt in availableoptions" :key="opt.value" :value="opt.value">
       {{ opt.name }}
-      <!-- - {{locale}} -->
     </option>
   </select>
 </template>
@@ -36,7 +35,7 @@ export default {
   },
   computed: {
     locale() {
-      return localStorage.getItem("locale") || this.$i18n.locale || "en";
+      return this.$i18n.locale || localStorage.getItem("locale") || "en";
     },
     availableoptions() {
       let buffer = [];

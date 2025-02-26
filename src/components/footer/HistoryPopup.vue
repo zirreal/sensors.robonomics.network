@@ -2,25 +2,17 @@
   <div id="history" class="popup-js container" :class="{ active: isActive }">
     <span class="history__import-data">Import data</span>
     <div class="history__wrapper">
-      <!-- <label for="location">{{ $t("history.city") }}:</label> -->
       <div class="sensors-select sensors-select-border">
         <select v-model="city" class="sensors-select-city">
           <template v-for="(country, key) in Object.keys(cities)" :key="key">
             <option disabled style="text-transform: lowercase">
               {{ country }}
             </option>
-            <template
-              v-for="(state, key2) in Object.keys(cities[country])"
-              :key="key2"
-            >
+            <template v-for="(state, key2) in Object.keys(cities[country])" :key="key2">
               <option disabled style="text-transform: lowercase">
                 &nbsp;&nbsp;&nbsp;&nbsp;{{ state }}
               </option>
-              <option
-                v-for="(city, key3) in cities[country][state]"
-                :value="city"
-                :key="key3"
-              >
+              <option v-for="(city, key3) in cities[country][state]" :value="city" :key="key3">
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {{ city }}
               </option>
             </template>
@@ -31,15 +23,9 @@
     </div>
 
     <div class="history__wrapper">
-      <!-- <label for="period">{{ $t("history.period") }}:</label> -->
-
       <div class="sensors-select sensors-select-border sensors-select-period">
         <select id="period" v-model="period">
-          <option
-            v-for="item in timePeriod"
-            :value="item.value"
-            :key="item.value"
-          >
+          <option v-for="item in timePeriod" :value="item.value" :key="item.value">
             {{ item.title }}
           </option>
         </select>
@@ -55,7 +41,6 @@
     <!-- класс success задает стили  для успешного запроса  -->
     <a :href="link" target="_blank" class="history__save">
       <span class="history__save-content">
-        <!-- <font-awesome-icon icon="fa-solid fa-download" /> -->
         {{ $t("history.download") }}
       </span>
 
@@ -66,36 +51,7 @@
       <font-awesome-icon icon="fa-solid fa-check" />
     </a>
 
-    <a
-      class="popup__close"
-      href="javascript:;"
-      @click="() => $emit('toggleIsActive')"
-    >
-      <!-- <svg
-        width="13"
-        height="13"
-        viewBox="0 0 13 13"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <g clip-path="url(#clip0_408_165)">
-          <path
-            d="M4.2432 3.24483C3.96708 2.96871 3.52092 2.96871 3.2448 3.24483C2.96868 3.52095 2.96868 3.96711 3.2448 4.24323L5.49119 6.48962L3.2448 8.73602C2.96868 9.01214 2.96868 9.4583 3.2448 9.73442C3.52092 10.0105 3.96708 10.0105 4.2432 9.73442L6.48959 7.48802L8.73599 9.73442C9.01211 10.0105 9.45827 10.0105 9.73439 9.73442C10.0105 9.4583 10.0105 9.01214 9.73439 8.73602L7.48799 6.48962L9.73439 4.24323C10.0105 3.96711 10.0105 3.52095 9.73439 3.24483C9.45827 2.96871 9.01211 2.96871 8.73599 3.24483L6.48959 5.49123L4.2432 3.24483Z"
-            fill="black"
-          />
-        </g>
-        <defs>
-          <clipPath id="clip0_408_165">
-            <rect
-              width="9.17767"
-              height="9.17767"
-              fill="white"
-              transform="translate(0 6.48962) rotate(-45)"
-            />
-          </clipPath>
-        </defs>
-      </svg> -->
-    </a>
+    <a class="popup__close" href="javascript:;" @click="() => $emit('toggleIsActive')"> </a>
   </div>
 </template>
 
@@ -137,14 +93,10 @@ export default {
   },
   computed: {
     startTimestamp: function () {
-      return Number(
-        moment(this.start + " 00:00:00", "YYYY-MM-DD HH:mm:ss").format("X")
-      );
+      return Number(moment(this.start + " 00:00:00", "YYYY-MM-DD HH:mm:ss").format("X"));
     },
     endTimestamp: function () {
-      return Number(
-        moment(this.end + " 23:59:59", "YYYY-MM-DD HH:mm:ss").format("X")
-      );
+      return Number(moment(this.end + " 23:59:59", "YYYY-MM-DD HH:mm:ss").format("X"));
     },
     link() {
       return `${config.REMOTE_PROVIDER}api/sensor/csv/${this.startTimestamp}/${this.endTimestamp}/${this.city}`;
@@ -163,9 +115,7 @@ export default {
   },
   async created() {
     try {
-      const result = await axios.get(
-        `${config.REMOTE_PROVIDER}api/sensor/cities`
-      );
+      const result = await axios.get(`${config.REMOTE_PROVIDER}api/sensor/cities`);
       this.cities = result.data.result;
       const country = Object.keys(this.cities);
       const state = Object.keys(this.cities[country[0]]);
