@@ -181,6 +181,7 @@ export default {
   locationloading: "Пытаемся получить вашу геопозицию",
   isLoad: "Загрузка ...",
   geolocationdefault: "Геолокация установлена ​​по умолчанию",
+  geolocationfromparams: "Геолокация установлена из параметров URL",
   geolocationlocal: "Геолокация устанавливается на основе локальных данных",
   geolocationisdetermined: "Геолокация определена",
   geolocationerror: "Геолокация не установлена [код -",

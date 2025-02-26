@@ -185,6 +185,7 @@ export default {
   locationloading: "Trying to get your location",
   isLoad: "Load...",
   geolocationdefault: "Geolocation is set default data",
+  geolocationfromparams: "Geolocation is set from url params",
   geolocationlocal: "Geolocation is set from local data",
   geolocationisdetermined: "Geolocation is determined",
   geolocationerror: "Geolocation is not established [code -",

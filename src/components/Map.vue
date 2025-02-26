@@ -199,7 +199,7 @@ export default {
 
           if (this.checkPosFromURI() && !forse) {
             this.setPosFromURI();
-            resolve("Geolocation is set from url params");
+            resolve(this.$t("geolocationfromparams"));
           } else if (localStorage.getItem("map-position") && !forse) {
             this.getlocalmappos();
             resolve(this.$t("geolocationlocal"));

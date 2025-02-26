@@ -108,7 +108,7 @@
           <div v-for="item in scales" :key="item.label">
             <template v-if="item?.zones && (item.name || item.label)">
               <p>
-                <b v-if="item.name">{{ locale === "en" ? item.name.en : item.name.ru }}</b>
+                <b v-if="item.name">{{ item.name[locale] ? item.name[locale] : item.name.en }}</b>
                 <b v-else>{{ item.label }}</b>
                 ({{ item.unit }})
               </p>
@@ -118,7 +118,7 @@
                   v-if="zone.color && zone.label"
                   :style="`--color: ${zone.color}`"
                 >
-                  <b>{{ locale === "en" ? zone.label.en : zone.label.ru }}</b>
+                  <b>{{ zone.label[locale] ? zone.label[locale] : zone.label.en }}</b>
                   (<template v-if="zone.value">{{ $t("scales.upto") }} {{ zone.value }}</template>
                   <template v-else>{{ $t("scales.above") }}</template
                   >)
