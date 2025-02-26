@@ -202,10 +202,10 @@ export default {
             resolve("Geolocation is set from url params");
           } else if (localStorage.getItem("map-position") && !forse) {
             this.getlocalmappos();
-            resolve("Geolocation is set from local data");
+            resolve(this.$t("geolocationlocal"));
           } else if (!forse) {
             this.setPosDefault();
-            resolve("Geolocation is set default data");
+            resolve(this.$t("geolocationdefault"));
           } else {
             navigator.geolocation.getCurrentPosition(
               (position) => {

@@ -9,7 +9,7 @@
 
     <div class="flexline">
       <select v-model="locale">
-        <option v-for="lang in languages" :key="lang.code" :value="lang.code">
+        <option v-for="lang in locales" :key="lang.code" :value="lang.code">
           {{ lang.title }}
         </option>
       </select>
@@ -78,15 +78,13 @@ import { useStore } from "@/store";
 import { languages } from "@/translate";
 import IconSensor from "../icons/Sensor.vue";
 
-import { locales } from "../../translations/languages";
-
 export default {
   components: { IconSensor },
 
   data() {
     return {
       locale: localStorage.getItem("locale") || this.$i18n.locale || "en",
-      locales: locales || this.$i18n.availableLocales || ["en"],
+      locales: languages || this.$i18n.availableLocales || ["en"],
       store: useStore(),
     };
   },
