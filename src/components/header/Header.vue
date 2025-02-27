@@ -23,7 +23,8 @@
             target="_blank"
             rel="noopener"
             >{{ $t("header.link1") }}</a
-          >{{ $t("header.text2") }}
+          >
+          {{ $t("header.text2") }}
           <a
             href="https://robonomics.academy/en/learn/sensors-connectivity-course/sensors-connectivity-module/"
             target="_blank"
@@ -40,7 +41,8 @@
             target="_blank"
             rel="noopener"
             >{{ $t("header.addSensorLink1") }}</a
-          >{{ $t("header.addSensorText2") }}
+          >
+          {{ $t("header.addSensorText2") }}
           <a
             href="https://robonomics.academy/en/learn/sensors-connectivity-course/setting-up-and-connecting-sensors/"
             target="_blank"
