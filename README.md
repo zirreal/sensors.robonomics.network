@@ -108,6 +108,84 @@ After modifying the necessary files, deploy your instance of the map by followin
 
 You can now access your deployed map using the provided GitHub Pages URL.
 
+
+## 💬 Localization & Translations
+
+You can add a new language to the map by modifying the translation files located in `src/translate/`.  
+
+### 📝 Adding a New Language  
+
+1️⃣ **Create a new translation file** in `src/translate/`, e.g., `es.js`.  
+
+2️⃣ **Update `index.js`** in the same folder:  
+   - Import your newly created translation file:  
+
+   ```js
+   import es from "./es";
+   
+   export default { en, ru, es };
+   ```
+
+  - Add the new language to the language list:
+
+  ```js
+    export const languages = [
+      { code: "en", title: "English" },
+      { code: "ru", title: "Русский" },
+      { code: "es", title: "Español" },
+    ];
+  ```
+  
+  ### 📏 Translating Measurements  
+
+  Measurement values are located in `src/measurements/`.  
+  To support multiple languages, update the relevant files in this folder.  
+
+  ## Files to Update  
+
+| Measurement Type        | File Name |
+|-------------------------|-----------|
+| Carbon Monoxide        | `co.js` |
+| Background Radiation   | `gs.js` |
+| Humidity              | `humidity.js` |
+| Ammonia (NH₃)         | `nh3.js` |
+| Nitrogen Dioxide (NO₂) | `no2.js` |
+| Noise Levels          | `noise.js`, `noiseavg.js`, `noisemax.js` |
+| PM10 Particulate Matter | `pm10.js` |
+| PM2.5 Particulate Matter | `pm25.js` |
+| Pressure              | `pressure.js` |
+| Temperature           | `temperature.js` |
+
+### Example Translation Update (`humidity.js`)  
+
+To add support for **Spanish (es)**, update the `name`, `nameshort`, and `zones` properties:  
+
+```js
+
+     name: {  
+       en: "Humidity",  
+       ru: "Влажность",  
+       es: "Humedad"  
+     },  
+     nameshort: {  
+       en: "Humidity",  
+       ru: "Влажность",  
+       es: "Humedad"  
+     },  
+
+     zones: [  
+       {  
+         value: 30,  
+         color: "#ff4d00",  
+         label: {  
+           en: "Very dry",  
+           ru: "Очень сухо",  
+           es: "Muy seco"  
+         }  
+       }  
+     ]  
+  ```
+
 ## ❓ Support
 
 For questions or suggestions, create an **issue** in the repository.
