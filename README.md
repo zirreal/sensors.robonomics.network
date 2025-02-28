@@ -154,7 +154,7 @@ You can add a new language to the map by modifying the translation files located
   Measurement values are located in `src/measurements/`.  
   To support multiple languages, update the relevant files in this folder.  
 
-  ## Files to Update  
+  #### Files to Update  
 
 | Measurement Type        | File Name |
 |-------------------------|-----------|
@@ -169,7 +169,7 @@ You can add a new language to the map by modifying the translation files located
 | Pressure              | `pressure.js` |
 | Temperature           | `temperature.js` |
 
-### Example Translation Update (`humidity.js`)  
+#### Example Translation Update (`humidity.js`)  
 
 To add support for **Spanish (es)**, update the `name`, `nameshort`, and `zones` properties:  
 
@@ -200,7 +200,7 @@ To add support for **Spanish (es)**, update the `name`, `nameshort`, and `zones`
   ```
 
   ---
-  
+
 
 ## ❓ Support
 
