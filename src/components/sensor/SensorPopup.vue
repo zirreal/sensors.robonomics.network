@@ -143,11 +143,10 @@
 
 <script>
 import { useStore } from "@/store";
+import config, { sensors } from "@config";
 import moment from "moment";
-import config from "../../config";
 import measurements from "../../measurements";
 import { toFixed } from "../../measurements/tools";
-import sensors from "../../sensors";
 import generate, { getState } from "../../utils/color";
 import { hidePath, showPath } from "../../utils/map/marker";
 import { getTypeProvider } from "../../utils/utils";

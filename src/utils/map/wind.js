@@ -1,8 +1,8 @@
+import config from "@config";
 import axios from "axios";
 import L from "leaflet";
 import "leaflet-velocity";
 import "leaflet-velocity/dist/leaflet-velocity.css";
-import config from "../../config";
 
 export const immediate = false;
 
@@ -15,12 +15,7 @@ export function init() {
       data: r.data,
       maxVelocity: 15,
       velocityScale: 0.01,
-      colorScale: [
-        "rgb(60,157,194)",
-        "rgb(128,205,193)",
-        "rgb(250,112,52)",
-        "rgb(245,64,32)",
-      ],
+      colorScale: ["rgb(60,157,194)", "rgb(128,205,193)", "rgb(250,112,52)", "rgb(245,64,32)"],
     });
   });
 }

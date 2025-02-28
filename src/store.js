@@ -1,5 +1,5 @@
+import config from "@config";
 import { defineStore } from "pinia";
-import config from "./config";
 import { IDBgettable } from "./idb";
 
 export const useStore = defineStore({

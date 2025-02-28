@@ -1,6 +1,6 @@
+import { agents } from "@config";
 import converter from "../measurements";
 import { createNode } from "../utils/libp2p";
-import { getAgents } from "../utils/utils";
 
 const topic = "airalab.lighthouse.5.robonomics.eth";
 
@@ -37,7 +37,7 @@ class Provider {
 
   async init(config) {
     this.node = await createNode(config);
-    this.whiteListAccounts = getAgents();
+    this.whiteListAccounts = agents;
   }
 
   ready() {

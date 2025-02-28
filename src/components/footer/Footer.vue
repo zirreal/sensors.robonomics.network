@@ -59,14 +59,14 @@
 
 <script>
 import { useStore } from "@/store";
+import config from "@config";
 import moment from "moment";
-import config from "../../config";
+import Bookmarks from "../../components/Bookmarks.vue";
+import Measures from "../../components/measures/Measures.vue";
 import { instanceMap } from "../../utils/map/instance";
 import { switchMessagesLayer } from "../../utils/map/marker";
 import { switchLayer } from "../../utils/map/wind";
 import HistoryImport from "./HistoryImport.vue";
-import Measures from "../../components/measures/Measures.vue";
-import Bookmarks from "../../components/Bookmarks.vue";
 
 export default {
   emits: ["history"],

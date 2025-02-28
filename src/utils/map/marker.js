@@ -1,12 +1,11 @@
+import config, { sensors } from "@config";
 import Queue from "js-queue";
 import L from "leaflet";
 import "leaflet-arrowheads";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
-import config from "../../config";
 import { getMeasurementByName } from "../../measurements/tools";
-import sensors from "../../sensors";
 import generate, { getColor, getColorDarkenRGB, getColorRGB } from "../../utils/color";
 
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";

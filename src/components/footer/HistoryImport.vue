@@ -33,9 +33,9 @@
 </template>
 
 <script>
+import config from "@config";
 import axios from "axios";
 import moment from "moment";
-import config from "../../config";
 
 export default {
   data() {

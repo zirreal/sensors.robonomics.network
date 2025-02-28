@@ -1,6 +1,6 @@
+import config from "@config";
 import axios from "axios";
 import io from "socket.io-client";
-import config from "../config";
 
 const axiosConfig = {
   baseURL: `${config.REMOTE_PROVIDER}api/sensor`,

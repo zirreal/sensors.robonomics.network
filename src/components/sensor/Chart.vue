@@ -3,10 +3,10 @@
 </template>
 
 <script>
+import config from "@config";
 import Highcharts from "highcharts";
 import { Chart } from "highcharts-vue";
 import stockInit from "highcharts/modules/stock";
-import config from "../../config";
 import unitsettings from "../../measurements";
 
 Highcharts.seriesTypes.spline.prototype.drawLegendSymbol = function (legend, item) {
