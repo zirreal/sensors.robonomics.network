@@ -29,6 +29,8 @@ jobs:
             ${{ runner.os }}-website-
       - run: yarn install --frozen-lockfile
       - run: yarn build
+        env:
+          VITE_CONFIG_ENV: ${{ vars.VITE_CONFIG_ENV }}
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
