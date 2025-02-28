@@ -1,5 +1,7 @@
 # sensors.social
 
+---
+
 ## 📌 Overview
 
 **sensors.social** is a decentralized application that visualizes data from sensors sending their measurements to the blockchain (Polkadot network, Robonomics parachain). The platform supports two modes of operation:
@@ -9,15 +11,18 @@
 
 For more details on connectivity and how to deploy your own map interface (or even a connectivity server), visit [Robonomics Academy](https://robonomics.academy/en/learn/sensors-connectivity-course/overview/).
 
+---
+
 ## 🚀 Deployment
 
-### 1️⃣ Clone the Repository
+This section is intended for contributors working on the existing map and developers setting up their own map interface. For comprehensive instructions on configuring your own user interface, refer to the next sections.
 
-Simply clone the repository and navigate to the project directory:
+### 1️⃣ Fork & Clone the Repository
+
+If you plan to contribute or customize the project extensively, consider forking it first. Then clone the repository:
 
 ```sh
- git clone https://github.com/airalab/sensors.social.git
- cd sensors.social
+  git clone <map repository>
 ```
 
 If you plan to contribute or customize the project extensively, consider forking it first.
@@ -43,9 +48,14 @@ Then install the required dependencies:
  yarn dev
 ```
 
+---
+
+
 ## 🔧 Setup Your Own Map (For Experienced Users)
 
 ### 1️⃣ Deploy Your Own Instance of the Map
+
+Refer to the "🚀 Deployment" section.
 
 ### 2️⃣ Enable GitHub Actions
 
@@ -109,6 +119,9 @@ After modifying the necessary files, deploy your instance of the map by followin
 You can now access your deployed map using the provided GitHub Pages URL.
 
 
+---
+
+
 ## 💬 Localization & Translations
 
 You can add a new language to the map by modifying the translation files located in `src/translate/`.  
@@ -141,7 +154,7 @@ You can add a new language to the map by modifying the translation files located
   Measurement values are located in `src/measurements/`.  
   To support multiple languages, update the relevant files in this folder.  
 
-  ## Files to Update  
+  #### Files to Update  
 
 | Measurement Type        | File Name |
 |-------------------------|-----------|
@@ -156,7 +169,7 @@ You can add a new language to the map by modifying the translation files located
 | Pressure              | `pressure.js` |
 | Temperature           | `temperature.js` |
 
-### Example Translation Update (`humidity.js`)  
+#### Example Translation Update (`humidity.js`)  
 
 To add support for **Spanish (es)**, update the `name`, `nameshort`, and `zones` properties:  
 
@@ -185,6 +198,9 @@ To add support for **Spanish (es)**, update the `name`, `nameshort`, and `zones`
        }  
      ]  
   ```
+
+  ---
+
 
 ## ❓ Support
 
