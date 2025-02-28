@@ -202,9 +202,68 @@ To add support for **Spanish (es)**, update the `name`, `nameshort`, and `zones`
   ---
 
 
+## How to Fork the Repository with Custom Configuration Files
+
+1️⃣ Copy the `src/config/template` directory to your own:
+
+```sh
+cp -r src/config/template src/config/my-project
+```
+
+2️⃣ In the `src/config/my-project/config.json` file, all parameters are optional. You can configure the following settings:
+
+```json
+{
+  "LIBP2P": "Configuration for initializing the LIBP2P library",
+  "REMOTE_PROVIDER": "Server with Rozman",
+  "WIND_PROVIDER": "Server with wind data",
+  "MAP": {
+    "zoom": "Zoom level",
+    "position": {
+      "lat": "Latitude",
+      "lng": "Longitude"
+    }
+  },
+  "SHOW_MESSAGES": "Boolean value (true/false) indicating whether to display user messages on the map",
+  "DEFAUL_TYPE_PROVIDER": "Default data provider type (remote or realtime)",
+  "TITLE": "Project title",
+  "SERIES_MAX_VISIBLE": "Maximum number of data points on the chart before grouping is applied"
+}
+```
+**Example**: [config.json](https://github.com/airalab/sensors.social/blob/master/src/config/main/config.json)
+
+3️⃣ In the `src/config/my-project/agents.json` file, specify a list of libp2p identifiers from which data can be received via pubsub in realtime mode.
+
+**Example**: [agents.json](https://github.com/airalab/sensors.social/blob/master/src/config/main/agents.json)
+
+4️⃣ In the `src/config/main/sensors.js` file, you can set an icon and a website link for a specific sensor:
+
+```json
+{
+  "HASH ID_SENSOR": {
+    "icon": "Path to the icon file",
+    "link": "URL of the website"
+  }
+}
+```
+
+**Example**: [sensors.json](https://github.com/airalab/sensors.social/blob/master/src/config/main/sensors.js)
+
+5️⃣ To ensure that your configuration is loaded in the final build, set the following environment variable:
+
+```
+VITE_CONFIG_ENV=my-project
+```
+
+You can configure this in your GitHub project settings under the Environments section.
+
+<img src="https://github.com/user-attachments/assets/97368424-ac08-4b62-9beb-3c36a61a1b47" width="500">
+
+---
+
+
 ## ❓ Support
 
 For questions or suggestions, create an **issue** in the repository.
 
 ---
-
