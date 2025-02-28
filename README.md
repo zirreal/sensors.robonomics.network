@@ -199,6 +199,9 @@ To add support for **Spanish (es)**, update the `name`, `nameshort`, and `zones`
      ]  
   ```
 
+  ---
+  
+
 ## ❓ Support
 
 For questions or suggestions, create an **issue** in the repository.
