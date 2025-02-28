@@ -1,5 +1,6 @@
 # sensors.social
 
+---
 
 ## 📌 Overview
 
@@ -10,7 +11,7 @@
 
 For more details on connectivity and how to deploy your own map interface (or even a connectivity server), visit [Robonomics Academy](https://robonomics.academy/en/learn/sensors-connectivity-course/overview/).
 
-
+---
 
 ## 🚀 Deployment
 
@@ -47,6 +48,7 @@ Then install the required dependencies:
  yarn dev
 ```
 
+---
 
 
 ## 🔧 Setup Your Own Map (For Experienced Users)
@@ -117,6 +119,7 @@ After modifying the necessary files, deploy your instance of the map by followin
 You can now access your deployed map using the provided GitHub Pages URL.
 
 
+---
 
 
 ## 💬 Localization & Translations
