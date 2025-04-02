@@ -1,18 +1,6 @@
 <template>
   <div class="mapcontrols">
     <div class="flexline">
-      <div id="bookmarks" class="popover-bottom-left popover" popover>
-        <h3>{{ $t("bookmarks.listtitle") }}</h3>
-        <Bookmarks />
-      </div>
-      <button
-        class="popovercontrol"
-        :class="bookmarks && bookmarks.length > 0 ? 'active' : null"
-        popovertarget="bookmarks"
-      >
-        <font-awesome-icon icon="fa-solid fa-bookmark" />
-      </button>
-
       <input type="date" v-model="start" :max="maxDate" :disabled="currentProvider == 'realtime'" />
 
       <Measures
@@ -52,6 +40,20 @@
       <button class="popovercontrol" popovertarget="mapsettings">
         <font-awesome-icon icon="fa-solid fa-gear" />
       </button>
+
+      <div id="bookmarks" class="popover-bottom-right popover" popover>
+        <h3>{{ $t("bookmarks.listtitle") }}</h3>
+        <Bookmarks />
+      </div>
+      <button
+        class="popovercontrol bookmarksbutton"
+        :class="bookmarks && bookmarks?.length > 0 ? 'active' : null"
+        popovertarget="bookmarks"
+      >
+        <font-awesome-icon icon="fa-solid fa-bookmark" />
+        <b v-if="bookmarks?.length > 0">{{bookmarks?.length}}</b>
+      </button>
+
       <slot />
     </div>
   </div>
@@ -146,6 +148,17 @@ export default {
 };
 </script>
 
+<style>
+.popovercontrol.active {
+  border-color: var(--color-green);
+}
+
+.popovercontrol.active path {
+  fill: var(--color-green) !important;
+}
+</style>
+
+
 <style scoped>
 .mapcontrols {
   bottom: 0;
@@ -177,14 +190,23 @@ export default {
 .popover-bottom-left {
   left: var(--app-controlsgap);
 }
-</style>
 
-<style>
-.popovercontrol.active {
-  border-color: var(--color-green);
+.bookmarksbutton {
+  position: relative;
 }
 
-.popovercontrol.active path {
-  fill: var(--color-green) !important;
+.bookmarksbutton b {
+  font-size: 80%;
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: var(--color-orange);
+  border-radius: 10px;
+  color: var(--color-light);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
