@@ -357,6 +357,14 @@ function markercolor(value) {
 }
 
 async function addMarker(point) {
+  // Проверка координат: если они близки к 0, пропускаем создание маркера
+  const tolerance = 0.001;
+  const lat = Number(point.geo.lat);
+  const lng = Number(point.geo.lng);
+  if (Math.abs(lat) < tolerance && Math.abs(lng) < tolerance) {
+    return; // Сенсор с нулевой геопозицией — не добавляем маркер
+  }
+  
   const colors = {
     basic: "#a1a1a1",
     border: "#999",
@@ -468,6 +476,14 @@ export async function hidePath(sensor_id) {
 }
 
 async function addMarkerUser(point) {
+  // Проверка координат: если они близки к 0, пропускаем создание маркера
+  const tolerance = 0.001;
+  const lat = Number(point.geo.lat);
+  const lng = Number(point.geo.lng);
+  if (Math.abs(lat) < tolerance && Math.abs(lng) < tolerance) {
+    return;
+  }
+
   const colors = {
     basic: "#f99981",
     border: "#999",

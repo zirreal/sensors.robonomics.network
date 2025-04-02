@@ -5,6 +5,7 @@ import { defaultLocale } from "../translate";
 
 export function useI18n(app) {
   const i18n = createI18n({
+    legacy: false, // обязательно отключаем legacy‑режим для Composition API
     locale: localStorage.getItem("locale") || defaultLocale,
     fallbackLocale: defaultLocale,
     messages,
