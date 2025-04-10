@@ -282,7 +282,7 @@ summary {
   cursor: pointer;
   background-color: #fff;
   border-radius: 5px;
-  padding: 3px 5px;
+  padding: 0 5px;
 }
 
 .details-content {
