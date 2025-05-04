@@ -439,6 +439,7 @@ export default {
 
 .mapcontainer.inactive {
   filter: grayscale(100%);
+  pointer-events: none;
 }
 
 .popoovergeo {

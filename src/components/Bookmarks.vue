@@ -1,18 +1,18 @@
 <template>
   <template v-if="!bookmarks || bookmarks.length < 1">{{ $t("bookmarks.listempty") }}</template>
-  <template v-else>
+  <div class="bookmarkslist" v-else>
     <section v-for="bookmark in bookmarks" :key="bookmark.id" class="flexline">
       <a :href="getlink(bookmark)" @click.prevent="showsensor(bookmark)">
-        <b v-if="bookmark.customName" class="name">{{ bookmark.customName }}</b>
-        <b v-if="bookmark.address" :class="bookmark.customName ? 'addresssm' : 'adresslg'">{{
-          bookmark.address
-        }}</b>
+        <b v-if="bookmark?.customName" class="name">{{ bookmark.customName }}</b>
+        <b v-if="bookmark?.geo" :class="bookmark.customName ? 'addresssm' : 'adresslg'">
+          {{JSON.parse(bookmark.geo)?.lat}}, {{JSON.parse(bookmark.geo)?.lng}}
+        </b>
       </a>
       <button title="Remove this sensor" @click.prevent="deletebookmark(bookmark.id)">
         <font-awesome-icon icon="fa-solid fa-xmark" />
       </button>
     </section>
-  </template>
+  </div>
 </template>
 
 <script>
@@ -98,7 +98,8 @@ section {
 }
 
 section:not(:last-child) {
-  padding-bottom: var(--gap);
+  padding-bottom: calc(var(--gap)/2);
+  margin-bottom: calc(var(--gap)/2);
   border-bottom: 1px solid var(--app-textcolor);
 }
 
@@ -111,5 +112,10 @@ button {
 
 button:hover {
   color: var(--color-red);
+}
+
+.bookmarkslist {
+  max-height: 70svh;
+  overflow-y: auto;
 }
 </style>

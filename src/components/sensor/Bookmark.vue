@@ -10,6 +10,7 @@
       :class="buttonclasses"
       :disabled="IsBookmarked"
       :area-label="$t('sensorpopup.bookmarkbutton')"
+      :title="$t('sensorpopup.bookmarkbutton')"
     >
       <template v-if="!IsBookmarked"
         ><font-awesome-icon icon="fa-solid fa-bookmark"
@@ -100,7 +101,7 @@ export default {
             store.add({
               customName: this.bookmarkname,
               id: this.$props.id,
-              address: this.$props.address,
+              // address: this.$props.address,
               link: this.$props.link,
               geo: JSON.stringify(this.$props.geo),
             });
