@@ -88,7 +88,19 @@ const series = computed(() => {
 // EN: Filter: display only the series that matches the activeType
 // RU: Фильтрация: показываем только ту серию, которая соответствует activeType
 const filteredSeries = computed(() => {
-  return series.value.filter(s => s.name === activeType.value);
+  // 1) Ищем совпадения с активным типом
+  const match = series.value.filter(s => s.name === activeType.value);
+
+  console.log('TEST', match.length, series.value.filter(s => s.name === 'pm10'))
+
+  if (match.length > 0) {
+    // есть данные — возвращаем их
+    return match;
+  }
+
+  // 2) Нет данных? Фолбэк на PM10
+  const fallback = series.value.filter(s => s.name === 'pm10');
+  return fallback;
 });
 
 const startpoint = computed(() => {
@@ -122,12 +134,15 @@ watch(series, (v) => {
 // RU: Применяем фильтрацию (устанавливаем видимость) по activeType
 watch(filteredSeries, (newList) => {
   if (!chartObj.value) return;
+  
+  // вытащим список имён, которые нам надо показывать
+  const namesToShow = newList.map(s => s.name);
+
+  // пройдём по всем series в графике и включим/скроем
   chartObj.value.series.forEach(serie => {
-    // EN: If the series matches activeType, make it visible; otherwise, hide it
-    // RU: Если серия соответствует activeType, делаем её видимой, иначе скрываем
-    const shouldBeVisible = (serie.name === activeType.value);
-    serie.setVisible(shouldBeVisible, false);
+    serie.setVisible(namesToShow.includes(serie.name), false);
   });
+
   chartObj.value.redraw();
 }, { immediate: true, deep: true });
 

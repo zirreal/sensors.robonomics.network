@@ -1,20 +1,38 @@
 <template>
   <div class="mapcontrols">
     <div class="flexline">
-      <input type="date" v-model="start" :max="maxDate" :disabled="currentProvider == 'realtime'" />
-
-      <Measures
-        :startTime="startTimestamp"
-        :endTime="endTimestamp"
-        :current="measuretype.toLowerCase()"
+      <!-- выбор даты -->
+      <input
+        type="date"
+        v-model="start"
+        :max="maxDate"
+        :disabled="currentProvider === 'realtime'"
       />
-      <div v-if="isLoad">{{ $t("isLoad") }}</div>
+
+      <!-- выбор измерения -->
+      <select v-model="type" v-if="store.sensors.length > 0 && availableOptions?.length > 0">
+        <option
+          v-for="opt in availableOptions"
+          :key="opt.value"
+          :value="opt.value"
+        >
+          {{ opt.name }}
+        </option>
+      </select>
     </div>
 
     <div class="flexline">
-      <div id="mapsettings" class="popover-bottom-right popover" popover>
+      <div
+        id="mapsettings"
+        class="popover-bottom-right popover"
+        popover
+      >
         <section>
-          <input id="realtime" v-model="realtime" type="checkbox" :checked="realtime" />
+          <input
+            id="realtime"
+            v-model="realtime"
+            type="checkbox"
+          />
           <label for="realtime">{{ $t("provider.realtime") }}</label>
         </section>
         <section>
@@ -23,12 +41,15 @@
             v-model="wind"
             type="checkbox"
             :disabled="!realtime"
-            :checked="wind && realtime"
           />
           <label for="wind">{{ $t("layer.wind") }}</label>
         </section>
         <section>
-          <input id="messages" v-model="messages" type="checkbox" :checked="messages" />
+          <input
+            id="messages"
+            v-model="messages"
+            type="checkbox"
+          />
           <label for="messages">{{ $t("layer.messages") }}</label>
         </section>
         <hr />
@@ -37,21 +58,28 @@
           <HistoryImport />
         </section>
       </div>
-      <button class="popovercontrol" popovertarget="mapsettings">
+      <button
+        class="popovercontrol"
+        popovertarget="mapsettings"
+      >
         <font-awesome-icon icon="fa-solid fa-gear" />
       </button>
 
-      <div id="bookmarks" class="popover-bottom-right popover" popover>
+      <div
+        id="bookmarks"
+        class="popover-bottom-right popover"
+        popover
+      >
         <h3>{{ $t("bookmarks.listtitle") }}</h3>
         <Bookmarks />
       </div>
       <button
         class="popovercontrol bookmarksbutton"
-        :class="bookmarks && bookmarks?.length > 0 ? 'active' : null"
+        :class="{ active: bookmarksCount > 0 }"
         popovertarget="bookmarks"
       >
         <font-awesome-icon icon="fa-solid fa-bookmark" />
-        <b v-if="bookmarks?.length > 0">{{bookmarks?.length}}</b>
+        <b v-if="bookmarksCount > 0">{{ bookmarksCount }}</b>
       </button>
 
       <slot />
@@ -59,93 +87,136 @@
   </div>
 </template>
 
-<script>
-import { useStore } from "@/store";
-import config from "@config";
-import moment from "moment";
-import Bookmarks from "../../components/Bookmarks.vue";
-import Measures from "../../components/measures/Measures.vue";
-import { instanceMap } from "../../utils/map/instance";
-import { switchMessagesLayer } from "../../utils/map/marker";
-import { switchLayer } from "../../utils/map/wind";
-import HistoryImport from "./HistoryImport.vue";
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import moment from 'moment'
+import { useStore } from '@/store'
+import config from '@config'
+import Bookmarks from '@/components/Bookmarks.vue'
+import HistoryImport from './HistoryImport.vue'
+import { instanceMap } from '../../utils/map/instance'
+import { switchMessagesLayer } from '../../utils/map/marker'
+import { switchLayer } from '../../utils/map/wind'
+import measurements from '../../measurements'
+import { getTypeProvider } from '../../utils/utils'
+import { Remote } from '../../providers'
 
-export default {
-  emits: ["history"],
-  props: ["currentProvider", "canHistory", "measuretype", "isLoad"],
-  components: { HistoryImport, Measures, Bookmarks },
+// props и emits
+const props = defineProps({
+  currentProvider: { type: String, required: true },
+  canHistory:      { type: Boolean, default: false },
+  measuretype:     { type: String, required: true }
+});
+const emit = defineEmits(['history']);
 
-  data() {
-    return {
-      store: useStore(),
-      isActive: false,
-      isActiveMenu: false,
-      isMeasuresPopupOpen: false,
+// инстансы
+const store  = useStore();
+const router = useRouter();
+const route  = useRoute();
+const { locale: i18nLocale } = useI18n();
 
-      realtime: this.currentProvider === "realtime",
-      wind: false,
-      messages: config.SHOW_MESSAGES,
-      start: moment().format("YYYY-MM-DD"),
-      maxDate: moment().format("YYYY-MM-DD"),
-    };
-  },
-  computed: {
-    startTimestamp: function () {
-      return Number(moment(this.start + " 00:00:00", "YYYY-MM-DD HH:mm:ss").format("X"));
-    },
-    endTimestamp: function () {
-      return Number(moment(this.start + " 23:59:59", "YYYY-MM-DD HH:mm:ss").format("X"));
-    },
-    bookmarks: function () {
-      return this.store.idbBookmarks;
-    },
-  },
-  watch: {
-    async realtime(v) {
-      await this.$router.push({
-        name: "main",
-        params: {
-          provider: v ? "realtime" : "remote",
-          type: this.$route.params.type,
-          zoom: this.$route.params.zoom,
-          lat: this.$route.params.lat,
-          lng: this.$route.params.lng,
-          sensor: this.$route.params.sensor,
-        },
-      });
-      this.$router.go(0);
-    },
-    start() {
-      this.getHistory();
-    },
-    canHistory: {
-      handler(newValue) {
-        if (newValue) {
-          this.getHistory();
-        }
-      },
-      immediate: true,
-    },
-    wind(value) {
-      switchLayer(instanceMap(), value);
-    },
-    messages(value) {
-      switchMessagesLayer(instanceMap(), value);
-    },
-  },
+// состояние
+const start    = ref(moment().format('YYYY-MM-DD'));
+const maxDate  = ref(moment().format('YYYY-MM-DD'));
+const realtime = ref(props.currentProvider === 'realtime');
+const wind     = ref(false);
+const messages = ref(config.SHOW_MESSAGES);
 
-  methods: {
-    getHistory() {
-      if (this.realtime) {
-        return;
+// выбор измерения
+const type           = ref(props.measuretype.toLowerCase());
+const availableUnits = ref(['pm10']);
+const locale         = computed(() => {
+  return i18nLocale.value || localStorage.getItem('locale') || 'en';
+});
+
+// опции для select
+const availableOptions = computed(() => {
+  const opts = availableUnits.value
+    .map(key => {
+      const info = measurements[key]
+      if (!info) {
+        return null
       }
-      this.$emit("history", {
-        start: this.startTimestamp,
-        end: this.endTimestamp,
-      });
-    },
-  },
-};
+      return {
+        value: key,
+        name: info.nameshort?.[locale.value] || info.label
+      }
+    })
+    .filter(item => Boolean(item))
+  return opts;
+});
+
+// вычисления для истории
+const startTimestamp = computed(() => {
+  return moment(`${start.value} 00:00:00`, 'YYYY-MM-DD HH:mm:ss').format('X')
+});
+
+const endTimestamp = computed(() => {
+  return moment(`${start.value} 23:59:59`, 'YYYY-MM-DD HH:mm:ss').format('X')
+});
+
+
+const bookmarksCount = computed(() => {
+  return (store.idbBookmarks || []).length
+});
+
+const getHistory = () => {
+  if (realtime.value) return;
+  emit('history', { start: startTimestamp.value, end: endTimestamp.value });
+}
+
+watch(type, async val => {
+  await router.push({
+    name: 'main',
+    params: {
+      provider: getTypeProvider(),
+      type:     val,
+      zoom:     route.params.zoom,
+      lat:      route.params.lat,
+      lng:      route.params.lng,
+      sensor:   route.params.sensor
+    }
+  });
+  // router.go(0)
+  window.location.reload();
+});
+
+watch(realtime, async v => {
+  await router.push({
+    name: 'main',
+    params: {
+      provider: v ? 'realtime' : 'remote',
+      type:     route.params.type,
+      zoom:     route.params.zoom,
+      lat:      route.params.lat,
+      lng:      route.params.lng,
+      sensor:   route.params.sensor
+    }
+  });
+  // router.go(0)
+  window.location.reload();
+});
+
+watch(start, () => getHistory());
+watch(() => props.canHistory, v => v && getHistory(), { immediate: true });
+watch(wind, v => switchLayer(instanceMap(), v));
+watch(messages, v => switchMessagesLayer(instanceMap(), v));
+
+
+// загрузка списка измерений из API
+onMounted(async () => {
+  try {
+    const arr = await Remote.getMeasurements(startTimestamp.value, endTimestamp.value);
+    const toMove = ['pm10','pm25'];
+    const head  = arr.filter(v => toMove.includes(v));
+    const tail  = arr.filter(v => !toMove.includes(v));
+    availableUnits.value = [...head, ...tail];
+  } catch (e) {
+    console.error(e);
+  }
+});
 </script>
 
 <style>
@@ -157,7 +228,6 @@ export default {
   fill: var(--color-green) !important;
 }
 </style>
-
 
 <style scoped>
 .mapcontrols {
