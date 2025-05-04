@@ -166,6 +166,8 @@ export default {
     infosensorgeo: "Sensor geoposition",
     infosensorowner: "Sensor owner",
     infosensordonated: "Donated by",
+    sharedefault: "Share this sensor",
+    sharelink: "Copy the link of sensor"
   },
   bookmarks: {
     listtitle: "Your bookmarked sensors",
@@ -243,5 +245,5 @@ export default {
     matomotext3:
       "You may choose not to have a unique web analytics cookie identification number assigned to your computer to avoid the aggregation and analysis of data collected on this website.",
     matomotext4: "To make that choice, please click below to receive an opt-out cookie",
-  },
+  }
 };

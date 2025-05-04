@@ -162,6 +162,8 @@ export default {
     infosensorgeo: "Геопозиция датчика",
     infosensorowner: "Владелец датчика",
     infosensordonated: "Спонсирован",
+    sharedefault: "Поделиться",
+    sharelink: "Скопировать ссылку на датчик"
   },
   bookmarks: {
     listtitle: "Сохраненные датчики",
