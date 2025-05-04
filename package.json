@@ -1,6 +1,6 @@
 {
   "name": "sensors.robonomics.network",
-  "version": "0.5.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "vite --host",
@@ -48,12 +48,14 @@
     "vue3-clipboard": "^1.0.0"
   },
   "devDependencies": {
+    "@release-it/conventional-changelog": "^10.0.1",
     "@rushstack/eslint-patch": "^1.1.4",
     "@vitejs/plugin-vue": "^3.0.3",
     "@vue/eslint-config-prettier": "^7.0.0",
     "eslint": "^8.22.0",
     "eslint-plugin-vue": "^9.3.0",
     "prettier": "^2.7.1",
+    "release-it": "^19.0.1",
     "vite": "^3.2.7"
   }
 }
