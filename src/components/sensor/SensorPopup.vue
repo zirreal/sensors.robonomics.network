@@ -387,6 +387,7 @@ function updatert() {
     }
     const data = last.value.data;
     const buffer = {};
+    console.log(data, " => just data");
     if (data) {
       state.rtdata = [];
       Object.keys(measurements).forEach((item) => {
@@ -409,6 +410,7 @@ function updatert() {
               }
             }
             state.rtdata.push(buffer);
+            console.log(state.rtdata, " => data after");
           }
         });
       });
@@ -468,6 +470,8 @@ onMounted(() => {
     ? moment.unix(props.startTime).format("YYYY-MM-DD")
     : moment().format("YYYY-MM-DD");
   updatert();
+
+  console.log(state.rtdata, " => data before");
 });
 </script>
 
@@ -665,7 +669,6 @@ h3.flexline {
 .rt-time {
   font-size: 0.8em;
   font-weight: 300;
-  padding-left: 13px;
 }
 .rt-unit,
 .rt-number {
