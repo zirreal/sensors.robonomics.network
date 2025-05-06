@@ -11,45 +11,21 @@
 
       <!-- выбор измерения -->
       <select v-model="type" v-if="store.sensors.length > 0 && availableOptions?.length > 0">
-        <option
-          v-for="opt in availableOptions"
-          :key="opt.value"
-          :value="opt.value"
-        >
+        <option v-for="opt in availableOptions" :key="opt.value" :value="opt.value">
           {{ opt.name }}
         </option>
       </select>
     </div>
 
     <div class="flexline">
-      <div
-        id="mapsettings"
-        class="popover-bottom-right popover"
-        popover
-      >
+      <div id="mapsettings" class="popover-bottom-right popover" popover>
+        <SelectRealtime :provider="currentProvider" :width="true" />
         <section>
-          <input
-            id="realtime"
-            v-model="realtime"
-            type="checkbox"
-          />
-          <label for="realtime">{{ $t("provider.realtime") }}</label>
-        </section>
-        <section>
-          <input
-            id="wind"
-            v-model="wind"
-            type="checkbox"
-            :disabled="!realtime"
-          />
+          <input id="wind" v-model="wind" type="checkbox" :disabled="!realtime" />
           <label for="wind">{{ $t("layer.wind") }}</label>
         </section>
         <section>
-          <input
-            id="messages"
-            v-model="messages"
-            type="checkbox"
-          />
+          <input id="messages" v-model="messages" type="checkbox" />
           <label for="messages">{{ $t("layer.messages") }}</label>
         </section>
         <hr />
@@ -58,18 +34,11 @@
           <HistoryImport />
         </section>
       </div>
-      <button
-        class="popovercontrol"
-        popovertarget="mapsettings"
-      >
+      <button class="popovercontrol" popovertarget="mapsettings">
         <font-awesome-icon icon="fa-solid fa-gear" />
       </button>
 
-      <div
-        id="bookmarks"
-        class="popover-bottom-right popover"
-        popover
-      >
+      <div id="bookmarks" class="popover-bottom-right popover" popover>
         <h3>{{ $t("bookmarks.listtitle") }}</h3>
         <Bookmarks />
       </div>
@@ -88,130 +57,117 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import moment from 'moment'
-import { useStore } from '@/store'
-import config from '@config'
-import Bookmarks from '@/components/Bookmarks.vue'
-import HistoryImport from './HistoryImport.vue'
-import { instanceMap } from '../../utils/map/instance'
-import { switchMessagesLayer } from '../../utils/map/marker'
-import { switchLayer } from '../../utils/map/wind'
-import measurements from '../../measurements'
-import { getTypeProvider } from '../../utils/utils'
-import { Remote } from '../../providers'
+import { ref, computed, watch, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
+import moment from "moment";
+import { useStore } from "@/store";
+import config from "@config";
+import Bookmarks from "@/components/Bookmarks.vue";
+import HistoryImport from "./HistoryImport.vue";
+import SelectRealtime from "@/components/sensor/SelectRealtime.vue";
+import { instanceMap } from "../../utils/map/instance";
+import { switchMessagesLayer } from "../../utils/map/marker";
+import { switchLayer } from "../../utils/map/wind";
+import measurements from "../../measurements";
+import { getTypeProvider } from "../../utils/utils";
+import { Remote } from "../../providers";
 
 // props и emits
 const props = defineProps({
   currentProvider: { type: String, required: true },
-  canHistory:      { type: Boolean, default: false },
-  measuretype:     { type: String, required: true }
+  canHistory: { type: Boolean, default: false },
+  measuretype: { type: String, required: true },
 });
-const emit = defineEmits(['history']);
+const emit = defineEmits(["history"]);
 
 // инстансы
-const store  = useStore();
+const store = useStore();
 const router = useRouter();
-const route  = useRoute();
+const route = useRoute();
 const { locale: i18nLocale } = useI18n();
 
 // состояние
-const start    = ref(moment().format('YYYY-MM-DD'));
-const maxDate  = ref(moment().format('YYYY-MM-DD'));
-const realtime = ref(props.currentProvider === 'realtime');
-const wind     = ref(false);
+const start = ref(moment().format("YYYY-MM-DD"));
+const maxDate = ref(moment().format("YYYY-MM-DD"));
+const realtime = ref(props.currentProvider === "realtime");
+const wind = ref(false);
 const messages = ref(config.SHOW_MESSAGES);
 
 // выбор измерения
-const type           = ref(props.measuretype.toLowerCase());
-const availableUnits = ref(['pm10']);
-const locale         = computed(() => {
-  return i18nLocale.value || localStorage.getItem('locale') || 'en';
+const type = ref(props.measuretype.toLowerCase());
+const availableUnits = ref(["pm10"]);
+const locale = computed(() => {
+  return i18nLocale.value || localStorage.getItem("locale") || "en";
 });
 
 // опции для select
 const availableOptions = computed(() => {
   const opts = availableUnits.value
-    .map(key => {
-      const info = measurements[key]
+    .map((key) => {
+      const info = measurements[key];
       if (!info) {
-        return null
+        return null;
       }
       return {
         value: key,
-        name: info.nameshort?.[locale.value] || info.label
-      }
+        name: info.nameshort?.[locale.value] || info.label,
+      };
     })
-    .filter(item => Boolean(item))
+    .filter((item) => Boolean(item));
   return opts;
 });
 
 // вычисления для истории
 const startTimestamp = computed(() => {
-  return moment(`${start.value} 00:00:00`, 'YYYY-MM-DD HH:mm:ss').format('X')
+  return moment(`${start.value} 00:00:00`, "YYYY-MM-DD HH:mm:ss").format("X");
 });
 
 const endTimestamp = computed(() => {
-  return moment(`${start.value} 23:59:59`, 'YYYY-MM-DD HH:mm:ss').format('X')
+  return moment(`${start.value} 23:59:59`, "YYYY-MM-DD HH:mm:ss").format("X");
 });
 
-
 const bookmarksCount = computed(() => {
-  return (store.idbBookmarks || []).length
+  return (store.idbBookmarks || []).length;
 });
 
 const getHistory = () => {
   if (realtime.value) return;
-  emit('history', { start: startTimestamp.value, end: endTimestamp.value });
-}
+  emit("history", { start: startTimestamp.value, end: endTimestamp.value });
+};
 
-watch(type, async val => {
+watch(type, async (val) => {
   await router.push({
-    name: 'main',
+    name: "main",
     params: {
       provider: getTypeProvider(),
-      type:     val,
-      zoom:     route.params.zoom,
-      lat:      route.params.lat,
-      lng:      route.params.lng,
-      sensor:   route.params.sensor
-    }
-  });
-  // router.go(0)
-  window.location.reload();
-});
-
-watch(realtime, async v => {
-  await router.push({
-    name: 'main',
-    params: {
-      provider: v ? 'realtime' : 'remote',
-      type:     route.params.type,
-      zoom:     route.params.zoom,
-      lat:      route.params.lat,
-      lng:      route.params.lng,
-      sensor:   route.params.sensor
-    }
+      type: val,
+      zoom: route.params.zoom,
+      lat: route.params.lat,
+      lng: route.params.lng,
+      sensor: route.params.sensor,
+    },
   });
   // router.go(0)
   window.location.reload();
 });
 
 watch(start, () => getHistory());
-watch(() => props.canHistory, v => v && getHistory(), { immediate: true });
-watch(wind, v => switchLayer(instanceMap(), v));
-watch(messages, v => switchMessagesLayer(instanceMap(), v));
-
+watch(
+  () => props.canHistory,
+  (v) => v && getHistory(),
+  { immediate: true }
+);
+watch(wind, (v) => switchLayer(instanceMap(), v));
+watch(messages, (v) => switchMessagesLayer(instanceMap(), v));
 
 // загрузка списка измерений из API
 onMounted(async () => {
   try {
     const arr = await Remote.getMeasurements(startTimestamp.value, endTimestamp.value);
-    const toMove = ['pm10','pm25'];
-    const head  = arr.filter(v => toMove.includes(v));
-    const tail  = arr.filter(v => !toMove.includes(v));
+    const toMove = ["pm10", "pm25"];
+    const head = arr.filter((v) => toMove.includes(v));
+    const tail = arr.filter((v) => !toMove.includes(v));
     availableUnits.value = [...head, ...tail];
   } catch (e) {
     console.error(e);

@@ -22,7 +22,12 @@
           />
         </div>
         <div class="shared-container">
-          <button v-if="globalWindow.navigator.share" @click.prevent="shareData" class="button" :title="t('sensorpopup.sharedefault')">
+          <button
+            v-if="globalWindow.navigator.share"
+            @click.prevent="shareData"
+            class="button"
+            :title="t('sensorpopup.sharedefault')"
+          >
             <font-awesome-icon icon="fa-solid fa-share-from-square" v-if="!state.sharedDefault" />
             <font-awesome-icon icon="fa-solid fa-check" v-if="state.sharedDefault" />
           </button>
@@ -34,12 +39,13 @@
         </div>
       </section>
 
+      <SelectRealtime :provider="currentProvider" />
       <section v-if="realtime" class="flexline">
         <div>
-          <div class="rt-title">Realtime view mode</div>
+          <!-- <div class="rt-title">Realtime view mode</div> -->
           <div v-if="state.rttime" class="rt-time">{{ state.rttime }}</div>
         </div>
-        <template v-if="rtdata && rtdata.length">
+        <template v-if="rtdata">
           <div v-for="item in rtdata" :key="item.key">
             <div class="rt-unit">{{ item.label }}</div>
             <div class="rt-number" :style="item.color ? 'color:' + item.color : ''">
@@ -119,7 +125,8 @@
                     {{ zone.label[localeComputed] ? zone.label[localeComputed] : zone.label.en }}
                   </b>
                   (<template v-if="zone.value">{{ t("scales.upto") }} {{ zone.value }}</template>
-                  <template v-else>{{ t("scales.above") }}</template>)
+                  <template v-else>{{ t("scales.above") }}</template
+                  >)
                 </div>
               </template>
             </template>
@@ -140,27 +147,29 @@
 </template>
 
 <script setup>
-import { reactive, computed, ref, watch, watchEffect, onMounted, getCurrentInstance } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useStore } from '@/store';
-import { useI18n } from 'vue-i18n';
-import moment from 'moment';
-import config, { sensors } from '@config';
-import measurements from '../../measurements';
-import { getTypeProvider } from '../../utils/utils';
-import { getAddressByPos } from '../../utils/map/utils';
+import { reactive, computed, ref, watch, watchEffect, onMounted, getCurrentInstance } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useStore } from "@/store";
+import { useI18n } from "vue-i18n";
+import moment from "moment";
+import config, { sensors } from "@config";
+import measurements from "../../measurements";
+import { getTypeProvider } from "../../utils/utils";
+import { getAddressByPos } from "../../utils/map/utils";
 
-import Bookmark from './Bookmark.vue';
-import Chart from './Chart.vue';
-import Copy from './Copy.vue';
+import Bookmark from "./Bookmark.vue";
+import Chart from "./Chart.vue";
+import Copy from "./Copy.vue";
+import SelectRealtime from "./SelectRealtime.vue";
 
 // Props и emits
 const props = defineProps({
   type: String,
   point: Object,
-  startTime: [Number, String]
+  startTime: [Number, String],
+  currentProvider: String,
 });
-const emit = defineEmits(['close']);
+const emit = defineEmits(["close"]);
 
 // Глобальные объекты
 const store = useStore();
@@ -183,7 +192,7 @@ const state = reactive({
   rtdata: [],
   sharedDefault: false,
   sharedLink: false,
-  isLoad: false
+  isLoad: false,
 });
 
 // Вычисляемые свойства
@@ -220,8 +229,12 @@ watchEffect(() => {
       geo.value.lng !== prevGeo.value.lng
     ) {
       getAddressByPos(geo.value.lat, geo.value.lng, locale.value)
-        .then((res) => { address.value = res; })
-        .catch((err) => { console.error(err); });
+        .then((res) => {
+          address.value = res;
+        })
+        .catch((err) => {
+          console.error(err);
+        });
       prevGeo.value = { ...geo.value };
     }
   } else {
@@ -229,16 +242,16 @@ watchEffect(() => {
   }
 });
 
-
 // Если спустя 5 секунд address всё ещё пустой, подставляем координаты.
 setTimeout(() => {
   if (!address.value || Object.keys(address.value).length === 0) {
     // Задаем объект с координатами (например, country пустой, а address — строка с lat, lng)
-    address.value = { country: 'Unrecognised address', address: [`${geo.value.lat}, ${geo.value.lng}`] };
+    address.value = {
+      country: "Unrecognised address",
+      address: [`${geo.value.lat}, ${geo.value.lng}`],
+    };
   }
 }, 5000);
-
-
 
 const sensor_id = computed(() => {
   return props.point?.sensor_id || route.params.sensor || null;
@@ -246,11 +259,11 @@ const sensor_id = computed(() => {
 
 const donated_by = computed(() => props.point?.donated_by || null);
 // Гарантируем, что log всегда массив
-const log = computed(() => Array.isArray(props.point?.log) ? props.point.log : []);
+const log = computed(() => (Array.isArray(props.point?.log) ? props.point.log : []));
 const model = computed(() => props.point?.model || null);
 const sender = computed(() => props.point?.sender || null);
 
-const realtime = computed(() => state.provider === 'realtime');
+const realtime = computed(() => state.provider === "realtime");
 
 const addressformatted = computed(() => {
   let buffer = "";
@@ -269,8 +282,10 @@ const isRussia = computed(() => {
   return address.value?.country === "Россия" || address.value?.country === "Russia";
 });
 
-const last = computed(() => log.value.length > 0 ? log.value[log.value.length - 1] : {});
-const date = computed(() => last.value.timestamp ? moment(last.value.timestamp, "X").format("DD.MM.YYYY HH:mm:ss") : "");
+const last = computed(() => (log.value.length > 0 ? log.value[log.value.length - 1] : {}));
+const date = computed(() =>
+  last.value.timestamp ? moment(last.value.timestamp, "X").format("DD.MM.YYYY HH:mm:ss") : ""
+);
 
 const startTimestamp = computed(() => {
   return Number(moment(state.start + " 00:00:00", "YYYY-MM-DD HH:mm:ss").format("X"));
@@ -282,9 +297,9 @@ const endTimestamp = computed(() => {
 
 const units = computed(() => {
   const measures = [];
-  log.value.forEach(item => {
+  log.value.forEach((item) => {
     if (item.data) {
-      Object.keys(item.data).forEach(unit => {
+      Object.keys(item.data).forEach((unit) => {
         measures.push(unit.toLowerCase());
       });
     }
@@ -294,8 +309,8 @@ const units = computed(() => {
 
 const scales = computed(() => {
   const buffer = [];
-  Object.keys(measurements).forEach(key => {
-    if (units.value.some(unit => unit === key)) {
+  Object.keys(measurements).forEach((key) => {
+    if (units.value.some((unit) => unit === key)) {
       buffer.push(measurements[key]);
     }
   });
@@ -312,8 +327,8 @@ const linkSensor = computed(() => {
         zoom: route.params.zoom || config.MAP.zoom,
         lat: geo.value.lat,
         lng: geo.value.lng,
-        sensor: sensor_id.value
-      }
+        sensor: sensor_id.value,
+      },
     });
     return new URL(resolved.href, window.location.origin).href;
   }
@@ -333,15 +348,14 @@ const chartReady = computed(() => {
   return !state.isLoad && props.point && Object.keys(props.point).length > 0;
 });
 
-
 const shareData = () => {
   if (navigator.share) {
     navigator.share({
       title: config.TITLE,
-      url: linkSensor.value || link.value
+      url: linkSensor.value || link.value,
     });
   }
-}
+};
 
 const shareLink = () => {
   navigator.clipboard
@@ -352,8 +366,8 @@ const shareLink = () => {
         state.sharedLink = false;
       }, 5000);
     })
-    .catch(e => console.log("not copied", e));
-}
+    .catch((e) => console.log("not copied", e));
+};
 
 function getHistory() {
   if (realtime.value) return;
@@ -361,7 +375,7 @@ function getHistory() {
   emit("history", {
     sensor_id: sensor_id.value,
     start: startTimestamp.value,
-    end: endTimestamp.value
+    end: endTimestamp.value,
   });
 }
 
@@ -372,21 +386,21 @@ function updatert() {
       state.rttime = new Date(ts).toLocaleString();
     }
     const data = last.value.data;
+    const buffer = {};
     if (data) {
       state.rtdata = [];
-      Object.keys(measurements).forEach(item => {
-        Object.keys(data).forEach(datakey => {
+      Object.keys(measurements).forEach((item) => {
+        Object.keys(data).forEach((datakey) => {
           if (item === datakey) {
-            const buffer = {};
             buffer.key = datakey;
             buffer.measure = data[datakey];
             buffer.label = measurements[item].label;
             buffer.unit = measurements[item].unit;
             if (
               measurements[item].zones &&
-              measurements[item].zones.find(i => buffer.measure < i.value)
+              measurements[item].zones.find((i) => buffer.measure < i.value)
             ) {
-              buffer.color = measurements[item].zones.find(i => buffer.measure < i.value).color;
+              buffer.color = measurements[item].zones.find((i) => buffer.measure < i.value).color;
             }
             if (!buffer.color && measurements[item].zones) {
               const zones = measurements[item].zones;
@@ -411,36 +425,43 @@ function closesensor() {
   emit("close");
 }
 
-
-watch(() => sensor_id.value, () => {
-  state.isShowPath = false;
-});
-watch(() => state.start, () => {
-  getHistory();
-});
+watch(
+  () => sensor_id.value,
+  () => {
+    state.isShowPath = false;
+  }
+);
+watch(
+  () => state.start,
+  () => {
+    getHistory();
+  }
+);
 watch(log, () => {
   updatert();
   state.isLoad = false;
 });
 
-watch(() => props.point, (newPoint) => {
-  // Only update URL if a valid point with a sensor_id is present
-  if (newPoint && newPoint.sensor_id && newPoint.geo) {
-    router.replace({
-      name: route.name,  // Assumes your route name remains the same
-      params: {
-        provider: state.provider,
-        type: props.type.toLowerCase(),
-        zoom: route.params.zoom || config.MAP.zoom, // trying to keep zoom
-        lat: newPoint.geo.lat,
-        lng: newPoint.geo.lng,
-        sensor: newPoint.sensor_id,
-      },
-    });
-  }
-}, {immediate: true, deep: true});
-
-
+watch(
+  () => props.point,
+  (newPoint) => {
+    // Only update URL if a valid point with a sensor_id is present
+    if (newPoint && newPoint.sensor_id && newPoint.geo) {
+      router.replace({
+        name: route.name, // Assumes your route name remains the same
+        params: {
+          provider: state.provider,
+          type: props.type.toLowerCase(),
+          zoom: route.params.zoom || config.MAP.zoom, // trying to keep zoom
+          lat: newPoint.geo.lat,
+          lng: newPoint.geo.lng,
+          sensor: newPoint.sensor_id,
+        },
+      });
+    }
+  },
+  { immediate: true, deep: true }
+);
 
 onMounted(() => {
   state.start = props.startTime
@@ -540,7 +561,6 @@ h3.flexline {
     background-position: -200% 0;
   }
 }
-
 
 @media screen and (max-width: 700px) {
   .popup-js.active {

@@ -1,15 +1,11 @@
 <template>
   <Header />
 
-  <MessagePopup
-      v-if="isMessage"
-      @close="handlerClose"
-      :data="state.point.measurement"
-  />
-  
+  <MessagePopup v-if="isMessage" @close="handlerClose" :data="state.point.measurement" />
+
   <SensorPopup
     v-if="isSensor"
-    :currentProvider="props?.provider"
+    :currentProvider="props.provider"
     :type="props?.type?.toLowerCase()"
     :point="state?.point"
     @modal="handlerModal"
@@ -28,8 +24,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, getCurrentInstance } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { ref, reactive, computed, watch, onMounted, getCurrentInstance } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { useStore } from "@/store";
 import moment from "moment";
 
@@ -44,18 +40,18 @@ import { instanceMap } from "../utils/map/instance";
 import * as markers from "../utils/map/marker";
 import { getAddressByPos } from "../utils/map/utils";
 import { getTypeProvider, setTypeProvider } from "../utils/utils";
-import { useI18n } from 'vue-i18n';
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   provider: {
     type: String,
-    default: getTypeProvider()
+    default: getTypeProvider(),
   },
   type: {
     type: String,
-    default: "pm10"
+    default: "pm10",
   },
-  sensor: String
+  sensor: String,
 });
 
 const store = useStore();
@@ -88,7 +84,7 @@ const lat = computed(() => store.mapposition.lat);
 const lng = computed(() => store.mapposition.lng);
 
 const isMessage = computed(() => {
-  return state.point && state.point.measurement && state.point.measurement.message
+  return state.point && state.point.measurement && state.point.measurement.message;
 });
 
 // в Main.vue определяем просто это сенсор или нет
@@ -96,15 +92,18 @@ const isMessage = computed(() => {
 const isSensor = computed(() => {
   return state.point
     ? !(state.point.measurement && state.point.measurement.message)
-    : !!props.sensor
+    : !!props.sensor;
 });
 
 // Следим за изменением типа единиц измерения и сохраняем его в localStorage
-watch(() => props.type, (value) => {
-  if (value) {
-    localStorage.setItem("currentUnit", value);
+watch(
+  () => props.type,
+  (value) => {
+    if (value) {
+      localStorage.setItem("currentUnit", value);
+    }
   }
-});
+);
 
 const handlerHistory = async ({ start, end }) => {
   state.isLoad = true;
@@ -138,29 +137,26 @@ const handlerHistory = async ({ start, end }) => {
 
 const handlerNewPoint = async (point) => {
   if (!point.model || !markers.isReadyLayers()) return;
-  
+
   point.data = point.data
     ? Object.fromEntries(Object.entries(point.data).map(([k, v]) => [k.toLowerCase(), v]))
     : {};
-  
+
   // Добавление маркера
   markers.addPoint({
     ...point,
     isEmpty: !point.data[props.type.toLowerCase()],
-    value: point.data[props.type.toLowerCase()]
+    value: point.data[props.type.toLowerCase()],
   });
-  
+
   if (point.sensor_id === props.sensor) {
     await handlerClick(point);
   }
-  
+
   if (state.point && state.point.sensor_id === point.sensor_id) {
-    state.point.log = [
-      ...state.point.log,
-      { data: point.data, timestamp: point.timestamp }
-    ];
+    state.point.log = [...state.point.log, { data: point.data, timestamp: point.timestamp }];
   }
-  
+
   if (
     Object.prototype.hasOwnProperty.call(point.data, props.type.toLowerCase()) ||
     Object.prototype.hasOwnProperty.call(point.data, "message")
@@ -225,8 +221,6 @@ const handlerModal = (modal) => {
 
 // Устанавливаем тип провайдера
 setTypeProvider(props.provider);
-
-
 
 onMounted(async () => {
   document.querySelector("#app").classList.add("map");
@@ -294,7 +288,6 @@ onMounted(async () => {
   if (props.type) {
     localStorage.setItem("currentUnit", props.type);
   }
-
 
   const instance = getCurrentInstance();
   instance?.proxy?.$matomo && instance.proxy.$matomo.disableCookies();

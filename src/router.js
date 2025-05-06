@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from "vue-router";
 import Main from "./views/Main.vue";
 import PrivacyPolicy from "./views/PrivacyPolicy.vue";
 import AirMeasurements from "./views/AirMeasurements.vue";
+// import SensorEmbed from "./views/SensorEmbed.vue";
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -29,6 +30,11 @@ const router = createRouter({
       name: "air-measurements",
       component: AirMeasurements,
     },
+    // {
+    //   path: "/embed/sensor/:id/",
+    //   name: "sensor-embed",
+    //   component: SensorEmbed,
+    // },
   ],
 });
 
