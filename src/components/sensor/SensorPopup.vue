@@ -45,7 +45,7 @@
           <!-- <div class="rt-title">Realtime view mode</div> -->
           <div v-if="state.rttime" class="rt-time">{{ state.rttime }}</div>
         </div>
-        <template v-if="rtdata">
+        <template v-if="rtdata && rtdata.length">
           <div v-for="item in rtdata" :key="item.key">
             <div class="rt-unit">{{ item.label }}</div>
             <div class="rt-number" :style="item.color ? 'color:' + item.color : ''">
@@ -386,31 +386,28 @@ function updatert() {
       state.rttime = new Date(ts).toLocaleString();
     }
     const data = last.value.data;
-    const buffer = {};
-    console.log(data, " => just data");
     if (data) {
       state.rtdata = [];
       Object.keys(measurements).forEach((item) => {
         Object.keys(data).forEach((datakey) => {
           if (item === datakey) {
-            buffer.key = datakey;
-            buffer.measure = data[datakey];
-            buffer.label = measurements[item].label;
-            buffer.unit = measurements[item].unit;
-            if (
-              measurements[item].zones &&
-              measurements[item].zones.find((i) => buffer.measure < i.value)
-            ) {
-              buffer.color = measurements[item].zones.find((i) => buffer.measure < i.value).color;
-            }
-            if (!buffer.color && measurements[item].zones) {
-              const zones = measurements[item].zones;
-              if (buffer.measure > zones[zones.length - 2].value) {
+            const buffer = {
+              key: datakey,
+              measure: data[datakey],
+              label: measurements[item].label,
+              unit: measurements[item].unit,
+              color: undefined,
+            };
+            const zones = measurements[item].zones;
+            if (zones) {
+              const matchedZone = zones.find((i) => buffer.measure < i.value);
+              if (matchedZone) {
+                buffer.color = matchedZone.color;
+              } else if (buffer.measure > zones[zones.length - 2].value) {
                 buffer.color = zones[zones.length - 1].color;
               }
             }
             state.rtdata.push(buffer);
-            console.log(state.rtdata, " => data after");
           }
         });
       });
@@ -470,8 +467,6 @@ onMounted(() => {
     ? moment.unix(props.startTime).format("YYYY-MM-DD")
     : moment().format("YYYY-MM-DD");
   updatert();
-
-  console.log(state.rtdata, " => data before");
 });
 </script>
 
