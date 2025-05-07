@@ -408,6 +408,7 @@ function updatert() {
               }
             }
             state.rtdata.push(buffer);
+            console.log(state.rtdata, " => data after");
           }
         });
       });
