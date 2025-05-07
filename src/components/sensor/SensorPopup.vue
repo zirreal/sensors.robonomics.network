@@ -45,8 +45,8 @@
           <!-- <div class="rt-title">Realtime view mode</div> -->
           <div v-if="state.rttime" class="rt-time">{{ state.rttime }}</div>
         </div>
-        <template v-if="rtdata && rtdata.length">
-          <div v-for="item in rtdata" :key="item.key">
+        <template v-if="state.rtdata && state.rtdata.length">
+          <div v-for="item in state.rtdata" :key="item.key">
             <div class="rt-unit">{{ item.label }}</div>
             <div class="rt-number" :style="item.color ? 'color:' + item.color : ''">
               {{ item.measure }} {{ item.unit }}
@@ -408,7 +408,6 @@ function updatert() {
               }
             }
             state.rtdata.push(buffer);
-            console.log(state.rtdata, " => data after");
           }
         });
       });
