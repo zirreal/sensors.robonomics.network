@@ -2,12 +2,13 @@
   <Chart
     :constructor-type="'stockChart'"
     :options="chartOptions"
+    :updateArgs="[true, true]"
     ref="chartRef"
   />
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import Highcharts from 'highcharts';
 import stockInit from 'highcharts/modules/stock';
@@ -18,112 +19,106 @@ import { getTypeProvider } from '../../utils/utils';
 
 stockInit(Highcharts);
 
-// Props & routing
+// Props and route
 const props = defineProps({ log: Array });
 const route = useRoute();
 const provider = route.params.provider || getTypeProvider();
 
-// Active type from URL (default to 'pm10')
-const activeType = computed(() => (
-  route.params.type ?? 'pm10').toLowerCase()
-);
+// Active series name from URL, default "pm10"
+const activeType = computed(() => {
+  const t = route.params.type ?? 'pm10';
+  return String(t).toLowerCase();
+});
 
-// Performance cap
+// Max points before high approximation
 const MAX_VISIBLE = config.SERIES_MAX_VISIBLE;
+// Flag to detect initial load
+const isInitial = ref(true);
 
-// Build initial allSeries
-function buildSeriesFromLog(log) {
-
+// Build a map of series data from log
+function buildSeriesMap(log) {
   const zonesMap = Object.fromEntries(
     Object.entries(unitsettings).map(([k, v]) => [k.toLowerCase(), v.zones])
   );
-
-  const out = [];
-
-  log.forEach(item => {
-    if (!item.timestamp || !item.data) return;
-
+  const map = new Map();
+  for (const item of log) {
+    if (!item.timestamp || !item.data) continue;
     const t = item.timestamp.toString().length === 10 ? item.timestamp * 1000 : item.timestamp;
-
-    Object.entries(item.data).forEach(([key, val]) => {
+    for (const [key, val] of Object.entries(item.data)) {
       const name = key.toLowerCase();
-      let series = out.find(s => s.name === name);
-      if (!series) {
-        series = { name, data: [], zones: zonesMap[name], visible: true, dataGrouping: { enabled: false } };
-        out.push(series);
+      if (!map.has(name)) {
+        map.set(name, {
+          name,
+          data: [],
+          zones: zonesMap[name],
+          visible: true,
+          dataGrouping: { enabled: true, units: [['minute', [5]]] }
+        });
       }
-      series.data.push([t, parseFloat(val)]);
-    });
-
-  });
-
-  // Performance
-  out.forEach(s => {
-    if (s.data.length > MAX_VISIBLE) {
-      s.visible = false;
-      s.dataGrouping = { approximation: 'high' };
+      map.get(name).data.push([t, parseFloat(val)]);
     }
-  });
-
-  return out;
+  }
+  return map;
 }
 
-const allSeries = ref([]);
-
-// Chart options
+// Base chart options
 const baseOpts = {
-  legend: { enabled: true },
-  rangeSelector: { inputEnabled: false, buttons: [{ type: 'all', text: 'All' }] },
   chart: { type: 'spline', height: 400 },
+  rangeSelector: { inputEnabled: false, buttons: [{ type: 'all', text: 'All' }] },
+  legend: { enabled: true },
   title: { text: '' },
   time: { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
   xAxis: { type: 'datetime', labels: { format: '{value:%H:%M}' } },
   yAxis: { title: false },
   tooltip: { valueDecimals: 2 },
   plotOptions: {
-    series: { showInNavigator: true, dataGrouping: { enabled: true, units: [['minute', [5]]] } }
+    series: {
+      showInNavigator: true,
+      dataGrouping: { enabled: true }
+    }
   }
 };
 
+// Reactive chart options
 const chartOptions = ref({ ...baseOpts, series: [] });
-const chartRef = ref(null);
-let chartObj = null;
-let lastIndex = 0;
+// Flag to show only activeType on initial load
+// (already declared above)
 
-onMounted(async () => {
 
-  await nextTick();
+// Watch log and update series reactively
+watch(
+  () => props.log,
+  (log) => {
+    const map = buildSeriesMap(log);
 
-  if (!chartRef.value?.chart) return;
+    const arr = Array.from(map.values()).map(s => {
+      if (s.data.length > MAX_VISIBLE) {
+        s.dataGrouping = { enabled: true, approximation: 'high', units: [['minute', [5]]] };
+      }
+      return s;
+    });
 
-  chartObj = chartRef.value.chart;
+    const seriesArr = arr.map(s => {
+      let visible;
+      if (isInitial.value) {
+        visible = s.name === activeType.value;
+      } else {
+        const prev = chartOptions.value.series.find(ps => ps.name === s.name);
+        visible = prev ? prev.visible : true;
+      }
+      return { ...s, visible };
+    });
 
-  // Initial build
-  allSeries.value = buildSeriesFromLog(props.log);
-  chartObj.update({ series: allSeries.value }, true, true);
+    // disable initial behavior
+    isInitial.value = false;
 
-  // Hide non-active
-  chartObj.series.forEach(s => s.setVisible(s.name === activeType.value, false));
-  chartObj.redraw();
-  lastIndex = props.log.length;
-});
-
-watch(() => props.log, (newLog) => {
-  if (!chartObj) return;
-
-  const seriesMap = buildSeriesFromLog(newLog);
-  const extremes = chartObj.xAxis[0].getExtremes();
-
-  chartObj.series.forEach(series => {
-    const name = series.name;
-    const newData = seriesMap.get(name)?.data || [];
-    series.setData(newData, false);
-  });
-
-  chartObj.xAxis[0].setExtremes(extremes.min, extremes.max, false);
-  chartObj.redraw();
-
-}, { deep: true });
+    chartOptions.value = {
+      ...baseOpts,
+      series: seriesArr
+    };
+  },
+  { immediate: true }
+);
 </script>
 
 <style>
