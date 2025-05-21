@@ -7,6 +7,7 @@ import { VitePWA } from "vite-plugin-pwa";
 import fs from "node:fs";
 import path from "node:path";
 
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // eslint-disable-next-line no-undef
