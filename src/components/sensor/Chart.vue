@@ -51,7 +51,6 @@ function buildSeriesMap(log) {
           name,
           data: [],
           zones: zonesMap[name],
-          visible: true,
           dataGrouping: { enabled: true, units: [['minute', [5]]] }
         });
       }
@@ -81,9 +80,6 @@ const baseOpts = {
 
 // Reactive chart options
 const chartOptions = ref({ ...baseOpts, series: [] });
-// Flag to show only activeType on initial load
-// (already declared above)
-
 
 // Watch log and update series reactively
 watch(
@@ -99,25 +95,26 @@ watch(
     });
 
     const seriesArr = arr.map(s => {
-      let visible;
-      if (isInitial.value) {
-        visible = s.name === activeType.value;
-      } else {
-        const prev = chartOptions.value.series.find(ps => ps.name === s.name);
-        visible = prev ? prev.visible : true;
-      }
-      return { ...s, visible };
+      const prev = chartOptions.value.series.find(ps => ps.id === s.name);
+      const visible = isInitial.value
+        ? s.name === activeType.value
+        : (prev ? prev.visible : true);
+
+      return {
+        id: s.name,
+        name: s.name,
+        data: s.data,
+        zones: s.zones,
+        dataGrouping: s.dataGrouping,
+        visible
+      };
     });
 
-    // disable initial behavior
     isInitial.value = false;
 
-    chartOptions.value = {
-      ...baseOpts,
-      series: seriesArr
-    };
+    chartOptions.value.series = seriesArr;
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 );
 </script>
 
