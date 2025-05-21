@@ -1,199 +1,123 @@
 <template>
-  <Chart :constructor-type="'stockChart'" :options="chartOptions" ref="chartRef" />
+  <Chart
+    :constructor-type="'stockChart'"
+    :options="chartOptions"
+    ref="chartRef"
+  />
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
-import { useRoute } from "vue-router";
-import config from "@config";
-import Highcharts from "highcharts";
-import { Chart } from "highcharts-vue";
-import stockInit from "highcharts/modules/stock";
-import unitsettings from "../../measurements";
-import { getTypeProvider } from "../../utils/utils";
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
+import { useRoute } from 'vue-router';
+import Highcharts from 'highcharts';
+import stockInit from 'highcharts/modules/stock';
+import { Chart } from 'highcharts-vue';
+import unitsettings from '../../measurements';
+import config from '@config';
+import { getTypeProvider } from '../../utils/utils';
 
 stockInit(Highcharts);
 
-Highcharts.seriesTypes.spline.prototype.drawLegendSymbol = function (legend, item) {
-  this.options.marker.enabled = true;
-  Highcharts.LegendSymbol.lineMarker?.call(this, legend, item);
-  this.options.marker.enabled = false;
-};
-
-const props = defineProps({
-  point: [Number, Object, String],
-  log: {
-    type: Array,
-    default: () => [],
-  },
-});
-
-const chartOptions = ref({});
-const chartObj = ref(null);
-const chartRef = ref(null);
+// Props & routing
+const props = defineProps({ log: Array });
 const route = useRoute();
 const provider = route.params.provider || getTypeProvider();
 
-// EN: If the 'type' parameter is not specified in the URL, default to filtering by "pm10"
-// RU: Если в URL не задан параметр type, то фильтруем по умолчанию по "pm10"
-const activeType = computed(() => {
-  return route.params.type ? route.params.type.toLowerCase() : "pm10";
-});
+// Active type from URL (default to 'pm10')
+const activeType = computed(() =>
+  (route.params.type ?? 'pm10').toLowerCase()
+);
 
-// EN: Compute all series from props.log data (with timestamp handling)
-// RU: Вычисляем все серии по данным из props.log (с обработкой timestamp)
-const series = computed(() => {
-  const unitsettingsLowerCase = Object.fromEntries(
-    Object.entries(unitsettings).map(([k, v]) => [k.toLowerCase(), v])
+// Build all series from props.log with performance optimizations
+const allSeries = computed(() => {
+  const zonesMap = Object.fromEntries(
+    Object.entries(unitsettings).map(([k, v]) => [k.toLowerCase(), v.zones])
   );
-  const result = [];
+  const out = [];
   for (const item of props.log) {
-    if (!item.timestamp) {
-      console.warn("Skipping item without timestamp", item);
-      continue;
-    }
-    if (item.data) {
-      // EN: If the timestamp has 10 digits (seconds), multiply by 1000; otherwise, use it as is
-      // RU: Если timestamp состоит из 10 цифр (секунды), умножаем на 1000; иначе используем как есть
-      const timestamp =
-        item.timestamp.toString().length === 10 ? item.timestamp * 1000 : item.timestamp;
-      for (let keyname of Object.keys(item.data)) {
-        keyname = keyname.toLowerCase();
-        const existingIndex = result.findIndex((m) => m.name === keyname);
-        if (existingIndex >= 0) {
-          result[existingIndex].data.push([timestamp, item.data[keyname]]);
-        } else {
-          result.push({
-            name: keyname,
-            data: [[timestamp, parseFloat(item.data[keyname])]],
-            zones: unitsettingsLowerCase[keyname]?.zones,
-            visible: true,
-            dataGrouping: { enabled: false },
-          });
-        }
+    if (!item.timestamp || !item.data) continue;
+    const t = item.timestamp.toString().length === 10
+      ? item.timestamp * 1000
+      : item.timestamp;
+    for (const [key, val] of Object.entries(item.data)) {
+      const name = key.toLowerCase();
+      const idx = out.findIndex(s => s.name === name);
+      if (idx >= 0) {
+        out[idx].data.push([t, parseFloat(val)]);
+      } else {
+        out.push({
+          name,
+          data: [[t, parseFloat(val)]],
+          zones: zonesMap[name],
+          visible: true,
+          dataGrouping: { enabled: false }
+        });
       }
     }
   }
-  for (const measurement of result) {
+  // Performance: hide long series and use high approximation
+  for (const measurement of out) {
     if (measurement.data.length > config.SERIES_MAX_VISIBLE) {
       measurement.visible = false;
-      measurement.dataGrouping = { approximation: "high" };
+      measurement.dataGrouping = { approximation: 'high' };
     }
   }
-  return result;
+  return out;
 });
 
-// EN: Filter: display only the series that matches the activeType
-// RU: Фильтрация: показываем только ту серию, которая соответствует activeType
-const filteredSeries = computed(() => {
-  // 1) Ищем совпадения с активным типом
-  const match = series.value.filter((s) => s.name === activeType.value);
-
-  console.log(
-    "TEST",
-    match.length,
-    series.value.filter((s) => s.name === "pm10")
-  );
-
-  if (match.length > 0) {
-    // есть данные — возвращаем их
-    return match;
+// Base chart options (without series)
+const baseOpts = {
+  legend: { enabled: true },
+  rangeSelector: { inputEnabled: false, buttons: [{ type: 'all', text: 'All' }] },
+  chart: { type: 'spline', height: 400 },
+  title: { text: '' },
+  time: { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+  xAxis: { type: 'datetime', labels: { format: '{value:%H:%M}' } },
+  yAxis: { title: false },
+  tooltip: { valueDecimals: 2 },
+  plotOptions: {
+    series: {
+      showInNavigator: true,
+      dataGrouping: { enabled: true, units: [['minute', [5]]] }
+    }
   }
+};
 
-  // 2) Нет данных? Фолбэк на PM10
-  const fallback = series.value.filter((s) => s.name === "pm10");
-  return fallback;
-});
+// Reactive chart options
+const chartOptions = ref({ ...baseOpts, series: [] });
+const chartRef = ref(null);
+let chartObj = null;
 
-const startpoint = computed(() => {
-  if (provider === "realtime") {
-    return Date.now();
-  } else {
-    let start = new Date();
-    start.setHours(0, 0, 0, 0);
-    return start;
+// On mount: render all series then hide non-active
+onMounted(async () => {
+  await nextTick();
+  if (chartRef.value?.chart) {
+    chartObj = chartRef.value.chart;
+    // Render all series initially
+    chartObj.update({ series: allSeries.value }, true, true);
+    // Hide series not matching activeType
+    chartObj.series.forEach(s => {
+      s.setVisible(s.name === activeType.value, false);
+    });
+    chartObj.redraw();
   }
 });
 
-// EN: Update the chart when the series list changes
-// RU: Обновляем график при изменении списка серий
+// On data update: only update data for existing series
 watch(
-  series,
-  (v) => {
-    if (!chartObj.value) return;
-    // EN: Add or update all series (all series are added initially)
-    // RU: Добавляем или обновляем все серии (изначально добавляем все)
-    v.forEach((newdata) => {
-      const index = chartObj.value.series.findIndex((m) => m.name === newdata.name);
-      if (index >= 0) {
-        chartObj.value.series[index].update({ data: newdata.data }, false);
-      } else {
-        chartObj.value.addSeries(newdata, false);
+  allSeries,
+  newArr => {
+    if (!chartObj) return;
+    newArr.forEach(sData => {
+      const exist = chartObj.series.find(x => x.name === sData.name);
+      if (exist) {
+        exist.setData(sData.data, false);
       }
     });
-    chartObj.value.redraw();
+    chartObj.redraw();
   },
-  { immediate: true, deep: true }
+  { deep: true }
 );
-
-// EN: Apply filtering (set visibility) based on activeType
-// RU: Применяем фильтрацию (устанавливаем видимость) по activeType
-watch(
-  filteredSeries,
-  (newList) => {
-    if (!chartObj.value) return;
-
-    // вытащим список имён, которые нам надо показывать
-    const namesToShow = newList.map((s) => s.name);
-
-    // пройдём по всем series в графике и включим/скроем
-    chartObj.value.series.forEach((serie) => {
-      serie.setVisible(namesToShow.includes(serie.name), false);
-    });
-
-    chartObj.value.redraw();
-  },
-  { immediate: true, deep: true }
-);
-
-onMounted(() => {
-  if (chartRef.value && chartRef.value.chart) {
-    chartObj.value = chartRef.value.chart;
-  }
-
-  chartOptions.value = {
-    legend: { enabled: true },
-    rangeSelector: {
-      inputEnabled: false,
-      buttons: [{ type: "all", text: "All", title: "View all" }],
-    },
-    chart: { type: "spline", height: 400 },
-    title: { text: "" },
-    time: { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-    series: series.value,
-    xAxis: {
-      title: false,
-      type: "datetime",
-      labels: { overflow: "justify", format: "{value: %H:%M }" },
-    },
-    yAxis: { title: false },
-    tooltip: { valueDecimals: 2 },
-    plotOptions: {
-      series: {
-        showInNavigator: true,
-        dataGrouping: { enabled: true, units: [["minute", [5]]] },
-        events: {
-          legendItemClick: function () {
-            // EN: When the user clicks on the legend, you can disable the filtering
-            // (Standard behavior is maintained here)
-            // RU: Если пользователь кликает по легенде, можно отключить фильтрацию
-            // Или оставить выбор за пользователем – здесь оставляем стандартное поведение.
-          },
-        },
-      },
-    },
-  };
-});
 </script>
 
 <style>
