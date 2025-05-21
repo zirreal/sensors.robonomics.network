@@ -103,17 +103,23 @@ onMounted(async () => {
   }
 });
 
-// On data update: only update data for existing series
+// On data update: only update data for existing series, preserving zoom
 watch(
   allSeries,
   newArr => {
     if (!chartObj) return;
+    // Save current x-axis extremes
+    const extremes = chartObj.xAxis[0].getExtremes();
+    // Update series data without redraw
     newArr.forEach(sData => {
       const exist = chartObj.series.find(x => x.name === sData.name);
       if (exist) {
         exist.setData(sData.data, false);
       }
     });
+    // Restore extremes to prevent full redraw
+    chartObj.xAxis[0].setExtremes(extremes.min, extremes.max, false);
+    // Final redraw
     chartObj.redraw();
   },
   { deep: true }
