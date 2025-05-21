@@ -35,7 +35,10 @@ export default defineConfig(({ mode }) => {
         injectRegister: "auto",
         workbox: {
           globPatterns: ["**/*.{js,css,html,ico,png,svg,json,vue,txt,woff2}"],
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           cleanupOutdatedCaches: false,
+          skipWaiting: true,
+          clientsClaim: true,
         },
         manifest: {
           name: "Robonomics Sensors",
