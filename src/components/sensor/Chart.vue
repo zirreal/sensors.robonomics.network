@@ -113,6 +113,7 @@ watch(
   () => props.log,
   (newLog) => {
 
+    console.log('props.log updated')
     if (!chartObj) return;
     if (newLog.length <= lastIndex) return;
 
@@ -127,7 +128,8 @@ watch(
         const series = chartObj.series.find(s => s.name === name);
 
         if (series) {
-          series.addPoint([t, parseFloat(val)], true, false);
+          series.addPoint([t, parseFloat(val)], false, false);
+          series.redraw();
         }
       });
     });
