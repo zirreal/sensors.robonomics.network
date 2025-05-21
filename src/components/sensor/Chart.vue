@@ -108,39 +108,10 @@ onMounted(async () => {
   lastIndex = props.log.length;
 });
 
-// Incremental updates: only add new points
-// watch(
-//   () => props.log,
-//   (newLog) => {
-
-//     if (!chartObj) return;
-//     if (newLog.length <= lastIndex) return;
-
-//     const newItems = newLog.slice(lastIndex);
-
-//     newItems.forEach(item => {
-//       if (!item.timestamp || !item.data) return;
-
-//       const t = item.timestamp.toString().length === 10 ? item.timestamp * 1000 : item.timestamp;
-//       Object.entries(item.data).forEach(([key, val]) => {
-//         const name = key.toLowerCase();
-//         const series = chartObj.series.find(s => s.name === name);
-
-//         if (series) {
-//           series.addPoint([t, parseFloat(val)], false, false);
-//         }
-//       });
-//     });
-//     lastIndex = newLog.length;
-//     chartObj.redraw();
-//   },
-//   { deep: true }
-// );
-
 watch(() => props.log, (newLog) => {
   if (!chartObj) return;
 
-  const seriesMap = buildSeriesMap(newLog);
+  const seriesMap = buildSeriesFromLog(newLog);
   const extremes = chartObj.xAxis[0].getExtremes();
 
   chartObj.series.forEach(series => {
