@@ -113,51 +113,27 @@ watch(
   () => props.log,
   (newLog) => {
 
-     if (!chartObj) return;
-     
-    // Сохраняем экстремумы обеих осей
-    const xExt = chartObj.xAxis[0].getExtremes();
-    const yExt = chartObj.yAxis[0].getExtremes();
+    console.log('props.log updated')
+    if (!chartObj) return;
+    if (newLog.length <= lastIndex) return;
 
-    // Перебираем всё лого (или можно только новые элементы)
-    // и строим свежий массив data для каждой серии:
-    const updatedSeries = buildSeriesFromLog(newLog);
-    // Обновляем сразу все серии одним вызовом, oneToOne: true
-    chartObj.update(
-      { series: updatedSeries },
-      false,   // redraw=false
-      true     // oneToOne=true
-    );
+    const newItems = newLog.slice(lastIndex);
 
-    // Восстанавливаем экстремумы
-    chartObj.xAxis[0].setExtremes(xExt.min, xExt.max, false);
-    chartObj.yAxis[0].setExtremes(yExt.min, yExt.max, false);
+    newItems.forEach(item => {
+      if (!item.timestamp || !item.data) return;
 
-    // Однократный redraw
-    chartObj.redraw();
+      const t = item.timestamp.toString().length === 10 ? item.timestamp * 1000 : item.timestamp;
+      Object.entries(item.data).forEach(([key, val]) => {
+        const name = key.toLowerCase();
+        const series = chartObj.series.find(s => s.name === name);
 
-
-    // if (!chartObj) return;
-    // if (newLog.length <= lastIndex) return;
-
-    // const newItems = newLog.slice(lastIndex);
-
-    // newItems.forEach(item => {
-    //   if (!item.timestamp || !item.data) return;
-
-    //   const t = item.timestamp.toString().length === 10 ? item.timestamp * 1000 : item.timestamp;
-    //   Object.entries(item.data).forEach(([key, val]) => {
-    //     const name = key.toLowerCase();
-    //     const series = chartObj.series.find(s => s.name === name);
-
-    //     if (series) {
-    //       series.addPoint([t, parseFloat(val)], false, false);
-    //       series.redraw();
-    //     }
-    //   });
-    // });
-    // lastIndex = newLog.length;
-    // // chartObj.redraw();
+        if (series) {
+          series.addPoint([t, parseFloat(val)], true, false);
+        }
+      });
+    });
+    lastIndex = newLog.length;
+    // chartObj.redraw();
   },
   { deep: true }
 );
