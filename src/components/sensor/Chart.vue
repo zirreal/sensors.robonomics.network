@@ -18,96 +18,121 @@ import { getTypeProvider } from '../../utils/utils';
 
 stockInit(Highcharts);
 
+// Props & routing
 const props = defineProps({ log: Array });
 const route = useRoute();
-const activeType = computed(() => (route.params.type ?? 'pm10').toLowerCase());
-const MAX_VISIBLE = config.SERIES_MAX_VISIBLE;
-const chartRef = ref(null);
-let chartObj = null;
-let lastIndex = 0;
+const provider = route.params.provider || getTypeProvider();
 
-function buildSeriesMap(log) {
+// Active type from URL (default to 'pm10')
+const activeType = computed(() => (
+  route.params.type ?? 'pm10').toLowerCase()
+);
+
+// Performance cap
+const MAX_VISIBLE = config.SERIES_MAX_VISIBLE;
+
+// Build initial allSeries
+function buildSeriesFromLog(log) {
+
   const zonesMap = Object.fromEntries(
     Object.entries(unitsettings).map(([k, v]) => [k.toLowerCase(), v.zones])
   );
-  const map = new Map();
+
+  const out = [];
+
   log.forEach(item => {
     if (!item.timestamp || !item.data) return;
+
     const t = item.timestamp.toString().length === 10 ? item.timestamp * 1000 : item.timestamp;
-    for (const [key, val] of Object.entries(item.data)) {
+
+    Object.entries(item.data).forEach(([key, val]) => {
       const name = key.toLowerCase();
-      if (!map.has(name)) {
-        map.set(name, {
-          name,
-          data: [],
-          zones: zonesMap[name],
-          visible: true,
-          dataGrouping: { enabled: true, approximation: 'high', units: [['minute', [5]]] }
-        });
+      let series = out.find(s => s.name === name);
+      if (!series) {
+        series = { name, data: [], zones: zonesMap[name], visible: true, dataGrouping: { enabled: false } };
+        out.push(series);
       }
-      map.get(name).data.push([t, parseFloat(val)]);
+      series.data.push([t, parseFloat(val)]);
+    });
+
+  });
+
+  // Performance
+  out.forEach(s => {
+    if (s.data.length > MAX_VISIBLE) {
+      s.visible = false;
+      s.dataGrouping = { approximation: 'high' };
     }
   });
-  return map;
+
+  return out;
 }
 
-const chartOptions = ref({
-  chart: { type: 'spline', height: 400 },
-  rangeSelector: { inputEnabled: false, buttons: [{ type: 'all', text: 'All' }] },
+const allSeries = ref([]);
+
+// Chart options
+const baseOpts = {
   legend: { enabled: true },
+  rangeSelector: { inputEnabled: false, buttons: [{ type: 'all', text: 'All' }] },
+  chart: { type: 'spline', height: 400 },
   title: { text: '' },
   time: { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
   xAxis: { type: 'datetime', labels: { format: '{value:%H:%M}' } },
   yAxis: { title: false },
   tooltip: { valueDecimals: 2 },
   plotOptions: {
-    series: {
-      showInNavigator: false,
-      dataGrouping: { enabled: true, units: [['minute', [5]]] }
-    }
-  },
-  series: []
-});
+    series: { showInNavigator: false, dataGrouping: { enabled: true, units: [['minute', [5]]] } }
+  }
+};
+
+const chartOptions = ref({ ...baseOpts, series: [] });
+const chartRef = ref(null);
+let chartObj = null;
+let lastIndex = 0;
 
 onMounted(async () => {
+
   await nextTick();
+
+  if (!chartRef.value?.chart) return;
+
   chartObj = chartRef.value.chart;
-  const seriesMap = buildSeriesMap(props.log);
 
-  seriesMap.forEach((series, name) => {
-    if (series.data.length > MAX_VISIBLE) {
-      series.dataGrouping = { enabled: true, approximation: 'high', units: [['minute', [5]]] };
-    }
-    chartObj.addSeries(series, false);
-  });
+  // Initial build
+  allSeries.value = buildSeriesFromLog(props.log);
+  chartObj.update({ series: allSeries.value }, true, true);
 
-  chartObj.series.forEach(s =>
-    s.setVisible(s.name === activeType.value, false)
-  );
+  // Hide non-active
+  chartObj.series.forEach(s => s.setVisible(s.name === activeType.value, false));
   chartObj.redraw();
   lastIndex = props.log.length;
 });
 
+// Incremental updates: only add new points
 watch(
   () => props.log,
   (newLog) => {
-    if (!chartObj || newLog.length <= lastIndex) return;
+
+    if (!chartObj) return;
+    if (newLog.length <= lastIndex) return;
+
     const newItems = newLog.slice(lastIndex);
+
     newItems.forEach(item => {
+      if (!item.timestamp || !item.data) return;
+
       const t = item.timestamp.toString().length === 10 ? item.timestamp * 1000 : item.timestamp;
       Object.entries(item.data).forEach(([key, val]) => {
         const name = key.toLowerCase();
-        const s = chartObj.series.find(s => s.name === name);
-        if (s) {
-          s.options.data.push([t, parseFloat(val)]);
-          s.processData();
-          s.generatePoints();
-          s.drawGraph();
-          s.drawPoints();
+        const series = chartObj.series.find(s => s.name === name);
+
+        if (series) {
+          series.addPoint([t, parseFloat(val)], false, false);
         }
       });
     });
     lastIndex = newLog.length;
+    chartObj.redraw();
   },
   { deep: true }
 );
