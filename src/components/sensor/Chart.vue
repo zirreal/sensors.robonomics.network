@@ -2,7 +2,6 @@
   <Chart
     :constructor-type="'stockChart'"
     :options="chartOptions"
-    :updateArgs="[true, true]"
     ref="chartRef"
   />
 </template>
@@ -18,7 +17,6 @@ import config from '@config'
 import { getTypeProvider } from '../../utils/utils'
 
 stockInit(Highcharts)
-
 const props = defineProps({ log: Array })
 const route = useRoute()
 const provider = route.params.provider || getTypeProvider()
@@ -42,12 +40,7 @@ function buildSeriesMap(log) {
     for (const [key, val] of Object.entries(item.data)) {
       const name = key.toLowerCase()
       if (!map.has(name)) {
-        map.set(name, {
-          name,
-          data: [],
-          zones: zonesMap[name],
-          dataGrouping: { enabled: true, units: [['minute', [5]]] }
-        })
+        map.set(name, { name, data: [], zones: zonesMap[name], dataGrouping: { enabled: true, units: [['minute', [5]]] } })
       }
       map.get(name).data.push([t, parseFloat(val)])
     }
@@ -64,12 +57,7 @@ const baseOpts = {
   xAxis: { type: 'datetime', labels: { format: '{value:%H:%M}' } },
   yAxis: { title: false },
   tooltip: { valueDecimals: 2 },
-  plotOptions: {
-    series: {
-      showInNavigator: true,
-      dataGrouping: { enabled: true }
-    }
-  }
+  plotOptions: { series: { showInNavigator: true, dataGrouping: { enabled: true } } }
 }
 
 const chartOptions = ref({ ...baseOpts, series: [] })
@@ -79,37 +67,41 @@ watch(
   () => props.log,
   async (log) => {
     const map = buildSeriesMap(log)
-
     const arr = Array.from(map.values()).map(s => {
       if (s.data.length > MAX_VISIBLE) {
         s.dataGrouping = { enabled: true, approximation: 'high', units: [['minute', [5]]] }
       }
       return s
     })
-
     const seriesArr = arr.map(s => {
-      const prev = chartOptions.value.series.find(ps => ps.id === s.name)
+      const previous = (chartRef.value && chartRef.value.chart)
+        ? chartRef.value.chart.get(s.name)
+        : null
       const visible = isInitial.value
         ? s.name === activeType.value
-        : (prev ? prev.visible : true)
-
-      return {
-        id: s.name,
-        name: s.name,
-        data: s.data,
-        zones: s.zones,
-        dataGrouping: s.dataGrouping,
-        visible
-      }
+        : previous ? previous.visible : true
+      return { id: s.name, name: s.name, data: s.data, zones: s.zones, dataGrouping: s.dataGrouping, visible }
     })
 
     if (chartRef.value && chartRef.value.chart) {
       await nextTick()
-      chartRef.value.chart.update(
-        { series: seriesArr },
-        true,
-        true
-      )
+      const chart = chartRef.value.chart
+      const existingIds = chart.series.map(s => s.options.id)
+      const newIds = seriesArr.map(s => s.id)
+      seriesArr.forEach(s => {
+        const existing = chart.get(s.id)
+        if (existing) {
+          existing.update({ data: s.data, zones: s.zones, dataGrouping: s.dataGrouping }, false)
+          existing.setVisible(s.visible, false)
+        } else {
+          chart.addSeries(s, false)
+        }
+      })
+      existingIds.filter(id => !newIds.includes(id)).forEach(id => {
+        const s = chart.get(id)
+        if (s) s.remove(false)
+      })
+      chart.redraw()
     } else {
       chartOptions.value.series = seriesArr
     }
@@ -121,12 +113,12 @@ watch(
 </script>
 
 <style>
-.highcharts-legend-item { font-weight: 900; }
+.highcharts-legend-item { font-weight: 900 }
 .highcharts-legend-item .highcharts-graph,
-.highcharts-legend-item .highcharts-point { stroke: #000 !important; }
-.highcharts-legend-item .highcharts-point { fill: #000 !important; stroke-width: 2; }
-.highcharts-legend-item-hidden text { fill: #999 !important; color: #999 !important; text-decoration: none !important; }
+.highcharts-legend-item .highcharts-point { stroke: #000 !important }
+.highcharts-legend-item .highcharts-point { fill: #000 !important; stroke-width: 2 }
+.highcharts-legend-item-hidden text { fill: #999 !important; color: #999 !important; text-decoration: none !important }
 .highcharts-legend-item-hidden .highcharts-graph,
-.highcharts-legend-item-hidden .highcharts-point { stroke: #999 !important; }
-.highcharts-legend-item-hidden .highcharts-point { fill: #999 !important; }
+.highcharts-legend-item-hidden .highcharts-point { stroke: #999 !important }
+.highcharts-legend-item-hidden .highcharts-point { fill: #999 !important }
 </style>
