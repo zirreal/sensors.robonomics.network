@@ -22,21 +22,29 @@ stockInit(Highcharts);
 const props = defineProps({ log: Array });
 const route = useRoute();
 const provider = route.params.provider || getTypeProvider();
+
 // Active type from URL (default to 'pm10')
-const activeType = computed(() => (route.params.type ?? 'pm10').toLowerCase());
+const activeType = computed(() => (
+  route.params.type ?? 'pm10').toLowerCase()
+);
 
 // Performance cap
 const MAX_VISIBLE = config.SERIES_MAX_VISIBLE;
 
 // Build initial allSeries
 function buildSeriesFromLog(log) {
+
   const zonesMap = Object.fromEntries(
     Object.entries(unitsettings).map(([k, v]) => [k.toLowerCase(), v.zones])
   );
+
   const out = [];
+
   log.forEach(item => {
     if (!item.timestamp || !item.data) return;
+
     const t = item.timestamp.toString().length === 10 ? item.timestamp * 1000 : item.timestamp;
+
     Object.entries(item.data).forEach(([key, val]) => {
       const name = key.toLowerCase();
       let series = out.find(s => s.name === name);
@@ -46,19 +54,22 @@ function buildSeriesFromLog(log) {
       }
       series.data.push([t, parseFloat(val)]);
     });
+
   });
 
-  // Performance: hide long series
+  // Performance
   out.forEach(s => {
     if (s.data.length > MAX_VISIBLE) {
       s.visible = false;
       s.dataGrouping = { approximation: 'high' };
     }
   });
+
   return out;
 }
 
 const allSeries = ref([]);
+
 // Chart options
 const baseOpts = {
   legend: { enabled: true },
@@ -73,18 +84,24 @@ const baseOpts = {
     series: { showInNavigator: true, dataGrouping: { enabled: true, units: [['minute', [5]]] } }
   }
 };
+
 const chartOptions = ref({ ...baseOpts, series: [] });
 const chartRef = ref(null);
 let chartObj = null;
 let lastIndex = 0;
 
 onMounted(async () => {
+
   await nextTick();
+
   if (!chartRef.value?.chart) return;
+
   chartObj = chartRef.value.chart;
+
   // Initial build
   allSeries.value = buildSeriesFromLog(props.log);
   chartObj.update({ series: allSeries.value }, true, true);
+
   // Hide non-active
   chartObj.series.forEach(s => s.setVisible(s.name === activeType.value, false));
   chartObj.redraw();
@@ -95,22 +112,27 @@ onMounted(async () => {
 watch(
   () => props.log,
   (newLog) => {
+
     if (!chartObj) return;
     if (newLog.length <= lastIndex) return;
+
     const newItems = newLog.slice(lastIndex);
+
     newItems.forEach(item => {
       if (!item.timestamp || !item.data) return;
+
       const t = item.timestamp.toString().length === 10 ? item.timestamp * 1000 : item.timestamp;
       Object.entries(item.data).forEach(([key, val]) => {
         const name = key.toLowerCase();
         const series = chartObj.series.find(s => s.name === name);
+
         if (series) {
-          series.addPoint([t, parseFloat(val)], false, false);
+          series.addPoint([t, parseFloat(val)], true, false);
         }
       });
     });
     lastIndex = newLog.length;
-    chartObj.redraw();
+    // chartObj.redraw();
   },
   { deep: true }
 );
