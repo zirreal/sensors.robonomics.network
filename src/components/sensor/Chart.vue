@@ -128,7 +128,12 @@ watch(
         const series = chartObj.series.find(s => s.name === name);
 
         if (series) {
-          series.addPoint([t, parseFloat(val)], true, false);
+          series.addPoint([t, parseFloat(val)], false, false);
+
+          series.processData();
+          series.generatePoints();
+          series.drawGraph();
+          series.drawPoints();
         }
       });
     });
