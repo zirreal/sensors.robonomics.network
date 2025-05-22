@@ -57,8 +57,8 @@
 
       <section>
         <!-- Показываем Chart, если данные готовы, иначе — скелет для графика -->
-        <Chart :point="props.point" :log="log" />
-        <!-- <div v-show="!chartReady" class="chart-skeleton"></div> -->
+        <Chart v-show="state.chartReady" :point="props.point" :log="log" />
+        <div v-show="!state.chartReady" class="chart-skeleton"></div>
       </section>
 
       <section>
@@ -193,6 +193,7 @@ const state = reactive({
   sharedDefault: false,
   sharedLink: false,
   isLoad: false,
+  chartEverLoaded: false,
 });
 
 // Вычисляемые свойства
@@ -208,39 +209,6 @@ const geo = computed(() => {
 
 const address = ref({});
 const prevGeo = ref({ lat: null, lng: null });
-
-watchEffect(() => {
-  // Если в props.point есть адрес, обновляем его только если координаты изменились.
-  if (props.point && props.point.address && Object.keys(props.point.address).length > 0) {
-    const currentGeo = props.point.geo || {};
-    if (
-      !prevGeo.value.lat ||
-      currentGeo.lat !== prevGeo.value.lat ||
-      currentGeo.lng !== prevGeo.value.lng
-    ) {
-      address.value = props.point.address;
-      prevGeo.value = { ...currentGeo };
-    }
-  } else if (geo.value.lat && geo.value.lng) {
-    // Если в props.point нет адреса, а заданы геоданные, запрашиваем адрес
-    if (
-      !prevGeo.value.lat ||
-      geo.value.lat !== prevGeo.value.lat ||
-      geo.value.lng !== prevGeo.value.lng
-    ) {
-      getAddressByPos(geo.value.lat, geo.value.lng, locale.value)
-        .then((res) => {
-          address.value = res;
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-      prevGeo.value = { ...geo.value };
-    }
-  } else {
-    address.value = {};
-  }
-});
 
 // Если спустя 5 секунд address всё ещё пустой, подставляем координаты.
 setTimeout(() => {
@@ -343,12 +311,6 @@ const icon = computed(() => {
   return sensors[sensor_id.value] ? sensors[sensor_id.value].icon : "";
 });
 
-const chartReady = computed(() => {
-  // console.log('chartReady', !state.isLoad && props.point && Object.keys(props.point).length > 0, !state.isLoad, props.point, Object.keys(props.point).length > 0)
-  // График готов, если объект point не пустой и загрузка завершена
-  return !state.isLoad && props.point && Object.keys(props.point).length > 0;
-});
-
 const shareData = () => {
   if (navigator.share) {
     navigator.share({
@@ -425,6 +387,13 @@ function closesensor() {
   emit("close");
 }
 
+onMounted(() => {
+  state.start = props.startTime
+    ? moment.unix(props.startTime).format("YYYY-MM-DD")
+    : moment().format("YYYY-MM-DD");
+  updatert();
+});
+
 watch(
   () => sensor_id.value,
   () => {
@@ -442,10 +411,21 @@ watch(log, () => {
   state.isLoad = false;
 });
 
+// EN: Check if log is ready to show Chart
+watch(
+  () => props.point?.log,
+  (log) => {
+    if (!state.chartReady && Array.isArray(log) && log.length > 0) {
+      state.chartReady = true;
+    }
+  },
+  { immediate: true }
+);
+
+// EN: Change URL for valid point if sensor_id is present and geo is okay
 watch(
   () => props.point,
   (newPoint) => {
-    // Only update URL if a valid point with a sensor_id is present
     if (newPoint && newPoint.sensor_id && newPoint.geo) {
       router.replace({
         name: route.name, // Assumes your route name remains the same
@@ -463,12 +443,40 @@ watch(
   { immediate: true, deep: true }
 );
 
-onMounted(() => {
-  state.start = props.startTime
-    ? moment.unix(props.startTime).format("YYYY-MM-DD")
-    : moment().format("YYYY-MM-DD");
-  updatert();
+// EN: Change the address text if geo is changed
+watchEffect(() => {
+  // Если в props.point есть адрес, обновляем его только если координаты изменились.
+  if (props.point && props.point.address && Object.keys(props.point.address).length > 0) {
+    const currentGeo = props.point.geo || {};
+    if (
+      !prevGeo.value.lat ||
+      currentGeo.lat !== prevGeo.value.lat ||
+      currentGeo.lng !== prevGeo.value.lng
+    ) {
+      address.value = props.point.address;
+      prevGeo.value = { ...currentGeo };
+    }
+  } else if (geo.value.lat && geo.value.lng) {
+    // Если в props.point нет адреса, а заданы геоданные, запрашиваем адрес
+    if (
+      !prevGeo.value.lat ||
+      geo.value.lat !== prevGeo.value.lat ||
+      geo.value.lng !== prevGeo.value.lng
+    ) {
+      getAddressByPos(geo.value.lat, geo.value.lng, locale.value)
+        .then((res) => {
+          address.value = res;
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+      prevGeo.value = { ...geo.value };
+    }
+  } else {
+    address.value = {};
+  }
 });
+
 </script>
 
 <style scoped>
