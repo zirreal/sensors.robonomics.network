@@ -57,8 +57,8 @@
 
       <section>
         <!-- Показываем Chart, если данные готовы, иначе — скелет для графика -->
-        <Chart v-if="chartReady" :point="props.point" :log="log" />
-        <div v-else class="chart-skeleton"></div>
+        <Chart v-show="chartReady" :point="props.point" :log="log" />
+        <div v-show="!chartReady" class="chart-skeleton"></div>
       </section>
 
       <section>
