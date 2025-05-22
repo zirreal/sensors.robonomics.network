@@ -57,8 +57,8 @@
 
       <section>
         <!-- Показываем Chart, если данные готовы, иначе — скелет для графика -->
-        <Chart v-show="chartReady" :point="props.point" :log="log" />
-        <div v-show="!chartReady" class="chart-skeleton"></div>
+        <Chart :point="props.point" :log="log" />
+        <!-- <div v-show="!chartReady" class="chart-skeleton"></div> -->
       </section>
 
       <section>
@@ -344,6 +344,7 @@ const icon = computed(() => {
 });
 
 const chartReady = computed(() => {
+  // console.log('chartReady', !state.isLoad && props.point && Object.keys(props.point).length > 0, !state.isLoad, props.point, Object.keys(props.point).length > 0)
   // График готов, если объект point не пустой и загрузка завершена
   return !state.isLoad && props.point && Object.keys(props.point).length > 0;
 });
