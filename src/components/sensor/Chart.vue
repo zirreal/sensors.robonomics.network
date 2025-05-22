@@ -1,13 +1,13 @@
 <template>
   <Chart
-    :constructor-type="'stockChart'"
-    :options="chartOptions"
     ref="chartRef"
+    constructor-type="stockChart"
+    :options="chartOptions"
   />
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Highcharts from 'highcharts'
 import stockInit from 'highcharts/modules/stock'
@@ -17,30 +17,32 @@ import config from '@config'
 import { getTypeProvider } from '../../utils/utils'
 
 stockInit(Highcharts)
-const props = defineProps({ log: Array })
+
+// Props и переменные
+const props = defineProps({ log: { type: Array, default: () => [] } })
 const route = useRoute()
-const provider = route.params.provider || getTypeProvider()
-
-const activeType = computed(() => {
-  const t = route.params.type ?? 'pm10'
-  return String(t).toLowerCase()
-})
-
+const activeType = (route.params.type ?? 'pm10').toLowerCase()
 const MAX_VISIBLE = config.SERIES_MAX_VISIBLE
-const isInitial = ref(true)
+const provider = getTypeProvider()
+const isRealtime = provider === 'realtime'
+const chartRef = ref(null)
+// Окно отображения (1 час)
+const WINDOW_MS = 60 * 60 * 1000
 
+// Сборка данных по сериям
 function buildSeriesMap(log) {
   const zonesMap = Object.fromEntries(
     Object.entries(unitsettings).map(([k, v]) => [k.toLowerCase(), v.zones])
   )
   const map = new Map()
-  for (const item of log) {
-    if (!item.timestamp || !item.data) continue
-    const t = String(item.timestamp).length === 10 ? item.timestamp * 1000 : item.timestamp
-    for (const [key, val] of Object.entries(item.data)) {
+  for (const entry of log) {
+    const { timestamp, data } = entry
+    if (!timestamp || !data) continue
+    const t = String(timestamp).length === 10 ? timestamp * 1000 : timestamp
+    for (const [key, val] of Object.entries(data)) {
       const name = key.toLowerCase()
       if (!map.has(name)) {
-        map.set(name, { name, data: [], zones: zonesMap[name], dataGrouping: { enabled: true, units: [['minute', [5]]] } })
+        map.set(name, { name, data: [], zones: zonesMap[name] || [], dataGrouping: { enabled: true, units: [['minute', [5]]] } })
       }
       map.get(name).data.push([t, parseFloat(val)])
     }
@@ -48,77 +50,97 @@ function buildSeriesMap(log) {
   return map
 }
 
-const baseOpts = {
+function makeSeriesArray(log) {
+  const map = buildSeriesMap(log)
+  return Array.from(map.values()).map(s => ({
+    id: s.name,
+    name: s.name,
+    data: s.data,
+    zones: s.zones,
+    dataGrouping: isRealtime
+      ? { enabled: false }
+      : (s.data.length > MAX_VISIBLE
+         ? { enabled: true, approximation: 'high', units: [['minute', [5]]] }
+         : s.dataGrouping)
+  }))
+}
+
+// Chart опции (не реактивны)
+const chartOptions = {
   chart: { type: 'spline', height: 400 },
   rangeSelector: { inputEnabled: false, buttons: [{ type: 'all', text: 'All' }] },
   legend: { enabled: true },
   title: { text: '' },
   time: { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-  xAxis: { type: 'datetime', labels: { format: '{value:%H:%M}' } },
+  xAxis: { type: 'datetime', labels: { format: '{value:%H:%M}' }, ordinal: !isRealtime },
   yAxis: { title: false },
   tooltip: { valueDecimals: 2 },
-  plotOptions: { series: { showInNavigator: true, dataGrouping: { enabled: true } } }
+  plotOptions: {
+    series: {
+      showInNavigator: true,
+      dataGrouping: isRealtime ? { enabled: false } : { enabled: true, units: [['minute', [5]]] },
+      // cropThreshold: Infinity
+    }
+  },
+  series: []
 }
 
-const chartOptions = ref({ ...baseOpts, series: [] })
-const chartRef = ref(null)
-
-watch(
-  () => props.log,
-  async (log) => {
-    const map = buildSeriesMap(log)
-    const arr = Array.from(map.values()).map(s => {
-      if (s.data.length > MAX_VISIBLE) {
-        s.dataGrouping = { enabled: true, approximation: 'high', units: [['minute', [5]]] }
-      }
-      return s
-    })
-    const seriesArr = arr.map(s => {
-      const previous = (chartRef.value && chartRef.value.chart)
-        ? chartRef.value.chart.get(s.name)
-        : null
-      const visible = isInitial.value
-        ? s.name === activeType.value
-        : previous ? previous.visible : true
-      return { id: s.name, name: s.name, data: s.data, zones: s.zones, dataGrouping: s.dataGrouping, visible }
-    })
-
-    if (chartRef.value && chartRef.value.chart) {
-      await nextTick()
+// Инициализация при монтировании
+onMounted(() => {
+  // Начальные серии
+  const initial = makeSeriesArray(props.log).map(s => ({ ...s, visible: s.id === activeType }))
+  chartOptions.series = initial
+  // Если realtime, фиксируем окно
+  if (isRealtime) {
+    setTimeout(() => {
       const chart = chartRef.value.chart
-      const existingIds = chart.series.map(s => s.options.id)
-      const newIds = seriesArr.map(s => s.id)
-      seriesArr.forEach(s => {
-        const existing = chart.get(s.id)
-        if (existing) {
-          existing.update({ data: s.data, zones: s.zones, dataGrouping: s.dataGrouping }, false)
-          existing.setVisible(s.visible, false)
-        } else {
-          chart.addSeries(s, false)
-        }
-      })
-      existingIds.filter(id => !newIds.includes(id)).forEach(id => {
-        const s = chart.get(id)
-        if (s) s.remove(false)
-      })
-      chart.redraw()
-    } else {
-      chartOptions.value.series = seriesArr
-    }
+      const lastTime = initial.reduce((max, s) => Math.max(max, s.data[s.data.length - 1]?.[0] || 0), 0)
+      if (lastTime) chart.xAxis[0].setExtremes(lastTime - WINDOW_MS, lastTime)
+    }, 0)
+  }
+})
 
-    isInitial.value = false
-  },
-  { immediate: true }
+// Динамическое обновление только новых точек
+watch(
+  () => props.log.length,
+  (newLen, oldLen) => {
+    if (newLen <= oldLen) return
+    const chart = chartRef.value.chart
+    const raw = makeSeriesArray(props.log)
+    const prevVis = {}
+    chart.series.forEach(s => { prevVis[s.options.id] = s.visible })
+    chart.series.slice().forEach(s => {
+      if (!raw.find(ns => ns.id === s.options.id)) s.remove(false)
+    })
+    let maxTime = 0
+    raw.forEach(ns => {
+      const ex = chart.get(ns.id)
+      if (ex) {
+        ex.update({ zones: ns.zones, dataGrouping: ns.dataGrouping }, false)
+        const lastX = ex.data[ex.data.length - 1]?.x || -Infinity
+        ns.data.slice(oldLen).filter(p => p[0] > lastX).forEach(p => {
+          ex.addPoint(p, false, false)
+          maxTime = Math.max(maxTime, p[0])
+        })
+      } else {
+        chart.addSeries({ ...ns, visible: prevVis[ns.id] ?? (ns.id === activeType) }, false)
+        const pts = chart.get(ns.id).data
+        maxTime = Math.max(maxTime, pts[pts.length - 1]?.x || 0)
+      }
+    })
+    if (isRealtime && maxTime) chart.xAxis[0].setExtremes(maxTime - WINDOW_MS, maxTime, false, false)
+    chart.redraw()
+  }
 )
 </script>
 
 <style>
-.highcharts-legend-item { font-weight: 900 }
+.highcharts-legend-item { font-weight: 900; }
 .highcharts-legend-item .highcharts-graph,
-.highcharts-legend-item .highcharts-point { stroke: #000 !important }
-.highcharts-legend-item .highcharts-point { fill: #000 !important; stroke-width: 2 }
-.highcharts-legend-item-hidden text { fill: #999 !important; color: #999 !important; text-decoration: none !important }
+.highcharts-legend-item .highcharts-point { stroke: #000!important; }
+.highcharts-legend-item .highcharts-point { fill: #000!important; stroke-width: 2; }
+.highcharts-legend-item-hidden text { fill: #999!important; color: #999!important; text-decoration: none!important; }
 .highcharts-legend-item-hidden .highcharts-graph,
-.highcharts-legend-item-hidden .highcharts-point { stroke: #999 !important }
-.highcharts-legend-item-hidden .highcharts-point { fill: #999 !important }
+.highcharts-legend-item-hidden .highcharts-point { stroke: #999!important; }
+.highcharts-legend-item-hidden .highcharts-point { fill: #999!important; }
 </style>
