@@ -2,43 +2,35 @@ name: github pages
 
 on:
   push:
-    branches:
-      - master
+    branches: [ master ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
 
-      - name: Setup Node
-        uses: actions/setup-node@v1
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node & Cache deps
+        uses: actions/setup-node@v3
         with:
           node-version: "20.x"
+          cache: "yarn"
+          cache-dependency-path: yarn.lock
 
-      - name: Get yarn cache
-        id: yarn-cache
-        run: echo "::set-output name=dir::$(yarn cache dir)"
-
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.yarn-cache.outputs.dir }}
-          key: ${{ runner.os }}-website-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-website-
       - run: yarn install --frozen-lockfile
       - run: yarn build
         env:
           VITE_CONFIG_ENV: ${{ vars.VITE_CONFIG_ENV }}
 
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          clean: true
           cname: sensors.social
 
-      - name: Set outputs
+      - name: Set commit output
         id: vars
-        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
