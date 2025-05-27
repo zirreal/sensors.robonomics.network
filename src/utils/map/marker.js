@@ -340,7 +340,7 @@ export async function addPoint(point) {
 function markercolor(value) {
   let color = null;
   const unit = localStorage.getItem("currentUnit") ?? null;
-  const zones = measurements[unit].zones;
+  const zones = measurements[unit].zones || "pm10";
 
   if (unit) {
     const match = zones.find((i) => value <= i?.value);

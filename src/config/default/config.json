@@ -16,7 +16,12 @@
     }
   },
   "SHOW_MESSAGES": true,
-  "DEFAUL_TYPE_PROVIDER": "remote",
+  "DEFAULT_TYPE_PROVIDER": "remote",
+  "VALID_DATA_PROVIDERS": {
+    "realtime": "Realtime",
+    "remote": "Daily Recap"
+  },
+  "DEFAULT_MEASURE_TYPE": "pm10",
   "TITLE": "Web3 public sensors map",
   "SERIES_MAX_VISIBLE": 3000
 }

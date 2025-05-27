@@ -225,7 +225,13 @@ cp -r src/config/template src/config/my-project
     }
   },
   "SHOW_MESSAGES": "Boolean value (true/false) indicating whether to display user messages on the map",
-  "DEFAUL_TYPE_PROVIDER": "Default data provider type (remote or realtime)",
+  "DEFAULT_TYPE_PROVIDER": "Default data provider type (remote or realtime)",
+  // VALID_DATA_PROVIDERS - an object whose keys are the valid provider identifiers (e.g. "realtime", "remote") and whose values are the human-readable labels shown in the UI.
+  "VALID_DATA_PROVIDERS": {
+    "realtime": "Realtime",
+    "remote": "Daily Recap"
+  },
+  "DEFAULT_MEASURE_TYPE": "pm10",
   "TITLE": "Project title",
   "SERIES_MAX_VISIBLE": "Maximum number of data points on the chart before grouping is applied"
 }

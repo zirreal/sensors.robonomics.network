@@ -5,7 +5,6 @@
 
   <SensorPopup
     v-if="isSensor"
-    :currentProvider="props.provider"
     :type="props?.type?.toLowerCase()"
     :point="state?.point"
     @modal="handlerModal"

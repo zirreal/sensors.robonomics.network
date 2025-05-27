@@ -11,10 +11,10 @@ export default {
     ru: "Шум Средн."
   },
   unit: "dB",
-  range: [0, 40, 70, 80, 100],
+  range: [0, 50, 70, 85, 100],
   zones: [
     {
-      value: 40,
+      value: 50,
       color: "#60bc2a",
       label: {
         en: "Faint",
@@ -30,7 +30,7 @@ export default {
       }
     },
     {
-      value: 80,
+      value: 85,
       color: "#ff9d00",
       label: {
         en: "Loud",

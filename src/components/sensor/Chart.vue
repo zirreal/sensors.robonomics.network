@@ -8,7 +8,8 @@
 
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from "vue-i18n";
 import Highcharts from 'highcharts';
 import stockInit from 'highcharts/modules/stock';
 import { Chart } from 'highcharts-vue';
@@ -26,16 +27,21 @@ const props = defineProps({
   }
 });
 
+// Global objects
+const route = useRoute();
+const router = useRouter();
+const { t, locale } = useI18n();
+
 // Fix chart timeline for 1 hour (only for realtime mode, to ensure nice view)
 const WINDOW_MS = 60 * 60 * 1000;
-
-const route = useRoute();
 const MAX_VISIBLE = config.SERIES_MAX_VISIBLE; // For perfomance issues, if reached max - approximation added
+const VALID_TYPES = Object.keys(unitsettings).map(k => k.toLowerCase());
 const chartRef = ref(null); // Chart container
 
 // Tracks the current selected measurement type from the route
 const activeType = computed(() => {
-  return (route.params.type ?? 'pm10').toLowerCase();
+  const t = route.params.type?.toLowerCase();
+  return VALID_TYPES.includes(t) ? t : config.DEFAULT_MEASURE_TYPE;
 });
 
 // Determines if the current provider is in realtime mode
@@ -51,7 +57,10 @@ const chartSeries = ref([]);
 // Reactive Highcharts config that updates when isRealtime changes
 const chartOptions = computed(() => ({
   chart: { type: 'spline', height: 400 },
-  rangeSelector: { inputEnabled: false, buttons: [{ type: 'all', text: 'All' }] },
+  // rangeSelector: { inputEnabled: false, buttons: [{ type: 'all', text: 'All' }] },
+  rangeSelector: {
+    enabled: false,
+  },
   legend: { enabled: true },
   title: { text: '' },
   time: { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
@@ -70,17 +79,76 @@ const chartOptions = computed(() => ({
         : { enabled: true, units: [['minute', [5]]] }
     }
   },
-  series: chartSeries.value // inject dynamic series reactively
+  credits: {
+    enabled: false
+  },
+  series: chartSeries.value, // inject dynamic series reactively
 }));
 
 // Converts raw log data into an array of Highcharts series
+// function buildSeriesArray(log, realtime, maxVisible) {
+//   // Create a lookup table for zones, keyed by lowercase measurement type
+//   const zonesMap = Object.fromEntries(
+//     Object.entries(unitsettings).map(([k, v]) => [k.toLowerCase(), v.zones])
+//   );
+
+//   console.log('unitsettings',unitsettings)
+
+//   // Store series in a Map for fast access and de-duplication by name
+//   const seriesMap = new Map();
+
+//   for (const entry of log) {
+//     const { timestamp, data } = entry;
+
+//     // Skip entries without timestamp or data
+//     if (!timestamp || !data) continue;
+
+//     // Convert UNIX timestamp (in seconds) to milliseconds if needed
+//     const t = String(timestamp).length === 10 ? timestamp * 1000 : timestamp;
+
+//     // Iterate over each key-value pair in the data object
+//     for (const [key, val] of Object.entries(data)) {
+//       const name = key.toLowerCase();
+
+//       // Initialize new series if it doesn't exist yet
+//       if (!seriesMap.has(name)) {
+//         seriesMap.set(name, {
+//           id: name,
+//           name,
+//           data: [],
+//           zones: zonesMap[name] || [],
+//           dataGrouping: {
+//             enabled: true,
+//             units: [['minute', [5]]]
+//           }
+//         });
+//       }
+
+//       // Add the data point [timestamp, value] to the corresponding series
+//       seriesMap.get(name).data.push([t, parseFloat(val)]);
+//     }
+//   }
+
+//   // Convert series Map into an array and apply dataGrouping logic
+//   return Array.from(seriesMap.values()).map(s => ({
+//     ...s,
+//     dataGrouping: realtime
+//       ? { enabled: false }
+//       : (s.data.length > maxVisible
+//          ? { enabled: true, approximation: 'high', units: [['minute', [5]]] }
+//          : s.dataGrouping)
+//   }))
+//   .sort((a, b) => a.name.localeCompare(b.name));
+// }
+
 function buildSeriesArray(log, realtime, maxVisible) {
+
   // Create a lookup table for zones, keyed by lowercase measurement type
   const zonesMap = Object.fromEntries(
     Object.entries(unitsettings).map(([k, v]) => [k.toLowerCase(), v.zones])
   );
 
-  // Store series in a Map for fast access and de-duplication by name
+  // Store series in a Map for fast access and de-duplication by id
   const seriesMap = new Map();
 
   for (const entry of log) {
@@ -92,17 +160,20 @@ function buildSeriesArray(log, realtime, maxVisible) {
     // Convert UNIX timestamp (in seconds) to milliseconds if needed
     const t = String(timestamp).length === 10 ? timestamp * 1000 : timestamp;
 
-    // Iterate over each key-value pair in the data object
     for (const [key, val] of Object.entries(data)) {
-      const name = key.toLowerCase();
+      const id = key.toLowerCase();
 
-      // Initialize new series if it doesn't exist yet
-      if (!seriesMap.has(name)) {
-        seriesMap.set(name, {
-          id: name,
-          name,
+      // On first encounter, initialize series with localized short name
+      if (!seriesMap.has(id)) {
+        const setting = unitsettings[id] || {};
+        const nameshort = setting.nameshort || {};
+        const displayName = nameshort[locale.value] || id;
+
+        seriesMap.set(id, {
+          id,
+          name: displayName,    // use localized short name
           data: [],
-          zones: zonesMap[name] || [],
+          zones: zonesMap[id] || [],
           dataGrouping: {
             enabled: true,
             units: [['minute', [5]]]
@@ -110,21 +181,24 @@ function buildSeriesArray(log, realtime, maxVisible) {
         });
       }
 
-      // Add the data point [timestamp, value] to the corresponding series
-      seriesMap.get(name).data.push([t, parseFloat(val)]);
+      // Push raw point
+      seriesMap.get(id).data.push([t, parseFloat(val)]);
     }
   }
 
-  // Convert series Map into an array and apply dataGrouping logic
-  return Array.from(seriesMap.values()).map(s => ({
-    ...s,
-    dataGrouping: realtime
-      ? { enabled: false }
-      : (s.data.length > maxVisible
-         ? { enabled: true, approximation: 'high', units: [['minute', [5]]] }
-         : s.dataGrouping)
-  }));
+  // Convert to array, apply dataGrouping logic & sort alphabetically by displayName
+  return Array.from(seriesMap.values())
+    .map(s => ({
+      ...s,
+      dataGrouping: realtime
+        ? { enabled: false }
+        : (s.data.length > maxVisible
+           ? { enabled: true, approximation: 'high', units: [['minute', [5]]] }
+           : s.dataGrouping)
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
+
 
 // Builds a chart-ready series array from log data,
 // with realtime and performance settings applied
@@ -133,11 +207,30 @@ const makeSeriesArray = (log) => buildSeriesArray(log, isRealtime.value, MAX_VIS
 
 // Initialize chart when component is mounted
 onMounted(() => {
+
+  // Checks if no any data type "activeType", show first we have in Chart
+  const all = makeSeriesArray(props.log);
+  let selectedType = activeType.value;
+  if (!all.find(s => s.id === selectedType)) {
+    selectedType = all[0]?.id;
+    if (selectedType) {
+      router.replace({
+        params: { ...route.params, type: selectedType }
+      });
+    }
+  }
+
   // Generate initial series based on the log data and selected type
-  const initial = makeSeriesArray(props.log).map(s => ({
+  const initial = all.map(s => ({
     ...s,
-    visible: s.id === activeType.value
+    visible: s.id === selectedType
   }));
+
+  
+  // const initial = makeSeriesArray(props.log).map(s => ({
+  //   ...s,
+  //   visible: s.id === activeType.value
+  // }));
 
   // Set series for the chart (reactively bound via chartOptions)
   chartSeries.value = initial;
@@ -163,21 +256,26 @@ onMounted(() => {
 
 
 // Dynamically append only new points to the chart when log grows
+
 watch(
   () => props.log.length,
   (newLen, oldLen) => {
     if (newLen <= oldLen) return;
 
     const chart = chartRef.value.chart;
-    const raw = makeSeriesArray(props.log);
 
-    // Preserve current visibility state of series
+    // 1. Rebuild and sort series alphabetically by name
+    const raw = makeSeriesArray(props.log)
+      .sort((a, b) => a.name.localeCompare(b.name));
+      
+
+    // 2. Preserve current visibility state of each series
     const prevVis = {};
     chart.series.forEach(s => {
       prevVis[s.options.id] = s.visible;
     });
 
-    // Remove series that no longer exist in the new log
+    // 3. Remove any series that no longer exist in the new data
     chart.series.slice().forEach(s => {
       if (!raw.find(ns => ns.id === s.options.id)) {
         s.remove(false);
@@ -186,48 +284,64 @@ watch(
 
     let maxTime = 0;
 
+    // 4. Update existing series or add new ones
     raw.forEach(ns => {
-      const existingSeries = chart.get(ns.id);
-
-      if (existingSeries) {
-        // Update zones and data grouping if needed
-        existingSeries.update(
-          {
-            zones: ns.zones,
+      const existing = chart.get(ns.id);
+      if (existing) {
+        // 4a. Update zones & dataGrouping
+        existing.update(
+          { 
+            name: ns.name,
+            zones: ns.zones, 
             dataGrouping: ns.dataGrouping
           },
           false
         );
-
-        // Add only new points that came after the last known point
-        const lastX = existingSeries.data.at(-1)?.x || -Infinity;
+        // 4b. Append only new points beyond the last known timestamp
+        const lastX = existing.data.at(-1)?.x || -Infinity;
         ns.data
           .slice(oldLen)
           .filter(p => p[0] > lastX)
           .forEach(p => {
-            existingSeries.addPoint(p, false, false);
+            existing.addPoint(p, false, false);
             maxTime = Math.max(maxTime, p[0]);
           });
       } else {
-        // New series: add it to chart and track its latest timestamp
+        // 4c. Add brand-new series, restoring its visibility or defaulting to activeType
         chart.addSeries(
-          {
-            ...ns,
-            visible: prevVis[ns.id] ?? (ns.id === activeType.value)
+          { 
+            ...ns, 
+            visible: prevVis[ns.id] ?? (ns.id === activeType.value) 
           },
           false
         );
-
         const pts = chart.get(ns.id).data;
         maxTime = Math.max(maxTime, pts.at(-1)?.x || 0);
       }
     });
 
-    // If realtime mode, update the visible time range
+    // 5. In realtime mode, shift the x-axis window to show the last hour
     if (isRealtime.value && maxTime) {
-      chart.xAxis[0].setExtremes(maxTime - WINDOW_MS, maxTime, false, false);
+      chart.xAxis[0].setExtremes(
+        maxTime - WINDOW_MS,
+        maxTime,
+        false,
+        false
+      );
     }
 
+    // 6. Fallback to first series if activeType disappeared
+    if (!raw.find(s => s.id === activeType.value) && raw.length) {
+      const fallback = raw[0].id;
+      router.replace({
+        params: { ...route.params, type: fallback }
+      });
+      chart.series.forEach(s =>
+        s.setVisible(s.options.id === fallback, false)
+      );
+    }
+
+    // 7. Finally, redraw to apply all changes
     chart.redraw();
   }
 );
