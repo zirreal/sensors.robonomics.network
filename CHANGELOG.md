@@ -1,4 +1,7 @@
-v2.1.0 (draft)
+v2.1.1
+Hot fix for cache problem (blank screen)
+
+v2.1.0
 - Fix: Realtime glitch for Chart in sensor pop-up
 - Fix: "Units of measurement" glith in sensor pop-up
 - Fix: removed PWA for now (to fix blank page bug)
@@ -12,7 +15,7 @@ v2.1.0 (draft)
 - Fix: tweaked Noise grades, PM2.5 grades, Radiation grades; added names for PM2.5 and PM10; added grades for Pressure
 
 v2.0.1
-- Feat: In sensor's popup has been added switcher "Realtime / Daily recap"
+Feat: In sensor's popup has been added switcher "Realtime / Daily recap"
 
 v2.0.0
 - Loading events for sensor pop-up
