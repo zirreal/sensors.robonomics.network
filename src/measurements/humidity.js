@@ -30,7 +30,7 @@ export default {
     },
     {
       value: 60,
-      color: "#03a5ed",
+      color: "#60bc2a",
       label: {
         en: "Comfortable",
         ru: "Комфортно"
@@ -38,14 +38,14 @@ export default {
     },
     {
       value: 70,
-      color: "#2a5cbc",
+      color: "#12bfcc",
       label: {
         en: "Humid",
         ru: "Влажно"
       }
     },
     {
-      color: "#7a00da",
+      color: "#2a5cbc",
       label: {
         en: "Very humid",
         ru: "Очень влажно"

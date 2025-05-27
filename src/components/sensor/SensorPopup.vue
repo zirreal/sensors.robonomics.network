@@ -10,9 +10,35 @@
     </section>
 
     <div class="scrollable-y">
+      <section class="flexline">
+        <ProviderType />
+
+        <div v-if="!realtime">
+          <input type="date" v-model="state.start" :max="state.maxDate" />
+        </div>
+
+        <div v-if="realtime" class="flexline">
+          <div>
+            <div v-if="state.rttime" class="rt-time">{{ state.rttime }}</div>
+          </div>
+          <template v-if="state.rtdata && state.rtdata.length">
+            <div v-for="item in state.rtdata" :key="item.key">
+              <div class="rt-unit">{{ item.label }}</div>
+              <div class="rt-number" :style="item.color ? 'color:' + item.color : ''">
+                {{ item.measure }} {{ item.unit }}
+              </div>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <section>
+        <Chart v-show="state.chartReady" :point="props.point" :log="log" />
+        <div v-show="!state.chartReady" class="chart-skeleton"></div>
+      </section>
+
       <section class="flexline space-between">
         <div class="flexline">
-          <input v-if="!realtime" type="date" v-model="state.start" :max="state.maxDate" />
           <Bookmark
             v-if="sensor_id"
             :id="sensor_id"
@@ -37,28 +63,6 @@
             <font-awesome-icon icon="fa-solid fa-check" v-if="state.sharedLink" />
           </button>
         </div>
-      </section>
-
-      <SelectRealtime :provider="currentProvider" />
-      <section v-if="realtime" class="flexline">
-        <div>
-          <!-- <div class="rt-title">Realtime view mode</div> -->
-          <div v-if="state.rttime" class="rt-time">{{ state.rttime }}</div>
-        </div>
-        <template v-if="state.rtdata && state.rtdata.length">
-          <div v-for="item in state.rtdata" :key="item.key">
-            <div class="rt-unit">{{ item.label }}</div>
-            <div class="rt-number" :style="item.color ? 'color:' + item.color : ''">
-              {{ item.measure }} {{ item.unit }}
-            </div>
-          </div>
-        </template>
-      </section>
-
-      <section>
-        <!-- Показываем Chart, если данные готовы, иначе — скелет для графика -->
-        <Chart v-show="state.chartReady" :point="props.point" :log="log" />
-        <div v-show="!state.chartReady" class="chart-skeleton"></div>
       </section>
 
       <section>
@@ -110,7 +114,7 @@
             <template v-if="item?.zones && (item.name || item.label)">
               <p>
                 <b v-if="item.name">
-                  {{ item.name[localeComputed] ? item.name[localeComputed] : item.name.en }}
+                  {{item.nameshort[localeComputed]}}
                 </b>
                 <b v-else>{{ item.label }}</b>
                 ({{ item.unit }})
@@ -160,14 +164,13 @@ import { getAddressByPos } from "../../utils/map/utils";
 import Bookmark from "./Bookmark.vue";
 import Chart from "./Chart.vue";
 import Copy from "./Copy.vue";
-import SelectRealtime from "./SelectRealtime.vue";
+import ProviderType from "../ProviderType.vue"
 
 // Props и emits
 const props = defineProps({
   type: String,
   point: Object,
   startTime: [Number, String],
-  currentProvider: String,
 });
 const emit = defineEmits(["close"]);
 
@@ -187,7 +190,7 @@ const state = reactive({
   isShowPath: false,
   start: moment().format("YYYY-MM-DD"),
   maxDate: moment().format("YYYY-MM-DD"),
-  provider: route.params.provider,
+  provider: getTypeProvider(route.params),
   rttime: null,
   rtdata: [],
   sharedDefault: false,
@@ -196,7 +199,13 @@ const state = reactive({
   chartEverLoaded: false,
 });
 
-// Вычисляемые свойства
+
+// some refs
+const address = ref({});
+const prevGeo = ref({ lat: null, lng: null });
+const units = ref([]);
+
+// computed
 const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
 
 const geo = computed(() => {
@@ -207,13 +216,9 @@ const geo = computed(() => {
   return { lat: Number(lat) || 0, lng: Number(lng) || 0 };
 });
 
-const address = ref({});
-const prevGeo = ref({ lat: null, lng: null });
-
 // Если спустя 5 секунд address всё ещё пустой, подставляем координаты.
 setTimeout(() => {
   if (!address.value || Object.keys(address.value).length === 0) {
-    // Задаем объект с координатами (например, country пустой, а address — строка с lat, lng)
     address.value = {
       country: "Unrecognised address",
       address: [`${geo.value.lat}, ${geo.value.lng}`],
@@ -230,7 +235,6 @@ const donated_by = computed(() => props.point?.donated_by || null);
 const log = computed(() => (Array.isArray(props.point?.log) ? props.point.log : []));
 const model = computed(() => props.point?.model || null);
 const sender = computed(() => props.point?.sender || null);
-
 const realtime = computed(() => state.provider === "realtime");
 
 const addressformatted = computed(() => {
@@ -263,18 +267,6 @@ const endTimestamp = computed(() => {
   return Number(moment(state.start + " 23:59:59", "YYYY-MM-DD HH:mm:ss").format("X"));
 });
 
-const units = computed(() => {
-  const measures = [];
-  log.value.forEach((item) => {
-    if (item.data) {
-      Object.keys(item.data).forEach((unit) => {
-        measures.push(unit.toLowerCase());
-      });
-    }
-  });
-  return [...new Set(measures)];
-});
-
 const scales = computed(() => {
   const buffer = [];
   Object.keys(measurements).forEach((key) => {
@@ -282,7 +274,12 @@ const scales = computed(() => {
       buffer.push(measurements[key]);
     }
   });
-  return buffer;
+  
+  return buffer.sort((a, b) => {
+    const nameA = a.nameshort[localeComputed] || '';
+    const nameB = b.nameshort[localeComputed] || '';
+    return nameA.localeCompare(nameB);
+  });
 });
 
 const linkSensor = computed(() => {
@@ -290,7 +287,7 @@ const linkSensor = computed(() => {
     const resolved = router.resolve({
       name: "main",
       params: {
-        provider: getTypeProvider(),
+        provider: state.provider,
         type: route.params.type || "pm10",
         zoom: route.params.zoom || config.MAP.zoom,
         lat: geo.value.lat,
@@ -310,6 +307,9 @@ const link = computed(() => {
 const icon = computed(() => {
   return sensors[sensor_id.value] ? sensors[sensor_id.value].icon : "";
 });
+
+
+// methods
 
 const shareData = () => {
   if (navigator.share) {
@@ -332,7 +332,7 @@ const shareLink = () => {
     .catch((e) => console.log("not copied", e));
 };
 
-function getHistory() {
+const getHistory = () => {
   if (realtime.value) return;
   state.isLoad = true;
   emit("history", {
@@ -342,7 +342,8 @@ function getHistory() {
   });
 }
 
-function updatert() {
+// Updates the realtime view: refreshes the timestamp and rebuilds state.rtdata with the latest measurements, labels, units, and zone colors.
+const updatert = () => {
   if (realtime.value && log.value.length > 0) {
     const ts = last.value.timestamp * 1000;
     if (ts) {
@@ -357,7 +358,7 @@ function updatert() {
             const buffer = {
               key: datakey,
               measure: data[datakey],
-              label: measurements[item].label,
+              label: measurements[item].nameshort[localeComputed.value] || measurements[item].label,
               unit: measurements[item].unit,
               color: undefined,
             };
@@ -378,7 +379,7 @@ function updatert() {
   }
 }
 
-function closesensor() {
+const closesensor = () => {
   const urlStr = window.location.href;
   if (urlStr.includes(sensor_id.value)) {
     const u = urlStr.replace(sensor_id.value, "");
@@ -386,6 +387,8 @@ function closesensor() {
   }
   emit("close");
 }
+
+// events
 
 onMounted(() => {
   state.start = props.startTime
@@ -406,17 +409,29 @@ watch(
     getHistory();
   }
 );
-watch(log, () => {
-  updatert();
-  state.isLoad = false;
-});
 
-// EN: Check if log is ready to show Chart
-watch(
-  () => props.point?.log,
-  (log) => {
-    if (!state.chartReady && Array.isArray(log) && log.length > 0) {
-      state.chartReady = true;
+watch(() => log.value, (i) => {
+    if(Array.isArray(i) && i.length > 0) {
+
+      // EN: Checks if log is ready to show Chart
+      updatert();
+      state.isLoad = false;
+
+      if (!state.chartReady) {
+        state.chartReady = true;
+      }
+
+      // EN: Checks if units set is changed (to show scales)
+      const unitsSet = new Set();
+      i.forEach((item) => {
+        if (item.data)
+          Object.keys(item.data).forEach((u) => unitsSet.add(u.toLowerCase()))
+      });
+      const newUnits = Array.from(unitsSet).sort();
+      const oldUnits = units.value;
+      const changed = newUnits.length !== oldUnits.length || newUnits.some((u, i) => u !== oldUnits[i]);
+      if (changed) units.value = newUnits
+
     }
   },
   { immediate: true }
@@ -428,7 +443,7 @@ watch(
   (newPoint) => {
     if (newPoint && newPoint.sensor_id && newPoint.geo) {
       router.replace({
-        name: route.name, // Assumes your route name remains the same
+        name: route.name, // Assumes the route name remains the same
         params: {
           provider: state.provider,
           type: props.type.toLowerCase(),
@@ -476,7 +491,6 @@ watchEffect(() => {
     address.value = {};
   }
 });
-
 </script>
 
 <style scoped>

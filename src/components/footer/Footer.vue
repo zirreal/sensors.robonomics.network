@@ -19,7 +19,10 @@
 
     <div class="flexline">
       <div id="mapsettings" class="popover-bottom-right popover" popover>
-        <SelectRealtime :provider="currentProvider" :width="true" />
+        <section>
+          <ProviderType />
+        </section>
+        
         <section>
           <input id="wind" v-model="wind" type="checkbox" :disabled="!realtime" />
           <label for="wind">{{ $t("layer.wind") }}</label>
@@ -65,13 +68,13 @@ import { useStore } from "@/store";
 import config from "@config";
 import Bookmarks from "@/components/Bookmarks.vue";
 import HistoryImport from "./HistoryImport.vue";
-import SelectRealtime from "@/components/sensor/SelectRealtime.vue";
 import { instanceMap } from "../../utils/map/instance";
 import { switchMessagesLayer } from "../../utils/map/marker";
 import { switchLayer } from "../../utils/map/wind";
 import measurements from "../../measurements";
 import { getTypeProvider } from "../../utils/utils";
 import { Remote } from "../../providers";
+import ProviderType from "../ProviderType.vue";
 
 // props и emits
 const props = defineProps({
