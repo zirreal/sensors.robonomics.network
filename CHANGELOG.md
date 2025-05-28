@@ -1,3 +1,6 @@
+v2.1.3
+Hotfix testing release. Some trouble with cache
+
 v2.1.2
 - Fix: "Daily recap" date picked chart redrawing bug
 - Refactor: updated name of project in package, removed some unnessecary logs to debug in console
