@@ -72,7 +72,7 @@ export default {
               const request = store.get(this.bookmarkid);
 
               request.addEventListener("error", (e) => {
-                console.log(e);
+                console.error(e);
               });
 
               request.addEventListener("success", (e) => {
@@ -81,7 +81,7 @@ export default {
                 const requestUpdate = store.put(data);
 
                 requestUpdate.addEventListener("error", (e) => {
-                  console.log(e);
+                  console.error(e);
                 });
 
                 requestUpdate.addEventListener("success", (e) => {
@@ -123,8 +123,6 @@ export default {
       this.bookmarkid = bookmark.id;
       this.bookmarkname = bookmark.customName;
     }
-
-    console.log(this.$props);
   },
 };
 </script>

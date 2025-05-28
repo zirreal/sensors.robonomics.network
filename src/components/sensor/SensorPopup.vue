@@ -13,11 +13,11 @@
       <section class="flexline">
         <ProviderType />
 
-        <div v-if="!realtime">
-          <input type="date" v-model="state.start" :max="state.maxDate" />
+        <div v-if="state.provider !== 'realtime'">
+          <input type="date" v-model="state.start" :max="state.maxDate" onchange="this.blur()" />
         </div>
 
-        <div v-if="realtime" class="flexline">
+        <div v-if="state.provider === 'realtime'" class="flexline">
           <div>
             <div v-if="state.rttime" class="rt-time">{{ state.rttime }}</div>
           </div>
@@ -172,7 +172,7 @@ const props = defineProps({
   point: Object,
   startTime: [Number, String],
 });
-const emit = defineEmits(["close"]);
+const emit = defineEmits(["history", "close"]);
 
 // Глобальные объекты
 const store = useStore();
@@ -195,8 +195,8 @@ const state = reactive({
   rtdata: [],
   sharedDefault: false,
   sharedLink: false,
-  isLoad: false,
   chartEverLoaded: false,
+  chartReady: false
 });
 
 
@@ -235,7 +235,6 @@ const donated_by = computed(() => props.point?.donated_by || null);
 const log = computed(() => (Array.isArray(props.point?.log) ? props.point.log : []));
 const model = computed(() => props.point?.model || null);
 const sender = computed(() => props.point?.sender || null);
-const realtime = computed(() => state.provider === "realtime");
 
 const addressformatted = computed(() => {
   let buffer = "";
@@ -329,12 +328,14 @@ const shareLink = () => {
         state.sharedLink = false;
       }, 5000);
     })
-    .catch((e) => console.log("not copied", e));
+    .catch((e) => console.error("Sensor's link not copied", e));
 };
 
 const getHistory = () => {
-  if (realtime.value) return;
-  state.isLoad = true;
+  if (state.provider === "realtime") return;
+
+  state.chartReady = false;
+
   emit("history", {
     sensor_id: sensor_id.value,
     start: startTimestamp.value,
@@ -344,7 +345,7 @@ const getHistory = () => {
 
 // Updates the realtime view: refreshes the timestamp and rebuilds state.rtdata with the latest measurements, labels, units, and zone colors.
 const updatert = () => {
-  if (realtime.value && log.value.length > 0) {
+  if (state.provider === "realtime" && log.value.length > 0) {
     const ts = last.value.timestamp * 1000;
     if (ts) {
       state.rttime = new Date(ts).toLocaleString();
@@ -415,7 +416,6 @@ watch(() => log.value, (i) => {
 
       // EN: Checks if log is ready to show Chart
       updatert();
-      state.isLoad = false;
 
       if (!state.chartReady) {
         state.chartReady = true;

@@ -1,3 +1,7 @@
+v2.1.2
+- Fix: "Daily recap" date picked chart redrawing bug
+- Refactor: updated name of project in package, removed some unnessecary logs to debug in console
+
 v2.1.1
 Hot fix for cache problem (blank screen)
 
