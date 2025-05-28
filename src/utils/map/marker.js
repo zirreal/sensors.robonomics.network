@@ -222,7 +222,7 @@ function iconCreateCircle(colors, isBookmarked, id) {
   // });
 
   return new L.DivIcon({
-    html: `<div data-id="${id}" class='marker-cluster-circle ${isBookmarked ? "sensor-bookmarked" : ''}' style='color:${colors.border};background-color: ${colors.basic};border-color: ${colors.border};'></div>`,
+    html: `<div data-id="${id ?? ''}" class='marker-cluster-circle ${isBookmarked ? "sensor-bookmarked" : ''}' style='color:${colors.border};background-color: ${colors.basic};border-color: ${colors.border};'></div>`,
     className: "marker-cluster",
     iconSize: new L.Point(40, 40),
   });
