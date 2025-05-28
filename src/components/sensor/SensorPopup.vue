@@ -591,17 +591,29 @@ h3.flexline {
     top: 30vw;
     padding-right: calc(var(--gap) * 0.5);
   }
+
+  .close {
+    top: -35px;
+    right: 10px;
+    background-color: #fff;
+    width: 40px;
+    height: 40px;
+  }
 }
 
 @container popup (min-width: 400px) {
   .close {
-    font-size: 1.6em;
+    font-size: 1.8em;
   }
 }
 
 @container popup (max-width: 400px) {
   h3.flexline {
     max-width: calc(100% - var(--gap) * 3);
+  }
+
+  .close {
+    font-size: 1.8em;
   }
 }
 
@@ -631,11 +643,18 @@ h3.flexline {
 @media screen and (max-width: 570px) {
   .shared-container {
     display: flex;
-    flex-direction: column;
+    /* flex-direction: column; */
     gap: 10px;
+    padding-right: 10px;
   }
   .shared-container button:first-of-type {
     margin-right: 0;
+    flex-shrink: 0;
+  }
+
+  .shared-container button {
+    min-width: 20px;
+    min-height: 20px;
   }
 }
 /* shared container */

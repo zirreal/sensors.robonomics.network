@@ -136,9 +136,9 @@ label {
   transition: opacity 0.3s ease-in-out;
 }
 
-:popover-open ~ [popovertarget] {
+/* :popover-open ~ [popovertarget] {
   opacity: .6;
-}
+} */
 
 :popover-open::backdrop {
   backdrop-filter: grayscale(1);

@@ -214,7 +214,7 @@ function createIconArrow(dir, speed, color) {
   });
 }
 
-function iconCreateCircle(colors) {
+function iconCreateCircle(colors, isBookmarked, id) {
   // return new L.DivIcon({
   //   html: `<div class='marker-cluster-circle' style='color:${colors.border};background-color: rgba(${colors.rgb}, 0.7);border-color: ${colors.border};'></div>`,
   //   className: "marker-cluster",
@@ -222,7 +222,7 @@ function iconCreateCircle(colors) {
   // });
 
   return new L.DivIcon({
-    html: `<div class='marker-cluster-circle' style='color:${colors.border};background-color: ${colors.basic};border-color: ${colors.border};'></div>`,
+    html: `<div data-id="${id}" class='marker-cluster-circle ${isBookmarked ? "sensor-bookmarked" : ''}' style='color:${colors.border};background-color: ${colors.basic};border-color: ${colors.border};'></div>`,
     className: "marker-cluster",
     iconSize: new L.Point(40, 40),
   });
@@ -246,7 +246,7 @@ function createMarkerArrow(coord, data, colors) {
 
 function createMarkerCircle(coord, data, colors) {
   return L.marker(new L.LatLng(coord[0], coord[1]), {
-    icon: iconCreateCircle(colors),
+    icon: iconCreateCircle(colors, data.isBookmarked, data.sensor_id),
     data: data,
     typeMarker: "circle",
   });
@@ -294,7 +294,7 @@ function updateMarker(marker, point, colors) {
   ) {
     marker.setIcon(createIconArrow(point.data.windang, point.data.windspeed, colors.basic));
   } else {
-    marker.setIcon(iconCreateCircle(colors));
+    marker.setIcon(iconCreateCircle(colors, point.isBookmarked));
   }
   if (point.model === 3) {
     const coord = [point.geo.lat, point.geo.lng];

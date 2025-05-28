@@ -47,6 +47,10 @@ export default {
           bc.close();
         }
       );
+        const sensorElement = document.querySelector(`[data-id="${id}"]`);
+        if (sensorElement && sensorElement.classList.contains('sensor-bookmarked')) {
+          sensorElement.classList.remove('sensor-bookmarked');
+        }
     },
 
     showsensor(bookmark) {
