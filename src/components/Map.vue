@@ -90,7 +90,7 @@ export default {
     },
 
     relocatemap(lat, lng, zoom, type = "default") {
-      console.log("relocatemap", lat, lng, zoom, type);
+      console.debug("relocatemap", lat, lng, zoom, type);
       const options = {
         name: "main",
         params: {
@@ -306,10 +306,10 @@ export default {
   },
   watch: {
     geoisloading(v) {
-      console.log("geoisloading changed", v);
+      console.debug("geoisloading changed", v);
     },
     geomsg(v) {
-      console.log("geomsg changed", v);
+      console.debug("geomsg changed", v);
     },
   },
 

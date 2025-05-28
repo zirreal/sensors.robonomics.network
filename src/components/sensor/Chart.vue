@@ -85,62 +85,6 @@ const chartOptions = computed(() => ({
   series: chartSeries.value, // inject dynamic series reactively
 }));
 
-// Converts raw log data into an array of Highcharts series
-// function buildSeriesArray(log, realtime, maxVisible) {
-//   // Create a lookup table for zones, keyed by lowercase measurement type
-//   const zonesMap = Object.fromEntries(
-//     Object.entries(unitsettings).map(([k, v]) => [k.toLowerCase(), v.zones])
-//   );
-
-//   console.log('unitsettings',unitsettings)
-
-//   // Store series in a Map for fast access and de-duplication by name
-//   const seriesMap = new Map();
-
-//   for (const entry of log) {
-//     const { timestamp, data } = entry;
-
-//     // Skip entries without timestamp or data
-//     if (!timestamp || !data) continue;
-
-//     // Convert UNIX timestamp (in seconds) to milliseconds if needed
-//     const t = String(timestamp).length === 10 ? timestamp * 1000 : timestamp;
-
-//     // Iterate over each key-value pair in the data object
-//     for (const [key, val] of Object.entries(data)) {
-//       const name = key.toLowerCase();
-
-//       // Initialize new series if it doesn't exist yet
-//       if (!seriesMap.has(name)) {
-//         seriesMap.set(name, {
-//           id: name,
-//           name,
-//           data: [],
-//           zones: zonesMap[name] || [],
-//           dataGrouping: {
-//             enabled: true,
-//             units: [['minute', [5]]]
-//           }
-//         });
-//       }
-
-//       // Add the data point [timestamp, value] to the corresponding series
-//       seriesMap.get(name).data.push([t, parseFloat(val)]);
-//     }
-//   }
-
-//   // Convert series Map into an array and apply dataGrouping logic
-//   return Array.from(seriesMap.values()).map(s => ({
-//     ...s,
-//     dataGrouping: realtime
-//       ? { enabled: false }
-//       : (s.data.length > maxVisible
-//          ? { enabled: true, approximation: 'high', units: [['minute', [5]]] }
-//          : s.dataGrouping)
-//   }))
-//   .sort((a, b) => a.name.localeCompare(b.name));
-// }
-
 function buildSeriesArray(log, realtime, maxVisible) {
 
   // Create a lookup table for zones, keyed by lowercase measurement type
@@ -255,12 +199,13 @@ onMounted(() => {
 });
 
 
+// Realtime watcher
 // Dynamically append only new points to the chart when log grows
-
 watch(
   () => props.log.length,
   (newLen, oldLen) => {
-    if (newLen <= oldLen) return;
+
+    if (!isRealtime.value || newLen <= oldLen) return;
 
     const chart = chartRef.value.chart;
 
@@ -344,6 +289,24 @@ watch(
     // 7. Finally, redraw to apply all changes
     chart.redraw();
   }
+);
+
+// Daily recap watcher
+// Redrawes all chart if log is changed
+watch(
+  () => props.log,
+  newLog => {
+    if (isRealtime.value) return;
+
+    const all = makeSeriesArray(newLog);
+    const initial = all.map(s => ({
+      ...s,
+      visible: s.id === activeType.value
+    }));
+
+    chartSeries.value = initial;
+  },
+  { deep: true }
 );
 
 </script>
