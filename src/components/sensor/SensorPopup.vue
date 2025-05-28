@@ -10,7 +10,7 @@
     </section>
 
     <div class="scrollable-y">
-      <section class="flexline">
+      <section class="flexline flexline-mobile-column">
         <ProviderType />
 
         <div v-if="state.provider !== 'realtime'">
@@ -584,6 +584,13 @@ h3.flexline {
   }
 }
 
+@media screen  and (max-width: 9600px) {
+  .flexline-mobile-column .flexline {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+}
+
 @media screen and (max-width: 700px) {
   .popup-js.active {
     left: 0;
@@ -598,6 +605,11 @@ h3.flexline {
     background-color: #fff;
     width: 40px;
     height: 40px;
+  }
+
+  .flexline-mobile-column {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
