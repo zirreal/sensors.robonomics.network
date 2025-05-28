@@ -141,6 +141,13 @@ const handlerNewPoint = async (point) => {
     ? Object.fromEntries(Object.entries(point.data).map(([k, v]) => [k.toLowerCase(), v]))
     : {};
 
+
+  store.idbBookmarks.map(bookmark => {
+    if(bookmark.id === point.sensor_id) {
+      point.isBookmarked = true;
+    }
+  })
+
   // Добавление маркера
   markers.addPoint({
     ...point,
