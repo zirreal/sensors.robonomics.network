@@ -17,6 +17,9 @@ export default {
     addSensorText3:
       ". We welcome your participation and look forward to expanding our community together. Join us today!",
     addSensorLink3: "YouTube video guide",
+    buySensorTitle: "Buy our ready to use sensor",
+    buySensorText: "Outside – unique 3D-printed box. Inside – good-quality sensors, wide range of measurements in one device (PM2.5, PM10, noise, atmospheric pressure, humidity, temperature), open-source firmware, offline mode.",
+    buySensorLink: "Learn more & buy",
   },
   measures: {
     title: "Air measurements information",

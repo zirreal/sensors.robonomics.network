@@ -3,7 +3,7 @@ import airtempavg from "./airtempavg";
 import airtempmax from "./airtempmax";
 import airtempmin from "./airtempmin";
 import co from "./co";
-import gc from "./gc";
+import radiation from "./radiation";
 import humidity from "./humidity";
 import nh3 from "./nh3";
 import no2 from "./no2";
@@ -29,7 +29,7 @@ export default {
   airtempmax,
   airtempmin,
   co,
-  gc,
+  radiation,
   humidity,
   nh3,
   no2,

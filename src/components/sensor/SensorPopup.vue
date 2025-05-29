@@ -65,6 +65,44 @@
         </div>
       </section>
 
+      <AltruistPromo />
+
+      <section v-if="units && scales && scales.length > 0">
+        <h3>{{ t("scales.title") }}</h3>
+        <div class="scalegrid">
+          <div v-for="item in scales" :key="item.label">
+            <template v-if="item?.zones && (item.name || item.label)">
+              <p>
+                <b v-if="item.name">
+                  {{item.nameshort[localeComputed]}}
+                </b>
+                <b v-else>{{ item.label }}</b>
+                ({{ item.unit }})
+              </p>
+              <template v-for="zone in item.zones" :key="zone.color">
+                <div
+                  class="scales-color"
+                  v-if="zone.color && zone.label"
+                  :style="`--color: ${zone.color}`"
+                >
+                  <b>
+                    {{ zone.label[localeComputed] ? zone.label[localeComputed] : zone.label.en }}
+                  </b>
+                  (<template v-if="zone.value">{{ t("scales.upto") }} {{ zone.value }}</template>
+                  <template v-else>{{ t("scales.above") }}</template
+                  >)
+                </div>
+              </template>
+            </template>
+          </div>
+        </div>
+
+        <p class="textsmall">
+          <template v-if="isRussia">{{ t("notice_with_fz") }}</template>
+          <template v-else>{{ t("notice_without_fz") }}</template>
+        </p>
+      </section>
+
       <section>
         <h3>{{ t("sensorpopup.infotitle") }}</h3>
         <div class="infoline flexline" v-if="sensor_id">
@@ -106,42 +144,6 @@
           </div>
         </div>
       </section>
-
-      <section v-if="units && scales && scales.length > 0">
-        <h3>{{ t("scales.title") }}</h3>
-        <div class="scalegrid">
-          <div v-for="item in scales" :key="item.label">
-            <template v-if="item?.zones && (item.name || item.label)">
-              <p>
-                <b v-if="item.name">
-                  {{item.nameshort[localeComputed]}}
-                </b>
-                <b v-else>{{ item.label }}</b>
-                ({{ item.unit }})
-              </p>
-              <template v-for="zone in item.zones" :key="zone.color">
-                <div
-                  class="scales-color"
-                  v-if="zone.color && zone.label"
-                  :style="`--color: ${zone.color}`"
-                >
-                  <b>
-                    {{ zone.label[localeComputed] ? zone.label[localeComputed] : zone.label.en }}
-                  </b>
-                  (<template v-if="zone.value">{{ t("scales.upto") }} {{ zone.value }}</template>
-                  <template v-else>{{ t("scales.above") }}</template
-                  >)
-                </div>
-              </template>
-            </template>
-          </div>
-        </div>
-
-        <p class="textsmall">
-          <template v-if="isRussia">{{ t("notice_with_fz") }}</template>
-          <template v-else>{{ t("notice_without_fz") }}</template>
-        </p>
-      </section>
     </div>
 
     <button @click.prevent="closesensor" aria-label="Close sensor" class="close">
@@ -164,7 +166,8 @@ import { getAddressByPos } from "../../utils/map/utils";
 import Bookmark from "./Bookmark.vue";
 import Chart from "./Chart.vue";
 import Copy from "./Copy.vue";
-import ProviderType from "../ProviderType.vue"
+import ProviderType from "../ProviderType.vue";
+import AltruistPromo from "../AltruistPromo.vue";
 
 // Props и emits
 const props = defineProps({

@@ -1,3 +1,8 @@
+v2.1.4
+- Feat: Added bookmark icon for bookmarked sensors on the map
+- Feat: Altruit promo section added
+- Style: Sensors count styling
+
 v2.1.3
 Hotfix testing release. Some trouble with cache
 
