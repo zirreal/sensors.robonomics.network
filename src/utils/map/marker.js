@@ -294,7 +294,7 @@ function updateMarker(marker, point, colors) {
   ) {
     marker.setIcon(createIconArrow(point.data.windang, point.data.windspeed, colors.basic));
   } else {
-    marker.setIcon(iconCreateCircle(colors, point.isBookmarked));
+    marker.setIcon(iconCreateCircle(colors, point.isBookmarked, point.sensor_id));
   }
   if (point.model === 3) {
     const coord = [point.geo.lat, point.geo.lng];
