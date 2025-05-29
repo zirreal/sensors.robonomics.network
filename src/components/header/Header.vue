@@ -6,12 +6,12 @@
       </router-link>
 
       <div class="sensors" v-if="store.sensors?.length > 0">
-        <IconSensor class="sensors-mainicon" />
 
-        <b>{{ store.sensors?.length }}</b>
+        <IconSensor class="sensors-mainicon" />
+        <b class="sensor-item">{{ store.sensors?.length }}</b>
 
         <details v-if="zeroGeoSensors.length > 0" tabindex="0">
-          <summary>
+          <summary class="sensor-item">
             <font-awesome-icon icon="fa-solid fa-exclamation" /> 
             {{ zeroGeoSensors.length }}
           </summary>
@@ -77,7 +77,8 @@
           >{{ $t("header.addSensorLink3") }}</a>
         </p>
 
-        <hr />
+        <AltruistPromo />
+
         <section class="navlinks">
           <a
             href="https://github.com/airalab/sensors.robonomics.network"
@@ -89,7 +90,7 @@
         </section>
       </div>
       <button class="popovercontrol" popovertarget="about">
-        <font-awesome-icon icon="fa-solid fa-bars" />
+        <font-awesome-icon icon="fa-solid fa-info" />
       </button>
     </div>
   </header>
@@ -99,9 +100,10 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { useStore } from "@/store";
 import { languages } from "@/translate";
-import IconSensor from "../icons/Sensor.vue";
 import config from "@config";
 import { useI18n } from "vue-i18n";
+import IconSensor from "../icons/Sensor.vue";
+import AltruistPromo from "../AltruistPromo.vue";
 
 const { locale: i18nLocale } = useI18n();
 
@@ -256,16 +258,23 @@ header > * {
 .sensors {
   color: #000;
   background: var(--color-orange);
-  padding: 4px 10px;
-  display: block;
+  display: flex;
+  align-content: center;
   border-radius: 5px;
   display: flex;
-  gap: 10px;
-  align-items: center;
+  gap: 8px;
+  align-items: stretch;
 }
 
 .sensors-mainicon {
   width: 22px;
+  margin: 4px 0 4px 4px;
+}
+
+.sensor-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
 details {
@@ -281,8 +290,9 @@ details summary::marker {
 summary {
   cursor: pointer;
   background-color: #fff;
-  border-radius: 5px;
+  border-radius: 0 5px 5px 0;
   padding: 0 5px;
+  height: 100%;
 }
 
 .details-content {
