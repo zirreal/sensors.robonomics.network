@@ -77,7 +77,7 @@
           >{{ $t("header.addSensorLink3") }}</a>
         </p>
 
-        <AltruistPromo />
+        <AltruistPromo animated />
 
         <section class="navlinks">
           <a
@@ -88,6 +88,8 @@
           <router-link to="/air-measurements">{{ $t("links.measurement") }}</router-link>
           <router-link to="/privacy-policy">{{ $t("links.privacy") }}</router-link>
         </section>
+
+        <ReleaseInfo />
       </div>
       <button class="popovercontrol" popovertarget="about">
         <font-awesome-icon icon="fa-solid fa-info" />
@@ -104,6 +106,7 @@ import config from "@config";
 import { useI18n } from "vue-i18n";
 import IconSensor from "../icons/Sensor.vue";
 import AltruistPromo from "../AltruistPromo.vue";
+import ReleaseInfo from "../ReleaseInfo.vue";
 
 const { locale: i18nLocale } = useI18n();
 
@@ -208,6 +211,11 @@ header > * {
   max-width: 100%;
 }
 
+.popover {
+  max-height: 80svh;
+  overflow-x: auto;
+}
+
 .popover-top-right {
   top: calc(var(--gap) * 3 + var(--app-inputheight));
   right: var(--gap);
@@ -231,10 +239,12 @@ header > * {
 
 .navlinks a {
   display: block;
+  padding: 5px 0;
 }
 
 .navlinks a:not(:last-child) {
   margin-bottom: calc(var(--gap) * 0.5);
+  border-bottom: 1px dotted #000;
 }
 
 

@@ -1,3 +1,10 @@
+v2.x.x (draft)
+- Refactor: added in sensor's chart checking if data is duplicated
+- Refactor: added as DEFAULT_MEASURE_TYPE PM 2.5 value
+- Fix: Radiation naming fixed
+- Feat: added realese info and bage about Polkadot (added REPO_NAME in config)
+- Fix: name of sensor removed reloading on new points in Realtime
+
 v2.1.4
 - Feat: Added bookmark icon for bookmarked sensors on the map
 - Feat: Altruit promo section added

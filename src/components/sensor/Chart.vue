@@ -7,7 +7,19 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue';
+/*
+ * This component renders a Highcharts stockChart (spline) and supports two data modes:
+ *   • Realtime mode (“realtime” provider):
+ *       – Disables data grouping to show every point as it arrives.
+ *       – Applies a rolling 1-hour time window on mount and as new data comes in.
+ *       – Uses a watcher on props.log.length to efficiently append only new points,
+ *         update existing series, remove deleted ones, and shift the x-axis window.
+ *   • Remote (historical/recap) mode:
+ *       – Enables Highcharts data grouping (5-minute bins) when point count exceeds threshold.
+ *       – Disables the realtime logic and simply redraws the chart whenever the full log array changes.
+ */
+
+import { ref, watch, onMounted, computed, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from "vue-i18n";
 import Highcharts from 'highcharts';
@@ -21,6 +33,7 @@ stockInit(Highcharts);
 
 // Props and Refs
 const props = defineProps({
+  /* log - Array of `{ timestamp, data }` entries; timestamps may be in seconds or ms. */
   log: {
     type: Array,
     default: () => []
@@ -130,17 +143,27 @@ function buildSeriesArray(log, realtime, maxVisible) {
     }
   }
 
+  // Remove duplicated points and sorting by time
   // Convert to array, apply dataGrouping logic & sort alphabetically by displayName
-  return Array.from(seriesMap.values())
-    .map(s => ({
-      ...s,
-      dataGrouping: realtime
-        ? { enabled: false }
-        : (s.data.length > maxVisible
-           ? { enabled: true, approximation: 'high', units: [['minute', [5]]] }
-           : s.dataGrouping)
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const seriesArray = Array.from(seriesMap.values()).map(s => ({
+    ...s,
+    data: s.data
+      .reduce((acc, [timestamp, value]) => {
+        if (!acc.some(([t]) => t === timestamp)) {
+          acc.push([timestamp, value]);
+        }
+        return acc;
+      }, [])
+      .sort((a, b) => a[0] - b[0]),
+    dataGrouping: realtime
+      ? { enabled: false }
+      : (s.data.length > maxVisible
+         ? { enabled: true, approximation: 'high', units: [['minute', [5]]] }
+         : s.dataGrouping)
+  }));
+
+  return seriesArray.sort((a, b) => a.name.localeCompare(b.name));
+
 }
 
 
@@ -150,7 +173,7 @@ const makeSeriesArray = (log) => buildSeriesArray(log, isRealtime.value, MAX_VIS
 
 
 // Initialize chart when component is mounted
-onMounted(() => {
+onMounted(async () => {
 
   // Checks if no any data type "activeType", show first we have in Chart
   const all = makeSeriesArray(props.log);
@@ -181,20 +204,25 @@ onMounted(() => {
 
   // If in realtime mode, fix the visible time window to the last hour
   if (isRealtime.value) {
-    setTimeout(() => {
-      const chart = chartRef.value.chart;
+    await nextTick();
 
-      // Find the latest timestamp among all series
-      const lastTime = initial.reduce(
-        (max, s) => Math.max(max, s.data[s.data.length - 1]?.[0] || 0),
-        0
+    const chart = chartRef.value.chart;
+
+    // Find the latest timestamp among all series
+    const lastTime = initial.reduce(
+      (max, s) => Math.max(max, s.data[s.data.length - 1]?.[0] || 0),
+      0
+    );
+
+    // Set visible time range to [lastTime - 1h, lastTime]
+    if (lastTime) {
+      chart.xAxis[0].setExtremes(
+        lastTime - WINDOW_MS,
+        lastTime,
+        true,   // redraw from start
+        false   // no animation
       );
-
-      // Set visible time range to [lastTime - 1h, lastTime]
-      if (lastTime) {
-        chart.xAxis[0].setExtremes(lastTime - WINDOW_MS, lastTime);
-      }
-    }, 0);
+    }
   }
 });
 

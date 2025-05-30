@@ -42,7 +42,7 @@
           <Bookmark
             v-if="sensor_id"
             :id="sensor_id"
-            :address="address?.address && address.address.join(', ')"
+            :address="state.address?.address && state.address?.address.join(', ')"
             :link="sensor_id"
             :geo="geo"
           />
@@ -144,6 +144,8 @@
           </div>
         </div>
       </section>
+
+      <ReleaseInfo />
     </div>
 
     <button @click.prevent="closesensor" aria-label="Close sensor" class="close">
@@ -168,6 +170,7 @@ import Chart from "./Chart.vue";
 import Copy from "./Copy.vue";
 import ProviderType from "../ProviderType.vue";
 import AltruistPromo from "../AltruistPromo.vue";
+import ReleaseInfo from "../ReleaseInfo.vue";
 
 // Props и emits
 const props = defineProps({
@@ -199,13 +202,14 @@ const state = reactive({
   sharedDefault: false,
   sharedLink: false,
   chartEverLoaded: false,
-  chartReady: false
+  chartReady: false,
+  lastCoords: { lat: null, lon: null },
+  address: ""
 });
 
 
 // some refs
-const address = ref({});
-const prevGeo = ref({ lat: null, lng: null });
+// const prevGeo = ref({ lat: null, lng: null });
 const units = ref([]);
 
 // computed
@@ -221,8 +225,8 @@ const geo = computed(() => {
 
 // Если спустя 5 секунд address всё ещё пустой, подставляем координаты.
 setTimeout(() => {
-  if (!address.value || Object.keys(address.value).length === 0) {
-    address.value = {
+  if (!state.address || Object.keys(state.address).length === 0) {
+    state.address = {
       country: "Unrecognised address",
       address: [`${geo.value.lat}, ${geo.value.lng}`],
     };
@@ -241,19 +245,19 @@ const sender = computed(() => props.point?.sender || null);
 
 const addressformatted = computed(() => {
   let buffer = "";
-  if (address.value && Object.keys(address.value).length > 0) {
-    if (address.value.country) {
-      buffer += address.value.country;
+  if (state.address && Object.keys(state.address).length > 0) {
+    if (state.address.country) {
+      buffer += state.address.country;
     }
-    if (Array.isArray(address.value.address) && address.value.address.length > 0) {
-      buffer += ", " + address.value.address.join(", ");
+    if (Array.isArray(state.address.address) && state.address.address.length > 0) {
+      buffer += ", " + state.address.address.join(", ");
     }
   }
   return buffer;
 });
 
 const isRussia = computed(() => {
-  return address.value?.country === "Россия" || address.value?.country === "Russia";
+  return state.address?.country === "Россия" || state.address?.country === "Russia";
 });
 
 const last = computed(() => (log.value.length > 0 ? log.value[log.value.length - 1] : {}));
@@ -392,6 +396,13 @@ const closesensor = () => {
   emit("close");
 }
 
+const setAddressUnrecognised = (lat, lng) => {
+  state.address = {
+    country: "Unrecognised address",
+    address: [`${lat}, ${lng}`]
+  };
+}
+
 // events
 
 onMounted(() => {
@@ -462,38 +473,86 @@ watch(
 );
 
 // EN: Change the address text if geo is changed
-watchEffect(() => {
-  // Если в props.point есть адрес, обновляем его только если координаты изменились.
-  if (props.point && props.point.address && Object.keys(props.point.address).length > 0) {
-    const currentGeo = props.point.geo || {};
-    if (
-      !prevGeo.value.lat ||
-      currentGeo.lat !== prevGeo.value.lat ||
-      currentGeo.lng !== prevGeo.value.lng
-    ) {
-      address.value = props.point.address;
-      prevGeo.value = { ...currentGeo };
+watch(
+  () => geo.value,
+  async (newGeo) => {
+    // 1) Use address from props.point if available
+    if (props.point?.address && Object.keys(props.point.address).length > 0) {
+      state.address = props.point.address;
+      state.lastCoords.lat = newGeo.lat;
+      state.lastCoords.lon = newGeo.lng;
+      return;
     }
-  } else if (geo.value.lat && geo.value.lng) {
-    // Если в props.point нет адреса, а заданы геоданные, запрашиваем адрес
-    if (
-      !prevGeo.value.lat ||
-      geo.value.lat !== prevGeo.value.lat ||
-      geo.value.lng !== prevGeo.value.lng
-    ) {
-      getAddressByPos(geo.value.lat, geo.value.lng, locale.value)
-        .then((res) => {
-          address.value = res;
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-      prevGeo.value = { ...geo.value };
+
+    // 2) If valid coordinates are provided
+    if (newGeo.lat && newGeo.lng) {
+      // Only proceed if coordinates have actually changed
+      if (
+        newGeo.lat !== state.lastCoords.lat ||
+        newGeo.lng !== state.lastCoords.lon
+      ) {
+        // Update last known coordinates
+        state.lastCoords.lat = newGeo.lat;
+        state.lastCoords.lon = newGeo.lng;
+
+        try {
+          // Attempt reverse geocoding via your API helper
+          const res = await getAddressByPos(
+            newGeo.lat,
+            newGeo.lng,
+            localeComputed.value
+          );
+          // Assign result if valid, otherwise use fallback
+          if (res && Object.keys(res).length > 0) {
+            state.address = res;
+          } else {
+            setAddressUnrecognised(newGeo.lat, newGeo.lng);
+          }
+        } catch (err) {
+          console.error("Reverse geocoding error:", err);
+          setAddressUnrecognised(newGeo.lat, newGeo.lng);
+        }
+      }
+    } else {
+      // No coordinates provided – set fallback with empty values
+      setAddressUnrecognised(newGeo.lat || "", newGeo.lng || "");
     }
-  } else {
-    address.value = {};
-  }
-});
+  },
+  { immediate: true, deep: true });
+
+
+// watchEffect(() => {
+//   // Если в props.point есть адрес, обновляем его только если координаты изменились.
+//   if (props.point && props.point.address && Object.keys(props.point.address).length > 0) {
+//     const currentGeo = props.point.geo || {};
+//     if (
+//       !prevGeo.value.lat ||
+//       currentGeo.lat !== prevGeo.value.lat ||
+//       currentGeo.lng !== prevGeo.value.lng
+//     ) {
+//       address.value = props.point.address;
+//       prevGeo.value = { ...currentGeo };
+//     }
+//   } else if (geo.value.lat && geo.value.lng) {
+//     // Если в props.point нет адреса, а заданы геоданные, запрашиваем адрес
+//     if (
+//       !prevGeo.value.lat ||
+//       geo.value.lat !== prevGeo.value.lat ||
+//       geo.value.lng !== prevGeo.value.lng
+//     ) {
+//       getAddressByPos(geo.value.lat, geo.value.lng, localeComputed.value)
+//         .then((res) => {
+//           address.value = res;
+//         })
+//         .catch((err) => {
+//           console.error(err);
+//         });
+//       prevGeo.value = { ...geo.value };
+//     }
+//   } else {
+//     address.value = {};
+//   }
+// });
 </script>
 
 <style scoped>

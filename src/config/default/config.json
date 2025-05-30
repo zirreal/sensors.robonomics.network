@@ -21,7 +21,8 @@
     "realtime": "Realtime",
     "remote": "Daily Recap"
   },
-  "DEFAULT_MEASURE_TYPE": "pm10",
+  "DEFAULT_MEASURE_TYPE": "pm25",
   "TITLE": "Web3 public sensors map",
-  "SERIES_MAX_VISIBLE": 3000
+  "SERIES_MAX_VISIBLE": 3000,
+  "REPO_NAME": "airalab/sensors.social"
 }
