@@ -1,49 +1,49 @@
 import { toFixed } from "./tools";
 
 export default {
-  label: "GC",
+  label: "CO2",
   name: {
-    en: "Background radiation",
-    ru: "Радиационный фон"
+    en: "Carbon Dioxide",
+    ru: "Углекислый газ"
   },
   nameshort: {
-    en: "Radiation",
-    ru: "Радиация"
+    en: "CO₂",
+    ru: "CO₂"
   },
-  unit: "μR/h",
-  chartColor: "#e99152",
-  range: [0, 10, 60, 100, 200],
+  unit: "ppm",
+  chartColor: "#76c7c0",
+  range: [0, 400, 1000, 2000, 5000],
   zones: [
     {
-      value: 10,
+      value: 400,
       color: "#03a5ed",
       label: {
         en: "Background",
-        ru: "Естественный фон"
+        ru: "Фоновый"
       }
     },
     {
-      value: 60,
+      value: 1000,
       color: "#60bc2a",
       label: {
         en: "Moderate",
-        ru: "Невысокая"
+        ru: "Умеренный"
       }
     },
     {
-      value: 100,
+      value: 2000,
       color: "#ff9d00",
       label: {
         en: "Elevated",
-        ru: "Повышенная"
+        ru: "Повышенный"
       }
     },
     {
-      value: 200,
+      value: 5000,
       color: "#ff4d00",
       label: {
         en: "High",
-        ru: "Высокая"
+        ru: "Высокий"
       }
     },
     {

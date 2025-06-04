@@ -13,7 +13,7 @@ export default {
   unit: "μg/m3",
   chartColor: "#89b268",
   colors: ["#60bc2a", "#ff9d00", "#fc0202"],
-  range: [0, 30, 55, 110, 251],
+  range: [0, 30, 55, 110, 250],
   zones: [
     {
       value: 30,
@@ -53,10 +53,10 @@ export default {
         en: "Unacceptable",
         ru: "Неприемлемо"
       }
-    },
+    }
   ],
   calculate: function (v) {
     return toFixed(v);
   },
-  info: "Suspended, solid and liquid particles with a diameter of 2.5 microns are an air pollutant.",
+  info: "Suspended, solid and liquid particles with a diameter of 2.5 microns are an air pollutant."
 };

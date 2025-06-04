@@ -1,3 +1,5 @@
+import { toFixed } from "./tools";
+
 export default {
   label: "Hm",
   name: {
@@ -10,7 +12,7 @@ export default {
   },
   unit: "%",
   chartColor: "#6fd3ff",
-  range: [30, 40, 60, 70],
+  range: [0, 30, 40, 60, 70],
   zones: [
     {
       value: 30,
@@ -50,6 +52,9 @@ export default {
         en: "Very humid",
         ru: "Очень влажно"
       }
-    },
+    }
   ],
+  calculate: function (v) {
+    return toFixed(v);
+  }
 };
