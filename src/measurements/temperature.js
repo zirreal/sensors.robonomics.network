@@ -13,7 +13,7 @@ export default {
   unit: "℃",
   chartColor: "#2d7ac7",
   colors: ["#fc0202", "#ff9d00", "#60bc2a", "#ff9d00", "#fc0202"],
-  range: [-10, 0, 10, 25],
+  range: [-9, 1, 10, 25],
   zones: [
     {
       value: -9,
@@ -53,11 +53,11 @@ export default {
         en: "Hot",
         ru: "Жарко"
       }
-    },
+    }
   ],
   states: ["danger", "attention", "good", "attention", "danger", "neutral"],
   calculate: function (v) {
     return toFixed(v);
   },
-  info: "Показатель температуры воздуха",
+  info: "Показатель температуры воздуха. Зоны: ≤ -9 ℃ — очень холодно; −9…1 ℃ — холодно; 1…10 ℃ — прохладно; 10…25 ℃ — тепло; >25 ℃ — жарко."
 };

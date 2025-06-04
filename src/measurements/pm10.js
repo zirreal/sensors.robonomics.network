@@ -13,7 +13,7 @@ export default {
   unit: "μg/m3",
   chartColor: "#e8b738",
   colors: ["#60bc2a", "#ff9d00", "#fc0202"],
-  range: [0, 51, 101, 251, 350],
+  range: [0, 50, 100, 250, 350],
   zones: [
     {
       value: 50,
@@ -53,10 +53,10 @@ export default {
         en: "Unacceptable",
         ru: "Неприемлемо"
       }
-    },
+    }
   ],
   calculate: function (v) {
     return toFixed(v);
   },
-  info: "PM10 - suspended particles (PM - particulate matter) of a substance with a diameter of less than 10 micrometers (μm). Pollen and other allergens.",
+  info: "PM10 - suspended particles (PM - particulate matter) of a substance with a diameter of less than 10 micrometers (μm). Pollen and other allergens."
 };
