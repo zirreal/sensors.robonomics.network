@@ -104,6 +104,19 @@ watch(
   }
 );
 
+// combined values for pm10 & pm 25 to get the max one
+function getCombinedValue(type, data) {
+  if (type.toLowerCase() === "pm10") {
+    const pm10 = data?.pm10;
+    const pm25 = data?.pm25;
+    if (pm10 !== undefined && pm25 !== undefined) return Math.max(pm10, pm25);
+    if (pm10 !== undefined) return pm10;
+    if (pm25 !== undefined) return pm25;
+    return null;
+  }
+  return data?.[type.toLowerCase()] ?? null;
+}
+
 const handlerHistory = async ({ start, end }) => {
   state.isLoad = true;
   state.start = start;
@@ -149,7 +162,7 @@ const handlerNewPoint = async (point) => {
   markers.addPoint({
     ...point,
     isEmpty: !point.data[props.type.toLowerCase()],
-    value: point.data[props.type.toLowerCase()],
+    value: getCombinedValue(props.type, point.data),
   });
 
   if (point.sensor_id === props.sensor) {
