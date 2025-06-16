@@ -248,5 +248,7 @@ export default {
     matomotext3:
       "You may choose not to have a unique web analytics cookie identification number assigned to your computer to avoid the aggregation and analysis of data collected on this website.",
     matomotext4: "To make that choice, please click below to receive an opt-out cookie",
-  }
+  },
+  "Dust & Particles": "Dust & Particles",
+  "Noise": "Noise"
 };

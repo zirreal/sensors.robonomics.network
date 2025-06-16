@@ -43,11 +43,11 @@ const props = defineProps({
 // Global objects
 const route = useRoute();
 const router = useRouter();
-const { t, locale } = useI18n();
+const { t: tr, locale } = useI18n();
 
 // Fix chart timeline for 1 hour (only for realtime mode, to ensure nice view)
 const WINDOW_MS = 60 * 60 * 1000;
-const MAX_VISIBLE = config.SERIES_MAX_VISIBLE; // For perfomance issues, if reached max - approximation added
+const MAX_VISIBLE = config.SERIES_MAX_VISIBLE; // For performance issues, if reached max - approximation added
 const VALID_TYPES = Object.keys(unitsettings).map(k => k.toLowerCase());
 const chartRef = ref(null); // Chart container
 
@@ -83,18 +83,59 @@ const chartOptions = computed(() => ({
     ordinal: !isRealtime.value
   },
   yAxis: { title: false },
-  tooltip: { valueDecimals: 2 },
-  plotOptions: {
-    series: {
-      showInNavigator: true,
-      dataGrouping: isRealtime.value
-        ? { enabled: false }
-        : { enabled: true, units: [['minute', [5]]] }
+  tooltip: { 
+    valueDecimals: 2,
+    shared: true,
+    formatter() {
+      const labelMap = {
+        pm10: 'PM10',
+        pm25: 'PM2.5',
+        noisemax: 'Noise Max',
+        noise: 'Noise',
+        noiseavg: 'Noise Avg'
+      };
+
+      let html = `<b>${Highcharts.dateFormat('%Y-%m-%d %H:%M', this.x)}</b><br/>`;
+
+      this.points.forEach(point => {
+        const id = point.series.options.id;
+        const label = labelMap[id] || point.series.name;
+        html += `<span style="color:${point.color}">●</span> ${label}: <b>${point.y.toFixed(2)}</b><br/>`;
+      });
+
+      return html;
     }
   },
-  credits: {
-    enabled: false
-  },
+plotOptions: {
+  series: {
+    showInNavigator: true,
+    dataGrouping: isRealtime.value
+      ? { enabled: false }
+      : { enabled: true, units: [['minute', [5]]] },
+    events: {
+      legendItemClick: function () {
+        const chart = this.chart;
+        const clickedSeries = this;
+
+        // Prevent default toggling if already visible
+        if (clickedSeries.visible) return false;
+
+        // Hide all other series
+        chart.series.forEach(s => {
+          if (s !== clickedSeries) {
+            s.setVisible(false, false);
+          }
+        });
+
+        // Show clicked series
+        clickedSeries.setVisible(true, false);
+
+        chart.redraw();
+
+        return false; // Prevent default behavior
+      }
+    }
+  }},
   series: chartSeries.value, // inject dynamic series reactively
 }));
 
@@ -104,6 +145,19 @@ function buildSeriesArray(log, realtime, maxVisible) {
   const zonesMap = Object.fromEntries(
     Object.entries(unitsettings).map(([k, v]) => [k.toLowerCase(), v.zones])
   );
+
+  // Grouped series behavior: only one shows in legend, others are linked
+  const linkedGroups = {
+    dust: ['pm10', 'pm25'],
+    noise: ['noise', 'noisemax', 'noiseavg']
+  };
+
+  const groupMap = {};
+  Object.entries(linkedGroups).forEach(([group, ids]) => {
+    ids.forEach(id => {
+      groupMap[id] = group;
+    });
+  });
 
   // Store series in a Map for fast access and de-duplication by id
   const seriesMap = new Map();
@@ -119,6 +173,42 @@ function buildSeriesArray(log, realtime, maxVisible) {
 
     for (const [key, val] of Object.entries(data)) {
       const id = key.toLowerCase();
+
+      const group = groupMap[id];
+
+      if (group) {
+        // Ensure first-seen ID becomes the main if default main is missing
+        if (!groupMap._firstSeen) groupMap._firstSeen = {};
+        if (!groupMap._firstSeen[group]) {
+          groupMap._firstSeen[group] = id;
+        }
+
+        const mainId = groupMap._firstSeen[group];
+        const isMain = id === mainId;
+
+        if (!seriesMap.has(id)) {
+          seriesMap.set(id, {
+            id,
+            name: group === 'noise'
+              ? tr('Noise')
+              : group === 'dust'
+                ? tr('Dust & Particles')
+                : displayName,
+            showInLegend: isMain,
+            linkedTo: isMain ? undefined : mainId,
+            dashStyle: isMain ? 'Solid' : 'ShortDot',
+            data: [],
+            zones: zonesMap[id] || [],
+            dataGrouping: {
+              enabled: true,
+              units: [['minute', [5]]]
+            }
+          });
+        }
+
+        seriesMap.get(id).data.push([t, parseFloat(val)]);
+        continue;
+      }
 
       // On first encounter, initialize series with localized short name
       if (!seriesMap.has(id)) {
@@ -190,7 +280,7 @@ onMounted(async () => {
   // Generate initial series based on the log data and selected type
   const initial = all.map(s => ({
     ...s,
-    visible: s.id === selectedType
+    visible: s.id === selectedType || s.linkedTo === selectedType
   }));
 
   
@@ -329,7 +419,7 @@ watch(
     const all = makeSeriesArray(newLog);
     const initial = all.map(s => ({
       ...s,
-      visible: s.id === activeType.value
+      visible: s.id === activeType.value || s.linkedTo === activeType.value
     }));
 
     chartSeries.value = initial;

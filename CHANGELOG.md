@@ -1,3 +1,6 @@
+v2.1.6
+- Feat: combined dust and noise values in the chart
+
 v2.1.5
 - Refactor: added in sensor's chart checking if data is duplicated
 - Refactor: added as DEFAULT_MEASURE_TYPE PM 2.5 value
