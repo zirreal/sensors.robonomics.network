@@ -52,7 +52,6 @@ input, select, .button {
   font-family: var(--font-family--normal);
   font-size: var(--font-size);
   font-weight: 700;
-  height: var(--app-inputheight); /* not good, but really need now */
   line-height: 1;
   padding: calc(var(--app-inputpadding) * 0.8) var(--app-inputpadding);
   transition-duration: 0.33s;
@@ -90,10 +89,14 @@ input[type=checkbox]:not(:last-child) {
   margin-right: calc(var(--gap) * .5);
 }
 
-input[type=submit], .button {
+input[type=submit], .button, .button:hover {
   background-color: var(--app-buttoncolor);
   border-color: var(--app-buttoncolor);
   color: var(--app-buttontextcolor);
+}
+
+.button {
+  display: inline-block;
 }
 
 input[type=submit]:not(:disabled):active, .button:not(:disabled):active { --app-buttoncolor: var(--app-buttoncolor-active); }
@@ -220,7 +223,7 @@ label {
 /* - TEXT */
 
 section:not(:last-child) {
-  margin-bottom: calc(var(--gap) * 2);
+  margin-bottom: var(--gap);
 }
 
 #app {

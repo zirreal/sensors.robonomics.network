@@ -8,7 +8,7 @@ export default {
       ", without any beneficiaries. It offers two distinct layers of decentralization at your choise: peer-to-peer connectivity for direct access to sensor data, and the federative concept for accumulating sensor data and displaying measurement history. Click",
     link2: "here",
     text3: "for further technical details.",
-    addSensorTitle: "Add your sensor on this map",
+    addSensorTitle: "Assemble your own sensor",
     addSensorText1: "You can",
     addSensorLink1: "assemble your own sensor",
     addSensorText2:
@@ -17,8 +17,8 @@ export default {
     addSensorText3:
       ". We welcome your participation and look forward to expanding our community together. Join us today!",
     addSensorLink3: "YouTube video guide",
-    buySensorTitle: "Buy our ready to use sensor",
-    buySensorText: "Outside – unique 3D-printed box. Inside – good-quality sensors, wide range of measurements in one device (PM2.5, PM10, noise, atmospheric pressure, humidity, temperature), open-source firmware, offline mode.",
+    buySensorTitle: "Buy now Altruist Outdoor Beta",
+    buySensorText: "Unique 3D-printed box with good-quality sensors, wide range of measurements in one device (PM2.5, PM10, noise, atmospheric pressure, humidity, temperature), open-source firmware, offline mode.",
     buySensorLink: "Learn more & buy",
   },
   measures: {
