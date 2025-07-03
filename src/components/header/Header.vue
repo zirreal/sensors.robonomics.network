@@ -1,105 +1,115 @@
 <template>
-  <header class="flexline space-between">
-    <div class="flexline align-start">
-      <router-link to="/" class="appicon">
-        <img :alt="config.TITLE" src="../../../public/app-icon-512.png" />
-      </router-link>
-
-      <div class="sensors" v-if="store.sensors?.length > 0">
-
-        <IconSensor class="sensors-mainicon" />
-        <b class="sensor-item">{{ store.sensors?.length }}</b>
-
-        <details v-if="zeroGeoSensors.length > 0" tabindex="0">
-          <summary class="sensor-item">
-            <font-awesome-icon icon="fa-solid fa-exclamation" /> 
-            {{ zeroGeoSensors.length }}
-          </summary>
-          <div class="details-content">
-            <h4>No geo sensors list</h4>
-            <ul>
-              <li v-for="sensor in zeroGeoSensors" :key="sensor.id">
-                <a :href="getSensorLink(sensor)" @click.prevent="showsensor(sensor)">
-                  <b>{{ formatSensorId(sensor.sensor_id) }}</b>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </details>
-      </div>
+  <header>
+    <div class="header-banner flexline align-center" :style="{ backgroundColor: banner.color }">
+      <a :href="banner.href" target="_blank">
+        <span v-html="banner.label"></span>
+        <img class="header-banner-svg" alt="Indiegogo" src="../../assets/images/indiegogo.svg"/>
+      </a>
     </div>
 
-    <div class="flexline">
-      <select v-model="locale">
-        <option v-for="lang in locales" :key="lang.code" :value="lang.code">
-          {{ lang.title }}
-        </option>
-      </select>
+    <div class="header-content flexline space-between">
+      <div class="flexline align-start">
+        <router-link to="/" class="appicon">
+          <img :alt="config.TITLE" src="../../../public/app-icon-512.png" />
+        </router-link>
 
-      <div id="about" class="popover popover-top-right" popover>
-        <h3>{{ $t("header.title") }}</h3>
-        <p>
-          {{ $t("header.text1") }}
-          <a
-            href="https://www.fsf.org/campaigns/priority-projects/decentralization-federation"
-            target="_blank"
-            rel="noopener"
-          >{{ $t("header.link1") }}</a>
-          {{ $t("header.text2") }}
-          <a
-            href="https://robonomics.academy/en/learn/sensors-connectivity-course/sensors-connectivity-module/"
-            target="_blank"
-            rel="noopener"
-          >{{ $t("header.link2") }}</a>
-          {{ $t("header.text3") }}
-        </p>
-        <h3>{{ $t("header.addSensorTitle") }}</h3>
-        <p>
-          {{ $t("header.addSensorText1") }}
-          <a
-            href="https://robonomics.academy/en/learn/sensors-connectivity-course/sensor-hardware/"
-            target="_blank"
-            rel="noopener"
-          >{{ $t("header.addSensorLink1") }}</a>
-          {{ $t("header.addSensorText2") }}
-          <a
-            href="https://robonomics.academy/en/learn/sensors-connectivity-course/setting-up-and-connecting-sensors/"
-            target="_blank"
-            rel="noopener"
-          >{{ $t("header.addSensorLink2") }}</a>
-          {{ $t("header.addSensorText3") }}
-        </p>
-        <p>
-          <a
-            href="https://youtu.be/AQ7ZzgbN7jU?si=Y_FsDCEw5T97"
-            target="_blank"
-            rel="noopener"
-          >{{ $t("header.addSensorLink3") }}</a>
-        </p>
+        <div class="sensors" v-if="store.sensors?.length > 0">
 
-        <AltruistPromo animated />
+          <IconSensor class="sensors-mainicon" />
+          <b class="sensor-item">{{ store.sensors?.length }}</b>
 
-        <section class="navlinks">
-          <a
-            href="https://github.com/airalab/sensors.robonomics.network"
-            target="_blank"
-            rel="noopener"
-          >{{ $t("links.github") }}</a>
-          <router-link to="/air-measurements">{{ $t("links.measurement") }}</router-link>
-          <router-link to="/privacy-policy">{{ $t("links.privacy") }}</router-link>
-        </section>
-
-        <ReleaseInfo />
+          <details v-if="zeroGeoSensors.length > 0" tabindex="0">
+            <summary class="sensor-item">
+              <font-awesome-icon icon="fa-solid fa-exclamation" /> 
+              {{ zeroGeoSensors.length }}
+            </summary>
+            <div class="details-content">
+              <h4>No geo sensors list</h4>
+              <ul>
+                <li v-for="sensor in zeroGeoSensors" :key="sensor.id">
+                  <a :href="getSensorLink(sensor)" @click.prevent="showsensor(sensor)">
+                    <b>{{ formatSensorId(sensor.sensor_id) }}</b>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </details>
+        </div>
       </div>
-      <button class="popovercontrol" popovertarget="about">
-        <font-awesome-icon icon="fa-solid fa-info" />
-      </button>
+
+      <div class="flexline">
+        <select v-model="locale">
+          <option v-for="lang in locales" :key="lang.code" :value="lang.code">
+            {{ lang.title }}
+          </option>
+        </select>
+
+        <div id="about" class="popover popover-top-right" popover>
+          <h3>{{ $t("header.title") }}</h3>
+          <p>
+            {{ $t("header.text1") }}
+            <a
+              href="https://www.fsf.org/campaigns/priority-projects/decentralization-federation"
+              target="_blank"
+              rel="noopener"
+            >{{ $t("header.link1") }}</a>
+            {{ $t("header.text2") }}
+            <a
+              href="https://robonomics.academy/en/learn/sensors-connectivity-course/sensors-connectivity-module/"
+              target="_blank"
+              rel="noopener"
+            >{{ $t("header.link2") }}</a>
+            {{ $t("header.text3") }}
+          </p>
+
+          <AltruistPromo utmMedium="header_popup" />
+
+          <h3>{{ $t("header.addSensorTitle") }}</h3>
+          <p>
+            {{ $t("header.addSensorText1") }}
+            <a
+              href="https://robonomics.academy/en/learn/sensors-connectivity-course/sensor-hardware/"
+              target="_blank"
+              rel="noopener"
+            >{{ $t("header.addSensorLink1") }}</a>
+            {{ $t("header.addSensorText2") }}
+            <a
+              href="https://robonomics.academy/en/learn/sensors-connectivity-course/setting-up-and-connecting-sensors/"
+              target="_blank"
+              rel="noopener"
+            >{{ $t("header.addSensorLink2") }}</a>
+            {{ $t("header.addSensorText3") }}
+          </p>
+          <p>
+            <a
+              href="https://youtu.be/AQ7ZzgbN7jU?si=Y_FsDCEw5T97"
+              target="_blank"
+              rel="noopener"
+            >{{ $t("header.addSensorLink3") }}</a>
+          </p>
+
+          <section class="navlinks">
+            <a
+              href="https://github.com/airalab/sensors.robonomics.network"
+              target="_blank"
+              rel="noopener"
+            >{{ $t("links.github") }}</a>
+            <router-link to="/air-measurements">{{ $t("links.measurement") }}</router-link>
+            <router-link to="/privacy-policy">{{ $t("links.privacy") }}</router-link>
+          </section>
+
+          <ReleaseInfo />
+        </div>
+        <button class="popovercontrol" popovertarget="about">
+          <font-awesome-icon icon="fa-solid fa-info" />
+        </button>
+      </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, reactive, computed, watch, onMounted } from "vue";
 import { useStore } from "@/store";
 import { languages } from "@/translate";
 import config from "@config";
@@ -113,6 +123,26 @@ const { locale: i18nLocale } = useI18n();
 const locale = ref(localStorage.getItem("locale") || i18nLocale.value || "en");
 const locales = languages || ["en"];
 const store = useStore();
+const banner = reactive({ label: "", color: "", href: "" });
+
+const bannerVariants = [
+  {
+    label: "<b>New Altruist</b> [Urban + Insight + Add-ons] on",
+    textKey: "text_a",
+  },
+  {
+    label: "<b>Limited</b> Altruist Bundles on",
+    textKey: "text_b",
+  },
+];
+
+const bannerColors = [
+  { color: "#e51075", colorKey: "color_1" },
+  { color: "#000",    colorKey: "color_2" },
+  { color: "#4b01d4", colorKey: "color_3" },
+];
+
+
 
 const zeroGeoSensors = computed(() => {
   const tolerance = 0.001; // допуск для сравнения
@@ -179,6 +209,17 @@ onMounted(() => {
               }
       })
   }
+
+  /* + BANNER */
+  const v = bannerVariants[Math.floor(Math.random() * bannerVariants.length)];
+  const c = bannerColors[Math.floor(Math.random() * bannerColors.length)];
+
+  banner.label = v.label;
+  banner.color = c.color;
+  banner.href =
+    `https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight/coming_soon` +
+    `?utm_source=sensors.social&utm_medium=head_banner&utm_content=${v.textKey}_${c.colorKey}`;
+  /* - BANNER */
 });
 
 </script>
@@ -186,7 +227,6 @@ onMounted(() => {
 <style scoped>
 header {
   left: 0;
-  padding: var(--app-controlsgap);
   position: absolute;
   top: 0;
   width: 100vw;
@@ -196,6 +236,35 @@ header {
 
 header > * {
   pointer-events: all;
+}
+
+.header-content {
+  /* padding: var(--app-controlsgap); */
+  padding: var(--gap);
+}
+
+.header-banner {
+  /* background-color: #e51075; */
+  color: #fff;
+}
+
+.header-banner a {
+  width: 100%;
+  padding: calc(var(--gap) /2) var(--gap);
+  color: currentColor;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-banner-svg {
+  max-height: 16px;
+  padding: 0 5px;
+}
+
+.header-banner b {
+  font-weight: 900;
 }
 
 .appicon {

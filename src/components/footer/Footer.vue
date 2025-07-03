@@ -250,4 +250,8 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
 }
+
+#mapsettings {
+  min-width: 20vw;
+}
 </style>
