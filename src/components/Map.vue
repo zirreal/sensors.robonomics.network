@@ -364,6 +364,10 @@ export default {
   margin-right: var(--gap);
 }
 
+.mapcontainer.inactive .leaflet-tile-pane {
+  filter: grayscale(100%);
+}
+
 .leaflet-bottom .leaflet-control {
   margin-bottom: 0.3rem;
 }
@@ -401,6 +405,15 @@ export default {
   line-height: 27px;
   font-weight: bold;
 }
+
+.mapcontainer.inactive .marker-cluster-circle {
+  filter: grayscale(100%);
+}
+
+.marker-cluster-circle.current-active-marker {
+  filter: none !important;
+}
+
 .marker-cluster-msg {
   font-weight: bold;
   background-size: contain;
@@ -446,8 +459,8 @@ export default {
 }
 
 .mapcontainer.inactive {
-  filter: grayscale(100%);
-  pointer-events: none;
+  /* filter: grayscale(100%); */
+  /* pointer-events: none; */
 }
 
 .popoovergeo {

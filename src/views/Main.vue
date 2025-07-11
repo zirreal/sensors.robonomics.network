@@ -117,6 +117,25 @@ function getCombinedValue(type, data) {
   return data?.[type.toLowerCase()] ?? null;
 }
 
+const removeAllActivePoints = () => {
+  document.querySelectorAll('.current-active-marker').forEach(el => {
+    el.classList.remove('current-active-marker');
+  });
+};
+
+const handleActivePoint = (id) => {
+  const el = document.querySelector(`[data-id="${id}"]`);
+  removeAllActivePoints();
+  if(el) {
+    if(!el.classList.contains('current-active-marker')) {
+      el.classList.add('current-active-marker')
+    } else {
+      el.classList.remove('current-active-marker')
+    }
+  }
+
+}
+
 const handlerHistory = async ({ start, end }) => {
   state.isLoad = true;
   state.start = start;
@@ -198,6 +217,8 @@ const handlerClick = async (point) => {
   const address = await getAddressByPos(point.geo.lat, point.geo.lng, localeComputed.value);
   state.point = { ...point, address, log: [...log] };
   state.isLoad = false;
+
+  handleActivePoint(point.sensor_id)
 };
 
 const handlerHistoryLog = async ({ sensor_id, start, end }) => {
@@ -211,8 +232,10 @@ const handlerClose = () => {
   store.mapinactive = false;
   store.removeAllCurrentMeasures();
   store.removeActiveCurrentMeasure();
+
   if (state.point) {
     markers.hidePath(state.point.sensor_id);
+    handleActivePoint(state.point.sensor_id)
   }
   state.point = null;
   instanceMap().setActiveArea({

@@ -3,198 +3,115 @@
   <section class="air-measurements container-pagetext">
     <h1>{{ $t("measures.title") }}</h1>
 
-    <div class="air-measurements__wrapper" id="PM10">
+    <div
+      v-for="(measurement, key) in measurements"
+      :key="key"
+      :id="key.toUpperCase()"
+    >
+    <div v-if="measurement.zones"       class="air-measurements__wrapper">
       <div class="air-measurements__header">
-        <h2 class="air-measurements__subtitle">PM<sub>10</sub> particles</h2>
+        <h2 class="air-measurements__subtitle">
+          {{ measurement.nameshort?.[locale] || measurement.label }}
+        </h2>
         <p class="air-measurements__descr">
-          {{ $t("measures.PM10") }}
+          {{ measurement.name?.[locale] || measurement.label }}
+        </p>
+        <p
+          v-if="$t(`measures.${measurement.label}`) !== `measures.${measurement.label}`"
+          class="air-measurements__descr"
+        >
+          {{ $t(`measures.${measurement.label}`) }}
         </p>
       </div>
-      <div class="air-measurements__content">
-        <ul>
-          <li class="green">{{ $t("measures.pollutionScalePM10.1") }}</li>
-          <li class="blue">{{ $t("measures.pollutionScalePM10.2") }}</li>
-          <li class="orange">{{ $t("measures.pollutionScalePM10.3") }}</li>
-          <li class="red">{{ $t("measures.pollutionScalePM10.4") }}</li>
-          <li class="purple">{{ $t("measures.pollutionScalePM10.5") }}</li>
-        </ul>
-        <div class="air-measurements__recs">
-          <p>{{ $t("measures.recsPM10Text") }}</p>
-          <ol>
-            <li>{{ $t("measures.recsPM10.1") }}</li>
-            <li>{{ $t("measures.recsPM10.2") }}</li>
-            <li>{{ $t("measures.recsPM10.3") }}</li>
-            <li>{{ $t("measures.recsPM10.4") }}</li>
-            <li>{{ $t("measures.recsPM10.5") }}</li>
-          </ol>
-        </div>
-      </div>
-    </div>
 
-    <div class="air-measurements__wrapper" id="PM2.5">
-      <div class="air-measurements__header">
-        <h2 class="air-measurements__subtitle">PM<sub>2.5</sub> particles</h2>
-        <p class="air-measurements__descr">
-          {{ $t("measures.PM25") }}
-        </p>
-      </div>
-      <div class="air-measurements__content">
+      <div v-if="measurement.zones && measurement.zones.length" class="air-measurements__content">
         <ul>
-          <li class="green">{{ $t("measures.pollutionScalePM25.1") }}</li>
-          <li class="blue">{{ $t("measures.pollutionScalePM25.2") }}</li>
-          <li class="orange">{{ $t("measures.pollutionScalePM25.3") }}</li>
-          <li class="red">{{ $t("measures.pollutionScalePM25.4") }}</li>
-          <li class="purple">{{ $t("measures.pollutionScalePM25.5") }}</li>
+          <li
+            v-for="(zone, index) in measurement.zones"
+            :key="index"
+            :style="{ backgroundColor: zone.color }"
+          >
+            <b>
+            {{ zone.label[locale] ? zone.label[locale] : zone.label.en }}
+            </b>
+            (<template v-if="zone.value">{{ $t("scales.upto")}}  {{ zone.value }} {{ measurement.unit }}</template>
+            <template v-else>{{ $t("scales.above") }}</template
+            >)
+          </li>
         </ul>
-        <div class="air-measurements__recs">
-          <p>{{ $t("measures.recsPM25Text") }}</p>
-          <ol>
-            <li>{{ $t("measures.recsPM25.1") }}</li>
-            <li>{{ $t("measures.recsPM25.2") }}</li>
-            <li>{{ $t("measures.recsPM25.3") }}</li>
-            <li>{{ $t("measures.recsPM25.4") }}</li>
-            <li>{{ $t("measures.recsPM25.5") }}</li>
-          </ol>
-        </div>
-      </div>
-    </div>
+        <div
+          class="air-measurements__recs"
+          v-if="measurement.recommendations && measurement.recommendations.length"
+        >
+          <template
+            v-for="(recGroup, recGroupIndex) in measurement.recommendations"
+            :key="recGroupIndex"
+          >
+            <template
+              v-for="(value, fieldKey, index) in recGroup"
+              :key="fieldKey"
+            >
+              <template v-if="fieldKey.includes(measurement.label.toUpperCase().replace('.', ''))">
+                <p v-if="fieldKey.toLowerCase().includes('text')">
+                  {{
+                    $t(`measures.${fieldKey}`) !== `measures.${fieldKey}`
+                      ? $t(`measures.${fieldKey}`)
+                      : value
+                  }}
+                </p>
 
-    <div class="air-measurements__wrapper" id="CO">
-      <div class="air-measurements__header">
-        <h2 class="air-measurements__subtitle">CO</h2>
-        <p class="air-measurements__descr">
-          {{ $t("measures.CO") }}
-        </p>
-      </div>
-      <div class="air-measurements__content">
-        <ul>
-          <li class="green">{{ $t("measures.pollutionScaleCO.1") }}</li>
-          <li class="blue">{{ $t("measures.pollutionScaleCO.2") }}</li>
-          <li class="red">{{ $t("measures.pollutionScaleCO.3") }}</li>
-          <li class="purple">{{ $t("measures.pollutionScaleCO.4") }}</li>
-        </ul>
-        <div class="air-measurements__recs">
-          <p>{{ $t("measures.recsCOText") }}</p>
-          <ol>
-            <li>{{ $t("measures.recsCO.1") }}</li>
-            <li>{{ $t("measures.recsCO.2") }}</li>
-            <li>{{ $t("measures.recsCO.3") }}</li>
-            <li>{{ $t("measures.recsCO.4") }}</li>
-            <li>{{ $t("measures.recsCO.5") }}</li>
-          </ol>
-          <p>{{ $t("measures.recsCOText2") }}</p>
+                <ol
+                  v-else-if="Array.isArray(value)"
+                  :class="{ mb: shouldAddMargin(recGroup, measurement.label, index) }"
+                >
+                  <li
+                    v-for="(item, i) in value"
+                    :key="i"
+                  >
+                    {{
+                      $t(`measures.${fieldKey}.${i + 1}`) !== `measures.${fieldKey}.${i + 1}`
+                        ? $t(`measures.${fieldKey}.${i + 1}`)
+                        : item
+                    }}
+                  </li>
+                </ol>
+              </template>
+            </template>
+          </template>
         </div>
       </div>
     </div>
-
-    <div class="air-measurements__wrapper" id="GO">
-      <div class="air-measurements__header">
-        <h2 class="air-measurements__subtitle">GO (Radiation)</h2>
-        <p class="air-measurements__descr">
-          {{ $t("measures.GO") }}
-        </p>
-      </div>
-      <div class="air-measurements__content">
-        <ul>
-          <li class="green">{{ $t("measures.pollutionScaleGO.1") }}</li>
-          <li class="blue">{{ $t("measures.pollutionScaleGO.2") }}</li>
-          <li class="orange">{{ $t("measures.pollutionScaleGO.3") }}</li>
-          <li class="red">{{ $t("measures.pollutionScaleGO.4") }}</li>
-        </ul>
-        <div class="air-measurements__recs">
-          <p>{{ $t("measures.pollutionScaleGOText") }}</p>
-          <p>{{ $t("measures.recsGOText") }}</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="air-measurements__wrapper" id="Tmp">
-      <div class="air-measurements__header">
-        <h2 class="air-measurements__subtitle">Tmp</h2>
-        <p class="air-measurements__descr">
-          {{ $t("measures.TMP") }}
-        </p>
-      </div>
-      <div class="air-measurements__content">
-        <ul>
-          <li class="purple">{{ $t("measures.pollutionScaleTMP.1") }}</li>
-          <li class="navy">{{ $t("measures.pollutionScaleTMP.2") }}</li>
-          <li class="blue">{{ $t("measures.pollutionScaleTMP.3") }}</li>
-          <li class="green">{{ $t("measures.pollutionScaleTMP.4") }}</li>
-          <li class="orange">{{ $t("measures.pollutionScaleTMP.5") }}</li>
-        </ul>
-        <div class="air-measurements__recs">
-          <p>{{ $t("measures.recsTMPText") }}</p>
-          <ol class="mb">
-            <li>{{ $t("measures.recsTMP1.1") }}</li>
-            <li>{{ $t("measures.recsTMP1.2") }}</li>
-          </ol>
-          <p>{{ $t("measures.recsTMPText2") }}</p>
-          <ol>
-            <li>{{ $t("measures.recsTMP2.1") }}</li>
-            <li>{{ $t("measures.recsTMP2.2") }}</li>
-            <li>{{ $t("measures.recsTMP2.3") }}</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-    <div class="air-measurements__wrapper" id="HM">
-      <div class="air-measurements__header">
-        <h2 class="air-measurements__subtitle">HM</h2>
-        <p class="air-measurements__descr">
-          {{ $t("measures.HM") }}
-        </p>
-      </div>
-      <div class="air-measurements__content">
-        <ul>
-          <li class="red">{{ $t("measures.pollutionScaleHM.1") }}</li>
-          <li class="orange">{{ $t("measures.pollutionScaleHM.2") }}</li>
-          <li class="blue">{{ $t("measures.pollutionScaleHM.3") }}</li>
-          <li class="navy">{{ $t("measures.pollutionScaleHM.4") }}</li>
-          <li class="purple">{{ $t("measures.pollutionScaleHM.5") }}</li>
-        </ul>
-        <div class="air-measurements__recs">
-          <p class="mb">{{ $t("measures.pollutionScaleHMText2") }}</p>
-          <p>{{ $t("measures.recsHMText") }}</p>
-          <ol class="mb">
-            <li>{{ $t("measures.recsHM1.1") }}</li>
-            <li>{{ $t("measures.recsHM1.2") }}</li>
-            <li>{{ $t("measures.recsHM1.3") }}</li>
-          </ol>
-          <p>{{ $t("measures.recsHMText2") }}</p>
-          <ol>
-            <li>{{ $t("measures.recsHM2.1") }}</li>
-            <li>{{ $t("measures.recsHM2.2") }}</li>
-            <li>{{ $t("measures.recsHM2.3") }}</li>
-            <li>{{ $t("measures.recsHM2.4") }}</li>
-            <li>{{ $t("measures.recsHM2.5") }}</li>
-          </ol>
-        </div>
-      </div>
-    </div>
-
-    <div class="air-measurements__wrapper air-measurements__header" id="NH3">
-      <h2 id="NH3" class="air-measurements__subtitle">NH<sub>3</sub></h2>
-      <p class="air-measurements__descr">
-        {{ $t("measures.NH3") }}
-      </p>
-    </div>
-    <div class="air-measurements__wrapper air-measurements__header" id="NO2">
-      <h2 id="NO2" class="air-measurements__subtitle">NO<sub>2</sub></h2>
-      <p class="air-measurements__descr">
-        {{ $t("measures.NO2") }}
-      </p>
     </div>
   </section>
 </template>
 
-<script>
-import Header from "../components/header/Header.vue";
 
-export default {
-  components: { Header },
+<script setup>
+import {ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+import Header from '../components/header/Header.vue';
+import measurements from '../measurements';
+
+// i18n support
+const { locale } = useI18n();
+const currentLocale = ref(locale.value);
+
+// reactively update locale when changed
+watch(locale, (newLocale) => {
+  currentLocale.value = newLocale;
+});
+
+const shouldAddMargin = (recGroup, label, currentIndex) => {
+  const labelKey = label.toUpperCase();
+  const arrayKeys = Object.keys(recGroup).filter(
+    (key) => key.includes(labelKey) && Array.isArray(recGroup[key])
+  );
+  return arrayKeys.length > 1 && currentIndex < arrayKeys.length * 2 - 1;
 };
+
 </script>
+
 
 <style scoped>
 header {
@@ -249,23 +166,18 @@ header {
 .air-measurements .green {
   background-color: var(--color-green);
 }
-
 .air-measurements .blue {
   background-color: var(--color-teal);
 }
-
 .air-measurements .navy {
   background-color: var(--color-navy);
 }
-
 .air-measurements .orange {
   background-color: var(--color-orange);
 }
-
 .air-measurements .red {
   background-color: var(--color-bright-red);
 }
-
 .air-measurements .purple {
   background-color: var(--color-purple);
 }

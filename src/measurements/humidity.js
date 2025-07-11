@@ -56,5 +56,16 @@ export default {
   ],
   calculate: function (v) {
     return toFixed(v);
-  }
+  },
+  description: "Air humidity is a measure of the water vapor content in the atmosphere. The optimal humidity level for comfort and health is in the range of 40% to 60%. High humidity can cause stuffiness, while low humidity can lead to dryness. Measuring humidity is useful for controlling the indoor air climate. The optimal humidity level may vary depending on individual preferences and climatic conditions.",
+  recommendations: [
+    {
+      recsHMText: 'During low outdoor humidity:',
+      recsHM: ["Moisturize your skin and mucous membranes.", "Drink an adequate amount of water.", "Avoid prolonged exposure to the sun."
+      ],
+      recsHMText2: 'During high outdoor humidity:',
+      recsHM2: ["Avoid physical activity during hot and humid times of the day.", "Wear lightweight, breathable clothing.", "Protect yourself from direct sunlight.", "Drink an adequate amount of water.", "Seek a cool place and use fans or air conditioning."
+      ]
+    }
+  ]
 };

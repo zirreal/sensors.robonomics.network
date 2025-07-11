@@ -58,5 +58,13 @@ export default {
   calculate: function (v) {
     return toFixed(v);
   },
-  info: "Suspended, solid and liquid particles with a diameter of 2.5 microns are an air pollutant."
+  info: "Suspended, solid and liquid particles with a diameter of 2.5 microns are an air pollutant.",
+  description: "PM 2.5 is atmospheric particles with a size of up to 2.5 micrometers, which include dust, soot, and smoke. They can be harmful to health, causing breathing problems, allergies, and cardiovascular diseases. Sources of PM 2.5 include industry, transportation, and household emissions. Monitoring and reducing their levels are important for health and clean air.",
+  recommendations: [
+    {
+      recsPM25Text: 'In case of elevated levels of PM 2.5, it is recommended to take the following measures:',
+      recsPM25: ["Stay indoors with good ventilation.", "Avoid outdoor physical activities.", "Keep windows and doors closed.", "Use face masks with good filtration.", "Monitor the air quality forecast.",
+      ]
+    }
+  ]
 };

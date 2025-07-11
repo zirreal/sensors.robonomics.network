@@ -51,6 +51,7 @@ input, select, .button {
   color: var(--app-textcolor);
   font-family: var(--font-family--normal);
   font-size: var(--font-size);
+  height: 40px;
   font-weight: 700;
   line-height: 1;
   padding: calc(var(--app-inputpadding) * 0.8) var(--app-inputpadding);
@@ -241,9 +242,15 @@ section:not(:last-child) {
 }
 
 .container-pagetext {
-  padding: calc(var(--gap) * 7) var(--gap) calc(var(--gap) * 3);
+  padding: calc(var(--gap) * 10) var(--gap) calc(var(--gap) * 3);
   margin: 0 auto;
   max-width: 1200px;
+}
+
+@media screen and (max-width: 500px) {
+  .container-pagetext {
+    padding: calc(var(--gap) * 16) var(--gap) calc(var(--gap) * 3);
+  }
 }
 
 .sensors-container {

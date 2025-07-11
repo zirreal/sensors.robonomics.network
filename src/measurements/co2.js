@@ -56,5 +56,6 @@ export default {
   ],
   calculate: function (v) {
     return toFixed(v);
-  }
+  },
+  description: ""
 };

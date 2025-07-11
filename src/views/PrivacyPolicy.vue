@@ -101,6 +101,10 @@ export default {
 </script>
 
 <style scoped>
+header {
+  width: 99vw;
+}
+
 .privacy-policy ul {
   padding-left: 20px;
   list-style: disc;
