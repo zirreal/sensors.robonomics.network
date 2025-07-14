@@ -254,4 +254,11 @@ onMounted(async () => {
 #mapsettings {
   min-width: 20vw;
 }
+
+@media screen and (max-width: 560px) {
+  .mapcontrols {
+    flex-direction: column;
+    gap: var(--gap);
+  }
+}
 </style>

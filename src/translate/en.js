@@ -99,7 +99,7 @@ export default {
       5: "25°C / 77°F and above - Very warm",
     },
     recsTMPText: "During very cold temperatures:",
-    recsTMP1: {
+    recsTMP: {
       1: "Wear warm clothing and accessories to prevent frostbite.",
       2: "Avoid prolonged exposure outdoors and stay in warm spaces.",
     },
@@ -121,7 +121,7 @@ export default {
       5: "> 70% - Very humid",
     },
     recsHMText: "During low outdoor humidity:",
-    recsHM1: {
+    recsHM: {
       1: "Moisturize your skin and mucous membranes.",
       2: "Drink an adequate amount of water.",
       3: "Avoid prolonged exposure to the sun.",

@@ -224,6 +224,12 @@ onMounted(() => {
 
 </script>
 
+<style>
+  .header-banner b {
+    font-weight: 900;
+  }
+</style>
+
 <style scoped>
 header {
   left: 0;
@@ -261,10 +267,6 @@ header > * {
 .header-banner-svg {
   max-height: 16px;
   padding: 0 5px;
-}
-
-.header-banner b {
-  font-weight: 900;
 }
 
 .appicon {
@@ -397,5 +399,17 @@ summary {
 }
 
 /* - Sensors panel */
+
+
+ @media screen and (max-width: 480px) {
+   .header-banner {
+      padding: calc(var(--gap) * 0.7);
+    }
+   
+    .header-banner a {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
 
 </style>
