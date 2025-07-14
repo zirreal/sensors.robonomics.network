@@ -259,6 +259,7 @@ onMounted(async () => {
   .mapcontrols {
     flex-direction: column;
     gap: var(--gap);
+    align-items: center;
   }
 }
 </style>

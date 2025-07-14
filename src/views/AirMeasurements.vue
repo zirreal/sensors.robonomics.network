@@ -1,87 +1,49 @@
 <template>
   <Header />
-  <section class="air-measurements container-pagetext">
+  <section class="container-pagetext">
     <h1>{{ $t("measures.title") }}</h1>
 
-    <div
-      v-for="(measurement, key) in measurements"
-      :key="key"
-      :id="key.toUpperCase()"
-    >
-    <div v-if="measurement.zones"       class="air-measurements__wrapper">
-      <div class="air-measurements__header">
-        <h2 class="air-measurements__subtitle">
-          {{ measurement.nameshort?.[locale] || measurement.label }}
-        </h2>
-        <p class="air-measurements__descr">
-          {{ measurement.name?.[locale] || measurement.label }}
-        </p>
-        <p
-          v-if="$t(`measures.${measurement.label}`) !== `measures.${measurement.label}`"
-          class="air-measurements__descr"
-        >
-          {{ $t(`measures.${measurement.label}`) }}
-        </p>
-      </div>
+    <section v-for="(measurement, key) in measurements" :key="key" :id="key.toUpperCase()">
 
-      <div v-if="measurement.zones && measurement.zones.length" class="air-measurements__content">
-        <ul>
-          <li
-            v-for="(zone, index) in measurement.zones"
-            :key="index"
-            :style="{ backgroundColor: zone.color }"
-          >
+      <template v-if="measurement?.nameshort && measurement?.description && measurement?.description !== ''">
+
+        <h2>
+          {{ measurement?.nameshort?.[locale] }}
+          <span v-if="measurement.name?.[locale] && measurement.name?.[locale] !== measurement?.nameshort?.[locale]">{{ measurement.name?.[locale] }}</span>
+        </h2>
+
+        <div v-if="measurement?.zones" class="measures">
+          <div v-for="(zone, index) in measurement.zones" :key="index" :style="{ backgroundColor: zone.color }">
             <b>
             {{ zone.label[locale] ? zone.label[locale] : zone.label.en }}
             </b>
-            (<template v-if="zone.value">{{ $t("scales.upto")}}  {{ zone.value }} {{ measurement.unit }}</template>
-            <template v-else>{{ $t("scales.above") }}</template
-            >)
-          </li>
-        </ul>
-        <div
-          class="air-measurements__recs"
-          v-if="measurement.recommendations && measurement.recommendations.length"
-        >
-          <template
-            v-for="(recGroup, recGroupIndex) in measurement.recommendations"
-            :key="recGroupIndex"
-          >
-            <template
-              v-for="(value, fieldKey, index) in recGroup"
-              :key="fieldKey"
-            >
-              <template v-if="fieldKey.includes(measurement.label.toUpperCase().replace('.', ''))">
-                <p v-if="fieldKey.toLowerCase().includes('text')">
-                  {{
-                    $t(`measures.${fieldKey}`) !== `measures.${fieldKey}`
-                      ? $t(`measures.${fieldKey}`)
-                      : value
-                  }}
-                </p>
-
-                <ol
-                  v-else-if="Array.isArray(value)"
-                  :class="{ mb: shouldAddMargin(recGroup, measurement.label, index) }"
-                >
-                  <li
-                    v-for="(item, i) in value"
-                    :key="i"
-                  >
-                    {{
-                      $t(`measures.${fieldKey}.${i + 1}`) !== `measures.${fieldKey}.${i + 1}`
-                        ? $t(`measures.${fieldKey}.${i + 1}`)
-                        : item
-                    }}
-                  </li>
-                </ol>
-              </template>
-            </template>
-          </template>
+            <span v-if="zone.value">{{ $t("scales.upto")}}  {{ zone.value }} {{ measurement.unit }}</span>
+            <span v-else>{{ $t("scales.above") }}</span>
+          </div>
         </div>
-      </div>
-    </div>
-    </div>
+
+        <template v-if="measurement?.description && Array.isArray(measurement?.description)">
+          <template v-for="(block, idx) in measurement.description" :key="idx">
+
+            <h4 v-if="block.tag === 'subtitle'">
+              {{ block.text?.[locale] ?? block.text?.en }}
+            </h4>
+
+            <p v-if="block.tag === 'p'">
+              {{ block.text?.[locale] ?? block.text?.en }}
+            </p>
+
+            <ul v-else-if="block.tag === 'ul'">
+              <li v-for="(item, i) in block.items?.[locale] ?? block.items?.en" :key="i">
+                {{ item }}
+              </li>
+            </ul>
+          </template>
+        </template>
+
+      </template>
+    </section>
+
   </section>
 </template>
 
@@ -101,54 +63,30 @@ const currentLocale = ref(locale.value);
 watch(locale, (newLocale) => {
   currentLocale.value = newLocale;
 });
-
-const shouldAddMargin = (recGroup, label, currentIndex) => {
-  const labelKey = label.toUpperCase();
-  const arrayKeys = Object.keys(recGroup).filter(
-    (key) => key.includes(labelKey) && Array.isArray(recGroup[key])
-  );
-  return arrayKeys.length > 1 && currentIndex < arrayKeys.length * 2 - 1;
-};
-
 </script>
 
 
 <style scoped>
-header {
-  width: 99vw;
+h2 span {
+  font-size: 60%;
+  display: block;
 }
 
-.mb {
-  margin-bottom: calc(var(--gap) * 2) !important;
+.measures {
+  display: flex;
+  gap: var(--gap);
+  margin-bottom: var(--gap);
 }
 
-.air-measurements__header p {
-  font-size: calc(var(--font-size) * 0.9);
-  font-weight: 500;
-  line-height: 1.7;
+.measures div {
+  color: #fff;
+  padding: var(--gap) calc(var(--gap) * 2);
 }
 
-.air-measurements__wrapper:not(:last-of-type) {
-  margin-bottom: 5rem;
+.measures span {
+  display: block;
 }
 
-.air-measurements__header {
-  max-width: 800px;
-  margin: 0 auto;
-  margin-bottom: calc(var(--gap) * 2);
-}
-
-.air-measurements__content {
-  display: grid;
-  grid-template-columns: 350px 630px;
-  justify-content: center;
-  gap: calc(var(--gap) * 2);
-  font-weight: 500;
-}
-
-.air-measurements__recs {
-  font-size: calc(var(--font-size) * 0.9);
-}
 
 .air-measurements ol {
   padding-left: calc(var(--gap) * 1.5);
@@ -159,7 +97,6 @@ header {
   width: 100%;
   padding: calc(var(--gap) * 0.5) calc(var(--gap) * 0.9);
   color: var(--color-light);
-  font-size: calc(var(--font-size) * 0.8);
   font-weight: 900;
 }
 
@@ -182,10 +119,10 @@ header {
   background-color: var(--color-purple);
 }
 
-@media screen and (max-width: 880px) {
-  .air-measurements__content {
-    grid-template-columns: 1fr;
-    gap: var(--gap);
+@media (width < 860px) {
+  .measures {
+    display: grid;
+    grid-template-rows: 1;
   }
 }
 </style>

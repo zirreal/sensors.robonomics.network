@@ -58,13 +58,39 @@ export default {
   calculate: function (v) {
     return toFixed(v);
   },
-  info: "PM10 - suspended particles (PM - particulate matter) of a substance with a diameter of less than 10 micrometers (μm). Pollen and other allergens.",
-  description: "PM 10 (Particulate Matter 10) consists of atmospheric particles with a size of up to 10 micrometers, including dust, soot, and other pollutants. They can cause health problems by affecting breathing and contributing to respiratory diseases. Sources of PM 10 include industrial emissions, road dust, and fuel combustion. Monitoring and reducing PM 10 levels are important for maintaining clean air and promoting health.",
-  recommendations: [
+ description: [
+  {
+      tag: 'p',
+      text: {
+        en: 'PM 10 (Particulate Matter 10) consists of atmospheric particles with a size of up to 10 µm, including dust, soot and other pollutants. They can cause health problems by affecting breathing and contributing to respiratory diseases. Sources include industrial emissions, road dust and fuel combustion.',
+        ru: 'PM 10 (взвешенные частицы до 10 мкм) — пыль, сажа и другие аэрозоли. Частицы проникают в дыхательные пути и вызывают болезни органов дыхания. Основные источники — промышленные выбросы, дорожная пыль и сгорание топлива.'
+      }
+    },
     {
-      recsPM10Text: 'In case of elevated levels of PM 10, it is recommended to take the following measures:',
-      recsPM10: ["Limit the time spent outdoors.", "Avoid physical activities, especially for individuals with respiratory problems.", "Close windows and doors to reduce the entry of polluted air into indoor spaces.", "Use masks with good filtration when necessary.", "Monitor information about air quality and follow recommendations from local health authorities.",
-      ]
+      tag: 'subtitle',
+      text: {
+        en: 'If PM10 levels are high, take the following precautions:',
+        ru: 'При повышенном уровне PM 10 рекомендуется:'
+      }
+    },
+    {
+      tag: 'ul',
+      items: {
+        en: [
+          'Limit the time spent outdoors.',
+          'Avoid intense physical activity, especially for people with respiratory problems.',
+          'Keep windows and doors closed to reduce indoor pollution.',
+          'Use well-filtering masks if necessary.',
+          'Monitor air-quality information and heed local health-authority advice.'
+        ],
+        ru: [
+          'Сократите время пребывания на улице.',
+          'Избегайте активных нагрузок, особенно при заболеваниях органов дыхания.',
+          'Держите окна и двери закрытыми, чтобы снизить попадание загрязнённого воздуха внутрь.',
+          'При необходимости используйте маски с хорошей фильтрацией.',
+          'Следите за данными о качестве воздуха и рекомендациями местных органов здравоохранения.'
+        ]
+      }
     }
   ]
 };

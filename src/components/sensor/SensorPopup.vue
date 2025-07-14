@@ -1,7 +1,7 @@
 <template>
   <div class="popup-js active">
     <section>
-      <h3 class="flexline clipoverflow">
+      <h3 class="clipoverflow">
         <img v-if="icon" :src="icon" class="icontitle" />
         <font-awesome-icon v-else icon="fa-solid fa-location-dot" />
         <span v-if="addressformatted">{{ addressformatted }}</span>
@@ -10,7 +10,7 @@
     </section>
 
     <div class="scrollable-y">
-      <section class="flexline flexline-mobile-column">
+      <section class="flexline" :class="state.provider === 'realtime' ? 'flexline-mobile-column' : null">
         <ProviderType />
 
         <div v-if="state.provider !== 'realtime'">
@@ -558,11 +558,11 @@ watch(
 <style scoped>
 .popup-js.active {
   container: popup / inline-size;
-  background: var(--app-popoverbg);
+  background: var(--color-light);
   border-radius: 0;
   bottom: 0;
   box-sizing: border-box;
-  color: var(--app-textcolor);
+  color: var(--color-dark);
   padding: var(--gap);
   position: absolute;
   right: 0;
@@ -570,6 +570,7 @@ watch(
   width: 80vw;
   max-width: 1000px;
   z-index: 100;
+  box-shadow: -6px 0 12px -4px rgba(0, 0, 0, 0.3);
 }
 
 .scrollable-y {
@@ -578,7 +579,7 @@ watch(
 
 .close {
   border: 0;
-  color: var(--app-textcolor);
+  color: var(--color-dark);
   cursor: pointer;
   font-size: 1.2em;
   position: absolute;
@@ -590,17 +591,8 @@ watch(
   color: var(--color-red);
 }
 
-.flexline {
-  gap: calc(var(--gap) * 2);
-}
-
-.flexline .flexline {
-  gap: var(--gap);
-}
-
-h3.flexline {
-  gap: calc(var(--gap) * 0.5);
-  max-width: calc(100% - var(--gap) * 2);
+h3 .fa-location-dot {
+  margin-right: 4px;
 }
 
 .icontitle {
@@ -657,17 +649,22 @@ h3.flexline {
   .popup-js.active {
     left: 0;
     width: 100vw;
-    top: 30vw;
+    top: 0;
     padding-right: calc(var(--gap) * 0.5);
+    padding-top: calc(2rem + var(--gap));
   }
 
   .close {
+    font-size: 2rem !important; 
+  }
+
+  /* .close {
     top: -35px;
     right: 10px;
     background-color: #fff;
     width: 40px;
     height: 40px;
-  }
+  } */
 
   .flexline-mobile-column {
     flex-direction: column;
@@ -787,4 +784,10 @@ h3.flexline {
   font-weight: 900;
 }
 /* - realtime */
+
+.buySensor {
+  border: 2px solid var(--color-dark);
+  padding: var(--gap);
+  border-radius: 5px;
+}
 </style>

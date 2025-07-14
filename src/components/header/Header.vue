@@ -1,8 +1,8 @@
 <template>
   <header>
-    <div class="header-banner flexline align-center" :style="{ backgroundColor: banner.color }">
-      <a :href="banner.href" target="_blank">
-        <span v-html="banner.label"></span>
+    <div class="header-banner flexline align-center">
+      <a href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight/coming_soon?utm_source=sensors.social&utm_medium=header-banner" target="_blank">
+        <span><b>Limited</b> Altruist Bundles on</span>
         <img class="header-banner-svg" alt="Indiegogo" src="../../assets/images/indiegogo.svg"/>
       </a>
     </div>
@@ -13,28 +13,25 @@
           <img :alt="config.TITLE" src="../../../public/app-icon-512.png" />
         </router-link>
 
-        <div class="sensors" v-if="store.sensors?.length > 0">
-
-          <IconSensor class="sensors-mainicon" />
-          <b class="sensor-item">{{ store.sensors?.length }}</b>
-
-          <details v-if="zeroGeoSensors.length > 0" tabindex="0">
-            <summary class="sensor-item">
-              <font-awesome-icon icon="fa-solid fa-exclamation" /> 
-              {{ zeroGeoSensors.length }}
-            </summary>
-            <div class="details-content">
-              <h4>No geo sensors list</h4>
-              <ul>
+        <details v-if="store.sensors?.length > 0" tabindex="0" class="sensors details-popup">
+          <summary>
+            <IconSensor class="sensors-mainicon" />
+            {{ store.sensors?.length + zeroGeoSensors?.length }}
+          </summary>
+          <div class="details-content">
+            <AltruistPromo utmMedium="header_popup" />
+            <section v-if="zeroGeoSensors?.length > 0">
+              <h4>{{zeroGeoSensors?.length}} sensors without geolocation</h4>
+              <ul class="sensors-list">
                 <li v-for="sensor in zeroGeoSensors" :key="sensor.id">
                   <a :href="getSensorLink(sensor)" @click.prevent="showsensor(sensor)">
                     <b>{{ formatSensorId(sensor.sensor_id) }}</b>
                   </a>
                 </li>
               </ul>
-            </div>
-          </details>
-        </div>
+            </section>
+          </div>
+        </details>
       </div>
 
       <div class="flexline">
@@ -62,38 +59,8 @@
             {{ $t("header.text3") }}
           </p>
 
-          <AltruistPromo utmMedium="header_popup" />
-
-          <h3>{{ $t("header.addSensorTitle") }}</h3>
-          <p>
-            {{ $t("header.addSensorText1") }}
-            <a
-              href="https://robonomics.academy/en/learn/sensors-connectivity-course/sensor-hardware/"
-              target="_blank"
-              rel="noopener"
-            >{{ $t("header.addSensorLink1") }}</a>
-            {{ $t("header.addSensorText2") }}
-            <a
-              href="https://robonomics.academy/en/learn/sensors-connectivity-course/setting-up-and-connecting-sensors/"
-              target="_blank"
-              rel="noopener"
-            >{{ $t("header.addSensorLink2") }}</a>
-            {{ $t("header.addSensorText3") }}
-          </p>
-          <p>
-            <a
-              href="https://youtu.be/AQ7ZzgbN7jU?si=Y_FsDCEw5T97"
-              target="_blank"
-              rel="noopener"
-            >{{ $t("header.addSensorLink3") }}</a>
-          </p>
-
           <section class="navlinks">
-            <a
-              href="https://github.com/airalab/sensors.robonomics.network"
-              target="_blank"
-              rel="noopener"
-            >{{ $t("links.github") }}</a>
+            <router-link to="/altruist-use-cases">Altruist use cases</router-link>
             <router-link to="/air-measurements">{{ $t("links.measurement") }}</router-link>
             <router-link to="/privacy-policy">{{ $t("links.privacy") }}</router-link>
           </section>
@@ -103,6 +70,8 @@
         <button class="popovercontrol" popovertarget="about">
           <font-awesome-icon icon="fa-solid fa-info" />
         </button>
+
+        <a class="button button-promo" href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight/coming_soon?utm_source=sensors.social&utm_medium=header-button" target="_blank">Altruist on Indiegogo</a>
       </div>
     </div>
   </header>
@@ -123,26 +92,6 @@ const { locale: i18nLocale } = useI18n();
 const locale = ref(localStorage.getItem("locale") || i18nLocale.value || "en");
 const locales = languages || ["en"];
 const store = useStore();
-const banner = reactive({ label: "", color: "", href: "" });
-
-const bannerVariants = [
-  {
-    label: "<b>New Altruist</b> [Urban + Insight + Add-ons] on",
-    textKey: "text_a",
-  },
-  {
-    label: "<b>Limited</b> Altruist Bundles on",
-    textKey: "text_b",
-  },
-];
-
-const bannerColors = [
-  { color: "#e51075", colorKey: "color_1" },
-  { color: "#000",    colorKey: "color_2" },
-  { color: "#4b01d4", colorKey: "color_3" },
-];
-
-
 
 const zeroGeoSensors = computed(() => {
   const tolerance = 0.001; // допуск для сравнения
@@ -209,17 +158,6 @@ onMounted(() => {
               }
       })
   }
-
-  /* + BANNER */
-  const v = bannerVariants[Math.floor(Math.random() * bannerVariants.length)];
-  const c = bannerColors[Math.floor(Math.random() * bannerColors.length)];
-
-  banner.label = v.label;
-  banner.color = c.color;
-  banner.href =
-    `https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight/coming_soon` +
-    `?utm_source=sensors.social&utm_medium=head_banner&utm_content=${v.textKey}_${c.colorKey}`;
-  /* - BANNER */
 });
 
 </script>
@@ -231,51 +169,32 @@ onMounted(() => {
 </style>
 
 <style scoped>
-header {
-  left: 0;
-  position: absolute;
-  top: 0;
-  width: 100vw;
-  z-index: 10;
-  pointer-events: none;
-}
+  header {
+    left: 0;
+    position: sticky;
+    top: 0;
+    width: 100vw;
+    z-index: 99;
+    pointer-events: none;
+    box-shadow: 0 6px 12px -4px rgba(0, 0, 0, 0.12);
+  }
 
-header > * {
-  pointer-events: all;
-}
+  header > * {
+    pointer-events: all;
+  }
 
-.header-content {
-  /* padding: var(--app-controlsgap); */
-  padding: var(--gap);
-}
+  .header-content {
+    padding: calc(var(--gap)/2) var(--gap);
+    background-color: var(--app-bodybg);
+  }
 
-.header-banner {
-  /* background-color: #e51075; */
-  color: #fff;
-}
-
-.header-banner a {
-  width: 100%;
-  padding: calc(var(--gap) /2) var(--gap);
-  color: currentColor;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.header-banner-svg {
-  max-height: 16px;
-  padding: 0 5px;
-}
-
-.appicon {
-  border-radius: 0.5rem;
-  display: block;
-  overflow: hidden;
-  user-select: none;
-  width: 2.5rem;
-}
+  .appicon {
+    border-radius: 0.5rem;
+    display: block;
+    overflow: hidden;
+    user-select: none;
+    width: 2.5rem;
+  }
 
 .appicon img {
   display: block;
@@ -285,6 +204,8 @@ header > * {
 .popover {
   max-height: 80svh;
   overflow-x: auto;
+  background-color: var(--color-light);
+  color: var(--color-dark);
 }
 
 .popover-top-right {
@@ -305,7 +226,8 @@ header > * {
 }
 
 .navlinks {
-  font-weight: bold;
+  font-weight: 900;
+  margin-bottom: calc(var(--gap) * 3);
 }
 
 .navlinks a {
@@ -313,92 +235,61 @@ header > * {
   padding: 5px 0;
 }
 
-.navlinks a:not(:last-child) {
+.navlinks a {
   margin-bottom: calc(var(--gap) * 0.5);
   border-bottom: 1px dotted #000;
 }
 
+/* + sensors list */
 
-/* + Sensors panel */
-
-/* .sensorscount {
-  color: #fff;
-  background: var(--color-orange);
-  padding: 4px 10px;
-  display: block;
-  border-radius: 5px;
+.sensors summary {
   display: flex;
-  gap: 10px;
   align-items: center;
-}
-
-.sensorscount svg {
-  width: 22px;
-} */
-
-.sensors {
+  gap: 3px;
   color: #000;
   background: var(--color-orange);
-  display: flex;
-  align-content: center;
   border-radius: 5px;
-  display: flex;
-  gap: 8px;
-  align-items: stretch;
+  padding: 4px 5px;
+  font-weight: bold;
 }
 
 .sensors-mainicon {
   width: 22px;
-  margin: 4px 0 4px 4px;
 }
 
-.sensor-item {
+.sensors-list a {
+  display: block;
+  padding: 5px;
+}
+
+.sensors-list li {
+  display: block;
+  border-top: 1px dotted var(--app-bordercolor);
+  margin: 0;
+}
+/* - sensors list */
+
+/* + banner */
+.header-banner {
+  background-color: #4b01d4;
+  color: #fff;
+}
+
+.header-banner a {
+  width: 100%;
+  padding: calc(var(--gap) /2) var(--gap);
+  color: currentColor;
+  font-weight: bold;
   display: flex;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
 }
 
-details {
-  position: relative;
-}
-
-details summary::-webkit-details-marker,
-details summary::marker {
-  content: "";
-  display: none; 
-}
-
-summary {
-  cursor: pointer;
-  background-color: #fff;
-  border-radius: 0 5px 5px 0;
+.header-banner-svg {
+  max-height: 16px;
   padding: 0 5px;
-  height: 100%;
 }
-
-.details-content {
-  border-radius: 5px;
-  background-color: #fff;
-  padding: 10px;
-  position: absolute;
-  top: calc(100% + 10px);
-  max-height: calc(100svh - 200px);
-  min-width: 25svw;
-  max-width: calc(100svw - 180px);
-  overflow: auto;
-  border: 1px solid var(--color-middle-gray);
-}
-
-.details-content li:not(:last-child) {
-  border-bottom: 1px solid var(--color-middle-gray);
-}
-
-.details-content a {
-  display: block;
-  padding: 5px 0;
-}
-
-/* - Sensors panel */
+/* - banner */
 
 
  @media screen and (max-width: 480px) {
@@ -409,6 +300,10 @@ summary {
     .header-banner a {
       flex-direction: column;
       text-align: center;
+    }
+
+    .button-promo {
+      display: none;
     }
   }
 
