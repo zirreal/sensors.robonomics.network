@@ -271,6 +271,7 @@ onMounted(() => {
 
 /* + banner */
 .header-banner {
+  display: none;
   background-color: #4b01d4;
   color: #fff;
 }
@@ -304,6 +305,10 @@ onMounted(() => {
 
     .button-promo {
       display: none;
+    }
+
+    .header-banner {
+      display: block;
     }
   }
 
