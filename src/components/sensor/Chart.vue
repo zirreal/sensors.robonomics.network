@@ -76,7 +76,7 @@ const chartOptions = computed(() => ({
   },
   legend: { enabled: true },
   title: { text: '' },
-  time: { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+  time: { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, useUTC: false},
   xAxis: {
     type: 'datetime',
     labels: { format: '{value:%H:%M}' },
@@ -86,6 +86,7 @@ const chartOptions = computed(() => ({
   tooltip: { 
     valueDecimals: 2,
     shared: true,
+    xDateFormat: '%Y-%m-%d %H:%M:%S',
     formatter() {
       const labelMap = {
         pm10: 'PM10',
@@ -95,7 +96,7 @@ const chartOptions = computed(() => ({
         noiseavg: 'Noise Avg'
       };
 
-      let html = `<b>${Highcharts.dateFormat('%Y-%m-%d %H:%M', this.x)}</b><br/>`;
+      let html = `<b>${new Date(this.x).toLocaleString()}</b><br/>`;
 
       this.points.forEach(point => {
         const id = point.series.options.id;
@@ -137,6 +138,7 @@ plotOptions: {
     }
   }},
   series: chartSeries.value, // inject dynamic series reactively
+  credits: {enabled: false}
 }));
 
 function buildSeriesArray(log, realtime, maxVisible) {
