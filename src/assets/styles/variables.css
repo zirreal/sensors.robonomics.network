@@ -24,11 +24,11 @@
 
   --sensor-popup-bg: #ffffff;
 
-  --main-bg: #ffffff;
-
+  --app-bodybg: #ffffff;
   --app-borderwidth: 2px;
   --app-bordercolor: #000;
   --app-inputbg: #fff;
+  --app-inputtextcolor: #000;
   --app-inputpadding: .8rem;
   --app-inputbradius: .3rem;
   --app-textcolor: #000;
@@ -51,5 +51,13 @@
 
   .leaflet-bottom .leaflet-control {
     margin-bottom: 0;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --app-bodybg: #1b1b1b;
+    --app-textcolor: #fff;
+    --app-controlsgap: calc(var(--gap) * 0.5);
   }
 }
