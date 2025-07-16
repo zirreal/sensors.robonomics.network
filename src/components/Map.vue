@@ -39,7 +39,7 @@ import { init as initWind } from "../utils/map/wind";
 import { getTypeProvider } from "../utils/utils";
 
 export default {
-  emits: ["city", "clickMarker", "close"],
+  emits: ["city", "clickMarker", "close", "activateMarker"],
   props: ["measuretype", "historyready", "historyhandler", "isLoad"],
   components: { Footer },
   data() {
@@ -169,6 +169,17 @@ export default {
       // }
     },
 
+    handleActivePoint() {
+      if(this.$route.params.sensor) {
+        document?.querySelectorAll("[data-children]").forEach(el => {
+          if(el.dataset.children.split(',').includes(this.$route.params.sensor))
+            el.classList.add('with-active-sensor')
+        })
+
+        this.$emit("activateMarker", this.$route.params.sensor);
+      }
+    },
+
     checkPosFromURI() {
       if (this.$route.params.lat || this.$route.params.lng || this.$route.params.zoom) {
         return true;
@@ -285,6 +296,8 @@ export default {
             e.target.getCenter().lng.toFixed(4),
             e.target.getZoom()
           );
+
+          this.handleActivePoint();
         }, 50);
       });
 
@@ -411,6 +424,10 @@ export default {
 }
 
 .marker-cluster-circle.current-active-marker {
+  filter: none !important;
+}
+
+.marker-cluster-circle.with-active-sensor {
   filter: none !important;
 }
 
