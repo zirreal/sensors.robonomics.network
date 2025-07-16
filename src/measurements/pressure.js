@@ -1,3 +1,5 @@
+import { toFixed } from "./tools";
+
 export default {
   label: "Pr",
   name: {
