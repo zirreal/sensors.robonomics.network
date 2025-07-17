@@ -11,11 +11,67 @@
 
     <div class="scrollable-y">
       <section class="flexline" :class="state.provider === 'realtime' ? 'flexline-mobile-column' : null">
-        <button  v-if="state.provider !== 'realtime' && state.chartReady" class="button" @click="exportData">Download PDF</button>
+        <div class="export-data"  v-if="state.provider !== 'realtime' && state.chartReady">
+          <div class="export-data__checkboxes">
+            <label class="checkbox-item">
+              <input
+                type="checkbox"
+                @change="toggleAllMeasures"
+              />
+              All measures
+            </label>
+            <label
+              v-for="m in availableMeasures"
+              :key="m"
+              class="checkbox-item"
+            >
+              <input
+                type="checkbox"
+                :value="m"
+                v-model="selectedMeasures"
+                @change="onMeasureChange"
+              />
+              {{ m.toUpperCase().replace('PM25', 'PM2.5') }}
+            </label>
+          </div>
+          <select v-model="exportType">
+            <option value="csv">CSV</option>
+            <option value="pdf">PDF</option>
+          </select>
+          <button class="button" @click="exportData">Export Data</button>
+        </div>
         <ProviderType />
 
         <div v-if="state.provider !== 'realtime'">
           <input type="date" v-model="state.start" :max="state.maxDate" onchange="this.blur()" />
+        </div>
+
+        <div ref="pdfContent" class="pdf-container" :class="{'pdf-container-exporting': isExporting}">
+          <section v-if="isExporting">
+            <h3 class="flexline clipoverflow">
+              <img v-if="icon" :src="icon" class="icontitle" />
+              <font-awesome-icon v-else icon="fa-solid fa-location-dot" />
+              <span v-if="addressformatted">{{ addressformatted }}</span>
+              <span v-else class="skeleton-text"></span>
+            </h3>
+            <p>Coordinates - {{ geo.lat }}, {{ geo.lng }}</p>
+            <h2>{{ sensor_id }}</h2>
+            <p v-if="!isExporting">{{ state.start }}<span v-if="state.provider === 'realtime'"> – {{ state.rttime }}</span></p>
+            <p v-else>
+               {{ formattedStart }}
+                <span v-if="state.provider === 'realtime'"> – {{ state.rttime }}</span>
+            </p>
+          </section>
+          <section>
+            <Chart ref="chartRef" v-show="state.chartReady" :log="log" :unit="measurements[props.type]?.unit" />
+            <div v-show="!state.chartReady" class="chart-skeleton"></div>
+          </section>
+        </div>
+
+         <!-- Loader overlay -->
+        <div v-if="isExporting" class="export-loader-overlay">
+          <span>Exporting PDF</span>
+          <div class="loader"></div>
         </div>
 
         <div v-if="state.provider === 'realtime'" class="flexline">
@@ -31,11 +87,6 @@
             </div>
           </template>
         </div>
-      </section>
-
-      <section>
-        <Chart v-show="state.chartReady" :log="log" :unit="measurements[props.type]?.unit" />
-        <div v-show="!state.chartReady" class="chart-skeleton"></div>
       </section>
 
       <section class="flexline space-between">

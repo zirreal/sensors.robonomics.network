@@ -7,6 +7,7 @@ export const useStore = defineStore({
   state: () => ({
     currentSensorPopupMeasures: [],
     currentActiveMeasure: "",
+    currentChartMeasure: "",
     idbBookmarkDbname: 'SensorsDBBookmarks',
     idbBookmarkVDbver: 6,
     idbBookmarkVDbtable: 'bookmarks',
@@ -56,6 +57,9 @@ export const useStore = defineStore({
     },
     removeActiveCurrentMeasure() {
       this.currentActiveMeasure = "";
+    },
+    setCurrentChartMeasure(measure) {
+      this.currentChartMeasure = measure;
     },
     setmapposition(lat, lng, zoom, save = true) {
       console.debug('setmapposition', lat, lng, zoom)
