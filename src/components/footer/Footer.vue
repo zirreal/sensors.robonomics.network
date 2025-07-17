@@ -105,31 +105,47 @@ const locale = computed(() => {
 });
 
 // опции для select
+// const availableOptions = computed(() => {
+//   const opts = availableUnits.value
+//     .filter((key) => !['pm10', 'pm25', 'noise', 'noisemax', 'noiseavg'].includes(key)) // Remove pm10, pm25, noise, noisemax
+//     .map((key) => {
+//       const info = measurements[key];
+//       if (!info) return null;
+//       return {
+//         value: key,
+//         name: info.nameshort?.[locale.value] || info.label,
+//       };
+//     })
+//     .filter(Boolean);
+
+//   // Add synthetic "dust" option (represents pm10 & pm25)
+//   opts.push({
+//     value: 'pm10',
+//     name: locale.value === 'en' ? 'Dust & Particles' : t('Dust & Particles'), 
+//   });
+
+//   // Add synthetic "noise" option (represents noise, noisemax & noiseavg)
+//   opts.push({
+//     value: 'noisemax',
+//     name: locale.value === 'en' ? 'Noise' : t('Noise'),
+//   });
+
+//   return opts;
+// });
+
 const availableOptions = computed(() => {
   const opts = availableUnits.value
-    .filter((key) => !['pm10', 'pm25', 'noise', 'noisemax', 'noiseavg'].includes(key)) // Remove pm10, pm25, noise, noisemax
     .map((key) => {
       const info = measurements[key];
-      if (!info) return null;
+      if (!info) {
+        return null;
+      }
       return {
         value: key,
         name: info.nameshort?.[locale.value] || info.label,
       };
     })
-    .filter(Boolean);
-
-  // Add synthetic "dust" option (represents pm10 & pm25)
-  opts.push({
-    value: 'pm10',
-    name: locale.value === 'en' ? 'Dust & Particles' : t('Dust & Particles'), 
-  });
-
-  // Add synthetic "noise" option (represents noise, noisemax & noiseavg)
-  opts.push({
-    value: 'noisemax',
-    name: locale.value === 'en' ? 'Noise' : t('Noise'),
-  });
-
+    .filter((item) => Boolean(item));
   return opts;
 });
 
