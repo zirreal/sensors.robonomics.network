@@ -19,6 +19,7 @@
     :historyhandler="handlerHistory"
     :isLoad="state.isLoad"
     @clickMarker="handlerClick"
+    @activateMarker="handleActivePoint"
   />
 </template>
 
@@ -82,6 +83,23 @@ const zoom = computed(() => store.mapposition.zoom);
 const lat = computed(() => store.mapposition.lat);
 const lng = computed(() => store.mapposition.lng);
 
+/* + Realtime watch */
+let unwatchRealtime = null;
+
+function subscribeRealtime() {
+  if (state.providerObj && !unwatchRealtime) {
+    unwatchRealtime = state.providerObj.watch(handlerNewPoint);
+  }
+}
+
+function unsubscribeRealtime() {
+  if (state.providerObj && unwatchRealtime) {
+    state.providerObj.watch(null);
+    unwatchRealtime = null;
+  }
+}
+/* - Realtime watch */
+
 const isMessage = computed(() => {
   return state.point && state.point.measurement && state.point.measurement.message;
 });
@@ -93,16 +111,6 @@ const isSensor = computed(() => {
     ? !(state.point.measurement && state.point.measurement.message)
     : !!props.sensor;
 });
-
-// Следим за изменением типа единиц измерения и сохраняем его в localStorage
-watch(
-  () => props.type,
-  (value) => {
-    if (value) {
-      localStorage.setItem("currentUnit", value);
-    }
-  }
-);
 
 // combined values for pm10 & pm 25 to get the max one
 function getCombinedValue(type, data) {
@@ -141,7 +149,8 @@ const handlerHistory = async ({ start, end }) => {
   state.start = start;
   state.end = end;
   state.status = "history";
-  state.providerObj.watch(null);
+  unsubscribeRealtime();
+
   handlerClose();
   markers.clear();
   state.providerObj.setStartDate(start);
@@ -167,6 +176,7 @@ const handlerHistory = async ({ start, end }) => {
 };
 
 const handlerNewPoint = async (point) => {
+
   if (!point.model || !markers.isReadyLayers()) return;
 
   point.data = point.data
@@ -177,7 +187,6 @@ const handlerNewPoint = async (point) => {
   point.isBookmarked = store.idbBookmarks?.some(bookmark => bookmark.id === point.sensor_id) || false;
 
 
-  // Добавление маркера
   markers.addPoint({
     ...point,
     isEmpty: !point.data[props.type.toLowerCase()],
@@ -214,6 +223,9 @@ const handlerClick = async (point) => {
   } else {
     log = await state.providerObj.getHistoryBySensor(point.sensor_id);
   }
+  document.querySelectorAll('.with-active-sensor').forEach(el => {
+    el.classList.remove('with-active-sensor');
+  });
   const address = await getAddressByPos(point.geo.lat, point.geo.lng, localeComputed.value);
   state.point = { ...point, address, log: [...log] };
   state.isLoad = false;
@@ -245,6 +257,7 @@ const handlerClose = () => {
     right: "0px",
     height: "100%",
   });
+  unsubscribeRealtime();
 };
 
 const handlerCloseInfo = () => {
@@ -258,11 +271,21 @@ const handlerModal = (modal) => {
   }
 };
 
-// Устанавливаем тип провайдера
-setTypeProvider(props.provider);
+// Следим за изменением типа единиц измерения и сохраняем его в localStorage
+watch(
+  () => props.type,
+  (value) => {
+    if (value) {
+      localStorage.setItem("currentUnit", value);
+    }
+  }
+);
 
 onMounted(async () => {
   document.querySelector("#app").classList.add("map");
+
+  // Устанавливаем тип провайдера
+  setTypeProvider(props.provider || "remote");
 
   // Настраиваем BroadcastChannel для получения данных о сенсорах
   const bcnewsensor = new BroadcastChannel("sensors");
@@ -312,7 +335,9 @@ onMounted(async () => {
 
   state.providerObj.ready().then(() => {
     state.providerReady = true;
-    state.providerObj.watch(handlerNewPoint);
+    if (props.provider === "realtime") {
+      subscribeRealtime();
+    }
   });
 
   if (props.provider === "remote") {
@@ -326,6 +351,10 @@ onMounted(async () => {
 
   if (props.type) {
     localStorage.setItem("currentUnit", props.type);
+  }
+
+  if(route.params.sensor) {
+    handleActivePoint(route.params.sensor)
   }
 
   const instance = getCurrentInstance();

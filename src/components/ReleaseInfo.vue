@@ -1,6 +1,14 @@
 <template>
   <section>
-    <p><b>{{ repoName }} {{ latestRelease }}</b></p>
+    <p>
+      <a
+        href="https://github.com/airalab/sensors.robonomics.network"
+        target="_blank"
+        rel="noopener"
+      >
+      <b>{{ repoName }} {{ latestRelease }}</b>
+      </a>
+    </p>
     <div><b>Secured by</b></div>
     <img
       alt=""

@@ -256,9 +256,10 @@ onMounted(async () => {
 }
 
 @media screen and (max-width: 560px) {
-  .mapcontrols {
+  .mapcontrols, .mapcontrols .flexline {
     flex-direction: column;
     gap: var(--gap);
+    align-items: end;
   }
 }
 </style>

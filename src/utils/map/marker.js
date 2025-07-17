@@ -127,10 +127,15 @@ function iconCreate(cluster) {
   const childCount = cluster.getChildCount();
   let childCountCalc = 0;
   let sum = 0;
+  const markersId = [];
+
   markers.forEach((marker) => {
     if (marker.options.data.value === undefined && marker.options.data.value !== "") {
       return;
     }
+
+    markersId.push(marker.options.data._id)
+
     childCountCalc++;
     sum += Number(marker.options.data.value);
   });
@@ -144,7 +149,7 @@ function iconCreate(cluster) {
   return new L.DivIcon({
     html: `<div class='marker-cluster-circle' style='color:${
       isDark ? "#eee" : "#333"
-    };background-color: rgba(${color}, 0.7);border-color: rgba(${colorBorder}, 1);'><span>${childCount}</span></div>`,
+    };background-color: rgba(${color}, 0.7);border-color: rgba(${colorBorder}, 1);' data-children="${markersId}"><span>${childCount}</span></div>`,
     className: "marker-cluster",
     iconSize: new L.Point(40, 40),
   });

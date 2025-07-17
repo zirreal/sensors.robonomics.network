@@ -7,8 +7,8 @@ export default {
     ru: "Аммиак"
   },
   nameshort: {
-    en: "Ammonia",
-    ru: "Аммиак"
+    en: "NH3",
+    ru: "NH3"
   },
   unit: "mg/m3",
   icon: "vial-virus",
@@ -42,6 +42,5 @@ export default {
   ],
   calculate: function (v) {
     return converterPpmToMgm3(v, 17.03);
-  },
-  description: "Ammonia. It is capable of causing toxic pulmonary edema and severe damage to the nervous system when inhaled. The maximum single concentration is 0.2 mg/m3, the average daily concentration is 0.4 mg/m3."
+  }
 };

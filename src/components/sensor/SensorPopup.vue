@@ -1,16 +1,16 @@
 <template>
   <div class="popup-js active">
     <section>
-      <h3 class="flexline clipoverflow">
+      <h3 class="clipoverflow">
         <img v-if="icon" :src="icon" class="icontitle" />
         <font-awesome-icon v-else icon="fa-solid fa-location-dot" />
-        <span v-if="addressformatted">{{ addressformatted }}</span>
+        <span v-if="addressformatted && addressformatted !==''">{{ addressformatted }}</span>
         <span v-else class="skeleton-text"></span>
       </h3>
     </section>
 
     <div class="scrollable-y">
-      <section class="flexline flexline-mobile-column">
+      <section class="flexline" :class="state.provider === 'realtime' ? 'flexline-mobile-column' : null">
         <button  v-if="state.provider !== 'realtime' && state.chartReady" class="button" @click="exportData">Download PDF</button>
         <ProviderType />
 
@@ -33,33 +33,10 @@
         </div>
       </section>
 
-        <div ref="pdfContent" class="pdf-container" :class="{'pdf-container-exporting': isExporting}">
-          <section v-if="isExporting">
-            <h3 class="flexline clipoverflow">
-              <img v-if="icon" :src="icon" class="icontitle" />
-              <font-awesome-icon v-else icon="fa-solid fa-location-dot" />
-              <span v-if="addressformatted">{{ addressformatted }}</span>
-              <span v-else class="skeleton-text"></span>
-            </h3>
-            <p>Coordinates - {{ geo.lat }}, {{ geo.lng }}</p>
-            <h2>{{ sensor_id }}</h2>
-            <p v-if="!isExporting">{{ state.start }}<span v-if="state.provider === 'realtime'"> – {{ state.rttime }}</span></p>
-            <p v-else>
-               {{ formattedStart }}
-                <span v-if="state.provider === 'realtime'"> – {{ state.rttime }}</span>
-            </p>
-          </section>
-          <section>
-            <Chart v-show="state.chartReady" :point="props.point" :log="log" />
-            <div v-show="!state.chartReady" class="chart-skeleton"></div>
-          </section>
-        </div>
-
-         <!-- Loader overlay -->
-        <div v-if="isExporting" class="export-loader-overlay">
-          <span>Exporting PDF</span>
-          <div class="loader"></div>
-        </div>
+      <section>
+        <Chart v-show="state.chartReady" :log="log" :unit="measurements[props.type]?.unit" />
+        <div v-show="!state.chartReady" class="chart-skeleton"></div>
+      </section>
 
       <section class="flexline space-between">
         <div class="flexline">
@@ -252,16 +229,6 @@ const geo = computed(() => {
   return { lat: Number(lat) || 0, lng: Number(lng) || 0 };
 });
 
-// Если спустя 5 секунд address всё ещё пустой, подставляем координаты.
-setTimeout(() => {
-  if (!state.address || Object.keys(state.address).length === 0) {
-    state.address = {
-      country: "Unrecognised address",
-      address: [`${geo.value.lat}, ${geo.value.lng}`],
-    };
-  }
-}, 5000);
-
 const sensor_id = computed(() => {
   return props.point?.sensor_id || route.params.sensor || null;
 });
@@ -274,7 +241,7 @@ const sender = computed(() => props.point?.sender || null);
 
 const addressformatted = computed(() => {
   let buffer = "";
-  if (state.address && Object.keys(state.address).length > 0) {
+  if (state.address && (state.address.length > 0 || Object.keys(state.address).length > 0)) {
     if (state.address.country) {
       buffer += state.address.country;
     }
@@ -562,9 +529,21 @@ const setAddressUnrecognised = (lat, lng) => {
 // events
 
 onMounted(() => {
+
+  // Если спустя 5 секунд address всё ещё пустой, подставляем координаты.
+  setTimeout(() => {
+    if (!state.address || Object.keys(state.address).length === 0) {
+      state.address = {
+        country: "Unrecognised address",
+        address: [`${geo.value.lat}, ${geo.value.lng}`],
+      };
+    }
+  }, 5000);
+
   state.start = props.startTime
     ? moment.unix(props.startTime).format("YYYY-MM-DD")
     : moment().format("YYYY-MM-DD");
+
   updatert();
 });
 
@@ -714,11 +693,11 @@ watch(
 <style scoped>
 .popup-js.active {
   container: popup / inline-size;
-  background: var(--app-popoverbg);
+  background: var(--color-light);
   border-radius: 0;
   bottom: 0;
   box-sizing: border-box;
-  color: var(--app-textcolor);
+  color: var(--color-dark);
   padding: var(--gap);
   position: absolute;
   right: 0;
@@ -726,6 +705,7 @@ watch(
   width: 80vw;
   max-width: 1000px;
   z-index: 100;
+  box-shadow: -6px 0 12px -4px rgba(0, 0, 0, 0.3);
 }
 
 .scrollable-y {
@@ -734,7 +714,7 @@ watch(
 
 .close {
   border: 0;
-  color: var(--app-textcolor);
+  color: var(--color-dark);
   cursor: pointer;
   font-size: 1.2em;
   position: absolute;
@@ -746,17 +726,8 @@ watch(
   color: var(--color-red);
 }
 
-.flexline {
-  gap: calc(var(--gap) * 2);
-}
-
-.flexline .flexline {
-  gap: var(--gap);
-}
-
-h3.flexline {
-  gap: calc(var(--gap) * 0.5);
-  max-width: calc(100% - var(--gap) * 2);
+h3 .fa-location-dot {
+  margin-right: 4px;
 }
 
 .icontitle {
@@ -865,18 +836,23 @@ h3.flexline {
 @media screen and (max-width: 700px) {
   .popup-js.active {
     left: 0;
-    width: 100vw;
-    top: 30vw;
+    width: 100%;
+    top: 0;
     padding-right: calc(var(--gap) * 0.5);
+    padding-top: calc(2rem + var(--gap));
   }
 
   .close {
+    font-size: 2rem !important; 
+  }
+
+  /* .close {
     top: -35px;
     right: 10px;
     background-color: #fff;
     width: 40px;
     height: 40px;
-  }
+  } */
 
   .flexline-mobile-column {
     flex-direction: column;
@@ -996,4 +972,10 @@ h3.flexline {
   font-weight: 900;
 }
 /* - realtime */
+
+.buySensor {
+  border: 2px solid var(--color-dark);
+  padding: var(--gap);
+  border-radius: 5px;
+}
 </style>
