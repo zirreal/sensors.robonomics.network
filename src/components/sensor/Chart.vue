@@ -1,27 +1,27 @@
 <template>
-  <Chart
-    ref="chartRef"
-    constructor-type="stockChart"
-    :options="chartOptions"
-  />
+  <div>
+    <Chart
+      ref="chartRef"
+      constructor-type="stockChart"
+      :options="chartOptions"
+    />
+    <div class="custom-legend">
+      <span
+        v-for="item in visibleLegend"
+        :key="item.key"
+        :class="['legend-item', { active: item.key === activeLegendKey }]"
+        @click="onLegendClick(item.key)"
+      >
+        {{ $t(item.labelKey) }}
+      </span>
+    </div>
+  </div>
 </template>
 
 <script setup>
-/*
- * This component renders a Highcharts stockChart (spline) and supports two data modes:
- *   • Realtime mode (“realtime” provider):
- *       – Disables data grouping to show every point as it arrives.
- *       – Applies a rolling 1-hour time window on mount and as new data comes in.
- *       – Uses a watcher on props.log.length to efficiently append only new points,
- *         update existing series, remove deleted ones, and shift the x-axis window.
- *   • Remote (historical/recap) mode:
- *       – Enables Highcharts data grouping (5-minute bins) when point count exceeds threshold.
- *       – Disables the realtime logic and simply redraws the chart whenever the full log array changes.
- */
-
 import { ref, watch, onMounted, computed, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useI18n } from "vue-i18n";
+import { useI18n } from 'vue-i18n';
 import Highcharts from 'highcharts';
 import stockInit from 'highcharts/modules/stock';
 import { Chart } from 'highcharts-vue';
@@ -31,316 +31,263 @@ import { getTypeProvider } from '../../utils/utils';
 
 stockInit(Highcharts);
 
-// Props and Refs
 const props = defineProps({
-  /* log - Array of `{ timestamp, data }` entries; timestamps may be in seconds or ms. */
-  log: {
-    type: Array,
-    default: () => []
-  }
+  log:  { type: Array, default: () => [] },
+  unit: { type: String }
 });
+const chartRef = ref(null);
 
-// Global objects
-const route = useRoute();
+const route  = useRoute();
 const router = useRouter();
 const { t: tr, locale } = useI18n();
 
-// Fix chart timeline for 1 hour (only for realtime mode, to ensure nice view)
-const WINDOW_MS = 60 * 60 * 1000;
-const MAX_VISIBLE = config.SERIES_MAX_VISIBLE; // For performance issues, if reached max - approximation added
+const WINDOW_MS   = 60 * 60 * 1000;
+const MAX_VISIBLE = config.SERIES_MAX_VISIBLE;
 const VALID_TYPES = Object.keys(unitsettings).map(k => k.toLowerCase());
-const chartRef = ref(null); // Chart container
 
-// Tracks the current selected measurement type from the route
-const activeType = computed(() => {
-  const t = route.params.type?.toLowerCase();
-  return VALID_TYPES.includes(t) ? t : config.DEFAULT_MEASURE_TYPE;
+const GROUPS = {
+  dust:    { members: ['pm10', 'pm25'], labelKey: 'Dust & Particles' },
+  noise:   { members: ['noise', 'noisemax', 'noiseavg'], labelKey: 'Noise' },
+  climate: { members: ['temperature', 'humidity'], labelKey: 'Climate' }
+};
+const idToGroup = Object.fromEntries(Object.entries(GROUPS).flatMap(([g, { members }]) => members.map(id => [id, g])));
+
+// --- Кешируем уникальные id (типы), а не все логи
+const presentIdsSet = ref(new Set());
+
+// Watch по props.log только если набор типов изменился
+watch(
+  () => props.log,
+  (log) => {
+    const set = new Set();
+    for (const point of log) {
+      if (!point.data) continue;
+      Object.keys(point.data).forEach(id => set.add(id.toLowerCase()));
+    }
+    // Обновляем только если изменился состав
+    const old = presentIdsSet.value;
+    if (
+      set.size !== old.size ||
+      [...set].some(id => !old.has(id))
+    ) {
+      presentIdsSet.value = set;
+    }
+  },
+  { immediate: true }
+);
+
+// visibleLegend зависит только от presentIdsSet, теперь не дергается при каждом изменении данных
+const visibleLegend = computed(() => {
+  const ids = presentIdsSet.value;
+  const legend = [];
+
+  Object.entries(GROUPS).forEach(([g, info]) => {
+    if (info.members.some(m => ids.has(m))) {
+      legend.push({ key: g, labelKey: info.labelKey, single: false });
+    }
+  });
+
+  const groupedIds = Object.values(GROUPS).flatMap(g => g.members);
+  ids.forEach(id => {
+    if (!groupedIds.includes(id)) {
+      legend.push({
+        key: id,
+        labelKey: unitsettings[id]?.namelong?.[locale.value] || unitsettings[id]?.nameshort?.[locale.value] || id.toUpperCase(),
+        single: true
+      });
+    }
+  });
+  return legend;
 });
 
-// Determines if the current provider is in realtime mode
-const isRealtime = computed(() => {
-  const provider = getTypeProvider();
-  return provider === 'realtime';
+const rawUrlType  = computed(() => route.params.type?.toLowerCase());
+const activeGroupKey = computed(() => idToGroup[rawUrlType.value] || null);
+const isSingle    = computed(() => !idToGroup[rawUrlType.value] && presentIdsSet.value.has(rawUrlType.value));
+
+const activeLegendKey = computed(() => {
+  if (activeGroupKey.value && visibleLegend.value.some(x => x.key === activeGroupKey.value)) return activeGroupKey.value;
+  if (isSingle.value && visibleLegend.value.some(x => x.key === rawUrlType.value)) return rawUrlType.value;
+  return visibleLegend.value[0]?.key || null;
 });
 
-
-// Series data managed separately
+const isRealtime  = computed(() => getTypeProvider() === 'realtime');
 const chartSeries = ref([]);
 
-// Reactive Highcharts config that updates when isRealtime changes
-const chartOptions = computed(() => ({
-  chart: { type: 'spline', height: 400 },
-  // rangeSelector: { inputEnabled: false, buttons: [{ type: 'all', text: 'All' }] },
-  rangeSelector: {
-    enabled: false,
-  },
-  legend: { enabled: true },
-  title: { text: '' },
-  time: { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, useUTC: false},
-  xAxis: {
-    type: 'datetime',
-    labels: { format: '{value:%H:%M}' },
-    ordinal: !isRealtime.value
-  },
-  yAxis: { title: false },
-  tooltip: { 
-    valueDecimals: 2,
-    shared: true,
-    xDateFormat: '%Y-%m-%d %H:%M:%S',
-    formatter() {
-      const labelMap = {
-        pm10: 'PM10',
-        pm25: 'PM2.5',
-        noisemax: 'Noise Max',
-        noise: 'Noise',
-        noiseavg: 'Noise Avg'
-      };
-
-      let html = `<b>${new Date(this.x).toLocaleString()}</b><br/>`;
-
-      this.points.forEach(point => {
-        const id = point.series.options.id;
-        const label = labelMap[id] || point.series.name;
-        html += `<span style="color:${point.color}">●</span> ${label}: <b>${point.y.toFixed(2)}</b><br/>`;
-      });
-
-      return html;
-    }
-  },
-plotOptions: {
-  series: {
-    showInNavigator: true,
-    dataGrouping: isRealtime.value
-      ? { enabled: false }
-      : { enabled: true, units: [['minute', [5]]] },
-    events: {
-      legendItemClick: function () {
-        const chart = this.chart;
-        const clickedSeries = this;
-
-        // Prevent default toggling if already visible
-        if (clickedSeries.visible) return false;
-
-        // Hide all other series
-        chart.series.forEach(s => {
-          if (s !== clickedSeries) {
-            s.setVisible(false, false);
-          }
-        });
-
-        // Show clicked series
-        clickedSeries.setVisible(true, false);
-
-        chart.redraw();
-
-        return false; // Prevent default behavior
-      }
-    }
-  }},
-  series: chartSeries.value, // inject dynamic series reactively
-  credits: {enabled: false}
-}));
-
-function buildSeriesArray(log, realtime, maxVisible) {
-
-  // Create a lookup table for zones, keyed by lowercase measurement type
+/**
+ * Builds an array of Highcharts-ready series, showing only series for the selected legend group or single parameter.
+ * - For group: shows all present members (dashed lines for secondary), one main (solid, displayed in legend).
+ * - For single parameter: shows only that one.
+ * - Only shows lines for parameters actually present in the current log.
+ * - In realtime mode, stretches each series to the last hour window by adding a virtual point if needed.
+ */
+function buildSeriesArray(log, realtime, maxVisible, legendKey) {
   const zonesMap = Object.fromEntries(
     Object.entries(unitsettings).map(([k, v]) => [k.toLowerCase(), v.zones])
   );
 
-  // Grouped series behavior: only one shows in legend, others are linked
-  const linkedGroups = {
-    dust: ['pm10', 'pm25'],
-    noise: ['noise', 'noisemax', 'noiseavg']
-  };
-
-  const groupMap = {};
-  Object.entries(linkedGroups).forEach(([group, ids]) => {
-    ids.forEach(id => {
-      groupMap[id] = group;
-    });
-  });
-
-  // Store series in a Map for fast access and de-duplication by id
+  const firstSeen = {};
   const seriesMap = new Map();
 
-  for (const entry of log) {
-    const { timestamp, data } = entry;
-
-    // Skip entries without timestamp or data
+  for (const { timestamp, data } of log) {
     if (!timestamp || !data) continue;
-
-    // Convert UNIX timestamp (in seconds) to milliseconds if needed
     const t = String(timestamp).length === 10 ? timestamp * 1000 : timestamp;
-
     for (const [key, val] of Object.entries(data)) {
       const id = key.toLowerCase();
-
-      const group = groupMap[id];
-
-      if (group) {
-        // Ensure first-seen ID becomes the main if default main is missing
-        if (!groupMap._firstSeen) groupMap._firstSeen = {};
-        if (!groupMap._firstSeen[group]) {
-          groupMap._firstSeen[group] = id;
-        }
-
-        const mainId = groupMap._firstSeen[group];
-        const isMain = id === mainId;
-
-        if (!seriesMap.has(id)) {
-          seriesMap.set(id, {
-            id,
-            name: group === 'noise'
-              ? tr('Noise')
-              : group === 'dust'
-                ? tr('Dust & Particles')
-                : displayName,
-            showInLegend: isMain,
-            linkedTo: isMain ? undefined : mainId,
-            dashStyle: isMain ? 'Solid' : 'ShortDot',
-            data: [],
-            zones: zonesMap[id] || [],
-            dataGrouping: {
-              enabled: true,
-              units: [['minute', [5]]]
-            }
-          });
-        }
-
-        seriesMap.get(id).data.push([t, parseFloat(val)]);
-        continue;
-      }
-
-      // On first encounter, initialize series with localized short name
-      if (!seriesMap.has(id)) {
-        const setting = unitsettings[id] || {};
-        const nameshort = setting.nameshort || {};
-        const displayName = nameshort[locale.value] || id;
-
-        seriesMap.set(id, {
-          id,
-          name: displayName,    // use localized short name
-          data: [],
-          zones: zonesMap[id] || [],
-          dataGrouping: {
-            enabled: true,
-            units: [['minute', [5]]]
+      const group = idToGroup[id];
+      const set = unitsettings[id] || {};
+      const unit = set.unit || props.unit || '';
+      const short = set.nameshort?.[locale.value] || id.toUpperCase();
+      const full = set.namelong?.[locale.value] || short;
+      if ((group && group === legendKey) || (!group && id === legendKey)) {
+        if (group) {
+          if (!firstSeen[group]) firstSeen[group] = id;
+          const mainId = firstSeen[group];
+          const isMain = id === mainId;
+          if (!seriesMap.has(id)) {
+            seriesMap.set(id, {
+              id,
+              unit,
+              name: tr(GROUPS[group].labelKey),
+              fullLabel: full,
+              showInLegend: isMain,
+              linkedTo: isMain ? undefined : mainId,
+              dashStyle: isMain ? 'Solid' : 'ShortDot',
+              data: [],
+              zones: zonesMap[id] || [],
+              dataGrouping: { enabled: true, units: [['minute', [5]]] }
+            });
           }
-        });
+        } else {
+          if (!seriesMap.has(id)) {
+            seriesMap.set(id, {
+              id,
+              unit,
+              name: short,
+              fullLabel: full,
+              showInLegend: true,
+              data: [],
+              zones: zonesMap[id] || [],
+              dataGrouping: { enabled: true, units: [['minute', [5]]] }
+            });
+          }
+        }
+        seriesMap.get(id).data.push([t, parseFloat(val)]);
       }
-
-      // Push raw point
-      seriesMap.get(id).data.push([t, parseFloat(val)]);
     }
   }
 
-  // Remove duplicated points and sorting by time
-  // Convert to array, apply dataGrouping logic & sort alphabetically by displayName
-  const seriesArray = Array.from(seriesMap.values()).map(s => ({
-    ...s,
-    data: s.data
-      .reduce((acc, [timestamp, value]) => {
-        if (!acc.some(([t]) => t === timestamp)) {
-          acc.push([timestamp, value]);
-        }
-        return acc;
-      }, [])
-      .sort((a, b) => a[0] - b[0]),
-    dataGrouping: realtime
-      ? { enabled: false }
-      : (s.data.length > maxVisible
-         ? { enabled: true, approximation: 'high', units: [['minute', [5]]] }
-         : s.dataGrouping)
-  }));
-
-  return seriesArray.sort((a, b) => a.name.localeCompare(b.name));
-
+  let out = Array.from(seriesMap.values()).map(s => {
+    let arr = Array.from(new Map(s.data.map(([ts, v]) => [ts, v])).entries())
+      .sort((a, b) => a[0] - b[0]);
+    const many = arr.length > maxVisible;
+    if (realtime && arr.length) {
+      const lastX = arr.at(-1)[0];
+      const leftX = lastX - WINDOW_MS;
+      if (arr[0][0] > leftX) {
+        arr = [[leftX, arr[0][1]], ...arr];
+      }
+    }
+    return {
+      ...s,
+      data: arr,
+      dataGrouping: realtime
+        ? { enabled: false }
+        : (many ? { enabled: true, approximation: 'high', units: [['minute', [5]]] } : s.dataGrouping)
+    };
+  });
+  return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+const makeSeriesArray = (log, legendKey) => buildSeriesArray(log, isRealtime.value, MAX_VISIBLE, legendKey);
 
-// Builds a chart-ready series array from log data,
-// with realtime and performance settings applied
-const makeSeriesArray = (log) => buildSeriesArray(log, isRealtime.value, MAX_VISIBLE);
+const chartOptions = computed(() => {
+  const unitsArr = [...new Set(chartSeries.value.map(s => s.unit))];
+  const unitToAxis = Object.fromEntries(unitsArr.map((u, i) => [u, i]));
+  const series = chartSeries.value.map(s => ({ ...s, yAxis: unitToAxis[s.unit] ?? 0 }));
 
-
-// Initialize chart when component is mounted
-onMounted(async () => {
-
-  // Checks if no any data type "activeType", show first we have in Chart
-  const all = makeSeriesArray(props.log);
-  let selectedType = activeType.value;
-  if (!all.find(s => s.id === selectedType)) {
-    selectedType = all[0]?.id;
-    if (selectedType) {
-      router.replace({
-        params: { ...route.params, type: selectedType }
-      });
-    }
-  }
-
-  // Generate initial series based on the log data and selected type
-  const initial = all.map(s => ({
-    ...s,
-    visible: s.id === selectedType || s.linkedTo === selectedType
+  const yAxis = unitsArr.map(u => ({
+    title: false,
+    labels: { format: `{value} ${u}` },
+    opposite: true,
+    visible: true
   }));
 
-  
-  // const initial = makeSeriesArray(props.log).map(s => ({
-  //   ...s,
-  //   visible: s.id === activeType.value
-  // }));
-
-  // Set series for the chart (reactively bound via chartOptions)
-  chartSeries.value = initial;
-
-  // If in realtime mode, fix the visible time window to the last hour
-  if (isRealtime.value) {
-    await nextTick();
-
-    const chart = chartRef.value.chart;
-
-    // Find the latest timestamp among all series
-    const lastTime = initial.reduce(
-      (max, s) => Math.max(max, s.data[s.data.length - 1]?.[0] || 0),
-      0
-    );
-
-    // Set visible time range to [lastTime - 1h, lastTime]
-    if (lastTime) {
-      chart.xAxis[0].setExtremes(
-        lastTime - WINDOW_MS,
-        lastTime,
-        true,   // redraw from start
-        false   // no animation
-      );
-    }
-  }
+  return {
+    chart: { type: 'spline', height: 400 },
+    rangeSelector: { enabled: false },
+    legend: { enabled: false },
+    title:  { text: '' },
+    time:   { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, useUTC: false },
+    xAxis:  {type: 'datetime', labels: { format: '{value:%H:%M}' }, ordinal: !isRealtime.value },
+    yAxis,
+    tooltip: {
+      valueDecimals: 2,
+      shared: true,
+      xDateFormat: '%Y-%m-%d %H:%M:%S',
+      formatter() {
+        const rows = this.points.map(p => `<span style="color:${p.color}">●</span> ${(p.series.userOptions.fullLabel || p.series.name)}: <b>${p.y.toFixed(2)}</b>`);
+        return `<b>${new Date(this.x).toLocaleString()}</b><br/>${rows.join('<br/>')}`;
+      }
+    },
+    plotOptions: {
+      series: {
+        showInNavigator: true,
+        dataGrouping: isRealtime.value ? { enabled: false } : { enabled: true, units: [['minute', [5]]] }
+      }
+    },
+    series,
+    credits: { enabled: false }
+  };
 });
 
+function onLegendClick(legendKey) {
+  if (legendKey === activeLegendKey.value) return;
+  let targetType;
+  if (GROUPS[legendKey]) {
+    targetType = GROUPS[legendKey].members.find(m => presentIdsSet.value.has(m));
+  } else {
+    targetType = legendKey;
+  }
+  router.replace({ params: { ...route.params, type: targetType } });
+}
 
-// Realtime watcher
-// Dynamically append only new points to the chart when log grows
+watch(
+  [() => props.log, () => activeLegendKey.value],
+  async ([log, legendKey]) => {
+    if (!legendKey || !log.length) return;
+    const all = makeSeriesArray(log, legendKey);
+    chartSeries.value = all;
+    if (isRealtime.value) {
+      await nextTick();
+      const chart = chartRef.value.chart;
+      const lastX = Math.max(...all.map(s => s.data.at(-1)?.[0] || 0));
+      if (lastX) {
+        chart.xAxis[0].setExtremes(
+          lastX - WINDOW_MS,
+          lastX,
+          true,
+          false
+        );
+      }
+    }
+  },
+  { immediate: true }
+);
+
 watch(
   () => props.log.length,
-  (newLen, oldLen) => {
-
-    if (!isRealtime.value || newLen <= oldLen) return;
-
+  async (newLen, oldLen) => {
+    if (!isRealtime.value || newLen <= oldLen || !activeLegendKey.value) return;
     const chart = chartRef.value.chart;
 
-    // 1. Rebuild and sort series alphabetically by name
-    const raw = makeSeriesArray(props.log)
+    const raw = makeSeriesArray(props.log, activeLegendKey.value)
       .sort((a, b) => a.name.localeCompare(b.name));
-      
 
-    // 2. Preserve current visibility state of each series
     const prevVis = {};
     chart.series.forEach(s => {
       prevVis[s.options.id] = s.visible;
     });
 
-    // 3. Remove any series that no longer exist in the new data
     chart.series.slice().forEach(s => {
       if (!raw.find(ns => ns.id === s.options.id)) {
         s.remove(false);
@@ -348,21 +295,17 @@ watch(
     });
 
     let maxTime = 0;
-
-    // 4. Update existing series or add new ones
     raw.forEach(ns => {
       const existing = chart.get(ns.id);
       if (existing) {
-        // 4a. Update zones & dataGrouping
         existing.update(
-          { 
+          {
             name: ns.name,
-            zones: ns.zones, 
+            zones: ns.zones,
             dataGrouping: ns.dataGrouping
           },
           false
         );
-        // 4b. Append only new points beyond the last known timestamp
         const lastX = existing.data.at(-1)?.x || -Infinity;
         ns.data
           .slice(oldLen)
@@ -372,12 +315,8 @@ watch(
             maxTime = Math.max(maxTime, p[0]);
           });
       } else {
-        // 4c. Add brand-new series, restoring its visibility or defaulting to activeType
         chart.addSeries(
-          { 
-            ...ns, 
-            visible: prevVis[ns.id] ?? (ns.id === activeType.value) 
-          },
+          { ...ns, visible: true },
           false
         );
         const pts = chart.get(ns.id).data;
@@ -385,7 +324,6 @@ watch(
       }
     });
 
-    // 5. In realtime mode, shift the x-axis window to show the last hour
     if (isRealtime.value && maxTime) {
       chart.xAxis[0].setExtremes(
         maxTime - WINDOW_MS,
@@ -395,49 +333,61 @@ watch(
       );
     }
 
-    // 6. Fallback to first series if activeType disappeared
-    if (!raw.find(s => s.id === activeType.value) && raw.length) {
-      const fallback = raw[0].id;
-      router.replace({
-        params: { ...route.params, type: fallback }
-      });
-      chart.series.forEach(s =>
-        s.setVisible(s.options.id === fallback, false)
-      );
+    if (!raw.length) {
+      const fallbackKey = visibleLegend.value[0]?.key;
+      if (fallbackKey) {
+        let fallbackType = GROUPS[fallbackKey]
+          ? GROUPS[fallbackKey].members.find(m => presentIdsSet.value.has(m))
+          : fallbackKey;
+        router.replace({ params: { ...route.params, type: fallbackType } });
+      }
     }
 
-    // 7. Finally, redraw to apply all changes
     chart.redraw();
   }
 );
 
-// Daily recap watcher
-// Redrawes all chart if log is changed
 watch(
   () => props.log,
   newLog => {
-    if (isRealtime.value) return;
+    if (isRealtime.value || !activeLegendKey.value) return;
+    chartSeries.value = makeSeriesArray(newLog, activeLegendKey.value);
+  }
+);
 
-    const all = makeSeriesArray(newLog);
-    const initial = all.map(s => ({
-      ...s,
-      visible: s.id === activeType.value || s.linkedTo === activeType.value
-    }));
-
-    chartSeries.value = initial;
-  },
-  { deep: true }
+watch(
+  () => route.params.type,
+  newType => {
+    if (!activeLegendKey.value) return;
+    chartSeries.value = makeSeriesArray(props.log, activeLegendKey.value);
+  }
 );
 
 </script>
 
 <style>
-.highcharts-legend-item { font-weight: 900; }
-.highcharts-legend-item .highcharts-graph,
-.highcharts-legend-item .highcharts-point { stroke: #000!important; }
-.highcharts-legend-item .highcharts-point { fill: #000!important; stroke-width: 2; }
-.highcharts-legend-item-hidden text { fill: #999!important; color: #999!important; text-decoration: none!important; }
-.highcharts-legend-item-hidden .highcharts-graph,
-.highcharts-legend-item-hidden .highcharts-point { stroke: #999!important; }
-.highcharts-legend-item-hidden .highcharts-point { fill: #999!important; }
+.custom-legend {
+  font-weight: 900;
+  font-size: 1.1em;
+  user-select: none;
+  margin-bottom: calc(var(--gap) * 3);
+  text-align: center;
+}
+.legend-item {
+  color: var(--app-textcolor);
+  cursor: pointer;
+  transition: color .2s;
+  opacity: .5;
+}
+.legend-item:not(:last-child) {
+  margin-right: calc(var(--gap) * 2);
+}
+.legend-item.active {
+  opacity: 1;
+  text-decoration: underline;
+  cursor: default;
+}
+.legend-item:hover:not(.active) {
+  opacity: .3;
+}
 </style>
