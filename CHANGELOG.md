@@ -1,3 +1,16 @@
+vx.x.x
+- Fix: timeline within points in a sensor's chart
+- Refactor: new structure for the header
+- Refactor: improved sensor's popup for small screens
+- Fix: overflow width scrolling for a sensor's popup
+- Feat: dark mode support
+- Refactor: improved code for the 'Measurements' page
+- Docs: new page about use cases of air sensor
+- Feat: added units in chart
+- Fix: removed update chart in 'Daily recap' mode
+- Feat: combined Temperature and Humidity in one group
+- Feat: added navigation icon
+
 v2.1.6
 - Feat: combined dust and noise values in the chart
 

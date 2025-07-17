@@ -4,7 +4,7 @@
       <h3 class="clipoverflow">
         <img v-if="icon" :src="icon" class="icontitle" />
         <font-awesome-icon v-else icon="fa-solid fa-location-dot" />
-        <span v-if="addressformatted">{{ addressformatted }}</span>
+        <span v-if="addressformatted && addressformatted !==''">{{ addressformatted }}</span>
         <span v-else class="skeleton-text"></span>
       </h3>
     </section>
@@ -33,7 +33,7 @@
       </section>
 
       <section>
-        <Chart v-show="state.chartReady" :point="props.point" :log="log" />
+        <Chart v-show="state.chartReady" :log="log" :unit="measurements[props.type]?.unit" />
         <div v-show="!state.chartReady" class="chart-skeleton"></div>
       </section>
 
@@ -223,16 +223,6 @@ const geo = computed(() => {
   return { lat: Number(lat) || 0, lng: Number(lng) || 0 };
 });
 
-// Если спустя 5 секунд address всё ещё пустой, подставляем координаты.
-setTimeout(() => {
-  if (!state.address || Object.keys(state.address).length === 0) {
-    state.address = {
-      country: "Unrecognised address",
-      address: [`${geo.value.lat}, ${geo.value.lng}`],
-    };
-  }
-}, 5000);
-
 const sensor_id = computed(() => {
   return props.point?.sensor_id || route.params.sensor || null;
 });
@@ -245,7 +235,7 @@ const sender = computed(() => props.point?.sender || null);
 
 const addressformatted = computed(() => {
   let buffer = "";
-  if (state.address && Object.keys(state.address).length > 0) {
+  if (state.address && (state.address.length > 0 || Object.keys(state.address).length > 0)) {
     if (state.address.country) {
       buffer += state.address.country;
     }
@@ -406,9 +396,21 @@ const setAddressUnrecognised = (lat, lng) => {
 // events
 
 onMounted(() => {
+
+  // Если спустя 5 секунд address всё ещё пустой, подставляем координаты.
+  setTimeout(() => {
+    if (!state.address || Object.keys(state.address).length === 0) {
+      state.address = {
+        country: "Unrecognised address",
+        address: [`${geo.value.lat}, ${geo.value.lng}`],
+      };
+    }
+  }, 5000);
+
   state.start = props.startTime
     ? moment.unix(props.startTime).format("YYYY-MM-DD")
     : moment().format("YYYY-MM-DD");
+
   updatert();
 });
 
@@ -648,7 +650,7 @@ h3 .fa-location-dot {
 @media screen and (max-width: 700px) {
   .popup-js.active {
     left: 0;
-    width: 100vw;
+    width: 100%;
     top: 0;
     padding-right: calc(var(--gap) * 0.5);
     padding-top: calc(2rem + var(--gap));

@@ -68,7 +68,7 @@
           <ReleaseInfo />
         </div>
         <button class="popovercontrol" popovertarget="about">
-          <font-awesome-icon icon="fa-solid fa-info" />
+          <font-awesome-icon icon="fa-solid fa-bars" />
         </button>
 
         <a class="button button-promo" href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight/coming_soon?utm_source=sensors.social&utm_medium=header-button" target="_blank">Altruist on Indiegogo</a>
