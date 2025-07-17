@@ -19,6 +19,7 @@
     :historyhandler="handlerHistory"
     :isLoad="state.isLoad"
     @clickMarker="handlerClick"
+    @activateMarker="handleActivePoint"
   />
 </template>
 
@@ -222,6 +223,9 @@ const handlerClick = async (point) => {
   } else {
     log = await state.providerObj.getHistoryBySensor(point.sensor_id);
   }
+  document.querySelectorAll('.with-active-sensor').forEach(el => {
+    el.classList.remove('with-active-sensor');
+  });
   const address = await getAddressByPos(point.geo.lat, point.geo.lng, localeComputed.value);
   state.point = { ...point, address, log: [...log] };
   state.isLoad = false;
@@ -347,6 +351,10 @@ onMounted(async () => {
 
   if (props.type) {
     localStorage.setItem("currentUnit", props.type);
+  }
+
+  if(route.params.sensor) {
+    handleActivePoint(route.params.sensor)
   }
 
   const instance = getCurrentInstance();
