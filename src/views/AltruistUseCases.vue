@@ -1,4 +1,9 @@
 <template>
+  <MetaInfo
+    pageTitle= "Who Altruist Was Created For - Sensors use cases"
+    pageDescription="Monitoring the environment involves plenty of pitfalls, making the job far harder than it looks at first glance. Our team—the creators of Altruist and the open-source project sensors.social—has spent seven years studying and working in this field, and we hope our experience will pleasantly surprise you and give you a practical tool for adapting to the conditions in which you and your loved ones live. Below we explain which main user groups Altruist is designed for…"
+    :pageImage="ogImage"
+  />
   <Header />
   <section class="container-pagetext">
     <h1>Who Altruist Was Created For</h1>
@@ -84,12 +89,15 @@ import {ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import Header from '../components/header/Header.vue';
+import MetaInfo from '../components/MetaInfo.vue';
 import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";
 
 // i18n support
 const { locale } = useI18n();
 const currentLocale = ref(locale.value);
+
+const ogImage = new URL('@/assets/images/pages/altruist-use-cases/altruist-use-cases-all.jpg', import.meta.url).href
 
 // reactively update locale when changed
 watch(locale, (newLocale) => {

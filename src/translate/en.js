@@ -22,7 +22,7 @@ export default {
     buySensorLink: "Learn more & buy",
   },
   measures: {
-    title: "Air measurements information",
+    title: "Air quality measurements information",
     PM10: "PM 10 (Particulate Matter 10) consists of atmospheric particles with a size of up to 10 micrometers, including dust, soot, and other pollutants. They can cause health problems by affecting breathing and contributing to respiratory diseases. Sources of PM 10 include industrial emissions, road dust, and fuel combustion. Monitoring and reducing PM 10 levels are important for maintaining clean air and promoting health.",
     pollutionScalePM10: {
       1: "0-50 µg/m³: Good air quality",
