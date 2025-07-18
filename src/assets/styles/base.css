@@ -5,8 +5,13 @@ body {
   color: var(--app-textcolor);
 }
 
+p, div, details {
+  font-size: var(--font-size);
+  line-height: 1.5;
+}
+
 a {
-  color: var(--color-link);
+  color: var(--app-buttoncolor);
   text-decoration: none;
 }
 
@@ -29,14 +34,33 @@ h1,h2, h3, h4, h5 {
 
 h1 {
   font-size: calc(var(--font-size) * 3);
-  font-weight: 900;
   margin-bottom: calc(var(--gap) * 3);
+}
+
+h2 {
+  font-size: calc(var(--font-size) * 2);
+  margin-bottom: calc(var(--gap) * 2);
+}
+
+h3 {
+  font-size: calc(var(--font-size) * 1.5);
+  margin-bottom: calc(var(--gap) * 1.5);
 }
 
 @media (width < 800px) {
   h1 {
-    font-size: calc(var(--font-size) * 2.5);
+    font-size: calc(var(--font-size) * 2.3);
   }
+
+  h2 {
+  font-size: calc(var(--font-size) * 1.6);
+  margin-bottom: calc(var(--gap) * 1.6);
+}
+
+h3 {
+  font-size: calc(var(--font-size) * 1.3);
+  margin-bottom: calc(var(--gap) * 1.3);
+}
 }
 
 li, dd {
@@ -630,7 +654,7 @@ section:not(:last-child) {
 .details-link summary {
   font-weight: 900;
   cursor: pointer;
-  color: var(--color-link);
+  color: var(--app-buttoncolor);
 }
 
 .details-link[open] summary {
@@ -639,10 +663,22 @@ section:not(:last-child) {
 /* - details */
 
 /* + TEXT PAGES */
+.container-pagetext > * {
+  --font-size: 1.3rem;
+  --gap: 1.7rem;
+  line-height: 1.5;
+}
+
+@media (width < 800px) {
+  .container-pagetext > * {
+    --gap: 1.4rem;
+  }
+}
+
 .container-pagetext {
   padding: calc(var(--gap) * 5) calc(var(--gap) * 3) calc(var(--gap) * 3);
   margin: 0 auto;
-  max-width: 1200px;
+  max-width: 1400px;
 }
 
 .container-pagetext section:not(:last-child) {
@@ -656,6 +692,17 @@ section:not(:last-child) {
 
 .pagetext-highlight {
   font-weight: 900;
+}
+
+.pagetext-fullwidth-image {
+  display: block;
+  width: 100vw;
+  max-width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
 }
 
 /* +-TEXT PAGES */

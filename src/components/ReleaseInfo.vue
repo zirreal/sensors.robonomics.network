@@ -12,7 +12,7 @@
     <div><b>Secured by</b></div>
     <img
       alt=""
-      src="../assets/polkadot-new-dot-logo-horizontal.svg"
+      src="../assets/images/polkadot-new-dot-logo-horizontal.svg"
       class="polkadotLogo"
     />
   </section>

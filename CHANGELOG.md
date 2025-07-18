@@ -10,6 +10,7 @@ vx.x.x
 - Fix: removed update chart in 'Daily recap' mode
 - Feat: combined Temperature and Humidity in one group
 - Feat: added navigation icon
+- Refactor: images paths structruzed better
 
 v2.1.6
 - Feat: combined dust and noise values in the chart
