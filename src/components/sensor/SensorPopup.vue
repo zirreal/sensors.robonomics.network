@@ -1,7 +1,7 @@
 <template>
   <div class="popup-js active">
     <section>
-      <h3 class="clipoverflow">
+      <h3 class="sensor-title clipoverflow">
         <img v-if="icon" :src="icon" class="icontitle" />
         <font-awesome-icon v-else icon="fa-solid fa-location-dot" />
         <span v-if="addressformatted && addressformatted !==''">{{ addressformatted }}</span>
@@ -169,7 +169,7 @@ import Bookmark from "./Bookmark.vue";
 import Chart from "./Chart.vue";
 import Copy from "./Copy.vue";
 import ProviderType from "../ProviderType.vue";
-import AltruistPromo from "../AltruistPromo.vue";
+import AltruistPromo from "../devices/altruist/AltruistPromo.vue";
 import ReleaseInfo from "../ReleaseInfo.vue";
 
 // Props и emits
@@ -787,9 +787,9 @@ h3 .fa-location-dot {
 }
 /* - realtime */
 
-.buySensor {
-  border: 2px solid var(--color-dark);
-  padding: var(--gap);
-  border-radius: 5px;
+.sensor-title {
+  display: flex;
+  gap: var(--gap);
+  align-content: center;
 }
 </style>

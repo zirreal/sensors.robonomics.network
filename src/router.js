@@ -3,6 +3,7 @@ import Main from "./views/Main.vue";
 import PrivacyPolicy from "./views/PrivacyPolicy.vue";
 import AirMeasurements from "./views/AirMeasurements.vue";
 import AltruistUseCases from "./views/AltruistUseCases.vue";
+import AltruistTimeline from "./views/AltruistTimeline.vue";
 // import SensorEmbed from "./views/SensorEmbed.vue";
 
 const router = createRouter({
@@ -35,6 +36,11 @@ const router = createRouter({
       path: "/altruist-use-cases/",
       name: "altruist-use-cases",
       component: AltruistUseCases,
+    },
+    {
+      path: "/altruist-timeline/",
+      name: "altruist-timeline",
+      component: AltruistTimeline,
     },
     // {
     //   path: "/embed/sensor/:id/",

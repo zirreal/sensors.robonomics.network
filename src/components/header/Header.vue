@@ -61,6 +61,7 @@
 
           <section class="navlinks">
             <router-link to="/altruist-use-cases">Altruist use cases</router-link>
+            <router-link to="/altruist-timeline">Altruist timeline</router-link>
             <router-link to="/air-measurements">{{ $t("links.measurement") }}</router-link>
             <router-link to="/privacy-policy">{{ $t("links.privacy") }}</router-link>
           </section>
@@ -84,7 +85,7 @@ import { languages } from "@/translate";
 import config from "@config";
 import { useI18n } from "vue-i18n";
 import IconSensor from "../icons/Sensor.vue";
-import AltruistPromo from "../AltruistPromo.vue";
+import AltruistPromo from "../devices/altruist/AltruistPromo.vue";
 import ReleaseInfo from "../ReleaseInfo.vue";
 
 const { locale: i18nLocale } = useI18n();

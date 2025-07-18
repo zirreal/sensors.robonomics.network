@@ -8,14 +8,14 @@
           target="_blank"
           rel="noopener"
         >
-          <img alt="" src="../assets/altruist-device/Altruist-bundle.png" />
+          <img alt="" src="../../../assets/images/altruist-device/Altruist-bundle.png" />
           <span>New</span>
         </a>
 
         <div>
-          <h2>Where to get a sensor</h2>
+          <h3>Where to get Altruist Indoor & Outdoor Sensor</h3>
           <p>Air monitor for indoors & outdoors: urban PM & noise, bedroom CO₂, indoor vs outdoor temp & humidity, barometric pressure, E-Ink display, Wi-Fi, USB-C, no forced cloud, Home Assistant ready. DIY & modding friendly! Super Early Bird – €149 | Amazon – €295 (Fall 2025).&nbsp;</p>
-          <p><a :href="link" target="_blank">Join Indiegogo Campaign &rarr;</a></p>
+          <p><a :href="link" target="_blank" class="button">Join Indiegogo Campaign &rarr;</a></p>
         </div>
       </div>
     </div>
@@ -40,8 +40,14 @@ onMounted(() => {
 
 <style scoped>
 .buySensor {
+  --font-size: 1rem;
+  --gap: 1rem;
   font-weight: bold;
   container-type: inline-size;
+  /* border: 2px solid var(--color-dark); */
+  padding: calc(var(--gap) *2);
+  /* border-radius: 5px; */
+  background-color: hsl(83, 100%, 71%);
 }
 
 .buySensor:not(:first-child) {
@@ -66,7 +72,7 @@ onMounted(() => {
 
 .buySensor-preview span {
   align-items: center;
-  background-color: var(--color-link);
+  background-color: var(--app-buttoncolor);
   border-radius: 20px;
   border: 2px solid #fff;
   color: #fff;
@@ -96,6 +102,12 @@ onMounted(() => {
 
   .buySensor-grid h3 {
     font-size: 1.6rem;
+  }
+}
+
+@container (width < 400px) {
+  .buySensor-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
