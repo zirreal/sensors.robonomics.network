@@ -10,70 +10,15 @@
     </section>
 
     <div class="scrollable-y">
-      <section class="flexline" :class="state.provider === 'realtime' ? 'flexline-mobile-column' : null">
-        <div class="export-data"  v-if="state.provider !== 'realtime' && state.chartReady">
-          <div class="export-data__checkboxes">
-            <label class="checkbox-item">
-              <input
-                type="checkbox"
-                @change="toggleAllMeasures"
-              />
-              All measures
-            </label>
-            <label
-              v-for="m in availableMeasures"
-              :key="m"
-              class="checkbox-item"
-            >
-              <input
-                type="checkbox"
-                :value="m"
-                v-model="selectedMeasures"
-                @change="onMeasureChange"
-              />
-              {{ m.toUpperCase().replace('PM25', 'PM2.5') }}
-            </label>
-          </div>
-          <select v-model="exportType">
-            <option value="csv">CSV</option>
-            <option value="pdf">PDF</option>
-          </select>
-          <button class="button" @click="exportData">Export Data</button>
-        </div>
+      <section class="flexline align-start" :class="state.provider === 'realtime' ? 'flexline-mobile-column' : null">
+
+        <Export v-if="state.chartReady" :log="log" :unit="measurements[props.type]?.unit" :icon="icon" :geo="geo" :addressformatted="addressformatted" :sensor_id="sensor_id" :provider="state.provider" :start="state.start" />
+      
         <ProviderType />
 
         <div v-if="state.provider !== 'realtime'">
           <input type="date" v-model="state.start" :max="state.maxDate" onchange="this.blur()" />
         </div>
-
-        <div ref="pdfContent" class="pdf-container" :class="{'pdf-container-exporting': isExporting}">
-          <section v-if="isExporting">
-            <h3 class="flexline clipoverflow">
-              <img v-if="icon" :src="icon" class="icontitle" />
-              <font-awesome-icon v-else icon="fa-solid fa-location-dot" />
-              <span v-if="addressformatted">{{ addressformatted }}</span>
-              <span v-else class="skeleton-text"></span>
-            </h3>
-            <p>Coordinates - {{ geo.lat }}, {{ geo.lng }}</p>
-            <h2>{{ sensor_id }}</h2>
-            <p v-if="!isExporting">{{ state.start }}<span v-if="state.provider === 'realtime'"> – {{ state.rttime }}</span></p>
-            <p v-else>
-               {{ formattedStart }}
-                <span v-if="state.provider === 'realtime'"> – {{ state.rttime }}</span>
-            </p>
-          </section>
-          <section>
-            <Chart ref="chartRef" v-show="state.chartReady" :log="log" :unit="measurements[props.type]?.unit" />
-            <div v-show="!state.chartReady" class="chart-skeleton"></div>
-          </section>
-        </div>
-
-         <!-- Loader overlay -->
-        <div v-if="isExporting" class="export-loader-overlay">
-          <span>Exporting PDF</span>
-          <div class="loader"></div>
-        </div>
-
         <div v-if="state.provider === 'realtime'" class="flexline">
           <div>
             <div v-if="state.rttime" class="rt-time">{{ state.rttime }}</div>
@@ -87,6 +32,10 @@
             </div>
           </template>
         </div>
+      </section>
+      <section>
+        <Chart ref="chartRef" v-show="state.chartReady" :log="log" :unit="measurements[props.type]?.unit" />
+        <div v-show="!state.chartReady" class="chart-skeleton"></div>
       </section>
 
       <section class="flexline space-between">
@@ -207,13 +156,10 @@
 </template>
 
 <script setup>
-import { reactive, computed, ref, watch, watchEffect, onMounted, getCurrentInstance, nextTick } from "vue";
+import { reactive, computed, ref, watch, watchEffect, onMounted, getCurrentInstance } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useStore } from "@/store";
 import { useI18n } from "vue-i18n";
-import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
 import moment from "moment";
 import config, { sensors } from "@config";
 import measurements from "../../measurements";
@@ -226,6 +172,7 @@ import Copy from "./Copy.vue";
 import ProviderType from "../ProviderType.vue";
 import AltruistPromo from "../AltruistPromo.vue";
 import ReleaseInfo from "../ReleaseInfo.vue";
+import Export from "./Export.vue";
 
 // Props и emits
 const props = defineProps({
@@ -266,8 +213,6 @@ const state = reactive({
 // some refs
 // const prevGeo = ref({ lat: null, lng: null });
 const units = ref([]);
-const isExporting = ref(false)
-const pdfContent = ref(null)
 
 // computed
 const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
@@ -319,27 +264,6 @@ const startTimestamp = computed(() => {
 const endTimestamp = computed(() => {
   return Number(moment(state.start + " 23:59:59", "YYYY-MM-DD HH:mm:ss").format("X"));
 });
-
-// Дата для пдф файла 
-const formattedStart = computed(() => {
-  if (!state.start) return ''
-
-  const startStr = state.start.toString()
-  const [year, month, day] = startStr.split('-').map(Number)
-
-  const startDate = new Date(year, month - 1, day)
-  const now = new Date()
-
-  const isToday = startDate.toDateString() === now.toDateString()
-
-  if (isToday) {
-    const hh = now.getHours().toString().padStart(2, '0')
-    const mm = now.getMinutes().toString().padStart(2, '0')
-    return `${startStr} ${hh}:${mm}`
-  }
-
-  return startStr
-})
 
 
 const scales = computed(() => {
@@ -418,112 +342,6 @@ const getHistory = () => {
     end: endTimestamp.value,
   });
 }
-
-
-async function exportData() {
-  if (!pdfContent.value) return
-
-  isExporting.value = true
-  await nextTick()
-
-  const isMobile = window.innerWidth <= 768
-
-  // Save original styles
-  const originalWidth = pdfContent.value.style.width
-  const originalMaxWidth = pdfContent.value.style.maxWidth
-  const originalMinWidth = pdfContent.value.style.minWidth
-  const originalOverflow = pdfContent.value.style.overflow
-  const originalBoxSizing = pdfContent.value.style.boxSizing
-
-  // Force PDF content to fixed pixel width based on device
-  const targetWidth = isMobile ? 780 : 1100
-  pdfContent.value.style.width = `${targetWidth}px`
-  pdfContent.value.style.maxWidth = 'none'        // override any max-width constraints
-  pdfContent.value.style.minWidth = `${targetWidth}px`
-  pdfContent.value.style.overflow = 'visible'
-  pdfContent.value.style.boxSizing = 'border-box'
-
-  pdfContent.value.scrollTop = 0
-  await nextTick()
-
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-  const pageWidth = pdf.internal.pageSize.getWidth()
-  const pageHeight = pdf.internal.pageSize.getHeight()
-
-  // Adjust scale slightly depending on device
-  const scale = isMobile ? 1.9 : 2.2
-
-  const canvas = await html2canvas(pdfContent.value, {
-    useCORS: true,
-    scale,
-    scrollY: -window.scrollY
-  })
-
-  // Restore original styles
-  pdfContent.value.style.width = originalWidth
-  pdfContent.value.style.maxWidth = originalMaxWidth
-  pdfContent.value.style.minWidth = originalMinWidth
-  pdfContent.value.style.overflow = originalOverflow
-  pdfContent.value.style.boxSizing = originalBoxSizing
-
-  const imgData = canvas.toDataURL('image/png')
-
-  const pxToMm = px => px * 25.4 / 96
-  const imgWidth = pxToMm(canvas.width)
-  const imgHeight = pxToMm(canvas.height)
-
-  const margin = 10
-  const maxPdfWidth = pageWidth - margin * 2
-
-  // Calculate scale ratio so image fits inside PDF width with margin
-  const ratio = Math.min(maxPdfWidth / imgWidth, 1) // never scale up, only down or 1:1
-
-  const renderWidth = imgWidth * ratio
-  const renderHeight = imgHeight * ratio
-
-  let y = margin
-  pdf.addImage(imgData, 'PNG', margin, y, renderWidth, renderHeight)
-  y += renderHeight + 10
-
-  // Table data (unchanged)
-  // const latestEntries = log.value.slice(-100)
-  const latestEntries = [...log.value]
-  const firstEntry = latestEntries[0]?.data ?? {}
-  const measureKeys = Object.keys(firstEntry)
-
-  const tableHeaders = ['#', 'Timestamp', ...measureKeys.map(key => key.toUpperCase())]
-
-  const tableBody = latestEntries.map((entry, index) => {
-    const values = measureKeys.map(key => {
-      const val = entry.data[key]
-      return typeof val === 'number' ? val.toFixed(2) : val ?? '-'
-    })
-    return [
-      index + 1,
-      new Date(entry.timestamp * 1000).toLocaleString(),
-      ...values
-    ]
-  })
-
-  autoTable(pdf, {
-    head: [tableHeaders],
-    body: tableBody,
-    startY: y,
-    margin: { left: margin, right: margin },
-    styles: {
-      fontSize: 8,
-      cellPadding: 2
-    },
-    headStyles: {
-      fillColor: [22, 160, 133]
-    }
-  })
-
-  pdf.save(`sensor-${sensor_id.value}-${state.start}.pdf`)
-  isExporting.value = false
-}
-
-
 
 const updatert = () => {
   if (state.provider === "realtime" && log.value.length > 0) {
@@ -815,59 +633,6 @@ h3 .fa-location-dot {
   animation: skeleton-loading 1.5s infinite;
 }
 
-/* Стили для pdf файла */
-.pdf-container {
-  position: relative;
-  margin-bottom: var(--gap);
-}
-
-.pdf-container-exporting {
-  pointer-events: none;
-  background: #fff;
-  color: #000;
-  padding: 16px;
-  font-family: system-ui, sans-serif;
-}
-
-.pdf-container h2 {
-  font-size: 20px;
-}
-
-.export-loader-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, #f0f0f0, #e0e0e0, #f0f0f0);
-  background-size: 200% 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  gap: 20px;
-  z-index: 1000;
-  font-weight: bold;
-  font-size: 1.2rem;
-  color: var(--color-navy);
-  animation: skeleton-loading 1.5s infinite;
-}
-
-.export-loader-overlay .loader {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid var(--color-navy);; 
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  animation: spinPdf 1s linear infinite;
-  margin-right: 8px;
-}
-
-@keyframes spinPdf {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 @keyframes skeleton-loading {
   0% {
     background-position: 200% 0;
@@ -1028,5 +793,12 @@ h3 .fa-location-dot {
   border: 2px solid var(--color-dark);
   padding: var(--gap);
   border-radius: 5px;
+}
+
+
+@media screen and (max-width: 560px) {
+  .flexline.align-start  {
+    flex-direction: column-reverse;
+  }
 }
 </style>
