@@ -232,13 +232,11 @@ onMounted(() => {
 }
 
 .navlinks a {
-  display: block;
-  padding: 5px 0;
-}
-
-.navlinks a {
   margin-bottom: calc(var(--gap) * 0.5);
   border-bottom: 1px dotted #000;
+  display: block;
+  padding: 5px 0;
+  text-decoration: none;
 }
 
 /* + sensors list */

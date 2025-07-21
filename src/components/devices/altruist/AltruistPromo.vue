@@ -1,5 +1,5 @@
 <template>
-    <div class="buySensor">
+    <div class="buySensor" v-bind="$attrs">
 
       <div class="buySensor-grid">
         <a
@@ -64,6 +64,8 @@ onMounted(() => {
     align-items: center;
     gap: 20px;
     font-size: 85%;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 .buySensor-preview {

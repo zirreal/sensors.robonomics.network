@@ -78,6 +78,9 @@ h2 span {
 }
 
 .measures {
+  --font-size: 1rem;
+  --gap: 1rem;
+
   display: flex;
   gap: var(--gap);
   margin-bottom: var(--gap);

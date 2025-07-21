@@ -12,7 +12,6 @@ body * {
 
 a {
   color: var(--app-buttoncolor);
-  text-decoration: none;
 }
 
 a:hover {
@@ -89,6 +88,7 @@ input, select, .button {
   transition-duration: 0.33s;
   transition-property: border, background-color;
   transition-timing-function: ease-in-out;
+  text-decoration: none;
 }
 
 input.block, select.block, .button.block {
