@@ -11,6 +11,7 @@ vx.x.x
 - Feat: combined Temperature and Humidity in one group
 - Feat: added navigation icon
 - Refactor: images paths structruzed better
+- Feat: Meta info for text pages
 
 v2.1.6
 - Feat: combined dust and noise values in the chart

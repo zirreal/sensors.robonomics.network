@@ -3,8 +3,7 @@
     pageTitle= "Sensors.social Privacy Policy"
     :pageImage = "ogImage"
   />
-  <Header />
-  <section class="container-pagetext privacy-policy">
+  <PageTextLayout>
     <h1>{{ $t("privacypolicy.title") }}</h1>
 
     <p class="privacy-policy__descr">
@@ -83,29 +82,24 @@
         {{ $t("privacypolicy.text8") }}
       </p>
     </div>
-  </section>
+  </PageTextLayout>
+
 </template>
 
-<script>
-import Header from "../components/header/Header.vue";
+<script setup>
+import { onMounted, getCurrentInstance } from "vue";
+
 import MetaInfo from "../components/MetaInfo.vue";
 import OptOutForm from "../components/matomo/OptOutForm.vue";
+import PageTextLayout from "../components/layouts/PageText.vue";
 
 const ogImage = new URL('@/assets/images/pages/privacy-policy/og-privacy-policy.webp', import.meta.url).href;
 
-export default {
-  components: {
-    Header,
-    OptOutForm,
-    MetaInfo
-  },
-
-  mounted() {
-    // matomo analytics
-    this.$matomo && this.$matomo.disableCookies();
-    this.$matomo && this.$matomo.trackPageView();
-  },
-};
+onMounted(() => {
+  const instance = getCurrentInstance();
+  instance?.proxy?.$matomo && instance.proxy.$matomo.disableCookies();
+  instance?.proxy?.$matomo && instance.proxy.$matomo.trackPageView();
+});
 </script>
 
 <style scoped>
