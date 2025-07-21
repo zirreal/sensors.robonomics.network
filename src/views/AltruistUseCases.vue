@@ -76,9 +76,7 @@
     </section>
 
     <AltruistCompare />
-
-    <AltruistPromo utmMedium="altruist-use-cases" />
-
+    
   </PageTextLayout>
 </template>
 
