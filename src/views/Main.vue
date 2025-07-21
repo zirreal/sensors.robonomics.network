@@ -1,4 +1,10 @@
 <template>
+  <MetaInfo
+    :pageTitle= "config.TITLE"
+    :pageDescription = "config.DESC"
+    :pageImage = "ogImage"
+  />
+
   <Header />
 
   <MessagePopup v-if="isMessage" @close="handlerClose" :data="state.point.measurement" />
@@ -33,6 +39,7 @@ import Header from "../components/header/Header.vue";
 import Map from "../components/Map.vue";
 import MessagePopup from "../components/message/MessagePopup.vue";
 import SensorPopup from "../components/sensor/SensorPopup.vue";
+import MetaInfo from '../components/MetaInfo.vue';
 
 import config from "@config";
 import * as providers from "../providers";
@@ -41,6 +48,8 @@ import * as markers from "../utils/map/marker";
 import { getAddressByPos } from "../utils/map/utils";
 import { getTypeProvider, setTypeProvider } from "../utils/utils";
 import { useI18n } from "vue-i18n";
+
+const ogImage = new URL('@/assets/images/pages/home/og-home.webp', import.meta.url).href;
 
 const props = defineProps({
   provider: {

@@ -2,6 +2,7 @@
   <MetaInfo
     pageTitle= "Air quality measurements information"
     pageDescription="Sensors.social Air Quality Map — an interactive tool for viewing, analyzing, and comparing real-time air quality data from sensors. Get up-to-date information on air conditions in your area."
+    :pageImage = "ogImage"
   />
   <Header />
   <section class="container-pagetext">
@@ -53,21 +54,11 @@
 
 
 <script setup>
-import {ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
-
 import Header from '../components/header/Header.vue';
 import MetaInfo from '../components/MetaInfo.vue';
 import measurements from '../measurements';
 
-// i18n support
-const { locale } = useI18n();
-const currentLocale = ref(locale.value);
-
-// reactively update locale when changed
-watch(locale, (newLocale) => {
-  currentLocale.value = newLocale;
-});
+const ogImage = new URL('@/assets/images/pages/air-measurements/og-air-measurements.webp', import.meta.url).href;
 </script>
 
 

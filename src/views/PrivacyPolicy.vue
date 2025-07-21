@@ -1,6 +1,7 @@
 <template>
   <MetaInfo
     pageTitle= "Sensors.social Privacy Policy"
+    :pageImage = "ogImage"
   />
   <Header />
   <section class="container-pagetext privacy-policy">
@@ -89,6 +90,8 @@
 import Header from "../components/header/Header.vue";
 import MetaInfo from "../components/MetaInfo.vue";
 import OptOutForm from "../components/matomo/OptOutForm.vue";
+
+const ogImage = new URL('@/assets/images/pages/privacy-policy/og-privacy-policy.webp', import.meta.url).href;
 
 export default {
   components: {
