@@ -4,8 +4,7 @@
     pageDescription="At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”."
     :pageImage="ogImage"
   />
-  <Header />
-  <section class="container-pagetext">
+  <PageTextLayout>
     <h1>7 Years of Altruism</h1>
     <section class="pagetext-highlight">
       <p>At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”.</p>
@@ -59,16 +58,14 @@
       <p>Find out who Altruist was designed for: <a href="https://sensors.social/#/altruist-use-cases">https://sensors.social/#/altruist-use-cases</a></p>
     </section>
 
-    <AltruistPromo utmMedium="altruist-timeline" />
-
-  </section>
+  </PageTextLayout>
 </template>
 
 
 <script setup>
-import Header from '../components/header/Header.vue';
 import MetaInfo from '../components/MetaInfo.vue';
 import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
+import PageTextLayout from "../components/layouts/PageText.vue";
 
 const ogImage = new URL('@/assets/images/pages/altruist-timeline/timeline.webp', import.meta.url).href
 </script>

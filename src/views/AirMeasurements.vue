@@ -4,8 +4,7 @@
     pageDescription="Sensors.social Air Quality Map — an interactive tool for viewing, analyzing, and comparing real-time air quality data from sensors. Get up-to-date information on air conditions in your area."
     :pageImage = "ogImage"
   />
-  <Header />
-  <section class="container-pagetext">
+  <PageTextLayout>
     <h1>{{ $t("measures.title") }}</h1>
 
     <section v-for="(measurement, key) in measurements" :key="key" :id="key.toUpperCase()">
@@ -49,16 +48,26 @@
       </template>
     </section>
 
-  </section>
+  </PageTextLayout>
 </template>
 
 
 <script setup>
-import Header from '../components/header/Header.vue';
+import {ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
 import MetaInfo from '../components/MetaInfo.vue';
 import measurements from '../measurements';
+import PageTextLayout from "../components/layouts/PageText.vue";
 
 const ogImage = new URL('@/assets/images/pages/air-measurements/og-air-measurements.webp', import.meta.url).href;
+
+const { locale } = useI18n();
+const currentLocale = ref(locale.value);
+
+watch(locale, (newLocale) => {
+  currentLocale.value = newLocale;
+});
 </script>
 
 
