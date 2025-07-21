@@ -1,8 +1,12 @@
 <template>
+  <MetaInfo
+    pageTitle= "7 Years of Altruism - Altruist Timeline"
+    pageDescription="At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”."
+    :pageImage="ogImage"
+  />
   <Header />
   <section class="container-pagetext">
     <h1>7 Years of Altruism</h1>
-
     <section class="pagetext-highlight">
       <p>At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”.</p>
     </section>
@@ -66,11 +70,14 @@ import {ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import Header from '../components/header/Header.vue';
+import MetaInfo from '../components/MetaInfo.vue';
 import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 
 // i18n support
 const { locale } = useI18n();
 const currentLocale = ref(locale.value);
+
+const ogImage = new URL('@/assets/images/pages/altruist-timeline/timeline.webp', import.meta.url).href
 
 // reactively update locale when changed
 watch(locale, (newLocale) => {

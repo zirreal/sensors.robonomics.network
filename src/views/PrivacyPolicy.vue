@@ -1,4 +1,7 @@
 <template>
+  <MetaInfo
+    pageTitle= "Sensors.social Privacy Policy"
+  />
   <Header />
   <section class="container-pagetext privacy-policy">
     <h1>{{ $t("privacypolicy.title") }}</h1>
@@ -84,12 +87,14 @@
 
 <script>
 import Header from "../components/header/Header.vue";
+import MetaInfo from "../components/MetaInfo.vue";
 import OptOutForm from "../components/matomo/OptOutForm.vue";
 
 export default {
   components: {
     Header,
     OptOutForm,
+    MetaInfo
   },
 
   mounted() {
