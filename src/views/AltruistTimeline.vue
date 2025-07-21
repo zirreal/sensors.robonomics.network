@@ -66,22 +66,9 @@
 
 
 <script setup>
-import {ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
-
 import Header from '../components/header/Header.vue';
 import MetaInfo from '../components/MetaInfo.vue';
 import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 
-// i18n support
-const { locale } = useI18n();
-const currentLocale = ref(locale.value);
-
 const ogImage = new URL('@/assets/images/pages/altruist-timeline/timeline.webp', import.meta.url).href
-
-// reactively update locale when changed
-watch(locale, (newLocale) => {
-  currentLocale.value = newLocale;
-});
-
 </script>
