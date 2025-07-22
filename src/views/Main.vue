@@ -208,7 +208,7 @@ const handlerNewPoint = async (point) => {
 
 const handlerClick = async (point) => {
   state.isLoad = true;
-  state.point = null;
+  state.point = [];
   let log = [];
   if (state.status === "history") {
     log = await state.providerObj.getHistoryPeriodBySensor(
