@@ -374,7 +374,7 @@ watch(
   text-align: center;
 }
 .legend-item {
-  color: var(--app-textcolor);
+  color: var(--color-dark);
   cursor: pointer;
   transition: color .2s;
   opacity: .5;

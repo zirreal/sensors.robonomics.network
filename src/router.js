@@ -4,6 +4,7 @@ import PrivacyPolicy from "./views/PrivacyPolicy.vue";
 import AirMeasurements from "./views/AirMeasurements.vue";
 import AltruistUseCases from "./views/AltruistUseCases.vue";
 import AltruistTimeline from "./views/AltruistTimeline.vue";
+import Login from "./views/Login.vue";
 // import SensorEmbed from "./views/SensorEmbed.vue";
 
 const router = createRouter({
@@ -41,6 +42,11 @@ const router = createRouter({
       path: "/altruist-timeline/",
       name: "altruist-timeline",
       component: AltruistTimeline,
+    },
+    {
+      path: "/login/",
+      name: "login",
+      component: Login,
     },
     // {
     //   path: "/embed/sensor/:id/",

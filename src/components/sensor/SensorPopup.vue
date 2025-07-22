@@ -583,7 +583,6 @@ watch(
   border: 0;
   color: var(--color-dark);
   cursor: pointer;
-  font-size: 1.2em;
   position: absolute;
   right: var(--gap);
   top: var(--gap);
@@ -591,6 +590,10 @@ watch(
 
 .close:hover {
   color: var(--color-red);
+}
+
+.close svg {
+  height: 2rem;
 }
 
 h3 .fa-location-dot {
@@ -790,6 +793,10 @@ h3 .fa-location-dot {
 .sensor-title {
   display: flex;
   gap: var(--gap);
-  align-content: center;
+  align-items: center;
+}
+
+.sensor-title span {
+  font-size: inherit;
 }
 </style>

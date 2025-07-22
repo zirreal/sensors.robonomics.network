@@ -65,5 +65,7 @@
     --app-tablerow: hsl(220, 23%, 18%);;
     --app-tableborder: #ddd;
     --app-controlsgap: calc(var(--gap) * 0.5);
+    --app-buttoncolor:hsl(219, 100%, 60%);
+    --app-buttoncolor-hover:hsl(219, 100%, 50%);
   }
 }
