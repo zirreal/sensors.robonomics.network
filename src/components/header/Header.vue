@@ -58,6 +58,7 @@
             >{{ $t("header.link2") }}</a>
             {{ $t("header.text3") }}
           </p>
+          <p>Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a></p>
 
           <section class="navlinks">
             <router-link to="/altruist-use-cases">Altruist use cases</router-link>

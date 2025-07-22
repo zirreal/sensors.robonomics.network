@@ -97,6 +97,7 @@ import ReleaseInfo from "../../components/ReleaseInfo.vue";
         margin-top: calc(var(--gap) * 3);
         display: grid;
         grid-template-rows: 1fr;
+        flex-shrink: 0;
     }
 
     .footer-section {
@@ -118,5 +119,9 @@ import ReleaseInfo from "../../components/ReleaseInfo.vue";
     .footer-section-in {
         padding-left: var(--gap);
         padding-right: var(--gap);
+    }
+
+    .container-pagetext {
+      flex: 1 0 auto;
     }
 </style>

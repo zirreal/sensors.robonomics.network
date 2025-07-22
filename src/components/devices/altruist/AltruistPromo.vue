@@ -48,6 +48,7 @@ onMounted(() => {
   padding: calc(var(--gap) *2);
   /* border-radius: 5px; */
   background-color: hsl(83, 100%, 71%);
+  color: var(--color-dark);
 }
 
 .buySensor:not(:first-child) {

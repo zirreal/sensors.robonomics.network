@@ -52,9 +52,10 @@ export function removeMap() {
 }
 
 export function init(position, zoom, theme = "light") {
-  map = L.map("map", { minZoom: 3 });
+  map = L.map("map", {minZoom: 3});
   setTheme(theme);
-  map.attributionControl.setPrefix("");
+  // moved attribution to the info
+  map.attributionControl.remove();
   map.setView(position, zoom);
   // L.control
   //   .locate({
