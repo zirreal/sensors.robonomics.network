@@ -75,7 +75,7 @@
       <p>The most fascinating lesson from seven years of experiments is the sheer diversity of motives, methods and analysis styles in environmental monitoring—from health concerns to activism, from outdated test tubes to high-end sampling stations, from smiley-faces to daily graphs. It all makes the task far more complex than it first appears, but we hope our team’s perspective embodied in Altruist and sensors.social will delight you and give you a useful tool for adapting to your environment.</p>
     </section>
 
-    <!-- <AltruistCompare /> -->
+    <AltruistCompare />
     
   </PageTextLayout>
 </template>
