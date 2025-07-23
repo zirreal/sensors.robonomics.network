@@ -44,6 +44,13 @@ import ReleaseInfo from "../../components/ReleaseInfo.vue";
 
 <style>
 
+.container-pagetext {
+  flex: 1 0 auto;
+  padding: calc(var(--gap) * 5) calc(var(--gap) * 3) calc(var(--gap) * 3);
+  margin: 0 auto;
+  max-width: 1400px;
+}
+
 .container-pagetext > * {
   --font-size: 1.3rem;
   --gap: 1.7rem;
@@ -54,12 +61,6 @@ import ReleaseInfo from "../../components/ReleaseInfo.vue";
   .container-pagetext > * {
     --gap: 1.4rem;
   }
-}
-
-.container-pagetext {
-  padding: calc(var(--gap) * 5) calc(var(--gap) * 3) calc(var(--gap) * 3);
-  margin: 0 auto;
-  max-width: 1400px;
 }
 
 .container-pagetext section:not(:last-child) {
@@ -119,9 +120,5 @@ import ReleaseInfo from "../../components/ReleaseInfo.vue";
     .footer-section-in {
         padding-left: var(--gap);
         padding-right: var(--gap);
-    }
-
-    .container-pagetext {
-      flex: 1 0 auto;
     }
 </style>

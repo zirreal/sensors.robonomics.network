@@ -1,52 +1,74 @@
 <template>
-  <div class="comparison-wrapper">
-    <h2 class="table-title">Air Sensor Comparison Table</h2>
-    <div class="table-container">
-      <table class="comparison-table">
-        <thead>
-          <tr>
-            <th class="comparison-table__thead-title">Air quality sensor</th>
-            <th>
-              <div class="sensor-header">
-                <img src="../../../assets/images/pages/altruist-use-cases/table/altruist-device.png" alt="Altruist Device" class="device-photo" />
-                <span class="sensor-name">Altruist Urban & Insight</span>
+  <section>
+    <h2>Air Sensor Comparison Table</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th v-for="(device, i) in deviceHeaders" :key="i">
+            <p>{{ device.name }}</p>
+            <img :src="device.img" :alt="device.name + ' device'" class="device-photo" />
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="(row, rowIndex) in tableData"
+          :key="rowIndex"
+        >
+
+          <td>{{ row.feature }}</td>
+
+          <td
+            v-for="(value, i) in [row.altruist, row.purpleair, row.airgradient, row.netatmo]"
+            :key="i"
+          >
+            <template v-if="isMobile">
+              <div class="device-mobile-label">
+                <img :src="deviceHeaders[i].img" :alt="deviceHeaders[i].name" class="device-label-img" />
+                <span class="device-label-title">{{ deviceHeaders[i].name }}</span>
               </div>
-            </th>
-            <th>
-              <div class="sensor-header">
-                <img src="../../../assets/images/pages/altruist-use-cases/table/purpleAir-device.png" alt="PurpleAir Device" class="device-photo" />
-                <span class="sensor-name">PurpleAir Zen</span>
-              </div>
-            </th>
-            <th>
-              <div class="sensor-header">
-                <img src="../../../assets/images/pages/altruist-use-cases/table/airGradient-device.png" alt="AirGradient Device" class="device-photo" />
-                <span class="sensor-name">AirGradient Indoor & Outdoor</span>
-              </div>
-            </th>
-            <th>
-              <div class="sensor-header">
-                <img src="../../../assets/images/pages/altruist-use-cases/table/netatmo-device.webp" alt="Netatmo Device" class="device-photo" />
-                <span class="sensor-name">Netatmo</span>
-              </div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, index) in tableData" :key="index" :class="index % 2 === 0 ? 'even-row' : 'odd-row'">
-            <th>{{ row.feature }}</th>
-            <td v-for="(value, i) in [row.altruist, row.purpleair, row.airgradient, row.netatmo]" :key="i">
-              <span :class="highlightClass(value)">{{ formatValue(value) }}</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+            </template>
+
+
+            <template v-if="row.feature === 'Price'">
+                  <a :href="priceLinks[i]" target="_blank"><b>{{ formatValue(value) }}</b></a>
+            </template>
+            <template v-else>
+              {{ formatValue(value) }}
+            </template>
+            
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+
+import altruistImg from '@/assets/images/altruist-device/Altruist-bundle.webp'
+import purpleAirImg from '@/assets/images/compare-table/purpleAir-device.png'
+import airGradientImg from '@/assets/images/compare-table/airGradient-device.png'
+import netatmoImg from '@/assets/images/compare-table/netatmo-device.png'
+
+const deviceHeaders = [
+  { name: "Altruist Urban & Insight", img: altruistImg },
+  { name: "PurpleAir Zen", img: purpleAirImg },
+  { name: "AirGradient Indoor & Outdoor", img: airGradientImg },
+  { name: "Netatmo Weather Station", img: netatmoImg },
+];
+
+const priceLinks = [
+  'https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight/coming_soon?utm_source=sensors.social&utm_medium=compare',
+  'https://www2.purpleair.com/products/purpleair-zen',
+  'https://www.airgradient.com',
+  'https://www.netatmo.com/en-gb/weather-station-original-sand',
+]
+
 const tableData = [
+  { feature: 'Price', altruist: '€189', purpleair: '$299', airgradient: '$385', netatmo: '£149.99' },
   { feature: 'Type', altruist: 'Dual-module, outdoor and indoor', purpleair: 'Can be outdoor or indoor', airgradient: 'Two separate modules', netatmo: 'Dual-module, outdoor and indoor' },
   { feature: 'Urban Noise Sensor', altruist: 'Yes', purpleair: 'No', airgradient: 'No', netatmo: 'Only indoor' },
   { feature: 'Indoor CO2', altruist: 'Yes', purpleair: 'No', airgradient: 'Yes', netatmo: 'Yes' },
@@ -63,7 +85,7 @@ const tableData = [
   { feature: 'Data Control and Ownership', altruist: 'User owns data and controls where it goes', purpleair: 'Data is owned by company; users can view/export data with restrictions', airgradient: 'User owns data and controls where it goes', netatmo: 'Formally belong to the users, but they are obliged to agree to data use by the company' },
   { feature: 'Open Source and Hardware', altruist: 'Yes', purpleair: 'No', airgradient: 'Yes', netatmo: 'No' },
   { feature: 'Custom Firmware and DIY-mods', altruist: 'Yes', purpleair: 'No', airgradient: 'Yes', netatmo: 'No' },
-]
+];
 
 const highlightClass = (value) => {
   if (value.trim().toLowerCase() === 'yes') return 'yes-value'
@@ -73,128 +95,88 @@ const highlightClass = (value) => {
 
 const formatValue = (value) => {
   const trimmed = value.trim().toLowerCase()
-  if (trimmed === 'yes') return '✅ Yes'
-  if (trimmed === 'no') return '❌ No'
+  if (trimmed === 'yes') return 'Yes'
+  if (trimmed === 'no') return 'No'
   return value
 }
+
+// Responsive flag for mobile/desktop
+const isMobile = ref(window.innerWidth < 1000)
+const updateMobile = () => { isMobile.value = window.innerWidth < 1000 }
+onMounted(() => window.addEventListener('resize', updateMobile))
+onUnmounted(() => window.removeEventListener('resize', updateMobile))
 </script>
 
 <style scoped>
-.yes-value {
-  color: #2e7d32;
-  font-weight: 600;
-}
-
-.no-value {
-  color: #c62828;
-  font-weight: 600;
-}
-
-.even-row {
-  background-color: var(--app-tablerow);
-}
-
-.odd-row {
-  background-color: var(--app-tablebody);
-}
-
-.table-title {
-  text-align: center;
-  color: var(--app-textcolor);
-  font-size: 1.8rem;
-  margin-bottom: 1.5rem;
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-.comparison-table {
-  width: 99%;
-  border-collapse: collapse;
-  min-width: 800px;
-  background: var(--app-tablebody);
-  border: 1px solid #ddd;
-}
-
-.comparison-table thead {
-  background: var(--app-tablebody);
-  color: #000;
-}
-
-.comparison-table thead th {
-  text-align: center;
-  vertical-align: bottom;
-  padding: 1rem 0.5rem;
-}
-
-.comparison-table th,
-.comparison-table td,
-.comparison-table__thead-title {
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--app-tableborder);
-  text-align: left;
-  vertical-align: top;
-}
-
-.comparison-table th:first-child {
-  background-color: var(--app-tablebody);
-  color: var(--app-textcolor);
-  font-weight: 600;
-  min-width: 180px;
-}
-
-.sensor-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0.5rem;
-  gap: 0.4rem;
-  text-align: center;
-  max-width: 120px;
-  margin: 0 auto;
-}
-
-.sensor-name {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--app-textcolor);
-  line-height: 1.2;
+.device-photo,
+.device-label-img {
+  display: inline-block;
+  object-fit: contain;
 }
 
 .device-photo {
-  max-width: 130px;
-  height: auto;
-  display: block;
-  transition: transform 0.3s ease;
+  max-width: 150px;
 }
 
-.device-photo:hover {
-  transform: scale(1.05);
+.device-label-img {
+  max-width: 40px;
 }
 
-.device-image-row td {
-  padding: 1rem 0.5rem;
-  vertical-align: middle;
-  background-color: var(--app-tablebody);
+td:first-child {
+  font-weight: bold;
 }
 
-@media screen and (max-width: 768px) {
-  .table-title {
-    font-size: 1.4rem;
-  }
-
-  .comparison-table th {
-    font-size: 1.2rem;
-  }
-
-  .comparison-table tr td span {
-    font-size: 0.85rem;
-  }
-
-  .sensor-icon {
-    max-width: 60px;
-  }
+th:not(:first-child) {
+  text-align: center;
 }
 
+h2 {
+  position: sticky;
+  top: 0;
+  background-color: var(--app-bodybg);
+  z-index: 1000;
+}
+
+@media (width < 1000px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+  thead tr {
+    display: none;
+  }
+  tr {
+    margin-bottom: calc(var(--gap) * 2);
+    border-bottom: 2px solid var(--app-bordercolor);
+  }
+  td {
+    position: relative;
+    min-height: 40px;
+    border: none;
+    border-bottom: 1px solid var(--app-bordercolor);
+    text-align: center !important;
+  }
+  .device-photo {
+    display: none;
+  }
+  td:first-child {
+    font-weight: 900;
+    text-transform: uppercase;
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .device-mobile-label {
+    display: flex;
+    gap: calc(var(--gap) / 2);
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: calc(var(--gap) / 2);
+  }
+
+  tbody tr:last-child td,
+  tfoot tr:last-child td {
+    border-bottom-width: 1px;
+  }
+}
 </style>
