@@ -1,9 +1,9 @@
 :root {
   --color-light: #fff;
+  --color-dark: #000;
   --color-gray: #4e4e4f;
   --color-middle-gray: #B6BDC4;
   --color-light-gray: #d5d3d3;
-  --app-bodybg: #000;
   --color-blue: #03a5ed; 
   --color-teal: #12bfcc;
   --color-green: #60bc2a;
@@ -61,8 +61,8 @@
   :root {
     --app-bodybg: #1b1b1b;
     --app-textcolor: #fff;
-    --app-tablebody: #1b1b1b;
-    --app-tablerow: hsl(220, 23%, 18%);;
+    --app-bordercolor: var(--color-gray);
+    --app-tablerow: hsl(220, 23%, 18%);
     --app-tableborder: #ddd;
     --app-controlsgap: calc(var(--gap) * 0.5);
     --app-buttoncolor:hsl(219, 100%, 60%);

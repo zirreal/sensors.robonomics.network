@@ -8,7 +8,7 @@
           target="_blank"
           rel="noopener"
         >
-          <img alt="" src="../../../assets/images/altruist-device/Altruist-bundle.png" />
+          <img alt="" src="../../../assets/images/altruist-device/Altruist-bundle.webp" />
           <span>New</span>
         </a>
 
@@ -44,9 +44,7 @@ onMounted(() => {
   --gap: 1rem;
   font-weight: bold;
   container-type: inline-size;
-  /* border: 2px solid var(--color-dark); */
   padding: calc(var(--gap) *2);
-  /* border-radius: 5px; */
   background-color: hsl(83, 100%, 71%);
   color: var(--color-dark);
 }

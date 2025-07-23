@@ -6,11 +6,11 @@
   />
 
   <PageTextLayout>
-    <h3>Login for Altruist holder</h3>
+    <!-- <h3>Login for Altruist holder</h3>
     <form>
         <input type="password" placeholder="Pass phrase (12 words)" />
         <button class="button">Sign in</button>
-    </form>
+    </form> -->
   </PageTextLayout>
 </template>
 
