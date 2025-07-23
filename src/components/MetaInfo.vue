@@ -29,7 +29,7 @@ const title = computed(() =>
 const description = computed(() => props.pageDescription)
 
 const image = computed(() =>
-  props.pageImage ? props.pageImage : siteUrl + '/'
+  props.pageImage ? props.pageImage : siteUrl + '/og-default.webp'
 )
 
 const fullUrl = computed(() => siteUrl + route.fullPath)

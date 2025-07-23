@@ -2,7 +2,6 @@
   <MetaInfo
     :pageTitle= "config.TITLE"
     :pageDescription = "config.DESC"
-    :pageImage = "ogImage"
   />
 
   <Header />
@@ -48,8 +47,6 @@ import * as markers from "../utils/map/marker";
 import { getAddressByPos } from "../utils/map/utils";
 import { getTypeProvider, setTypeProvider } from "../utils/utils";
 import { useI18n } from "vue-i18n";
-
-const ogImage = new URL('@/assets/images/pages/home/og-home.webp', import.meta.url).href;
 
 const props = defineProps({
   provider: {
