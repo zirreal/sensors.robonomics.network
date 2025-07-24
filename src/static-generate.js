@@ -1,7 +1,8 @@
-const { createServer } = require('vite');
+const { spawn } = require('child_process');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
+const net = require('net');
 
 const routes = [
   'privacy-policy',
@@ -12,19 +13,58 @@ const routes = [
 
 const outputDir = path.resolve(__dirname, '../dist');
 
+function waitForPort(port, host = 'localhost', timeout = 15000) {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+
+    const check = () => {
+      const socket = net.createConnection(port, host);
+
+      socket.on('connect', () => {
+        socket.end();
+        resolve();
+      });
+
+      socket.on('error', () => {
+        socket.destroy();
+        if (Date.now() - start > timeout) {
+          reject(new Error(`Timeout waiting for port ${port}`));
+        } else {
+          setTimeout(check, 500);
+        }
+      });
+    };
+
+    check();
+  });
+}
+
 async function prerender() {
-  const server = await createServer({
-    configFile: path.resolve(__dirname, '../vite.config.js'),
-    preview: {
-      port: 4173,
-      strictPort: true
-    }
+  console.log('Starting vite preview server...');
+
+  // Spawn `vite preview` process
+  const previewProcess = spawn('npx', ['vite', 'preview', '--port', '4173'], {
+    stdio: ['ignore', 'inherit', 'inherit']
   });
 
-  await server.listen();
-  console.log('Vite preview server started on http://localhost:4173');
+  // Make sure to kill preview process on script exit
+  const cleanup = () => previewProcess.kill();
+  process.on('exit', cleanup);
+  process.on('SIGINT', () => {
+    cleanup();
+    process.exit(1);
+  });
+  process.on('SIGTERM', () => {
+    cleanup();
+    process.exit(1);
+  });
 
-  const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  await waitForPort(4173);
+  console.log('Vite preview server is running at http://localhost:4173');
+
+  const browser = await puppeteer.launch({
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
   const page = await browser.newPage();
 
   for (const route of routes) {
@@ -34,12 +74,14 @@ async function prerender() {
     console.log(`Prerendering ${url}`);
     await page.goto(url, { waitUntil: 'networkidle2' });
 
-    // Wait for #app element to appear on the page before getting content
     await page.waitForSelector('#app', { timeout: 10000 });
 
     let html = await page.content();
 
-    html = html.replace(/(<link[^>]+href="|<script[^>]+src=")(\.*\/)*assets\//g, '$1/assets/');
+    html = html.replace(
+      /(<link[^>]+href="|<script[^>]+src=")(\.*\/)*assets\//g,
+      '$1/assets/'
+    );
 
     const REDIRECT_JS = `
     <script>
@@ -53,7 +95,6 @@ async function prerender() {
     html = html.replace('<head>', `<head>${REDIRECT_JS}`);
 
     const outPath = path.join(outputDir, route, 'index.html');
-        
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     fs.writeFileSync(outPath, html);
 
@@ -61,7 +102,9 @@ async function prerender() {
   }
 
   await browser.close();
-  await server.close();
+
+  // Kill preview server process
+  previewProcess.kill();
   console.log('Prerendering completed and preview server stopped.');
 }
 
