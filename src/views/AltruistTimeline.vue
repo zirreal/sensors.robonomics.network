@@ -55,7 +55,7 @@
     <section>
       <h2>What’s Next?</h2>
       <p>Soon, we will launch on Indiegogo, and then we want to make the Altruist sensor available worldwide through online platforms like Amazon, as well as on regional distributor websites. Check the “devices” section at robonomics.network, select “Altruist”, and purchase it in the way that is most convenient for you.</p>
-      <p>Find out who Altruist was designed for: <a href="https://sensors.social/#/altruist-use-cases">https://sensors.social/#/altruist-use-cases</a></p>
+      <p>Find out who Altruist was designed for <router-link to="/altruist-use-cases">on this page</router-link></p>
     </section>
 
   </PageTextLayout>

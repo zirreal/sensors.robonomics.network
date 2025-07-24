@@ -5,6 +5,8 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useHead } from '@vueuse/head'
 
+import config from "@config";
+
 const props = defineProps({
   pageTitle: { type: String, default: '' },
   pageDescription: {
@@ -17,8 +19,8 @@ const props = defineProps({
   pageImageHeight: { type: String, default: '765' }
 })
 
-const siteName = 'Sensors.social'
-const siteUrl = 'https://sensors.social'
+const siteName = config.SITE_NAME;
+const siteUrl = config.SITE_URL;
 
 const route = useRoute()
 
@@ -59,8 +61,8 @@ useHead({
     { name: 'twitter:title', content: title.value },
     { name: 'twitter:image', content: image.value },
     { name: 'twitter:description', content: description.value },
-    { name: 'twitter:site', content: '@AIRA_Robonomics' },
-    { name: 'twitter:creator', content: '@AIRA_Robonomics' }
+    { name: 'twitter:site', content: config.TWITTER },
+    { name: 'twitter:creator', content: config.TWITTER }
   ]
 })
 </script>

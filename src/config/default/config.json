@@ -25,5 +25,8 @@
   "TITLE": "Map of independent air quality sensors",
   "DESC": "Welcome to the decentralized opensource sensors map which operates with the sole intent of serving the free will of individuals, without any beneficiaries.",
   "SERIES_MAX_VISIBLE": 3000,
-  "REPO_NAME": "airalab/sensors.social"
+  "SITE_NAME": "Sensors.social",
+  "SITE_URL": "https://sensors.social",
+  "REPO_NAME": "airalab/sensors.social",
+  "TWITTER": "@AIRA_Robonomics"
 }
