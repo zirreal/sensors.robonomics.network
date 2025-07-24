@@ -5,9 +5,8 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "prerender": "node src/scripts/prerender.js",
-    "build-and-prerender": "npm run build && npm run prerender",
-    "preview": "vite preview --port 4173",
+    "static-generate": "yarn build && node src/static-generate.js",
+    "preview": "npx kill-port 4173 && vite preview --port 4173",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
