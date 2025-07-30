@@ -1,6 +1,9 @@
 <template>
   <section>
     <h2>Air Sensor Comparison Table</h2>
+
+    <img alt="" src="@/assets/images/pages/altruist-compare/compare-stand.gif" v-if="gif" class="gif" />
+
     <table>
       <thead>
         <tr>
@@ -45,13 +48,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue';
 
-import altruistImg from '@/assets/images/altruist-device/Altruist-bundle.webp'
-import purpleAirImg from '@/assets/images/compare-table/purpleAir-device.webp'
-import airGradientImg from '@/assets/images/compare-table/airGradient-device.webp'
-import netatmoImg from '@/assets/images/compare-table/netatmo-device.webp'
-import airVisualImg from '@/assets/images/compare-table/airvisual-device.webp'
+import altruistImg from '@/assets/images/altruist-device/Altruist-bundle.webp';
+import purpleAirImg from '@/assets/images/compare-table/purpleAir-device.webp';
+import airGradientImg from '@/assets/images/compare-table/airGradient-device.webp';
+import netatmoImg from '@/assets/images/compare-table/netatmo-device.webp';
+import airVisualImg from '@/assets/images/compare-table/airvisual-device.webp';
+
+const props = defineProps({
+  gif: { type: Boolean, default: false }
+});
 
 const deviceHeaders = [
   { name: "Altruist Urban & Insight", img: altruistImg },
@@ -59,7 +66,7 @@ const deviceHeaders = [
   { name: "AirGradient Indoor & Outdoor", img: airGradientImg },
   { name: "Netatmo Weather Station", img: netatmoImg },
   { name: "AirVisual Pro & Outdoor", img: airVisualImg },
-]
+];
 
 const priceLinks = [
   'https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight/coming_soon?utm_source=sensors.social&utm_medium=compare',
@@ -67,7 +74,7 @@ const priceLinks = [
   'https://www.airgradient.com',
   'https://www.netatmo.com/en-gb/weather-station-original-sand',
   'https://www.iqair.com/us/air-quality-monitors',
-]
+];
 
 const tableData = [
   {
@@ -222,7 +229,7 @@ const getMarkClass = (mark) => mark?.trim() ? `mark-${mark}` : '';
 const isMobile = ref(window.innerWidth < 1000);
 
 const updateMobile = () => { 
-  isMobile.value = window.innerWidth < 1000
+  isMobile.value = window.innerWidth < 1000;
 }
 
 onMounted(() => window.addEventListener('resize', updateMobile));
@@ -350,5 +357,10 @@ h2 {
   tfoot tr:last-child td {
     border-bottom-width: 1px;
   }
+}
+.gif {
+  display: block;
+  width: 100%;
+  margin-bottom: calc(var(--gap) * 2);
 }
 </style>

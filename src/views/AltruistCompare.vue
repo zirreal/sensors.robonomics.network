@@ -6,7 +6,7 @@
   />
   <PageTextLayout>
 
-    <AltruistCompare />
+    <AltruistCompare gif />
 
   </PageTextLayout>
 </template>
