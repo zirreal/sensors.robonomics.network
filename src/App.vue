@@ -6,7 +6,6 @@
 <script setup>
 import { RouterView } from "vue-router";
 
-// import { waitReady } from '@polkadot/wasm-crypto';
 import { onMounted } from "vue";
 import { useAccountStore } from "@/stores/account";
 import { IDBgettable, decryptText } from "@/idb";
@@ -15,8 +14,6 @@ import config from "@/config/default/config.json";
 const accountStore = useAccountStore();
 
 onMounted(async () => {
-
-  // await waitReady();
 
   const accounts = await IDBgettable(
     config.INDEXEDDB.accounts.dbname,
