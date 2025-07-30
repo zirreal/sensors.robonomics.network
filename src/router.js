@@ -49,11 +49,11 @@ const router = createRouter({
       name: "altruist-compare",
       component: AltruistCompare,
     },
-    {
-      path: "/login/",
-      name: "login",
-      component: Login,
-    },
+    // {
+    //   path: "/login/",
+    //   name: "login",
+    //   component: Login,
+    // },
     // {
     //   path: "/embed/sensor/:id/",
     //   name: "sensor-embed",
