@@ -21,6 +21,7 @@
     "@libp2p/webrtc": "^3.2.0",
     "@libp2p/websockets": "^7.0.7",
     "@oddbird/popover-polyfill": "^0.4.3",
+    "@polkadot/wasm-crypto": "^7.4.1",
     "@vueuse/head": "^2.0.0",
     "axios": "^1.1.2",
     "buffer": "^6.0.3",
