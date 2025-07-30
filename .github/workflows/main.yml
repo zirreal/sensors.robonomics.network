@@ -27,7 +27,8 @@ jobs:
           yarn -v
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        # run: yarn install --frozen-lockfile
+        run: yarn install
 
       - name: Build project
         run: yarn static-generate
