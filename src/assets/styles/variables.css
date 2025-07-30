@@ -4,7 +4,7 @@
   --color-gray: #4e4e4f;
   --color-middle-gray: #B6BDC4;
   --color-light-gray: #d5d3d3;
-  --color-blue: #03a5ed; 
+  --color-blue: #007bff; 
   --color-teal: #12bfcc;
   --color-green: #60bc2a;
   --color-red: #fc0202; 
@@ -34,9 +34,9 @@
   --app-textcolor: #000;
   --app-inputheight: 2.4rem;
   --app-popoverbg: #fff;
-  --app-buttoncolor:hsl(219, 63%, 45%);
-  --app-buttoncolor-active:hsl(219, 63%, 60%);
-  --app-buttoncolor-hover:hsl(219, 63%, 35%);
+  --app-buttoncolor:hsl(211, 100%, 50%);
+  --app-buttoncolor-active:hsl(211, 96%, 40%);
+  --app-buttoncolor-hover:hsl(211, 98%, 34%);
   --app-buttontextcolor: #fff;
   --app-popoverbg: #fff;
   --app-tablebody: #fff;

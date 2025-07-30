@@ -6,9 +6,15 @@ import config from "@config";
  * @param {string} type – the provider key, e.g. 'realtime' or 'remote'
  */
 export function setTypeProvider(type) {
+  const candidate =
+    type ||
+    localStorage.getItem('provider_type') ||
+    config.DEFAULT_TYPE_PROVIDER;
+
   // Only proceed if the provided type is one of the valid keys
-  if (Object.prototype.hasOwnProperty.call(config.VALID_DATA_PROVIDERS, type)) {
-    localStorage.setItem("provider_type", type)
+  if (Object.prototype.hasOwnProperty.call(config.VALID_DATA_PROVIDERS, candidate)) {
+    localStorage.setItem('provider_type', candidate);
+    return candidate;
   } else {
     console.warn(
       `setTypeProvider: invalid provider_type "${type}". Expected one of [${Object.keys(
@@ -19,7 +25,6 @@ export function setTypeProvider(type) {
     // localStorage.setItem('provider_type', config.DEFAULT_TYPE_PROVIDER)
   }
 }
-
 
 /**
  * Retrieves a valid provider type from route parameters, localStorage, or default.
@@ -39,8 +44,6 @@ export function getTypeProvider(routeParams) {
   if (Object.prototype.hasOwnProperty.call(config.VALID_DATA_PROVIDERS, candidate)) {
     return candidate;
   }
-
-  return config.DEFAULT_TYPE_PROVIDER;
 }
 
 export function mergeDeep(target, source) {

@@ -1,5 +1,5 @@
 <template>
-  <div :class="{ inactive: store.mapinactive }" class="mapcontainer" id="map"></div>
+  <div :class="{ inactive: mapStore.mapinactive }" class="mapcontainer" id="map"></div>
   <Footer
     :currentProvider="provider"
     :canHistory="historyready"
@@ -29,7 +29,6 @@
 </template>
 
 <script>
-import { useStore } from "@/store";
 import config from "@config";
 import { toRaw } from "vue";
 import Footer from "../components/footer/Footer.vue";
@@ -38,13 +37,17 @@ import { init as initMarkers } from "../utils/map/marker";
 import { init as initWind } from "../utils/map/wind";
 import { getTypeProvider } from "../utils/utils";
 
+import { useMapStore } from "@/stores/map";
+import { useBookmarksStore } from "@/stores/bookmarks";
+
 export default {
   emits: ["city", "clickMarker", "close", "activateMarker"],
   props: ["measuretype", "historyready", "historyhandler", "isLoad"],
   components: { Footer },
   data() {
     return {
-      store: useStore(),
+      mapStore: useMapStore(),
+      bookmarksStore: useBookmarksStore(),
       locale: localStorage.getItem("locale") || this.$i18n.locale || "en",
       theme: window?.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark",
       userposition: null,
@@ -60,13 +63,13 @@ export default {
 
   computed: {
     zoom() {
-      return this.store.mapposition.zoom;
+      return this.mapStore.mapposition.zoom;
     },
     lat() {
-      return this.store.mapposition.lat;
+      return this.mapStore.mapposition.lat;
     },
     lng() {
-      return this.store.mapposition.lng;
+      return this.mapStore.mapposition.lng;
     },
     provider() {
       return getTypeProvider();
@@ -190,10 +193,10 @@ export default {
       const lat = this.$route.params.lat || config.MAP.position.lat;
       const lng = this.$route.params.lng || config.MAP.position.lng;
       const zoom = this.$route.params.zoom || config.MAP.zoom;
-      this.store.setmapposition(lat, lng, zoom, true);
+      this.mapStore.setmapposition(lat, lng, zoom, true);
     },
     setPosDefault() {
-      this.store.setmapposition(
+      this.mapStore.setmapposition(
         config.MAP.position.lat,
         config.MAP.position.lng,
         config.MAP.zoom,
@@ -222,7 +225,7 @@ export default {
               (position) => {
                 /* setting for the app globally user's geo position and zoom 20 for better view */
                 this.userposition = [position.coords.latitude, position.coords.longitude];
-                this.store.setmapposition(this.userposition[0], this.userposition[1], 20);
+                this.mapStore.setmapposition(this.userposition[0], this.userposition[1], 20);
 
                 if (this.userposition && this.map) {
                   drawuser(this.userposition, this.zoom);
@@ -276,7 +279,7 @@ export default {
           e.target.getCenter().lng.toFixed(4),
           e.target.getZoom()
         );
-        this.store.setmapposition(
+        this.mapStore.setmapposition(
           e.target.getCenter().lat.toFixed(4),
           e.target.getCenter().lng.toFixed(4),
           e.target.getZoom()
@@ -291,7 +294,7 @@ export default {
             e.target.getCenter().lng.toFixed(4),
             e.target.getZoom()
           );
-          this.store.setmapposition(
+          this.mapStore.setmapposition(
             e.target.getCenter().lat.toFixed(4),
             e.target.getCenter().lng.toFixed(4),
             e.target.getZoom()
@@ -310,7 +313,7 @@ export default {
       }
 
       /* get bookmarks and listenning for broadcast from DB */
-      await this.store.idbBookmarkGet();
+      await this.bookmarksStore.idbBookmarkGet();
     },
   },
 

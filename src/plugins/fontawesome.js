@@ -14,6 +14,7 @@ import {
   faLocationDot,
   faSort,
   faStopwatch,
+  faUser,
   faXmark,
   faShareFromSquare,
 } from "@fortawesome/free-solid-svg-icons";
@@ -25,7 +26,6 @@ library.add(
   faCheck,
   faCompass,
   faCopy,
-  faCopy,
   faInfo,
   faExclamation,
   faFaceMeh,
@@ -35,6 +35,7 @@ library.add(
   faLocationDot,
   faSort,
   faStopwatch,
+  faUser,
   faXmark,
   faShareFromSquare,
 );

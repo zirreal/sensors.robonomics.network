@@ -2,8 +2,9 @@
   <div class="popup-js active">
     <section>
       <h3 class="sensor-title clipoverflow">
-        <img v-if="icon" :src="icon" class="icontitle" />
-        <font-awesome-icon v-else icon="fa-solid fa-location-dot" />
+        
+        <Icon :sensorID="sensor_id" />
+
         <span v-if="addressformatted && addressformatted !==''">{{ addressformatted }}</span>
         <span v-else class="skeleton-text"></span>
       </h3>
@@ -157,7 +158,6 @@
 <script setup>
 import { reactive, computed, ref, watch, watchEffect, onMounted, getCurrentInstance } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useStore } from "@/store";
 import { useI18n } from "vue-i18n";
 import moment from "moment";
 import config, { sensors } from "@config";
@@ -171,6 +171,7 @@ import Copy from "./Copy.vue";
 import ProviderType from "../ProviderType.vue";
 import AltruistPromo from "../devices/altruist/AltruistPromo.vue";
 import ReleaseInfo from "../ReleaseInfo.vue";
+import Icon from "./Icon.vue";
 
 // Props и emits
 const props = defineProps({
@@ -181,7 +182,6 @@ const props = defineProps({
 const emit = defineEmits(["history", "close"]);
 
 // Глобальные объекты
-const store = useStore();
 const route = useRoute();
 const router = useRouter();
 const { t, locale } = useI18n();
@@ -213,6 +213,10 @@ const state = reactive({
 const units = ref([]);
 
 // computed
+const sensor_id = computed(() => {
+  return props.point?.sensor_id || route.params.sensor || null;
+});
+
 const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
 
 const geo = computed(() => {
@@ -223,11 +227,8 @@ const geo = computed(() => {
   return { lat: Number(lat) || 0, lng: Number(lng) || 0 };
 });
 
-const sensor_id = computed(() => {
-  return props.point?.sensor_id || route.params.sensor || null;
-});
-
 const donated_by = computed(() => props.point?.donated_by || null);
+
 // Гарантируем, что log всегда массив
 const log = computed(() => (Array.isArray(props.point?.log) ? props.point.log : []));
 const model = computed(() => props.point?.model || null);
@@ -284,7 +285,7 @@ const linkSensor = computed(() => {
       name: "main",
       params: {
         provider: state.provider,
-        type: route.params.type || "pm10",
+        type: route.params.type || config.MAP.measure,
         zoom: route.params.zoom || config.MAP.zoom,
         lat: geo.value.lat,
         lng: geo.value.lng,
@@ -299,11 +300,6 @@ const linkSensor = computed(() => {
 const link = computed(() => {
   return sensors[sensor_id.value] ? sensors[sensor_id.value].link : "";
 });
-
-const icon = computed(() => {
-  return sensors[sensor_id.value] ? sensors[sensor_id.value].icon : "";
-});
-
 
 // methods
 
@@ -522,39 +518,6 @@ watch(
   },
   { immediate: true, deep: true });
 
-
-// watchEffect(() => {
-//   // Если в props.point есть адрес, обновляем его только если координаты изменились.
-//   if (props.point && props.point.address && Object.keys(props.point.address).length > 0) {
-//     const currentGeo = props.point.geo || {};
-//     if (
-//       !prevGeo.value.lat ||
-//       currentGeo.lat !== prevGeo.value.lat ||
-//       currentGeo.lng !== prevGeo.value.lng
-//     ) {
-//       address.value = props.point.address;
-//       prevGeo.value = { ...currentGeo };
-//     }
-//   } else if (geo.value.lat && geo.value.lng) {
-//     // Если в props.point нет адреса, а заданы геоданные, запрашиваем адрес
-//     if (
-//       !prevGeo.value.lat ||
-//       geo.value.lat !== prevGeo.value.lat ||
-//       geo.value.lng !== prevGeo.value.lng
-//     ) {
-//       getAddressByPos(geo.value.lat, geo.value.lng, localeComputed.value)
-//         .then((res) => {
-//           address.value = res;
-//         })
-//         .catch((err) => {
-//           console.error(err);
-//         });
-//       prevGeo.value = { ...geo.value };
-//     }
-//   } else {
-//     address.value = {};
-//   }
-// });
 </script>
 
 <style scoped>
@@ -594,15 +557,6 @@ watch(
 
 .close svg {
   height: 2rem;
-}
-
-h3 .fa-location-dot {
-  margin-right: 4px;
-}
-
-.icontitle {
-  display: inline-block;
-  max-height: calc(var(--font-size) * 2);
 }
 
 /* Стили скелетона для заглушки графика */

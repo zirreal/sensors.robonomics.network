@@ -11,7 +11,10 @@ vx.x.x
 - Feat: combined Temperature and Humidity in one group
 - Feat: added navigation icon
 - Refactor: images paths structruzed better
-- Feat: Meta info for text pages
+- Feat: static pages prerender for SEO
+- Refactor: Pinia store structure refactoring
+- Refactor: no geo popup (slight redesign)
+- Refactor: default measure type in config moved to "map section" added usage of the default measure from config
 
 v2.1.6
 - Feat: combined dust and noise values in the chart

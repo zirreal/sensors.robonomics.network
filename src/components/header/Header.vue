@@ -1,5 +1,5 @@
 <template>
-  <header>
+  <header :class="`route-${route.name || route.path.replaceAll('/', '-')}`">
     <div class="header-banner flexline align-center">
       <a href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight/coming_soon?utm_source=sensors.social&utm_medium=header-banner" target="_blank">
         <span><b>Limited</b> Altruist Bundles on</span>
@@ -12,14 +12,13 @@
         <router-link to="/" class="appicon">
           <img :alt="config.TITLE" src="../../../public/app-icon-512.png" />
         </router-link>
-
-        <details v-if="store.sensors?.length > 0" tabindex="0" class="sensors details-popup">
+        <details v-if="mapStore.sensors?.length > 0" tabindex="0" class="sensors details-popup">
           <summary>
             <IconSensor class="sensors-mainicon" />
-            {{ store.sensors?.length + zeroGeoSensors?.length }}
+            {{ mapStore.sensors?.length + zeroGeoSensors?.length }}
           </summary>
-          <div class="details-content">
-            <AltruistPromo utmMedium="header_popup" />
+          <div class="details-content" :class="zeroGeoSensors?.length > 0 ? 'nogeo' : null">
+
             <section v-if="zeroGeoSensors?.length > 0">
               <h4>{{zeroGeoSensors?.length}} sensors without geolocation</h4>
               <ul class="sensors-list">
@@ -30,6 +29,8 @@
                 </li>
               </ul>
             </section>
+
+            <AltruistPromo utmMedium="header_popup" />
           </div>
         </details>
       </div>
@@ -61,10 +62,11 @@
           <p>Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a></p>
 
           <section class="navlinks">
-            <router-link to="/altruist-use-cases">Altruist use cases</router-link>
-            <router-link to="/altruist-timeline">Altruist timeline</router-link>
-            <router-link to="/air-measurements">{{ $t("links.measurement") }}</router-link>
-            <router-link to="/privacy-policy">{{ $t("links.privacy") }}</router-link>
+            <router-link to="/altruist-use-cases/">Altruist use cases</router-link>
+            <router-link to="/altruist-timeline/">Altruist timeline</router-link>
+            <router-link to="/altruist-compare/">Altruist comparison table</router-link>
+            <router-link to="/air-measurements/">{{ $t("links.measurement") }}</router-link>
+            <router-link to="/privacy-policy/">{{ $t("links.privacy") }}</router-link>
           </section>
 
           <ReleaseInfo />
@@ -73,7 +75,9 @@
           <font-awesome-icon icon="fa-solid fa-bars" />
         </button>
 
-        <a class="button button-promo" href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight/coming_soon?utm_source=sensors.social&utm_medium=header-button" target="_blank">Altruist on Indiegogo</a>
+        <!-- <Login /> -->
+        
+        <!-- <a class="button button-promo" href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight/coming_soon?utm_source=sensors.social&utm_medium=header-button" target="_blank">Altruist on Indiegogo</a> -->
       </div>
     </div>
   </header>
@@ -81,23 +85,28 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from "vue";
-import { useStore } from "@/store";
 import { languages } from "@/translate";
 import config from "@config";
 import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
+
+import { useMapStore } from "@/stores/map";
+
 import IconSensor from "../icons/Sensor.vue";
 import AltruistPromo from "../devices/altruist/AltruistPromo.vue";
 import ReleaseInfo from "../ReleaseInfo.vue";
+import Login from "./Login.vue";
 
 const { locale: i18nLocale } = useI18n();
+const route = useRoute();
 
 const locale = ref(localStorage.getItem("locale") || i18nLocale.value || "en");
 const locales = languages || ["en"];
-const store = useStore();
+const mapStore = useMapStore();
 
 const zeroGeoSensors = computed(() => {
   const tolerance = 0.001; // допуск для сравнения
-  return store.sensors.filter(sensor => {
+  return mapStore.sensors.filter(sensor => {
     const lat = Number(sensor.geo.lat);
     const lng = Number(sensor.geo.lng);
     return Math.abs(lat) < tolerance && Math.abs(lng) < tolerance;
@@ -181,6 +190,10 @@ onMounted(() => {
     box-shadow: 0 6px 12px -4px rgba(0, 0, 0, 0.12);
   }
 
+  header.route-altruist-compare {
+    position: static;
+  }
+
   header > * {
     pointer-events: all;
   }
@@ -201,26 +214,6 @@ onMounted(() => {
 .appicon img {
   display: block;
   max-width: 100%;
-}
-
-.popover {
-  max-height: 80svh;
-  overflow-x: auto;
-  background-color: var(--color-light);
-  color: var(--color-dark);
-}
-
-.popover-top-right {
-  top: calc(var(--gap) * 3 + var(--app-inputheight));
-  right: var(--gap);
-  width: 500px;
-  max-width: calc(100vw - var(--gap) * 2);
-}
-
-@supports not selector(:popover-open) {
-  .popover-top-right {
-    right: var(--gap) !important;
-  }
 }
 
 #about p {
@@ -271,7 +264,6 @@ onMounted(() => {
 
 /* + banner */
 .header-banner {
-  display: none;
   background-color: #4b01d4;
   color: #fff;
 }
@@ -284,10 +276,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  text-decoration: none;
 }
 
 .header-banner-svg {
-  max-height: 16px;
+  max-height: 12px;
   padding: 0 5px;
 }
 /* - banner */
@@ -302,13 +295,19 @@ onMounted(() => {
       flex-direction: column;
       text-align: center;
     }
+  }
 
-    .button-promo {
-      display: none;
+  @media screen and (width > 900px) {
+    .nogeo {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      max-width: calc(100vw - var(--gap) * 2) !important;
+      min-width: min(800px, calc(100vw - (var(--gap) * 2))) !important;
+      gap: calc(var(--gap) * 2);
     }
 
-    .header-banner {
-      display: block;
+    .buySensor {
+      margin-top: 0 !important;
     }
   }
 

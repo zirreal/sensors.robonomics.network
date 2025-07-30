@@ -13,7 +13,8 @@
     "position": {
       "lat": "39.0277",
       "lng": "8.7891"
-    }
+    },
+    "measure": "pm25"
   },
   "SHOW_MESSAGES": true,
   "DEFAULT_TYPE_PROVIDER": "remote",
@@ -21,10 +22,16 @@
     "realtime": "Realtime",
     "remote": "Daily Recap"
   },
-  "DEFAULT_MEASURE_TYPE": "pm25",
+  "SERIES_MAX_VISIBLE": 3000,
+  "INDEXEDDB": {
+    "accounts": {
+      "dbname": "Altruist",
+      "dbversion": "1",
+      "tablename": "Accounts"
+    }
+  },
   "TITLE": "Map of independent air quality sensors",
   "DESC": "Welcome to the decentralized opensource sensors map which operates with the sole intent of serving the free will of individuals, without any beneficiaries.",
-  "SERIES_MAX_VISIBLE": 3000,
   "SITE_NAME": "Sensors.social",
   "SITE_URL": "https://sensors.social",
   "REPO_NAME": "airalab/sensors.social",

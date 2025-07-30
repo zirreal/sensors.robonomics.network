@@ -117,6 +117,19 @@ select {
   background-size: .5rem;
   padding-right: calc(var(--app-inputpadding) * 1.5 + 0.5rem);
   user-select: none;
+  cursor: pointer;
+}
+
+select.select-link {
+  --app-bordercolor: var(--color-link);
+  --app-inputpadding: 0;
+  --app-inputbradius: 0;
+  --app-inputtextcolor: var(--color-link);
+  
+  background: none;
+  border-width: 0 0 1px;
+  display: inline-block;
+  width: max-content;
 }
 
 input[type=text]:focus, input[type=password]:focus {
@@ -129,9 +142,10 @@ input[type=checkbox] {
   width: calc(var(--app-inputheight) * .5);
 }
 
-input[type=checkbox]:not(:last-child) {
+/* input[type=checkbox]:not(:last-child) {
   margin-right: calc(var(--gap) * .5);
-}
+} */
+ 
 
 input[type=submit], .button, .button:hover {
   background-color: var(--app-buttoncolor);
@@ -164,6 +178,13 @@ input[type=submit]:not([disabled]),
 label {
   font-weight: 700;
 }
+
+.label-line {
+  display: flex;
+  gap: calc(var(--gap)/2);
+  align-items: center;
+}
+
 /* - FORMS, INPUTS */
 
 /* + POPOVER API */
@@ -718,3 +739,31 @@ table img {
   object-fit: contain;
 }
 /* - basic styles for tables */
+
+/* + popover */
+.popover {
+  max-height: 80svh;
+  overflow-x: auto;
+  background-color: var(--color-light);
+  color: var(--color-dark);
+}
+
+.popover-top-right {
+  top: calc(var(--gap) * 4 + var(--app-inputheight));
+  right: var(--gap);
+  width: 500px;
+  max-width: calc(100vw - var(--gap) * 2);
+}
+
+@supports not selector(:popover-open) {
+  .popover-top-right {
+    right: var(--gap) !important;
+  }
+}
+
+@media screen and (width < 500px) {
+  .popover-top-right {
+    top: calc(var(--gap) * 8 + var(--app-inputheight));
+  }
+}
+/* - popover */
