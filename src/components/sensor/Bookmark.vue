@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import { useStore } from "@/store";
+import { useBookmarksStore } from "@/stores/bookmarks";
 import { IDBgettable, IDBworkflow } from "../../idb";
 
 export default {
@@ -34,7 +34,7 @@ export default {
       bookmarks: [],
       bookmarkid: null,
       bookmarkname: "",
-      store: useStore(),
+      bookmarksStore: useBookmarksStore(),
     };
   },
 
@@ -51,9 +51,9 @@ export default {
   methods: {
     async findbookmark() {
       const bookmarks = await IDBgettable(
-        this.store.idbBookmarkDbname,
-        this.store.idbBookmarkVDbver,
-        this.store.idbBookmarkVDbtable
+        this.bookmarksStore.idbBookmarkDbname,
+        this.bookmarksStore.idbBookmarkVDbver,
+        this.bookmarksStore.idbBookmarkVDbtable
       );
       return bookmarks.find((bookmark) => bookmark.id === this.$props.id);
     },
@@ -66,9 +66,9 @@ export default {
       if (bookmark) {
         if (this.bookmarkid) {
           IDBworkflow(
-            this.store.idbBookmarkDbname,
-            this.store.idbBookmarkVDbver,
-            this.store.idbBookmarkVDbtable,
+            this.bookmarksStore.idbBookmarkDbname,
+            this.bookmarksStore.idbBookmarkVDbver,
+            this.bookmarksStore.idbBookmarkVDbtable,
             "readwrite",
             (store) => {
               const request = store.get(this.bookmarkid);
@@ -98,9 +98,9 @@ export default {
         }
       } else {
         IDBworkflow(
-          this.store.idbBookmarkDbname,
-          this.store.idbBookmarkVDbver,
-          this.store.idbBookmarkVDbtable,
+          this.bookmarksStore.idbBookmarkDbname,
+          this.bookmarksStore.idbBookmarkVDbver,
+          this.bookmarksStore.idbBookmarkVDbtable,
           "readwrite",
           (store) => {
             store.add({
@@ -120,8 +120,8 @@ export default {
 
       
 
-      const bc = new BroadcastChannel(this.store.idbWatcherBroadcast);
-      bc.postMessage(this.store.idbBookmarkVDbtable);
+      const bc = new BroadcastChannel(this.bookmarksStore.idbWatcherBroadcast);
+      bc.postMessage(this.bookmarksStore.idbBookmarkVDbtable);
       bc.close();
     },
   },

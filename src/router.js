@@ -4,6 +4,7 @@ import PrivacyPolicy from "./views/PrivacyPolicy.vue";
 import AirMeasurements from "./views/AirMeasurements.vue";
 import AltruistUseCases from "./views/AltruistUseCases.vue";
 import AltruistTimeline from "./views/AltruistTimeline.vue";
+import AltruistCompare from "./views/AltruistCompare.vue";
 import Login from "./views/Login.vue";
 // import SensorEmbed from "./views/SensorEmbed.vue";
 
@@ -42,6 +43,11 @@ const router = createRouter({
       path: "/altruist-timeline/",
       name: "altruist-timeline",
       component: AltruistTimeline,
+    },
+    {
+      path: "/altruist-compare/",
+      name: "altruist-compare",
+      component: AltruistCompare,
     },
     {
       path: "/login/",

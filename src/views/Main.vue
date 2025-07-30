@@ -3,7 +3,6 @@
     :pageTitle= "config.TITLE"
     :pageDescription = "config.DESC"
   />
-
   <Header />
 
   <MessagePopup v-if="isMessage" @close="handlerClose" :data="state.point.measurement" />
@@ -31,7 +30,10 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, getCurrentInstance } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { useStore } from "@/store";
+
+import { useMapStore } from "@/stores/map";
+import { useBookmarksStore } from "@/stores/bookmarks";
+
 import moment from "moment";
 
 import Header from "../components/header/Header.vue";
@@ -60,7 +62,8 @@ const props = defineProps({
   sensor: String,
 });
 
-const store = useStore();
+const mapStore = useMapStore();
+const bookmarksStore = useBookmarksStore();
 const router = useRouter();
 const route = useRoute();
 const { locale } = useI18n();
@@ -85,9 +88,10 @@ const state = reactive({
 });
 
 const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
-const zoom = computed(() => store.mapposition.zoom);
-const lat = computed(() => store.mapposition.lat);
-const lng = computed(() => store.mapposition.lng);
+const zoom = computed(() => mapStore.mapposition.zoom);
+const lat = computed(() => mapStore.mapposition.lat);
+const lng = computed(() => mapStore.mapposition.lng);
+const isMainRoute = computed(() => route.path === '/');
 
 /* + Realtime watch */
 let unwatchRealtime = null;
@@ -178,7 +182,7 @@ const handlerNewPoint = async (point) => {
     : {};
 
 
-  point.isBookmarked = store.idbBookmarks?.some(bookmark => bookmark.id === point.sensor_id) || false;
+  point.isBookmarked = bookmarksStore.idbBookmarks?.some(bookmark => bookmark.id === point.sensor_id) || false;
 
 
   markers.addPoint({
@@ -213,7 +217,7 @@ const handlerClick = async (point) => {
       state.providerObj.start,
       state.providerObj.end
     );
-    store.mapinactive = true;
+    mapStore.mapinactive = true;
   } else {
     log = await state.providerObj.getHistoryBySensor(point.sensor_id);
   }
@@ -235,9 +239,7 @@ const handlerHistoryLog = async ({ sensor_id, start, end }) => {
 };
 
 const handlerClose = () => {
-  store.mapinactive = false;
-  store.removeAllCurrentMeasures();
-  store.removeActiveCurrentMeasure();
+  mapStore.mapinactive = false;
 
   if (state.point) {
     markers.hidePath(state.point.sensor_id);
@@ -256,7 +258,7 @@ const handlerClose = () => {
 
 const handlerCloseInfo = () => {
   state.isShowInfo = false;
-  store.mapinactive = false;
+  mapStore.mapinactive = false;
 };
 
 const handlerModal = (modal) => {
@@ -275,36 +277,50 @@ watch(
   }
 );
 
+// следим это карта или нет
+watch(isMainRoute, (isMain) => {
+  const app = document.getElementById('app');
+  if (app) {
+    if (isMain) {
+      app.classList.add('map');
+    } else {
+      app.classList.remove('map');
+    }
+  }
+}, { immediate: true });
+
+
 onMounted(async () => {
-  document.querySelector("#app").classList.add("map");
 
-  // Устанавливаем тип провайдера
-  setTypeProvider(props.provider || "remote");
-
-  // Настраиваем BroadcastChannel для получения данных о сенсорах
+  /* + BroadcastChannel */
+  /* Отслеживаем изменения сенсоров */
   const bcnewsensor = new BroadcastChannel("sensors");
   const bcclearsensors = new BroadcastChannel("sensorsremoved");
-  store.sensors = [];
+  mapStore.sensors = [];
 
   bcnewsensor.onmessage = (e) => {
     if (e.data) {
       let unique = true;
-      store.sensors.forEach((i) => {
+      mapStore.sensors.forEach((i) => {
         if (e.data.sensor_id === i.sensor_id) {
           unique = false;
         }
       });
       if (unique) {
-        store.sensors.push(e.data);
+        mapStore.sensors.push(e.data);
       }
     }
   };
 
   bcclearsensors.onmessage = (e) => {
     if (e.data) {
-      store.sensors = [];
+      mapStore.sensors = [];
     }
   };
+  /* - BroadcastChannel */
+
+  // Устанавливаем тип провайдера
+  setTypeProvider(props.provider);
 
   // Инициализируем объект провайдера
   if (props.provider === "remote") {

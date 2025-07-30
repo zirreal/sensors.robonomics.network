@@ -222,7 +222,8 @@ cp -r src/config/template src/config/my-project
     "position": {
       "lat": "Latitude",
       "lng": "Longitude"
-    }
+    },
+    "measure": "pm25"
   },
   "SHOW_MESSAGES": "Boolean value (true/false) indicating whether to display user messages on the map",
   "DEFAULT_TYPE_PROVIDER": "Default data provider type (remote or realtime)",
@@ -231,7 +232,16 @@ cp -r src/config/template src/config/my-project
     "realtime": "Realtime",
     "remote": "Daily Recap"
   },
-  "DEFAULT_MEASURE_TYPE": "pm10",
+  // For sensor chart
+  "SERIES_MAX_VISIBLE": 3000,
+  // accounts - local DB for signed in altruist holders (in development now)
+  "INDEXEDDB": {
+    "accounts": {
+      "dbname": "Altruist",
+      "dbversion": "1",
+      "tablename": "Accounts"
+    }
+  },
   "TITLE": "Project title",
   "SERIES_MAX_VISIBLE": "Maximum number of data points on the chart before grouping is applied"
 }

@@ -49,6 +49,7 @@ import ReleaseInfo from "../../components/ReleaseInfo.vue";
   padding: calc(var(--gap) * 5) calc(var(--gap) * 3) calc(var(--gap) * 3);
   margin: 0 auto;
   max-width: 1400px;
+  width: 100vw;
 }
 
 .container-pagetext > * {

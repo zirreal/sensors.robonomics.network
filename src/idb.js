@@ -18,7 +18,7 @@
         })
     })
  */
-export function IDBworkflow(dbname, dbver, dbtable, mode, onsuccess) {
+export function IDBworkflow(dbname, dbver, dbtable, mode, onsuccess, keyPath = 'id', autoIncrement = true) {
     const IDB = window.indexedDB || window.webkitIndexedDB
     if(!IDB) { return }
 
@@ -57,12 +57,12 @@ export function IDBworkflow(dbname, dbver, dbtable, mode, onsuccess) {
         }
 
         if (!db.objectStoreNames.contains(dbtable)) {
-            db.createObjectStore(dbtable, {keyPath: 'id', autoIncrement: true})
+            db.createObjectStore(dbtable, { keyPath, autoIncrement })
         }
     })
 }
 
-/* gets all data from the table */
+/* get all data from the table */
 export function IDBgettable(dbname, dbver, dbtable) {
     return new Promise((resolve) => {
         let datafromtable = []
@@ -100,4 +100,63 @@ export function IDBcleartable(dbname, dbver, dbtable) {
         }
     });
     
+}
+
+/*  
+    encryptText(text)
+    Возвращает объект { ciphertext, iv, key }
+    Используется для безопасного хранения текста
+*/
+
+export async function encryptText(text) {
+    const MAGIC = "altruist-v1";
+    const enc = new TextEncoder();
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const key = await window.crypto.subtle.generateKey(
+        { name: 'AES-GCM', length: 256 },
+        true,
+        ['encrypt', 'decrypt']
+    );
+    const ciphertext = await window.crypto.subtle.encrypt(
+        { name: "AES-GCM", iv },
+        key,
+        enc.encode(`${MAGIC}:${text}`)
+    );
+    const exportedKey = await window.crypto.subtle.exportKey("jwk", key);
+    return {
+        ciphertext: Array.from(new Uint8Array(ciphertext)),
+        iv: Array.from(iv),
+        key: exportedKey,
+    };
+}
+
+/*
+    decryptText(data)
+    data — объект {ciphertext, iv, key}
+    Возвращает расшифрованный текст или null, если ошибка
+*/
+export async function decryptText(data) {
+    try {
+        const MAGIC = "altruist-v1";
+        const dec = new TextDecoder();
+        const key = await window.crypto.subtle.importKey(
+            "jwk",
+            data.key,
+            { name: "AES-GCM" },
+            false,
+            ["decrypt"]
+        );
+        const decrypted = await window.crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: new Uint8Array(data.iv) },
+            key,
+            new Uint8Array(data.ciphertext)
+        );
+        const str = dec.decode(new Uint8Array(decrypted));
+        if(str.startsWith(MAGIC + ":")) {
+            return str.slice(MAGIC.length + 1);
+        }
+        return null;
+    } catch(e) {
+        return null;
+    }
 }

@@ -10,7 +10,7 @@
       />
 
       <!-- выбор измерения -->
-      <select v-model="type" v-if="store.sensors.length > 0 && availableOptions?.length > 0">
+      <select v-model="type" v-if="mapStore.sensors.length > 0 && availableOptions?.length > 0">
         <option v-for="opt in availableOptions" :key="opt.value" :value="opt.value">
           {{ opt.name }}
         </option>
@@ -24,12 +24,16 @@
         </section>
         
         <section>
-          <input id="wind" v-model="wind" type="checkbox" :disabled="!realtime" />
-          <label for="wind">{{ $t("layer.wind") }}</label>
+          <label class="label-line">
+            <input id="wind" v-model="wind" type="checkbox" :disabled="!realtime" />
+            <span>{{ $t("layer.wind") }}</span>
+          </label>
         </section>
         <section>
-          <input id="messages" v-model="messages" type="checkbox" />
-          <label for="messages">{{ $t("layer.messages") }}</label>
+          <label class="label-line">
+            <input id="messages" v-model="messages" type="checkbox" />
+            <span>{{ $t("layer.messages") }}</span>
+          </label>
         </section>
         <hr />
         <section>
@@ -64,7 +68,6 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import moment from "moment";
-import { useStore } from "@/store";
 import config from "@config";
 import Bookmarks from "@/components/Bookmarks.vue";
 import HistoryImport from "./HistoryImport.vue";
@@ -76,6 +79,9 @@ import { getTypeProvider } from "../../utils/utils";
 import { Remote } from "../../providers";
 import ProviderType from "../ProviderType.vue";
 
+import { useBookmarksStore } from "@/stores/bookmarks";
+import { useMapStore } from "@/stores/map";
+
 // props и emits
 const props = defineProps({
   currentProvider: { type: String, required: true },
@@ -85,7 +91,8 @@ const props = defineProps({
 const emit = defineEmits(["history"]);
 
 // инстансы
-const store = useStore();
+const mapStore = useMapStore();
+const bookmarksStore = useBookmarksStore();
 const router = useRouter();
 const route = useRoute();
 const { locale: i18nLocale, t } = useI18n();
@@ -159,7 +166,7 @@ const endTimestamp = computed(() => {
 });
 
 const bookmarksCount = computed(() => {
-  return (store.idbBookmarks || []).length;
+  return (bookmarksStore.idbBookmarks || []).length;
 });
 
 const getHistory = () => {

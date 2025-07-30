@@ -58,6 +58,8 @@
       <p>Find out who Altruist was designed for <router-link to="/altruist-use-cases">on this page</router-link></p>
     </section>
 
+    <AltruistCompare />
+
   </PageTextLayout>
 </template>
 
@@ -66,6 +68,7 @@
 import MetaInfo from '../components/MetaInfo.vue';
 import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
+import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";
 
 const ogImage = new URL('@/assets/images/pages/altruist-timeline/timeline.webp', import.meta.url).href
 </script>
