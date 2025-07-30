@@ -26,6 +26,7 @@
     "axios": "^1.1.2",
     "buffer": "^6.0.3",
     "chroma-js": "^2.4.2",
+    "crypto-browserify": "^3.12.1",
     "events": "^3.3.0",
     "highcharts": "^11.4.3",
     "highcharts-vue": "^2.0.1",
@@ -43,6 +44,8 @@
     "pinia": "^2.0.23",
     "puppeteer": "^24.15.0",
     "socket.io-client": "^2.3.0",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5",
     "vue": "^3.2.38",
     "vue-i18n": "9",
     "vue-matomo": "^4.1.0",
@@ -58,6 +61,7 @@
     "eslint-plugin-vue": "^9.3.0",
     "prettier": "^2.7.1",
     "release-it": "^19.0.1",
-    "vite": "^3.2.7"
+    "vite": "^3.2.7",
+    "vite-plugin-node-polyfills": "^0.24.0"
   }
 }

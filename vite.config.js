@@ -1,14 +1,12 @@
 import { fileURLToPath, URL } from "node:url";
-
 import vue from "@vitejs/plugin-vue";
 import { defineConfig, loadEnv } from "vite";
 import fs from "node:fs";
 import path from "node:path";
-
+import nodePolyfills from "vite-plugin-node-polyfills";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // eslint-disable-next-line no-undef
   const env = loadEnv(mode, process.cwd());
   let configEnv = env.VITE_CONFIG_ENV || "default";
 
@@ -24,15 +22,26 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: "",
-    // server: { https: true },
     plugins: [
       vue(),
+      nodePolyfills({
+        protocolImports: true,
+      }),
     ],
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
         "@config": `/src/config/${configEnv}`,
+
+        // Node polyfills
+        crypto: "crypto-browserify",
+        stream: "stream-browserify",
+        buffer: "buffer",
+        util: "util",
       },
+    },
+    define: {
+      global: "globalThis",
     },
     build: {
       target: ["es2020"],
