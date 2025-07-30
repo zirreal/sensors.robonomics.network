@@ -11,14 +11,23 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Node & Cache deps
+      - name: Setup Node.js 22 + Cache deps
         uses: actions/setup-node@v3
         with:
-          node-version: "20.x"
+          node-version: "22.x"
           cache: "yarn"
           cache-dependency-path: yarn.lock
 
-      - run: yarn install --frozen-lockfile
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3
+
+      - name: Print Node and Yarn versions
+        run: |
+          node -v
+          yarn -v
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
       - name: Build project
         run: yarn static-generate
