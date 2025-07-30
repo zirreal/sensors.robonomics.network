@@ -8,7 +8,8 @@ const routes = [
   'privacy-policy',
   'air-measurements',
   'altruist-timeline',
-  'altruist-use-cases'
+  'altruist-use-cases',
+  'altruist-compare'
 ];
 
 const outputDir = path.resolve(__dirname, '../dist');
