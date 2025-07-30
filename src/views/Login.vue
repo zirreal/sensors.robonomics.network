@@ -56,165 +56,165 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useAccountStore } from "@/stores/account";
-import config from "@config";
+// import { ref, computed } from "vue";
+// import { useRoute, useRouter } from "vue-router";
+// import { useAccountStore } from "@/stores/account";
+// import config from "@config";
 
-import { mnemonicValidate, encodeAddress } from "@polkadot/util-crypto";
-import { Keyring } from "@polkadot/keyring";
+// import { mnemonicValidate, encodeAddress } from "@polkadot/util-crypto";
+// import { Keyring } from "@polkadot/keyring";
 
-import MetaInfo from '../components/MetaInfo.vue';
-import PageTextLayout from "../components/layouts/PageText.vue";
-import { encryptText } from "../idb";
-import { getTypeProvider } from "../utils/utils";
+// import MetaInfo from '../components/MetaInfo.vue';
+// import PageTextLayout from "../components/layouts/PageText.vue";
+// import { encryptText } from "../idb";
+// import { getTypeProvider } from "../utils/utils";
 
-const accountStore = useAccountStore();
-const ogImage = new URL('@/assets/images/pages/login/og-login.webp', import.meta.url).href;
-const MAGIC = "altruist-v1";
-const router = useRouter();
-let redirectTimer = null;
+// const accountStore = useAccountStore();
+// const ogImage = new URL('@/assets/images/pages/login/og-login.webp', import.meta.url).href;
+// const MAGIC = "altruist-v1";
+// const router = useRouter();
+// let redirectTimer = null;
 
-const passPhrase = ref("");
-const keepSigned = ref(false);
-const error = ref("");
-const keyType = ref("sr25519"); // По умолчанию sr25519
-const loginStatus = ref("idle"); // idle | success | error
-const sensorLink = ref(null);
-const redirectCountdown = ref(15);
+// const passPhrase = ref("");
+// const keepSigned = ref(false);
+// const error = ref("");
+// const keyType = ref("sr25519"); // По умолчанию sr25519
+// const loginStatus = ref("idle"); // idle | success | error
+// const sensorLink = ref(null);
+// const redirectCountdown = ref(15);
 
-const canKeepSigned = computed(() =>
-  !!(window.crypto?.subtle || window.crypto?.webkitSubtle) && !!window.indexedDB
-);
+// const canKeepSigned = computed(() =>
+//   !!(window.crypto?.subtle || window.crypto?.webkitSubtle) && !!window.indexedDB
+// );
 
-const account = computed(() => {
-  const phrase = passPhrase.value.trim();
-  if (phrase.split(/\s+/).length !== 12) return "";
-  if (!mnemonicValidate(phrase)) return "";
-  try {
-    const keyring = new Keyring({ type: keyType.value });
-    const pair = keyring.addFromMnemonic(phrase);
-    return encodeAddress(pair.publicKey, 32);
-  } catch {
-    return "";
-  }
-});
+// const account = computed(() => {
+//   const phrase = passPhrase.value.trim();
+//   if (phrase.split(/\s+/).length !== 12) return "";
+//   if (!mnemonicValidate(phrase)) return "";
+//   try {
+//     const keyring = new Keyring({ type: keyType.value });
+//     const pair = keyring.addFromMnemonic(phrase);
+//     return encodeAddress(pair.publicKey, 32);
+//   } catch {
+//     return "";
+//   }
+// });
 
-function formatAddress(addr) {
-  if (!addr) return "";
-  if (addr.length <= 16) return addr;
-  return addr.slice(0, 6) + "..." + addr.slice(-6);
-}
+// function formatAddress(addr) {
+//   if (!addr) return "";
+//   if (addr.length <= 16) return addr;
+//   return addr.slice(0, 6) + "..." + addr.slice(-6);
+// }
 
-function getRobonomicsAddressByType(phrase, type) {
-  let pair;
-  try {
-    const keyring = new Keyring({ type });
-    pair = keyring.addFromMnemonic(phrase);
-  } catch {
-    throw new Error(`Cannot create ${type} account from this mnemonic`);
-  }
-  const address = encodeAddress(pair.publicKey, 32);
-  return { address, type, publicKey: pair.publicKey };
-}
+// function getRobonomicsAddressByType(phrase, type) {
+//   let pair;
+//   try {
+//     const keyring = new Keyring({ type });
+//     pair = keyring.addFromMnemonic(phrase);
+//   } catch {
+//     throw new Error(`Cannot create ${type} account from this mnemonic`);
+//   }
+//   const address = encodeAddress(pair.publicKey, 32);
+//   return { address, type, publicKey: pair.publicKey };
+// }
 
-function resetStatus() {
-  loginStatus.value = "idle";
-  error.value = "";
-  clearTimeout(redirectTimer);
-  redirectCountdown.value = 15;
-  sensorLink.value = null;
-}
+// function resetStatus() {
+//   loginStatus.value = "idle";
+//   error.value = "";
+//   clearTimeout(redirectTimer);
+//   redirectCountdown.value = 15;
+//   sensorLink.value = null;
+// }
 
-function redirect() {
-  sensorLink.value = {
-    name: "main",
-    params: {
-      provider: getTypeProvider(),
-      type: config.MAP.measure,
-      zoom: config.MAP.zoom,
-      lat: config.MAP.position.lat, // тут надо сделать попытку получить гео от сенсора >> sensorLat || config.MAP.position.lat
-      lng: config.MAP.position.lng, // тут тоже
-      sensor: accountStore.devices[0],
-    },
-  };
-  redirectCountdown.value = 15;
-  clearTimeout(redirectTimer);
+// function redirect() {
+//   sensorLink.value = {
+//     name: "main",
+//     params: {
+//       provider: getTypeProvider(),
+//       type: config.MAP.measure,
+//       zoom: config.MAP.zoom,
+//       lat: config.MAP.position.lat, // тут надо сделать попытку получить гео от сенсора >> sensorLat || config.MAP.position.lat
+//       lng: config.MAP.position.lng, // тут тоже
+//       sensor: accountStore.devices[0],
+//     },
+//   };
+//   redirectCountdown.value = 15;
+//   clearTimeout(redirectTimer);
 
-  function tick() {
-    if (redirectCountdown.value > 0) {
-      redirectCountdown.value -= 1;
-      redirectTimer = setTimeout(tick, 1000);
-    } else {
-      router.push(sensorLink.value);
-    }
-  }
-  tick();
-}
+//   function tick() {
+//     if (redirectCountdown.value > 0) {
+//       redirectCountdown.value -= 1;
+//       redirectTimer = setTimeout(tick, 1000);
+//     } else {
+//       router.push(sensorLink.value);
+//     }
+//   }
+//   tick();
+// }
 
-async function handleLogin(e) {
-  e.preventDefault();
-  error.value = "";
-  loginStatus.value = "idle";
-  sensorLink.value = null;
-  clearTimeout(redirectTimer);
-  redirectCountdown.value = 15;
-  const phrase = passPhrase.value.trim();
+// async function handleLogin(e) {
+//   e.preventDefault();
+//   error.value = "";
+//   loginStatus.value = "idle";
+//   sensorLink.value = null;
+//   clearTimeout(redirectTimer);
+//   redirectCountdown.value = 15;
+//   const phrase = passPhrase.value.trim();
 
-  if (phrase.split(/\s+/).length !== 12) {
-    error.value = "Passphrase must be 12 words";
-    loginStatus.value = "error";
-    return;
-  }
+//   if (phrase.split(/\s+/).length !== 12) {
+//     error.value = "Passphrase must be 12 words";
+//     loginStatus.value = "error";
+//     return;
+//   }
 
-  if (!mnemonicValidate(phrase)) {
-    error.value = "Invalid mnemonic";
-    loginStatus.value = "error";
-    return;
-  }
+//   if (!mnemonicValidate(phrase)) {
+//     error.value = "Invalid mnemonic";
+//     loginStatus.value = "error";
+//     return;
+//   }
 
-  let accountData;
-  try {
-    accountData = getRobonomicsAddressByType(phrase, keyType.value);
-  } catch (e) {
-    error.value = e.message || "Cannot create Robonomics account";
-    loginStatus.value = "error";
-    return;
-  }
-  const { address, type } = accountData;
-  const devices = [
-    '4Cgi21YcaUTr9z3KCB7de9iPAr3jiGEhhBaCsWugqgMhPGXR',
-    '4Gsha9WxNjv3y8pyLQ5dAzsyNnvfS8CTPZF1Awu1XB1zrEjs'
-  ]; // записываем девайсы из подписки
+//   let accountData;
+//   try {
+//     accountData = getRobonomicsAddressByType(phrase, keyType.value);
+//   } catch (e) {
+//     error.value = e.message || "Cannot create Robonomics account";
+//     loginStatus.value = "error";
+//     return;
+//   }
+//   const { address, type } = accountData;
+//   const devices = [
+//     '4Cgi21YcaUTr9z3KCB7de9iPAr3jiGEhhBaCsWugqgMhPGXR',
+//     '4Gsha9WxNjv3y8pyLQ5dAzsyNnvfS8CTPZF1Awu1XB1zrEjs'
+//   ]; // записываем девайсы из подписки
 
-  if (keepSigned.value) {
-    try {
-      const encrypted = await encryptText(phrase);
-      accountStore.saveToDB({
-        address,
-        data: encrypted,
-        type,
-        devices
-      });
-    } catch (e) {
-      error.value = "Encryption error";
-      loginStatus.value = "error";
-      return;
-    }
-  } else {
-    // убеждаемся, что аккаунт не сохранен в бд, так как пользователь больше этого не хочет
-    accountStore.deleteFromDB(address);
-  }
+//   if (keepSigned.value) {
+//     try {
+//       const encrypted = await encryptText(phrase);
+//       accountStore.saveToDB({
+//         address,
+//         data: encrypted,
+//         type,
+//         devices
+//       });
+//     } catch (e) {
+//       error.value = "Encryption error";
+//       loginStatus.value = "error";
+//       return;
+//     }
+//   } else {
+//     // убеждаемся, что аккаунт не сохранен в бд, так как пользователь больше этого не хочет
+//     accountStore.deleteFromDB(address);
+//   }
 
-  accountStore.setAccount(phrase, address, type, devices);
+//   accountStore.setAccount(phrase, address, type, devices);
 
-  passPhrase.value = "";
-  loginStatus.value = "success";
+//   passPhrase.value = "";
+//   loginStatus.value = "success";
 
-  if (devices.length > 0) {
-    redirect();
-  }
-}
+//   if (devices.length > 0) {
+//     redirect();
+//   }
+// }
 </script>
 
 <style scoped>

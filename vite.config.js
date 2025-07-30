@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
-        "@config": `/src/config/${configEnv}`
+        "@config": `/src/config/${configEnv}`,
       },
     },
     build: {

@@ -1,7 +1,7 @@
 <template>
   <MetaInfo
-    pageTitle= "7 Years of Altruism - Altruist Timeline"
-    pageDescription="At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”."
+    pageTitle= "Compare table for Altruist with other air quality sensors"
+    pageDescription="Explore the advantages and special features of each sensor and choose the one that best suits your needs!"
     :pageImage="ogImage"
   />
   <PageTextLayout>
