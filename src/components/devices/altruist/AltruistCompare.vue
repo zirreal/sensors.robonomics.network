@@ -276,6 +276,22 @@ h2 {
   background-color: #f1f1f1;
 }
 
+@media (prefers-color-scheme: dark) {
+
+  .mark-good {
+    background-color: #043107;
+  }
+
+  .mark-bad {
+    background-color: #5f0f09;
+  }
+
+  .mark-neutral {
+    background-color: #3f3f3f;
+  }
+
+}
+
 @media (width > 1000px) {
   thead tr:first-child th {
     position: sticky;
