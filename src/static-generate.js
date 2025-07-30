@@ -86,7 +86,7 @@ async function prerender() {
 
     const REDIRECT_JS = `
     <script>
-    if (!location.hash && location.pathname.match(/^\\/(altruist-use-cases|privacy-policy|air-measurements|altruist-timeline)\\/?$/)) {
+    if (!location.hash && location.pathname.match(/^\\/(altruist-use-cases|privacy-policy|air-measurements|altruist-timeline|altruist-compare)\\/?$/)) {
         var path = location.pathname.replace(/^\\//, '').replace(/\\/$/, '');
         location.replace('/#/' + path + location.search + location.hash);
     }
