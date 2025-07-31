@@ -14,7 +14,7 @@
 
     <section>
       <h2>🏙️ You live in a big city or an ecologically challenged region</h2>
-      <p><img alt="" class="pagetext-fullwidth-image" src="../assets/images/pages/altruist-use-cases/altruist-use-cases-1.jpg" /></p>
+      <p><img :src="image1" alt="" class="pagetext-fullwidth-image" /></p>
       <p>Think of it as a little adventure: getting to know your city better. The top-priority reason to buy a home air-quality station is to gain solid knowledge of what is happening indoors and outside throughout the year so you can adapt accordingly.</p>
       <p>There’s always something to worry about, but it’s best not to let the extremes—“nothing is happening” vs. “everything is definitely bad”—take root. After seven years working with citizen air-quality monitoring around the world, we can assure you that personal, quantitative monitoring shows the real situation right where you live. After a year with Altruist you will see, in clear graphs with insights from the developers, how air quality varies by time of day, season, the operation of waste-incineration plants, industrial sites, power stations, seasonal fires, dust storms… and you’ll form an objective view of what is happening right outside your window—and adapt to it.</p>
       
@@ -29,7 +29,7 @@
 
     <section>
       <h2>🤧🌿 You or your loved ones have allergies or bronchial asthma</h2>
-      <p><img alt="" class="pagetext-fullwidth-image" src="../assets/images/pages/altruist-use-cases/altruist-use-cases-2.jpg" /></p>
+      <p><img :src="image2" alt="" class="pagetext-fullwidth-image" /></p>
       <p>Some of Altruist’s developers suffer from house-dust allergy; one of us spent childhood in hospital every few weeks with asthma attacks. Life is harder for such people, so it is especially important to help them control indoor air quality.</p>
       
       <details class="details-link">
@@ -44,7 +44,7 @@
 
     <section>
       <h2>🛠️🏠 You are building a smart home</h2>
-      <p><img alt="" class="pagetext-fullwidth-image" src="../assets/images/pages/altruist-use-cases/altruist-use-cases-3.jpg" /></p>
+      <p><img :src="image3" alt="" class="pagetext-fullwidth-image" /></p>
       <p>Most of our team are engineers who automate their homes. We provide an official integration in Home Assistant Store so you can add Altruist to your local smart-home setup in two clicks, plus ready-made automation blueprints that need no coding.</p>
       
       <details class="details-link">
@@ -59,7 +59,7 @@
 
     <section>
       <h2>🕵️‍♂️📈 You like to support community initiatives independent of governments and corporations</h2>
-      <p><img alt="" class="pagetext-fullwidth-image" src="../assets/images/pages/altruist-use-cases/altruist-use-cases-4.jpg" /></p>
+      <p><img :src="image4" alt="" class="pagetext-fullwidth-image" /></p>
       <p>Become a data source and join other Altruists to build a citizen network monitoring environmental issues in your region. The developers have open-sourced the entire sensors.social backend so local communities can launch an independent sensor map.</p>
 
       <details class="details-link">
@@ -82,10 +82,49 @@
 
 
 <script setup>
+import { computed, } from "vue";
 import MetaInfo from '../components/MetaInfo.vue';
 import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
 
-const ogImage = new URL('@/assets/images/pages/altruist-use-cases/altruist-use-cases-all.jpg', import.meta.url).href
+import { useI18n } from "vue-i18n";
+
+const { locale: i18nLocale } = useI18n();
+
+const locale = computed(() => {
+  return i18nLocale.value || localStorage.getItem("locale") || "en";
+});
+
+const ogImage = computed(() => {
+  return locale.value === 'ru'
+    ? new URL('@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-all.png', import.meta.url).href
+    : new URL('@/assets/images/pages/altruist-use-cases/altruist-use-cases-all.png', import.meta.url).href;
+});
+
+const image1 = computed(() => {
+  return locale.value === 'ru'
+    ? new URL('@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-1.webp', import.meta.url).href
+    : new URL('@/assets/images/pages/altruist-use-cases/altruist-use-cases-1.webp', import.meta.url).href;
+});
+
+const image2 = computed(() => {
+  return locale.value === 'ru'
+    ? new URL('@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-2.webp', import.meta.url).href
+    : new URL('@/assets/images/pages/altruist-use-cases/altruist-use-cases-2.webp', import.meta.url).href;
+});
+
+const image3 = computed(() => {
+  return locale.value === 'ru'
+    ? new URL('@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-3.webp', import.meta.url).href
+    : new URL('@/assets/images/pages/altruist-use-cases/altruist-use-cases-3.webp', import.meta.url).href;
+});
+
+const image4 = computed(() => {
+  return locale.value === 'ru'
+    ? new URL('@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-4.webp', import.meta.url).href
+    : new URL('@/assets/images/pages/altruist-use-cases/altruist-use-cases-4.webp', import.meta.url).href;
+});
+
+
 </script>

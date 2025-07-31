@@ -1,11 +1,13 @@
 {
   "name": "sensors.social",
   "version": "2.1.5",
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
     "static-generate": "yarn build && node src/static-generate.js",
+    "autotranslate": "node src/scripts/translate.js",
     "preview": "npx kill-port 4173 && vite preview --port 4173",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
@@ -27,7 +29,9 @@
     "axios": "^1.1.2",
     "buffer": "^6.0.3",
     "chroma-js": "^2.4.2",
+    "dotenv": "^17.2.1",
     "events": "^3.3.0",
+    "fast-glob": "^3.3.3",
     "highcharts": "^11.4.3",
     "highcharts-vue": "^2.0.1",
     "js-file-download": "^0.4.12",
@@ -41,6 +45,7 @@
     "leaflet.tilelayer.colorfilter": "^1.2.5",
     "libp2p": "^0.46.11",
     "moment": "^2.29.4",
+    "openai": "^5.11.0",
     "pinia": "^2.0.23",
     "puppeteer": "^24.15.0",
     "socket.io-client": "^2.3.0",
