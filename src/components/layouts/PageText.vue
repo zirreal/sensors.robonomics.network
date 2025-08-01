@@ -122,4 +122,13 @@ import ReleaseInfo from "../../components/ReleaseInfo.vue";
         padding-left: var(--gap);
         padding-right: var(--gap);
     }
+
+    @media screen and (max-width: 690px) {
+      nav ul {
+        flex-wrap: wrap;
+        gap: var(--gap);
+        align-items: center;
+        justify-content: center;
+      }
+    }
 </style>

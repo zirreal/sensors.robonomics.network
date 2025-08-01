@@ -390,4 +390,13 @@ watch(
 .legend-item:hover:not(.active) {
   opacity: .3;
 }
+
+@media screen and (max-width: 420px) {
+  .custom-legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
 </style>

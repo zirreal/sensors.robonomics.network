@@ -93,7 +93,6 @@ input, select, .button {
   color: var(--app-inputtextcolor);
   font-family: var(--font-family--normal);
   font-size: var(--font-size);
-  height: 40px;
   font-weight: 700;
   line-height: 1;
   padding: calc(var(--app-inputpadding) * 0.8) var(--app-inputpadding);
@@ -101,6 +100,10 @@ input, select, .button {
   transition-property: border, background-color;
   transition-timing-function: ease-in-out;
   text-decoration: none;
+}
+
+input, select {
+  height: 40px;
 }
 
 input.block, select.block, .button.block {

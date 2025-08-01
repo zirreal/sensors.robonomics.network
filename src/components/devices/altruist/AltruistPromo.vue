@@ -9,7 +9,7 @@
           rel="noopener"
         >
           <img alt="" src="../../../assets/images/altruist-device/Altruist-bundle.webp" />
-          <span>{{$t('New')}}</span>
+          <span>New</span>
         </a>
 
         <div>
