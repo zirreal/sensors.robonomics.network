@@ -13,6 +13,9 @@ const LANGUAGES = ["en", "ru"];  // Add/remove languages here
 const SKIP_KEYS = []; // Add keys to skip here
 const PRESERVE_KEYS = [
   "Climate",
+  "Daily Recap", 
+  "Realtime",
+  "RADIATION"
 ];
 const TRANSLATION_FILES_DIR = "src/translate";
 const CACHE_FILE = "src/scripts/openai-cache.json";
@@ -132,7 +135,7 @@ const run = async () => {
 
 
     // keys to translate
-    const SHORT_LIST = ['Yes', 'No', 'Model', 'New', 'Housing', 'Climate', 'Type', 'Price', 'Photo', 'Limited', 'Map', 'Daily Recap', 'Realtime'];
+    const SHORT_LIST = ['Yes', 'No', 'Model', 'New', 'Housing', 'Climate', 'Type', 'Price', 'Photo', 'Limited', 'Map'];
 
     // Translate missing keys
     for (const key of keys) {

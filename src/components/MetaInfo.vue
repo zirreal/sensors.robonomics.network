@@ -7,6 +7,10 @@ import { useHead } from '@vueuse/head'
 
 import config from "@config";
 
+import { useI18n } from "vue-i18n";
+
+const { locale: i18nLocale } = useI18n();
+
 const props = defineProps({
   pageTitle: { type: String, default: '' },
   pageDescription: {
@@ -36,10 +40,14 @@ const image = computed(() =>
 
 const fullUrl = computed(() => siteUrl + route.fullPath)
 
+const locale = computed(() => {
+  return i18nLocale.value || localStorage.getItem("locale") || "en";
+});
+
 useHead({
   title: title.value,
   htmlAttrs: {
-    lang: 'en',
+    lang: locale,
     amp: true,
     dir: 'ltr'
   },

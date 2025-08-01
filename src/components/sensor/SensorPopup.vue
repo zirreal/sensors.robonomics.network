@@ -705,6 +705,7 @@ watch(
 .scales-color {
   position: relative;
   padding-left: calc(var(--gap) * 2);
+  hyphens: auto;
 }
 .scales-color:before {
   content: "";

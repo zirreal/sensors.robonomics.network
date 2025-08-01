@@ -204,7 +204,6 @@ export default {
   "Yes": "Yes",
   "No": "No",
   "Housing": "Housing",
-  "New": "New",
   "Altruist Urban & Insight": "Altruist Urban & Insight",
   "PurpleAir Zen": "PurpleAir Zen",
   "AirGradient Indoor & Outdoor": "AirGradient Indoor & Outdoor",

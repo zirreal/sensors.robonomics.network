@@ -107,6 +107,12 @@ header {
   width: 99vw;
 }
 
+h1 {
+  hyphens: auto;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 .privacy-policy ul {
   padding-left: 20px;
   list-style: disc;
