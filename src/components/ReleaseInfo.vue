@@ -9,7 +9,7 @@
       <b>{{ repoName }} {{ latestRelease }}</b>
       </a>
     </p>
-    <div><b>Secured by</b></div>
+    <div><b>{{ $t('Secured by') }}</b></div>
     <img
       alt=""
       src="../assets/images/polkadot-new-dot-logo-horizontal.svg"

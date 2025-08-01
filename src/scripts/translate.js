@@ -2,202 +2,196 @@ import fs from "fs";
 import path from "path";
 import fg from "fast-glob";
 import dotenv from "dotenv";
-import { fileURLToPath } from "url";
 import { OpenAI } from "openai";
 
 dotenv.config();
+
 const openai = new OpenAI({ apiKey: process.env.VITE_OPENAI_KEY });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// === CONFIG ===
+const LANGUAGES = ["en", "ru"];  // Add/remove languages here
+const SKIP_KEYS = []; // Add keys to skip here
+const PRESERVE_KEYS = [
+  "Climate",
+];
+const TRANSLATION_FILES_DIR = "src/translate";
+const CACHE_FILE = "src/scripts/openai-cache.json";
+const PROJECT_FILES_GLOB = ["src/**/*.vue", "src/**/*.js"];
 
-const SRC_DIR = path.resolve(__dirname, "../");
-const TRANSLATION_FILES_DIR = path.resolve(SRC_DIR, "translate");
-const LANGUAGES = ["en", "ru"];
-const CACHE_FILE = path.resolve(__dirname, ".cache.json");
-const KEY_MAP_FILE = path.resolve(__dirname, ".keymap.json");
-const SKIP_KEYS = [];
-
-
-const SHORT_SENTENCE_WHITELIST = new Set([
-  "yes",
-  "no",
-  "ok",
-  "cancel",
-  "or",
-  "if",
-  "download",
-  "noise",
-  "climate",
-  "dust & particles",
-  "pressure",
-  "rainfall",
-  "temperature",
-  "humidity",
-  "wind",
-]);
-
-const isSentenceKey = (str) =>
-  typeof str === "string" &&
-  str.length > 15 &&
-  /[.?!]/.test(str) &&
-  !SHORT_SENTENCE_WHITELIST.has(str);
-
-const generateShortKey = (text) =>
-  "auto_" +
-  text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/_{2,}/g, "_")
-    .slice(0, 40)
-    .replace(/^_+|_+$/g, "") +
-  "_" + Math.random().toString(36).substring(2, 6);
-
-const flatten = (obj, prefix = "", res = {}) => {
-  for (const [key, val] of Object.entries(obj)) {
-    const fullKey = prefix ? `${prefix}.${key}` : key;
-    if (val && typeof val === "object") flatten(val, fullKey, res);
-    else res[fullKey] = val;
+// Flatten nested object to flat keys with dots
+const flatten = (obj, prefix = "") => {
+  let res = {};
+  for (const key in obj) {
+    const val = obj[key];
+    const newKey = prefix ? `${prefix}.${key}` : key;
+    if (typeof val === "object" && val !== null) {
+      Object.assign(res, flatten(val, newKey));
+    } else {
+      res[newKey] = val;
+    }
   }
   return res;
 };
 
-const unflatten = (flat) => {
-  const result = {};
-  for (const key in flat) {
-    const parts = key.split(".");
-    let curr = result;
-    parts.forEach((part, i) => {
-      if (i === parts.length - 1) curr[part] = flat[key];
-      else curr = curr[part] = curr[part] || {};
-    });
-  }
-  return result;
+// === Load/save cache ===
+const loadCache = () => {
+  if (fs.existsSync(CACHE_FILE))
+    return JSON.parse(fs.readFileSync(CACHE_FILE, "utf-8"));
+  return {};
 };
 
-const getDeep = (obj, key) => key.split(".").reduce((o, i) => (o ? o[i] : undefined), obj);
-const setDeep = (obj, key, value) => {
-  const parts = key.split(".");
-  let curr = obj;
-  parts.forEach((part, i) => {
-    if (i === parts.length - 1) curr[part] = value;
-    else curr = curr[part] = curr[part] || {};
-  });
+const saveCache = (cache) => {
+  fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
 };
 
-const extractTranslationKeysAndReplace = async () => {
-  const entries = await fg(["**/*.vue", "**/*.js"], {
-    cwd: SRC_DIR,
-    ignore: ["node_modules/**"],
-    absolute: true,
-  });
+// === Extract translation keys ===
+const extractTranslationKeys = async () => {
+  const files = await fg(PROJECT_FILES_GLOB);
+  // Match both $t(...) and t(...)
+  const regex = /(?:\$)?t\(\s*["'`]([^"'`\s][^"'`]*?)["'`]\s*\)/g;
+  const keys = new Set();
 
-  const regex = /(?:\$t|t)\((['"])(.*?)\1\)/g;
-  const keyMap = fs.existsSync(KEY_MAP_FILE) ? JSON.parse(fs.readFileSync(KEY_MAP_FILE, "utf8")) : {};
-  const usedKeys = new Set();
-
-  for (const file of entries) {
-    let content = fs.readFileSync(file, "utf-8");
-    let updated = false;
-
-    content = content.replace(regex, (match, quote, originalKey) => {
-      if (SKIP_KEYS.includes(originalKey)) {
-        usedKeys.add(originalKey);
-        return match;
-      }
-
-      if (!isSentenceKey(originalKey)) {
-        usedKeys.add(originalKey);
-        return match;
-      }
-
-      if (!keyMap[originalKey]) {
-        keyMap[originalKey] = generateShortKey(originalKey);
-      }
-
-      usedKeys.add(keyMap[originalKey]);
-      updated = true;
-      return `$t(${quote}${keyMap[originalKey]}${quote})`;
-    });
-
-    if (updated) fs.writeFileSync(file, content, "utf-8");
+  for (const file of files) {
+    const content = fs.readFileSync(file, "utf-8");
+    let match;
+    while ((match = regex.exec(content))) {
+      keys.add(match[1]);
+    }
   }
 
-  fs.writeFileSync(KEY_MAP_FILE, JSON.stringify(keyMap, null, 2), "utf-8");
-  return { usedKeys: [...usedKeys], keyMap };
+  return [...keys];
 };
 
-const loadLocaleFile = async (lang) => {
-  const filePath = path.join(TRANSLATION_FILES_DIR, `${lang}.js`);
-  if (!fs.existsSync(filePath)) return {};
-  const module = await import(`${filePath}?update=${Date.now()}`);
-  return module.default || {};
-};
-
-const saveLocaleFile = (lang, data) => {
-  const filePath = path.join(TRANSLATION_FILES_DIR, `${lang}.js`);
-  const content = `export default ${JSON.stringify(data, null, 2)};\n`;
-  fs.writeFileSync(filePath, content, "utf-8");
-};
-
-const loadCache = () => (fs.existsSync(CACHE_FILE) ? JSON.parse(fs.readFileSync(CACHE_FILE, "utf8")) : {});
-const saveCache = (cache) => fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2), "utf-8");
-
+// === Translate using OpenAI with caching ===
 const translateWithOpenAI = async (text, targetLang, cache) => {
-  const cacheKey = `${targetLang}:${text}`;
+  const cacheKey = `${text}|${targetLang}`;
   if (cache[cacheKey]) return cache[cacheKey];
-  console.log(`🌍 Translating → [${targetLang}]: ${text}`);
+
   const response = await openai.chat.completions.create({
     model: "gpt-4",
     messages: [
-      { role: "system", content: `Translate into ${targetLang}.` },
-      { role: "user", content: text },
+      {
+        role: "system",
+        content: `You are a professional translator. Translate the following phrase to ${targetLang}. Return only the translation, no quotes.`,
+      },
+      {
+        role: "user",
+        content: text,
+      },
     ],
   });
+
   const translated = response.choices[0].message.content.trim();
   cache[cacheKey] = translated;
   saveCache(cache);
   return translated;
 };
 
-const cleanupUnusedKeys = async (lang, usedKeys) => {
-  const translations = await loadLocaleFile(lang);
-  const flat = flatten(translations);
-  const cleaned = {};
-  for (const key of Object.keys(flat)) {
-    if (usedKeys.includes(key)) cleaned[key] = flat[key];
-    else console.log(`🗑️  [${lang}] removed unused: ${key}`);
-  }
-  const nested = unflatten(cleaned);
-  saveLocaleFile(lang, nested);
+// === Load and save locale files ===
+const loadLocaleFile = async (lang) => {
+  const filePath = path.resolve(TRANSLATION_FILES_DIR, `${lang}.js`);
+  if (!fs.existsSync(filePath)) return {};
+  const fileUrl = `file://${filePath}`;
+  const module = await import(fileUrl);
+  return module.default || {};
 };
 
+const saveLocaleFile = (lang, data) => {
+  const filePath = path.join(TRANSLATION_FILES_DIR, `${lang}.js`);
+  // Save flat keys directly, no nesting (to avoid accidental nesting)
+  const content = "export default " + JSON.stringify(data, null, 2) + ";";
+  fs.writeFileSync(filePath, content);
+};
+
+// === Main function ===
 const run = async () => {
-  const { usedKeys, keyMap } = await extractTranslationKeysAndReplace();
+  const keys = await extractTranslationKeys();
   const cache = loadCache();
 
-  for (const lang of LANGUAGES) {
-    console.log(`\n🌐 Processing: ${lang}`);
-    const translations = await loadLocaleFile(lang);
+  // Detect simple nested keys (letters, numbers, _, ., -)
+  const isSimpleNestedKey = (key) => /^[\w\d_.-]+$/.test(key);
+  const looksLikeCodeIdentifier = (key) => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key);
+  const looksLikeUserText = (key) => /[ \.,!?:\-—]/.test(key);
 
-    for (const original in keyMap) {
-      const shortKey = keyMap[original];
-      if (getDeep(translations, shortKey)) continue;
-      if (lang === "en") {
-        setDeep(translations, shortKey, original);
-        console.log(`📝 [en] ${shortKey} => "${original}"`);
+  for (const lang of LANGUAGES) {
+    console.log(`🌐 Processing language: ${lang}`);
+
+    // Load and flatten existing translations
+    const translationsRaw = await loadLocaleFile(lang);
+    const translations = flatten(translationsRaw);
+
+    // Remove unused keys
+    const cleanTranslations = {};
+    for (const tKey in translations) {
+      if (keys.includes(tKey) || PRESERVE_KEYS.includes(tKey)) {
+        cleanTranslations[tKey] = translations[tKey];
       } else {
-        const translated = await translateWithOpenAI(original, lang, cache);
-        setDeep(translations, shortKey, translated);
-        console.log(`✅ [${lang}] ${shortKey} => "${translated}"`);
+        console.log(`🗑️ Removing unused key [${lang}]: ${tKey}`);
       }
     }
 
-    saveLocaleFile(lang, translations);
-    await cleanupUnusedKeys(lang, usedKeys);
+
+    // keys to translate
+    const SHORT_LIST = ['Yes', 'No', 'Model', 'New', 'Housing', 'Climate', 'Type', 'Price', 'Photo', 'Limited', 'Map', 'Daily Recap', 'Realtime'];
+
+    // Translate missing keys
+    for (const key of keys) {
+      if (SKIP_KEYS.includes(key)) {
+        console.log(`⏭️ Skipping key (in skip list): ${key}`);
+        continue;
+      }
+
+      if (!key.trim()) {
+        console.log(`⏭️ Skipping key (empty or whitespace): ${key}`);
+        continue;
+      }
+
+      if (/^[,.:;#\s]+$/.test(key)) {
+        console.log(`⏭️ Skipping key (only punctuation): ${key}`);
+        continue;
+      }
+
+      if (key.startsWith("#")) {
+        console.log(`⏭️ Skipping key (starts with #): ${key}`);
+        continue;
+      }
+
+     
+      const hasTemplateVariable = /\$\{[^}]+\}/;
+      const looksLikePath = /^\/|\/.*\//;
+      if (hasTemplateVariable.test(key) || looksLikePath.test(key)) {
+        console.log(`⏭️ Skipping key (looks like path/template variable): ${key}`);
+        continue;
+      }
+
+      if (looksLikeCodeIdentifier(key) && !looksLikeUserText(key) && !SHORT_LIST.includes(key)) {
+        console.log(`⏭️ Skipping key (looks like code identifier): ${key}`);
+        continue;
+      }
+
+      // Skip if already translated
+      if (cleanTranslations[key]) continue;
+
+      let translated;
+      if (lang === "en") {
+        translated = key; // copy verbatim for English
+      } else {
+        const baseText = isSimpleNestedKey(key)
+          ? key.split(".").pop().replace(/_/g, " ")
+          : key;
+        translated = await translateWithOpenAI(baseText, lang, cache);
+      }
+
+      cleanTranslations[key] = translated;
+
+      console.log(`${lang === "en" ? "📝" : "✅"} [${lang}] ${key} → ${translated}`);
+    }
+
+    // Save flat translations
+    saveLocaleFile(lang, cleanTranslations);
   }
 
-  console.log("\n✅ All done.");
+  console.log("🎉 Done!");
 };
 
 run();
