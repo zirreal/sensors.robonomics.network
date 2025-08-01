@@ -1,8 +1,9 @@
-const { spawn } = require('child_process');
-const puppeteer = require('puppeteer');
-const fs = require('fs');
-const path = require('path');
-const net = require('net');
+import { spawn } from 'child_process';
+import puppeteer from 'puppeteer';
+import fs from 'fs';
+import path from 'path';
+import net from 'net';
+import { fileURLToPath } from 'url';
 
 const routes = [
   'privacy-policy',
@@ -11,6 +12,9 @@ const routes = [
   'altruist-use-cases',
   'altruist-compare'
 ];
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const outputDir = path.resolve(__dirname, '../dist');
 
@@ -41,14 +45,12 @@ function waitForPort(port, host = 'localhost', timeout = 15000) {
 }
 
 async function prerender() {
-  console.log('Starting vite preview server...');
+  console.log('🚀 Starting vite preview server...');
 
-  // Spawn `vite preview` process
   const previewProcess = spawn('npx', ['vite', 'preview', '--port', '4173'], {
-    stdio: ['ignore', 'inherit', 'inherit']
+    stdio: ['ignore', 'inherit', 'inherit'],
   });
 
-  // Make sure to kill preview process on script exit
   const cleanup = () => previewProcess.kill();
   process.on('exit', cleanup);
   process.on('SIGINT', () => {
@@ -61,10 +63,10 @@ async function prerender() {
   });
 
   await waitForPort(4173);
-  console.log('Vite preview server is running at http://localhost:4173');
+  console.log('✅ Vite preview server is running at http://localhost:4173');
 
   const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
   const page = await browser.newPage();
 
@@ -72,7 +74,7 @@ async function prerender() {
     const hashRoute = route ? `/#/${route}/` : '/#/';
     const url = `http://localhost:4173${hashRoute}`;
 
-    console.log(`Prerendering ${url}`);
+    console.log(`🌐 Prerendering ${url}`);
     await page.goto(url, { waitUntil: 'networkidle2' });
 
     await page.waitForSelector('#app', { timeout: 10000 });
@@ -104,12 +106,11 @@ async function prerender() {
 
   await browser.close();
 
-  // Kill preview server process
   previewProcess.kill();
-  console.log('Prerendering completed and preview server stopped.');
+  console.log('🎉 Prerendering completed and preview server stopped.');
 }
 
-prerender().catch(err => {
-  console.error(err);
+prerender().catch((err) => {
+  console.error('❌ Prerendering failed:', err);
   process.exit(1);
 });

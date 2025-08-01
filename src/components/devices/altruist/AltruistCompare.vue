@@ -1,19 +1,19 @@
 <template>
   <section>
-    <h2>Air Sensor Comparison Table</h2>
+    <h2>{{ $t('Air Sensor Comparison Table') }}</h2>
 
     <img alt="" src="@/assets/images/pages/altruist-compare/compare-stand.gif" v-if="gif" class="gif" />
 
     <table>
       <thead>
         <tr>
-          <th>Model</th>
+          <th>{{$t('Model')}}</th>
           <th v-for="(device, i) in deviceHeaders" :key="'name-' + i">
             {{ device.name }}
           </th>
         </tr>
         <tr>
-          <th>Photo</th>
+          <th>{{ $t('Photo') }}</th>
           <th v-for="(device, i) in deviceHeaders" :key="'img-' + i">
             <img :src="device.img" :alt="device.name + ' device'" class="device-photo" />
           </th>
@@ -56,16 +56,21 @@ import airGradientImg from '@/assets/images/compare-table/airGradient-device.web
 import netatmoImg from '@/assets/images/compare-table/netatmo-device.webp';
 import airVisualImg from '@/assets/images/compare-table/airvisual-device.webp';
 
+import { useI18n } from 'vue-i18n';
+const { t: $t } = useI18n();
+
 const props = defineProps({
   gif: { type: Boolean, default: false }
 });
 
+
+
 const deviceHeaders = [
-  { name: "Altruist Urban & Insight", img: altruistImg },
-  { name: "PurpleAir Zen", img: purpleAirImg },
-  { name: "AirGradient Indoor & Outdoor", img: airGradientImg },
-  { name: "Netatmo Weather Station", img: netatmoImg },
-  { name: "AirVisual Pro & Outdoor", img: airVisualImg },
+  { name: $t("Altruist Urban & Insight"), img: altruistImg },
+  { name: $t("PurpleAir Zen"), img: purpleAirImg },
+  { name: $t("AirGradient Indoor & Outdoor"), img: airGradientImg },
+  { name: $t("Netatmo Weather Station"), img: netatmoImg },
+  { name: $t("AirVisual Pro & Outdoor"), img: airVisualImg },
 ];
 
 const priceLinks = [
@@ -78,7 +83,7 @@ const priceLinks = [
 
 const tableData = [
   {
-    feature: 'Price',
+    feature: $t('Price'),
     altruist: { value: '€189 ($221)', mark: ' ' },
     purpleair: { value: '€254 ($299)', mark: ' ' },
     airgradient: { value: '€328 ($385)', mark: ' ' },
@@ -86,140 +91,140 @@ const tableData = [
     airvisual: { value: '€638 ($748)', mark: ' ' }
   },
   {
-    feature: 'Type',
-    altruist: { value: 'Dual-module, outdoor and indoor', mark: ' ' },
-    purpleair: { value: 'Can be outdoor or indoor', mark: ' ' },
-    airgradient: { value: 'Two separate modules', mark: ' ' },
-    netatmo: { value: 'Dual-module, outdoor and indoor', mark: ' ' },
-    airvisual: { value: 'Two separate modules', mark: ' ' }
+    feature: $t('Type'),
+    altruist: { value: $t('Dual-module, outdoor and indoor'), mark: ' ' },
+    purpleair: { value: $t('Can be outdoor or indoor'), mark: ' ' },
+    airgradient: { value: $t('Two separate modules'), mark: ' ' },
+    netatmo: { value: $t('Dual-module, outdoor and indoor'), mark: ' ' },
+    airvisual: { value: $t('Two separate modules'), mark: ' ' }
   },
   {
-    feature: 'Particle Sensor',
-    altruist: { value: 'Yes', mark: 'good' },
-    purpleair: { value: 'Yes', mark: 'good' },
-    airgradient: { value: 'Yes', mark: 'good' },
-    netatmo: { value: 'No', mark: 'bad' },
-    airvisual: { value: 'Yes', mark: 'good' }
+    feature: $t('Particle Sensor'),
+    altruist: { value: $t('Yes'), mark: 'good' },
+    purpleair: { value: $t('Yes'), mark: 'good' },
+    airgradient: { value: $t('Yes'), mark: 'good' },
+    netatmo: { value: $t('No'), mark: 'bad' },
+    airvisual: { value: $t('Yes'), mark: 'good' }
   },
   {
-    feature: 'Urban Noise Sensor',
-    altruist: { value: 'Yes', mark: 'good' },
-    purpleair: { value: 'No', mark: 'bad' },
-    airgradient: { value: 'No', mark: 'bad' },
-    netatmo: { value: 'Only indoor', mark: 'neutral' },
-    airvisual: { value: 'No', mark: 'bad' }
+    feature: $t('Urban Noise Sensor'),
+    altruist: { value: $t('Yes'), mark: 'good' },
+    purpleair: { value: $t('No'), mark: 'bad' },
+    airgradient: { value: $t('No'), mark: 'bad' },
+    netatmo: { value: $t('Only indoor'), mark: 'neutral' },
+    airvisual: { value: $t('No'), mark: 'bad' }
   },
   {
-    feature: 'Indoor CO2',
-    altruist: { value: 'Yes', mark: 'good' },
-    purpleair: { value: 'No', mark: 'bad' },
-    airgradient: { value: 'Yes', mark: 'good' },
-    netatmo: { value: 'Yes', mark: 'good' },
-    airvisual: { value: 'Yes', mark: 'good' }
+    feature: $t('Indoor CO2'),
+    altruist: { value: $t('Yes'), mark: 'good' },
+    purpleair: { value: $t('No'), mark: 'bad' },
+    airgradient: { value: $t('Yes'), mark: 'good' },
+    netatmo: { value: $t('Yes'), mark: 'good' },
+    airvisual: { value: $t('Yes'), mark: 'good' }
   },
   {
-    feature: 'User Interface on Device',
-    altruist: { value: 'LED indication on Urban + E-ink screen on Insight', mark: 'neutral' },
-    purpleair: { value: 'Only LED strip', mark: 'neutral' },
-    airgradient: { value: 'LED indication and small screen on Indoor', mark: 'neutral' },
-    netatmo: { value: 'Only LED strip', mark: 'neutral' },
-    airvisual: { value: 'LED indication on Outdoor and LCD screen on Pro', mark: 'neutral' }
+    feature: $t('User Interface on Device'),
+    altruist: { value: $t('LED indication on Urban + E-ink screen on Insight'), mark: 'neutral' },
+    purpleair: { value: $t('Only LED strip'), mark: 'neutral' },
+    airgradient: { value: $t('LED indication and small screen on Indoor'), mark: 'neutral' },
+    netatmo: { value: $t('Only LED strip'), mark: 'neutral' },
+    airvisual: { value: $t('LED indication on Outdoor and LCD screen on Pro'), mark: 'neutral' }
   },
   {
-    feature: 'microSD Support',
-    altruist: { value: 'Yes', mark: 'good' },
-    purpleair: { value: 'Yes', mark: 'good' },
-    airgradient: { value: 'No', mark: 'bad' },
-    netatmo: { value: 'No', mark: 'bad' },
-    airvisual: { value: 'No', mark: 'bad' }
+    feature: $t('microSD Support'),
+    altruist: { value: $t('Yes'), mark: 'good' },
+    purpleair: { value: $t('Yes'), mark: 'good' },
+    airgradient: { value: $t('No'), mark: 'bad' },
+    netatmo: { value: $t('No'), mark: 'bad' },
+    airvisual: { value: $t('No'), mark: 'bad' }
   },
   {
-    feature: 'Power Connector',
-    altruist: { value: 'USB Type-C', mark: 'good' },
-    purpleair: { value: 'Micro USB', mark: 'bad' },
-    airgradient: { value: 'USB Type-C', mark: 'good' },
-    netatmo: { value: 'Micro USB', mark: 'bad' },
-    airvisual: { value: 'Micro USB on Pro & Ethernet PoE on Outdoor', mark: 'neutral' }
+    feature: $t('Power Connector'),
+    altruist: { value: $t('USB Type-C'), mark: 'good' },
+    purpleair: { value: $t('Micro USB'), mark: 'bad' },
+    airgradient: { value: $t('USB Type-C'), mark: 'good' },
+    netatmo: { value: $t('Micro USB'), mark: 'bad' },
+    airvisual: { value: $t('Micro USB on Pro & Ethernet PoE on Outdoor'), mark: 'neutral' }
   },
   {
-    feature: 'Housing',
-    altruist: { value: '3D printed, different colors and icons', mark: 'good' },
-    purpleair: { value: 'Only one color available', mark: 'bad' },
-    airgradient: { value: 'Only one color available', mark: 'bad' },
-    netatmo: { value: 'Only one color available', mark: 'bad' },
-    airvisual: { value: 'Only one color available', mark: 'bad' }
+    feature: $t('Housing'),
+    altruist: { value: $t('3D printed, different colors and icons'), mark: 'good' },
+    purpleair: { value: $t('Only one color available'), mark: 'bad' },
+    airgradient: { value: $t('Only one color available'), mark: 'bad' },
+    netatmo: { value: $t('Only one color available'), mark: 'bad' },
+    airvisual: { value: $t('Only one color available'), mark: 'bad' }
   },
   {
-    feature: 'Water Protection',
-    altruist: { value: 'Fully sealed housing, air supply tube', mark: 'good' },
-    purpleair: { value: 'Unprotected open bottom of the sensor', mark: 'bad' },
-    airgradient: { value: 'Fully sealed housing', mark: 'good' },
-    netatmo: { value: 'Fully sealed housing', mark: 'good' },
-    airvisual: { value: 'Fully sealed housing', mark: 'good' }
+    feature: $t('Water Protection'),
+    altruist: { value: $t('Fully sealed housing, air supply tube'), mark: 'good' },
+    purpleair: { value: $t('Unprotected open bottom of the sensor'), mark: 'bad' },
+    airgradient: { value: $t('Fully sealed housing'), mark: 'good' },
+    netatmo: { value: $t('Fully sealed housing'), mark: 'good' },
+    airvisual: { value: $t('Fully sealed housing'), mark: 'good' }
   },
   {
-    feature: 'UV Protection',
-    altruist: { value: 'Protective shield made of ASA plastic', mark: 'good' },
-    purpleair: { value: 'Not specified', mark: 'bad' },
-    airgradient: { value: 'Housing is made of ASA plastic', mark: 'good' },
-    netatmo: { value: 'Not specified', mark: 'bad' },
-    airvisual: { value: 'Yes', mark: 'good' }
+    feature: $t('UV Protection'),
+    altruist: { value: $t('Protective shield made of ASA plastic'), mark: 'good' },
+    purpleair: { value: $t('Not specified'), mark: 'bad' },
+    airgradient: { value: $t('Housing is made of ASA plastic'), mark: 'good' },
+    netatmo: { value: $t('Not specified'), mark: 'bad' },
+    airvisual: { value: $t('Yes'), mark: 'good' }
   },
   {
-    feature: 'Mandatory Cloud Connection',
-    altruist: { value: 'No', mark: 'good' },
-    purpleair: { value: 'Yes', mark: 'bad' },
-    airgradient: { value: 'No', mark: 'good' },
-    netatmo: { value: 'Yes', mark: 'bad' },
-    airvisual: { value: 'Yes', mark: 'bad' }
+    feature: $t('Mandatory Cloud Connection'),
+    altruist: { value: $t('No'), mark: 'good' },
+    purpleair: { value: $t('Yes'), mark: 'bad' },
+    airgradient: { value: $t('No'), mark: 'good' },
+    netatmo: { value: $t('Yes'), mark: 'bad' },
+    airvisual: { value: $t('Yes'), mark: 'bad' }
   },
   {
-    feature: 'Local Device Management via IP',
-    altruist: { value: 'Full control over settings', mark: 'good' },
-    purpleair: { value: 'Most functions are not available, settings only via corporate cloud', mark: 'bad' },
-    airgradient: { value: 'No, but available via Home Assistant', mark: 'neutral' },
-    netatmo: { value: 'No, only in the app', mark: 'bad' },
-    airvisual: { value: 'No, only in the app', mark: 'bad' }
+    feature: $t('Local Device Management via IP'),
+    altruist: { value: $t('Full control over settings'), mark: 'good' },
+    purpleair: { value: $t('Most functions are not available, settings only via corporate cloud'), mark: 'bad' },
+    airgradient: { value: $t('No, but available via Home Assistant'), mark: 'neutral' },
+    netatmo: { value: $t('No, only in the app'), mark: 'bad' },
+    airvisual: { value: $t('No, only in the app'), mark: 'bad' }
   },
   {
-    feature: 'Online Air Quality Map by Community',
-    altruist: { value: 'Yes, optional', mark: 'good' },
-    purpleair: { value: 'Yes, main entry point to view data', mark: 'good' },
-    airgradient: { value: 'Yes, optional', mark: 'good' },
-    netatmo: { value: 'Yes, optional', mark: 'good' },
-    airvisual: { value: 'Yes, optional ', mark: 'good' }
+    feature: $t('Online Air Quality Map by Community'),
+    altruist: { value: $t('Yes, optional'), mark: 'good' },
+    purpleair: { value: $t( 'Yes, main entry point to view data'), mark: 'good' },
+    airgradient: { value: $t('Yes, optional'), mark: 'good' },
+    netatmo: { value: $t('Yes, optional'), mark: 'good' },
+    airvisual: { value: $t( 'Yes, optional'), mark: 'good' }
   },
   {
-    feature: 'Home Assistant Integration',
-    altruist: { value: 'Yes, only the HA addon is needed', mark: 'good' },
-    purpleair: { value: 'Yes, but limited API and cloud connection are required', mark: 'bad' },
-    airgradient: { value: 'Yes, only the HA addon is needed', mark: 'good' },
-    netatmo: { value: 'Yes, only the HA addon is needed', mark: 'good' },
-    airvisual: { value: 'Yes, but only for Pro', mark: 'bad' }
+    feature: $t('Home Assistant Integration'),
+    altruist: { value: $t('Yes, only the HA addon is needed'), mark: 'good' },
+    purpleair: { value: $t('Yes, but limited API and cloud connection are required'), mark: 'bad' },
+    airgradient: { value: $t( 'Yes, only the HA addon is needed'), mark: 'good' },
+    netatmo: { value: $t('Yes, only the HA addon is needed'), mark: 'good' },
+    airvisual: { value: $t('Yes, but only for Pro'), mark: 'bad' }
   },
   {
-    feature: 'Data Control and Ownership',
-    altruist: { value: 'The user owns the data and controls its distribution', mark: 'good' },
-    purpleair: { value: 'The company owns the data, but users can view and export it with some limitations', mark: 'bad' },
-    airgradient: { value: 'The user owns the data and controls its distribution', mark: 'good' },
-    netatmo: { value: "Officially owned by users, but they must consent to the company's use of their data", mark: 'bad' },
-    airvisual: { value: "Officially owned by users, but they must consent to the company's use of their data", mark: 'bad' }
+    feature: $t('Data Control and Ownership'),
+    altruist: { value: $t('The user owns the data and controls its distribution'), mark: 'good' },
+    purpleair: { value: $t('The company owns the data, but users can view and export it with some limitations'), mark: 'bad' },
+    airgradient: { value: $t('The user owns the data and controls its distribution'), mark: 'good' },
+    netatmo: { value: $t("Officially owned by users, but they must consent to the company's use of their data"), mark: 'bad' },
+    airvisual: { value: $t("Officially owned by users, but they must consent to the company's use of their data"), mark: 'bad' }
   },
   {
-    feature: 'Open Source and Hardware',
-    altruist: { value: 'Yes', mark: 'good' },
-    purpleair: { value: 'No', mark: 'bad' },
-    airgradient: { value: 'Yes', mark: 'good' },
-    netatmo: { value: 'No', mark: 'bad' },
-    airvisual: { value: 'No', mark: 'bad' }
+    feature: $t('Open Source and Hardware'),
+    altruist: { value: $t('Yes'), mark: 'good' },
+    purpleair: { value: $t('No'), mark: 'bad' },
+    airgradient: { value: $t( 'Yes'), mark: 'good' },
+    netatmo: { value: $t('No'), mark: 'bad' },
+    airvisual: { value: $t('No'), mark: 'bad' }
   },
   {
-    feature: 'Custom Firmware and DIY-mods',
-    altruist: { value: 'Yes', mark: 'good' },
-    purpleair: { value: 'No', mark: 'bad' },
-    airgradient: { value: 'Yes', mark: 'good' },
-    netatmo: { value: 'No', mark: 'bad' },
-    airvisual: { value: 'No', mark: 'bad' }
+    feature: $t('Custom Firmware and DIY-mods'),
+    altruist: { value: $t('Yes'), mark: 'good' },
+    purpleair: { value: $t('No'), mark: 'bad' },
+    airgradient: { value: $t('Yes'), mark: 'good' },
+    netatmo: { value: $t('No'), mark: 'bad' },
+    airvisual: { value: $t('No'), mark: 'bad' }
   }
 ];
 

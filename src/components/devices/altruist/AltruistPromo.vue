@@ -9,13 +9,13 @@
           rel="noopener"
         >
           <img alt="" src="../../../assets/images/altruist-device/Altruist-bundle.webp" />
-          <span>New</span>
+          <span>{{$t('New')}}</span>
         </a>
 
         <div>
-          <h3>Where to get Altruist Indoor & Outdoor Sensor</h3>
-          <p>Air monitor for indoors & outdoors: urban PM & noise, bedroom CO₂, indoor vs outdoor temp & humidity, barometric pressure, E-Ink display, Wi-Fi, USB-C, no forced cloud, Home Assistant ready. DIY & modding friendly! Super Early Bird – €149 | Amazon – €295 (Fall 2025).&nbsp;</p>
-          <p><a :href="link" target="_blank" class="button">Join Indiegogo Campaign &rarr;</a></p>
+          <h3>{{$t('Where to get Altruist Indoor & Outdoor Sensor')}}</h3>
+          <p>{{$t('Air monitor for indoors & outdoors: urban PM & noise, bedroom CO₂, indoor vs outdoor temp & humidity, barometric pressure, E-Ink display, Wi-Fi, USB-C, no forced cloud, Home Assistant ready. DIY & modding friendly! Super Early Bird – €149 | Amazon – €295 (Fall 2025).')}}&nbsp;</p>
+          <p><a :href="link" target="_blank" class="button">{{$t('Join Indiegogo Campaign')}}&rarr;</a></p>
         </div>
       </div>
     </div>

@@ -7,8 +7,8 @@
         <AltruistPromo utmMedium="footer" class="footer" />
         <nav class="footer-section">
             <ul class="footer-section-in">
-                <li><router-link to="/altruist-use-cases">Altruist use cases</router-link></li>
-                <li><router-link to="/altruist-timeline">Altruist timeline</router-link></li>
+                <li><router-link to="/altruist-use-cases">{{ $t('Altruist use cases') }}</router-link></li>
+                <li><router-link to="/altruist-timeline">{{$t('Altruist timeline')}}</router-link></li>
                 <li><router-link to="/air-measurements">{{ $t("links.measurement") }}</router-link></li>
                 <li><router-link to="/privacy-policy">{{ $t("links.privacy") }}</router-link></li>
             </ul>

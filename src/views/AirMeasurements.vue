@@ -1,7 +1,7 @@
 <template>
   <MetaInfo
-    pageTitle= "Air quality measurements information"
-    pageDescription="Sensors.social Air Quality Map — an interactive tool for viewing, analyzing, and comparing real-time air quality data from sensors. Get up-to-date information on air conditions in your area."
+    :pageTitle= "$t('Air quality measurements information')"
+    :pageDescription="$t('Sensors.social Air Quality Map — an interactive tool for viewing, analyzing, and comparing real-time air quality data from sensors. Get up-to-date information on air conditions in your area.')"
     :pageImage = "ogImage"
   />
   <PageTextLayout>

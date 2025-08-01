@@ -2,7 +2,7 @@
   <header :class="`route-${route.name || route.path.replaceAll('/', '-')}`">
     <div class="header-banner flexline align-center">
       <a href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight/coming_soon?utm_source=sensors.social&utm_medium=header-banner" target="_blank">
-        <span><b>Limited</b> Altruist Bundles on</span>
+        <span><b>{{$t('Limited')}}</b> {{ $t('Altruist Bundles on') }}</span>
         <img class="header-banner-svg" alt="Indiegogo" src="../../assets/images/indiegogo.svg"/>
       </a>
     </div>
@@ -59,12 +59,12 @@
             >{{ $t("header.link2") }}</a>
             {{ $t("header.text3") }}
           </p>
-          <p>Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a></p>
+          <p>{{$t('Map data')}} © <a href="https://www.openstreetmap.org/copyright" target="_blank">{{ $t('OpenStreetMap contributors') }}</a></p>
 
           <section class="navlinks">
-            <router-link to="/altruist-use-cases/">Altruist use cases</router-link>
-            <router-link to="/altruist-timeline/">Altruist timeline</router-link>
-            <router-link to="/altruist-compare/">Altruist comparison table</router-link>
+            <router-link to="/altruist-use-cases/">{{ $t('Altruist use cases') }}</router-link>
+            <router-link to="/altruist-timeline/">{{ $t('Altruist timeline') }}</router-link>
+            <router-link to="/altruist-compare/">{{ $t('Altruist comparison table') }}</router-link>
             <router-link to="/air-measurements/">{{ $t("links.measurement") }}</router-link>
             <router-link to="/privacy-policy/">{{ $t("links.privacy") }}</router-link>
           </section>

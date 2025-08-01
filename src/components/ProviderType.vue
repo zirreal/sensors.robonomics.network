@@ -5,7 +5,7 @@
       :key="key"
       :value="key"
     >
-      {{ label }}
+      {{ $t(label) }}
     </option>
   </select>
 </template>

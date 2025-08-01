@@ -1,7 +1,7 @@
 <template>
   <MetaInfo
-    pageTitle= "Compare table for Altruist with other air quality sensors"
-    pageDescription="Explore the advantages and special features of each sensor and choose the one that best suits your needs!"
+    :pageTitle= "$t('Compare table for Altruist with other air quality sensors')"
+    :pageDescription="$t('Explore the advantages and special features of each sensor and choose the one that best suits your needs!')"
     :pageImage="ogImage"
   />
   <PageTextLayout>
