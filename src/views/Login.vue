@@ -56,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAccountStore } from "@/stores/account";
 import config from "@config";
@@ -86,6 +86,47 @@ const redirectCountdown = ref(15);
 const canKeepSigned = computed(() =>
   !!(window.crypto?.subtle || window.crypto?.webkitSubtle) && !!window.indexedDB
 );
+
+// START DEVICES
+import axios from "axios";
+import { usePolkadotApi } from "robonomics-interface-vue";
+import { useDevices } from "robonomics-interface-vue/devices";
+
+const { isConnected, instance } = usePolkadotApi();
+const owner = ref("4FiueWs4Q223iyvcYmEUQAJexNXZRQnvkML1sqWxZ8QXuCW1");
+const devices = useDevices(owner, { immediate: false });
+
+// подключаемся к чейну
+instance.connect().catch((e) => {
+  console.log(e);
+});
+
+// ожидаем подключения к чейну, чтобы сделать запрос на получение девайсов
+watch(
+  isConnected,
+  (isConnected) => {
+    if (isConnected) {
+      devices.load();
+    }
+  },
+  { immediate: true }
+);
+
+// выводим список девайсов
+watch(devices.data, (data) => {
+  console.log("DEVICES", data);
+});
+
+// получаем список сенсоров по адресу владельца c roseman
+(async () => {
+  try {
+    const result = await axios.get(`https://roseman.airalab.org/api/sensor/sensors/${owner.value}`);
+    console.log("SENSORS", result.data);
+  } catch (error) {
+    console.log(error);
+  }
+})();
+// END DEVICES
 
 const account = computed(() => {
   const phrase = passPhrase.value.trim();
