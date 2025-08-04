@@ -8,7 +8,7 @@ dotenv.config();
 
 const openai = new OpenAI({ apiKey: process.env.VITE_OPENAI_KEY });
 
-// === CONFIG ===
+// CONFIG 
 const LANGUAGES = ["en", "ru"];  // Add/remove languages here
 const SKIP_KEYS = []; // Add keys to skip here
 const PRESERVE_KEYS = [
@@ -36,7 +36,7 @@ const flatten = (obj, prefix = "") => {
   return res;
 };
 
-// === Load/save cache ===
+// Load/save cache 
 const loadCache = () => {
   if (fs.existsSync(CACHE_FILE))
     return JSON.parse(fs.readFileSync(CACHE_FILE, "utf-8"));
@@ -47,7 +47,7 @@ const saveCache = (cache) => {
   fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
 };
 
-// === Extract translation keys ===
+// Extract translation keys 
 const extractTranslationKeys = async () => {
   const files = await fg(PROJECT_FILES_GLOB);
   // Match both $t(...) and t(...)
@@ -65,7 +65,7 @@ const extractTranslationKeys = async () => {
   return [...keys];
 };
 
-// === Translate using OpenAI with caching ===
+// Translate using OpenAI with caching 
 const translateWithOpenAI = async (text, targetLang, cache) => {
   const cacheKey = `${text}|${targetLang}`;
   if (cache[cacheKey]) return cache[cacheKey];
@@ -90,7 +90,7 @@ const translateWithOpenAI = async (text, targetLang, cache) => {
   return translated;
 };
 
-// === Load and save locale files ===
+// Load and save locale files 
 const loadLocaleFile = async (lang) => {
   const filePath = path.resolve(TRANSLATION_FILES_DIR, `${lang}.js`);
   if (!fs.existsSync(filePath)) return {};
@@ -101,17 +101,15 @@ const loadLocaleFile = async (lang) => {
 
 const saveLocaleFile = (lang, data) => {
   const filePath = path.join(TRANSLATION_FILES_DIR, `${lang}.js`);
-  // Save flat keys directly, no nesting (to avoid accidental nesting)
   const content = "export default " + JSON.stringify(data, null, 2) + ";";
   fs.writeFileSync(filePath, content);
 };
 
-// === Main function ===
+// Main function 
 const run = async () => {
   const keys = await extractTranslationKeys();
   const cache = loadCache();
 
-  // Detect simple nested keys (letters, numbers, _, ., -)
   const isSimpleNestedKey = (key) => /^[\w\d_.-]+$/.test(key);
   const looksLikeCodeIdentifier = (key) => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key);
   const looksLikeUserText = (key) => /[ \.,!?:\-—]/.test(key);
