@@ -198,8 +198,46 @@ To add support for **Spanish (es)**, update the `name`, `nameshort`, and `zones`
        }  
      ]  
   ```
+  
+### 🌍 Auto-Translation with OpenAI
 
-  ---
+You can automatically translate interface strings using OpenAI's API. To enable this:
+
+1. **Set up your API key**
+
+   Add your OpenAI key to the `.env` file as:
+
+   ```env
+   VITE_OPENAI_KEY=your-openai-api-key
+   ```
+
+2. **Mark translatable strings**
+
+   Use the `$t()` function in your code to mark strings for translation:
+
+   ```js
+   $t('Geolocation');
+   ```
+
+3. **Configure translation behavior**
+
+   Modify the config in `src/scripts/translate.js`:
+
+   * **Languages**: Add/remove target languages in the `LANGUAGES` array.
+   * **Preserve specific keys**: Add keys to `PRESERVE_KEYS` to keep them even if not found in `$t()` calls.
+   * **Allow identifiers to be translated**: If certain keys look like code (e.g., `Model`, `Yes`) but should still be translated, add them to the `SHORT_LIST`.
+
+4. **Run the translation script**
+
+   Use the following command to generate or update translation files:
+
+   ```bash
+   yarn autotranslate
+   ```
+
+   Once complete, your translations will be available in the appropriate language files in `src/translate`.
+
+---
 
 
 ## How to Fork the Repository with Custom Configuration Files
