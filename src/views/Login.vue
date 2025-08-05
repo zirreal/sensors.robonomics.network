@@ -170,7 +170,7 @@ function resetStatus() {
 function redirect() {
   sensorLink.value = {
     name: "main",
-    params: {
+    query: {
       provider: getTypeProvider(),
       type: config.MAP.measure,
       zoom: config.MAP.zoom,

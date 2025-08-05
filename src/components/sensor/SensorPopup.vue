@@ -196,7 +196,7 @@ const state = reactive({
   isShowPath: false,
   start: moment().format("YYYY-MM-DD"),
   maxDate: moment().format("YYYY-MM-DD"),
-  provider: getTypeProvider(route.params),
+  provider: getTypeProvider(route.query),
   rttime: null,
   rtdata: [],
   sharedDefault: false,
@@ -214,7 +214,7 @@ const units = ref([]);
 
 // computed
 const sensor_id = computed(() => {
-  return props.point?.sensor_id || route.params.sensor || null;
+  return props.point?.sensor_id || route.query.sensor || null;
 });
 
 const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
@@ -223,7 +223,7 @@ const geo = computed(() => {
   if (props.point?.geo && props.point.geo.lat && props.point.geo.lng) {
     return props.point.geo;
   }
-  const { lat, lng } = route.params;
+  const { lat, lng } = route.query;
   return { lat: Number(lat) || 0, lng: Number(lng) || 0 };
 });
 
@@ -283,10 +283,10 @@ const linkSensor = computed(() => {
   if (geo.value?.lat && geo.value?.lng && sensor_id.value) {
     const resolved = router.resolve({
       name: "main",
-      params: {
+      query: {
         provider: state.provider,
-        type: route.params.type || config.MAP.measure,
-        zoom: route.params.zoom || config.MAP.zoom,
+        type: route.query.type || config.MAP.measure,
+        zoom: route.query.zoom || config.MAP.zoom,
         lat: geo.value.lat,
         lng: geo.value.lng,
         sensor: sensor_id.value,
@@ -456,10 +456,10 @@ watch(
     if (newPoint && newPoint.sensor_id && newPoint.geo) {
       router.replace({
         name: route.name, // Assumes the route name remains the same
-        params: {
+        query: {
           provider: state.provider,
           type: props.type.toLowerCase(),
-          zoom: route.params.zoom || config.MAP.zoom, // trying to keep zoom
+          zoom: route.query.zoom || config.MAP.zoom, // trying to keep zoom
           lat: newPoint.geo.lat,
           lng: newPoint.geo.lng,
           sensor: newPoint.sensor_id,

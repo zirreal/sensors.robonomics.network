@@ -23,14 +23,14 @@ const route = useRoute();
 const options = computed(() => Object.entries(config.VALID_DATA_PROVIDERS));
 
 // Current provider (key)
-const dataMode = ref(getTypeProvider(route.params));
+const dataMode = ref(getTypeProvider(route.query));
 
 const changeDataMode = async () => {
   setTypeProvider(dataMode.value);
   await router.push({
     name: "main",
-    params: { ...route.params, provider: dataMode.value },
+    query: { ...route.query, provider: dataMode.value },
   });
   window.location.reload();
-}
+};
 </script>

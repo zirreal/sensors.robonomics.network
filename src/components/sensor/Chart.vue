@@ -248,7 +248,7 @@ function onLegendClick(legendKey) {
   } else {
     targetType = legendKey;
   }
-  router.replace({ params: { ...route.params, type: targetType } });
+  router.replace({ query: { ...route.query, type: targetType } });
 }
 
 watch(
@@ -339,7 +339,7 @@ watch(
         let fallbackType = GROUPS[fallbackKey]
           ? GROUPS[fallbackKey].members.find(m => presentIdsSet.value.has(m))
           : fallbackKey;
-        router.replace({ params: { ...route.params, type: fallbackType } });
+        router.replace({ query: { ...route.query, type: fallbackType } });
       }
     }
 
@@ -356,13 +356,12 @@ watch(
 );
 
 watch(
-  () => route.params.type,
-  newType => {
+  () => route.query.type,
+  (newType) => {
     if (!activeLegendKey.value) return;
     chartSeries.value = makeSeriesArray(props.log, activeLegendKey.value);
   }
 );
-
 </script>
 
 <style>

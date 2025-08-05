@@ -101,17 +101,17 @@ function getAccountSensors(acc) {
 
 // Формирует ссылку на сенсор
 function getSensorLink(sensor) {
-    return {
-        name: "main",
-        params: {
-            provider: getTypeProvider(),
-            type: config.MAP.measure,
-            zoom: config.MAP.zoom,
-            lat: config.MAP.position.lat, // если нужна попытка получить координаты — доработай тут
-            lng: config.MAP.position.lng,
-            sensor: sensor,
-        },
-    };
+  return {
+    name: "main",
+    query: {
+      provider: getTypeProvider(),
+      type: config.MAP.measure,
+      zoom: config.MAP.zoom,
+      lat: config.MAP.position.lat, // если нужна попытка получить координаты — доработай тут
+      lng: config.MAP.position.lng,
+      sensor: sensor,
+    },
+  };
 }
 
 function reloadOnClick(e) {
