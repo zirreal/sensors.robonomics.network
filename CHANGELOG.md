@@ -15,6 +15,7 @@ vx.x.x
 - Refactor: Pinia store structure refactoring
 - Refactor: no geo popup (slight redesign)
 - Refactor: default measure type in config moved to "map section" added usage of the default measure from config
+- Refactor: added using of Roseman api, instead of BroadCasting for getting sensors list
 
 v2.1.6
 - Feat: combined dust and noise values in the chart
