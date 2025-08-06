@@ -48,7 +48,7 @@ const VALID_TYPES = Object.keys(unitsettings).map(k => k.toLowerCase());
 const GROUPS = {
   dust:    { members: ['pm10', 'pm25'], labelKey: 'Dust & Particles' },
   noise:   { members: ['noise', 'noisemax', 'noiseavg'], labelKey: 'Noise' },
-  climate: { members: ['temperature', 'humidity'], labelKey: 'Climate' }
+  climate: { members: ['temperature', 'humidity', 'dew point'], labelKey: 'Climate' }
 };
 const idToGroup = Object.fromEntries(Object.entries(GROUPS).flatMap(([g, { members }]) => members.map(id => [id, g])));
 
