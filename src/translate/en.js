@@ -221,5 +221,11 @@ export default {
   "OpenStreetMap contributors": "OpenStreetMap contributors",
   "Photo": "Photo",
   "Secured by": "Secured by",
-  "Latest dew point": "Latest dew point"
+  "Latest dew point": "Latest dew point",
+  "Daily Recap": "Daily Recap",
+  "Realtime": "Realtime",
+  "Dust & Particles": "Dust & Particles",
+  "Noise": "Noise",
+  "Climate": "Climate",
+  "Pressure": "Pressure"
 };
