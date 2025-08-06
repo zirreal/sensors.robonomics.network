@@ -485,7 +485,7 @@ watch(() => log.value, (i) => {
           const dew = calculateDewPoint(entry.data.temperature, entry.data.humidity);
           entry.data = {
             ...entry.data,
-            ['dew point']: dew,
+            ['dewpoint']: dew,
           };
         }
       });

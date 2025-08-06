@@ -84,6 +84,7 @@ export default {
   "Dust & Particles": "Пыль и частицы",
   "Noise": "Шум",
   "Climate": "Климат",
+  "Pressure": "Давление",
   "Who Altruist Was Created For": "Для кого был создан Альтруист",
   "Monitoring the environment involves plenty of pitfalls, making the job far harder than it looks at first glance. Our team—the creators of Altruist and the open-source project sensors.social—has spent seven years studying and working in this field, and we hope our experience will pleasantly surprise you and give you a practical tool for adapting to the conditions in which you and your loved ones live. Below we explain which main user groups Altruist is designed for…": "Мониторинг окружающей среды подразумевает множество подводных камней, делая работу намного сложнее, чем она кажется на первый взгляд. Наша команда - создатели Altruist и открытого проекта sensors.social - провела семь лет, изучая и работая в этой области, и мы надеемся, что наш опыт приятно вас удивит и даст вам практический инструмент для адаптации к условиям, в которых живут вы и ваши близкие. Ниже мы объясняем, для каких основных групп пользователей предназначен Altruist…",
   "YYYY-MM-DD": "ГГГГ-ММ-ДД",

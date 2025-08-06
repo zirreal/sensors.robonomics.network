@@ -15,7 +15,8 @@ const PRESERVE_KEYS = [
   "Climate",
   "Daily Recap", 
   "Realtime",
-  "RADIATION"
+  "RADIATION",
+  "Pressure"
 ];
 const TRANSLATION_FILES_DIR = "src/translate";
 const CACHE_FILE = "src/scripts/openai-cache.json";
