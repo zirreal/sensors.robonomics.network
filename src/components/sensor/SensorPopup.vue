@@ -123,6 +123,12 @@
           <div class="infoline-info">{{ geo.lat }}, {{ geo.lng }}</div>
         </div>
 
+        <div class="infoline flexline" v-if="dewPoint">
+          <div class="infoline-title">{{ $t("Latest dew point") }}:</div>
+          <div class="infoline-info">{{ dewPoint }} ℃</div>
+          
+        </div>
+
         <div class="infoline flexline" v-if="link">
           <div class="infoline-title">{{ t("sensorpopup.infosensorowner") }}:</div>
           <div class="infoline-info">
@@ -211,6 +217,7 @@ const state = reactive({
 // some refs
 // const prevGeo = ref({ lat: null, lng: null });
 const units = ref([]);
+const dewPoint = ref(null)
 
 // computed
 const sensor_id = computed(() => {
@@ -301,6 +308,16 @@ const link = computed(() => {
   return sensors[sensor_id.value] ? sensors[sensor_id.value].link : "";
 });
 
+// checking log values for dew point
+const latestValidLog = computed(() => {
+  return [...log.value] // clone array to avoid mutating original
+    .reverse()
+    .find(entry => {
+      const data = entry?.data;
+      return typeof data?.temperature === 'number' && typeof data?.humidity === 'number';
+    });
+});
+
 // methods
 
 const shareData = () => {
@@ -334,6 +351,20 @@ const getHistory = () => {
     start: startTimestamp.value,
     end: endTimestamp.value,
   });
+}
+
+const calculateDewPoint = (t, h) => {
+  if (typeof t !== 'number' || typeof h !== 'number' || h <= 0 || h > 100) {
+    return null;
+  }
+
+  const a = 17.27;
+  const b = 237.7;
+  const gamma = (a * t) / (b + t) + Math.log(h / 100);
+  const dewPoint = (b * gamma) / (a - gamma);
+
+  return parseFloat(dewPoint.toFixed(1));
+
 }
 
 // Updates the realtime view: refreshes the timestamp and rebuilds state.rtdata with the latest measurements, labels, units, and zone colors.
@@ -443,6 +474,28 @@ watch(() => log.value, (i) => {
       const oldUnits = units.value;
       const changed = newUnits.length !== oldUnits.length || newUnits.some((u, i) => u !== oldUnits[i]);
       if (changed) units.value = newUnits
+
+
+      log.value.forEach(entry => {
+        if (
+          entry?.data &&
+          typeof entry.data.temperature === 'number' &&
+          typeof entry.data.humidity === 'number'
+        ) {
+          const dew = calculateDewPoint(entry.data.temperature, entry.data.humidity);
+          entry.data = {
+            ...entry.data,
+            ['dew point']: dew,
+          };
+        }
+      });
+
+      if (latestValidLog.value) {
+        const { temperature, humidity } = latestValidLog.value.data;
+        dewPoint.value = calculateDewPoint(temperature, humidity);
+      } else {
+        console.warn('No valid log entry for dew point was found');
+      }
 
     }
   },

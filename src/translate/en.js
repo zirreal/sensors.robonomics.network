@@ -220,5 +220,6 @@ export default {
   "Map data": "Map data",
   "OpenStreetMap contributors": "OpenStreetMap contributors",
   "Photo": "Photo",
-  "Secured by": "Secured by"
+  "Secured by": "Secured by",
+  "Latest dew point": "Latest dew point"
 };

@@ -224,5 +224,6 @@ export default {
   "Secured by": "Обеспечено защитой",
   "Daily Recap": "Ежедневная сводка",
   "Realtime": "В реальном времени",
-  "RADIATION": "Радиация"
+  "RADIATION": "Радиация",
+  "Latest dew point": "Последняя точка росы"
 };
