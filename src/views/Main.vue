@@ -292,33 +292,6 @@ watch(isMainRoute, (isMain) => {
 
 onMounted(async () => {
 
-  /* + BroadcastChannel */
-  /* Отслеживаем изменения сенсоров */
-  const bcnewsensor = new BroadcastChannel("sensors");
-  const bcclearsensors = new BroadcastChannel("sensorsremoved");
-  mapStore.sensors = [];
-
-  bcnewsensor.onmessage = (e) => {
-    if (e.data) {
-      let unique = true;
-      mapStore.sensors.forEach((i) => {
-        if (e.data.sensor_id === i.sensor_id) {
-          unique = false;
-        }
-      });
-      if (unique) {
-        mapStore.sensors.push(e.data);
-      }
-    }
-  };
-
-  bcclearsensors.onmessage = (e) => {
-    if (e.data) {
-      mapStore.sensors = [];
-    }
-  };
-  /* - BroadcastChannel */
-
   // Устанавливаем тип провайдера
   setTypeProvider(props.provider);
 

@@ -18,7 +18,9 @@
         })
     })
  */
-export function IDBworkflow(dbname, dbver, dbtable, mode, onsuccess, keyPath = 'id', autoIncrement = true) {
+export function IDBworkflow(dbname, dbver, dbtable, mode, onsuccess, keyPath, autoIncrement = true) {
+
+    console.log('IDBworkflow', dbname, dbver, dbtable, mode, onsuccess, keyPath, autoIncrement)
     const IDB = window.indexedDB || window.webkitIndexedDB
     if(!IDB) { return }
 
@@ -63,7 +65,7 @@ export function IDBworkflow(dbname, dbver, dbtable, mode, onsuccess, keyPath = '
 }
 
 /* get all data from the table */
-export function IDBgettable(dbname, dbver, dbtable) {
+export function IDBgettable(dbname, dbver, dbtable, keyPath = 'id', autoIncrement = true) {
     return new Promise((resolve) => {
         let datafromtable = []
         IDBworkflow(dbname, dbver, dbtable, 'readonly', store => {
@@ -76,8 +78,25 @@ export function IDBgettable(dbname, dbver, dbtable) {
                     resolve(datafromtable)
                 }
             })
-        })
+        }, keyPath, autoIncrement)
     })
+}
+
+
+export function IDBdeleteByKey(dbname, dbver, dbtable, key) {
+  return new Promise((resolve, reject) => {
+    IDBworkflow(
+      dbname,
+      dbver,
+      dbtable,
+      "readwrite",
+      (store) => {
+        const req = store.delete(key);
+        req.onsuccess = () => resolve();
+        req.onerror = (e) => reject(e);
+      }
+    );
+  });
 }
 
 /* delete all data from the table */

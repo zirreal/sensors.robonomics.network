@@ -87,47 +87,6 @@ const canKeepSigned = computed(() =>
   !!(window.crypto?.subtle || window.crypto?.webkitSubtle) && !!window.indexedDB
 );
 
-// START DEVICES
-import axios from "axios";
-import { usePolkadotApi } from "robonomics-interface-vue";
-import { useDevices } from "robonomics-interface-vue/devices";
-
-const { isConnected, instance } = usePolkadotApi();
-const owner = ref("4FiueWs4Q223iyvcYmEUQAJexNXZRQnvkML1sqWxZ8QXuCW1");
-const devices = useDevices(owner, { immediate: false });
-
-// подключаемся к чейну
-instance.connect().catch((e) => {
-  console.log(e);
-});
-
-// ожидаем подключения к чейну, чтобы сделать запрос на получение девайсов
-watch(
-  isConnected,
-  (isConnected) => {
-    if (isConnected) {
-      devices.load();
-    }
-  },
-  { immediate: true }
-);
-
-// выводим список девайсов
-watch(devices.data, (data) => {
-  console.log("DEVICES", data);
-});
-
-// получаем список сенсоров по адресу владельца c roseman
-(async () => {
-  try {
-    const result = await axios.get(`https://roseman.airalab.org/api/sensor/sensors/${owner.value}`);
-    console.log("SENSORS", result.data);
-  } catch (error) {
-    console.log(error);
-  }
-})();
-// END DEVICES
-
 const account = computed(() => {
   const phrase = passPhrase.value.trim();
   if (phrase.split(/\s+/).length !== 12) return "";
@@ -157,6 +116,22 @@ function getRobonomicsAddressByType(phrase, type) {
   }
   const address = encodeAddress(pair.publicKey, 32);
   return { address, type, publicKey: pair.publicKey };
+}
+
+async function getUserSensors(owner) {
+  try {
+    const response = await fetch(`https://roseman.airalab.org/api/sensor/sensors/${owner}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return Array.isArray(result.sensors) ? result.sensors : [];
+
+  } catch (error) {
+    console.warn('getUserSensors error:', error);
+    return [];
+  }
 }
 
 function resetStatus() {
@@ -223,15 +198,12 @@ async function handleLogin(e) {
     return;
   }
   const { address, type } = accountData;
-  const devices = [
-    '4Cgi21YcaUTr9z3KCB7de9iPAr3jiGEhhBaCsWugqgMhPGXR',
-    '4Gsha9WxNjv3y8pyLQ5dAzsyNnvfS8CTPZF1Awu1XB1zrEjs'
-  ]; // записываем девайсы из подписки
+  const devices = await getUserSensors(address);
 
   if (keepSigned.value) {
     try {
       const encrypted = await encryptText(phrase);
-      accountStore.saveToDB({
+      await accountStore.saveToDB({
         address,
         data: encrypted,
         type,
@@ -253,7 +225,7 @@ async function handleLogin(e) {
   loginStatus.value = "success";
 
   if (devices.length > 0) {
-    redirect();
+    // redirect();
   }
 }
 </script>

@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { IDBworkflow, IDBgettable } from "@/idb";
+import { IDBworkflow, IDBgettable, IDBdeleteByKey } from "@/idb";
 import config from "@config";
 
 export const useAccountStore = defineStore('account', {
@@ -23,81 +23,58 @@ export const useAccountStore = defineStore('account', {
       this.devices = "";
     },
     deleteFromDB(address) {
-      // удаляем аккаунт, после чего если есть другие — помечаем первый активным
-      IDBworkflow(
+     return IDBdeleteByKey(
         config.INDEXEDDB.accounts.dbname,
         config.INDEXEDDB.accounts.dbversion,
         config.INDEXEDDB.accounts.tablename,
-        "readwrite",
-        (store) => {
-          store.delete(address);
-
-          // после удаления отмечаем активным первый аккаунт (если остался)
-          IDBgettable(config.INDEXEDDB.accounts.dbname, config.INDEXEDDB.accounts.dbversion, config.INDEXEDDB.accounts.tablename).then((accounts) => {
-            if (accounts && accounts.length > 0) {
-              // снимаем active у всех, потом ставим первому
-              accounts.forEach(acc => {
-                acc.active = false;
-                store.put(acc);
-              });
-              const first = accounts[0];
-              first.active = true;
-              store.put(first);
-            }
-          });
-        },
-        "address",
-        false
+        address
       );
     },
-    markActiveInDB(address) {
-      // сбрасываем active у всех, отмечаем active для address
-      IDBgettable(config.INDEXEDDB.accounts.dbname, config.INDEXEDDB.accounts.dbversion, config.INDEXEDDB.accounts.tablename).then((accounts) => {
-        IDBworkflow(
-          config.INDEXEDDB.accounts.dbname,
-          config.INDEXEDDB.accounts.dbversion,
-          config.INDEXEDDB.accounts.tablename,
-          "readwrite",
-          (store) => {
-            accounts.forEach(acc => {
-              acc.active = acc.address === address;
-              store.put(acc);
-            });
-          },
-          "address",
-          false
-        );
-      });
-    },
-    saveToDB({ address, data, type, devices, ts }) {
-      // сохраняем аккаунт: снимаем active со всех, ставим active новому
-      IDBgettable(config.INDEXEDDB.accounts.dbname, config.INDEXEDDB.accounts.dbversion, config.INDEXEDDB.accounts.tablename)
-        .then((accounts) => {
+    async saveToDB({ address, data, type, devices, ts }) {
+      await this.getDB().then((accounts) => {
           IDBworkflow(
             config.INDEXEDDB.accounts.dbname,
             config.INDEXEDDB.accounts.dbversion,
             config.INDEXEDDB.accounts.tablename,
             "readwrite",
             (store) => {
-              if (accounts && accounts.length > 0) {
-                accounts.forEach(acc => {
-                  acc.active = false;
-                  store.put(acc);
-                });
-              }
               store.put({
                 address,
                 data,
                 type,
                 devices,
                 ts: ts || Date.now(),
-                active: true
               });
             },
             "address",
             false
           );
         });
+    },
+
+    async getDB() {
+      return await IDBgettable(
+        config.INDEXEDDB.accounts.dbname,
+        config.INDEXEDDB.accounts.dbversion,
+        config.INDEXEDDB.accounts.tablename,
+        "address",
+        false
+      );
+    },
+
+    async getUserSensors(owner) {
+      try {
+        const response = await fetch(`https://roseman.airalab.org/api/sensor/sensors/${owner}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return Array.isArray(result.sensors) ? result.sensors : [];
+      } catch (error) {
+        console.warn('getUserSensors error:', error);
+        return [];
+      }
     }
   },
 });
