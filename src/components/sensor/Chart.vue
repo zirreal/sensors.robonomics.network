@@ -52,31 +52,9 @@ const GROUPS = {
 };
 const idToGroup = Object.fromEntries(Object.entries(GROUPS).flatMap(([g, { members }]) => members.map(id => [id, g])));
 
-// --- Кешируем уникальные id (типы), а не все логи
+// Запоминаем уникальные типы
 const presentIdsSet = ref(new Set());
 
-// Watch по props.log только если набор типов изменился
-watch(
-  () => props.log,
-  (log) => {
-    const set = new Set();
-    for (const point of log) {
-      if (!point.data) continue;
-      Object.keys(point.data).forEach(id => set.add(id.toLowerCase()));
-    }
-    // Обновляем только если изменился состав
-    const old = presentIdsSet.value;
-    if (
-      set.size !== old.size ||
-      [...set].some(id => !old.has(id))
-    ) {
-      presentIdsSet.value = set;
-    }
-  },
-  { immediate: true }
-);
-
-// visibleLegend зависит только от presentIdsSet, теперь не дергается при каждом изменении данных
 const visibleLegend = computed(() => {
   const ids = presentIdsSet.value;
   const legend = [];
@@ -100,9 +78,9 @@ const visibleLegend = computed(() => {
   return legend;
 });
 
-const rawUrlType  = computed(() => route.params.type?.toLowerCase());
+const rawUrlType  = computed(() => route.query.type?.toLowerCase());
 const activeGroupKey = computed(() => idToGroup[rawUrlType.value] || null);
-const isSingle    = computed(() => !idToGroup[rawUrlType.value] && presentIdsSet.value.has(rawUrlType.value));
+const isSingle = computed(() => !idToGroup[rawUrlType.value] && presentIdsSet.value.has(rawUrlType.value));
 
 const activeLegendKey = computed(() => {
   if (activeGroupKey.value && visibleLegend.value.some(x => x.key === activeGroupKey.value)) return activeGroupKey.value;
@@ -355,9 +333,31 @@ watch(
   }
 );
 
+// если набор типов изменился
+watch(
+  () => props.log,
+  (log) => {
+    if (!log.length) return;
+    const set = new Set();
+    for (const point of log) {
+      if (!point.data) continue;
+      Object.keys(point.data).forEach(id => set.add(id.toLowerCase()));
+    }
+    // Обновляем только если изменился состав
+    const old = presentIdsSet.value;
+    if (
+      set.size !== old.size ||
+      [...set].some(id => !old.has(id))
+    ) {
+      presentIdsSet.value = set;
+    }
+  },
+  { immediate: true }
+);
+
 watch(
   () => route.query.type,
-  (newType) => {
+  () => {
     if (!activeLegendKey.value) return;
     chartSeries.value = makeSeriesArray(props.log, activeLegendKey.value);
   }
