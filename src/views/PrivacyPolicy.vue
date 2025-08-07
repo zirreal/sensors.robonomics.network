@@ -89,11 +89,15 @@
 <script setup>
 import { onMounted, getCurrentInstance } from "vue";
 
+import config from "@config";
 import MetaInfo from "../components/MetaInfo.vue";
 import OptOutForm from "../components/matomo/OptOutForm.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
 
-const ogImage = new URL('../assets/images/pages/privacy-policy/og-privacy-policy.webp', import.meta.url).href;
+const ogImage = new URL(
+  new URL("@/assets/images/pages/privacy-policy/og-privacy-policy.webp", import.meta.url).pathname,
+  config.SITE_URL
+).href;
 
 onMounted(() => {
   const instance = getCurrentInstance();

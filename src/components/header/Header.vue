@@ -98,6 +98,7 @@ import ReleaseInfo from "../ReleaseInfo.vue";
 import Login from "./Login.vue";
 
 const { locale: i18nLocale } = useI18n();
+const router = useRouter();
 const route = useRoute();
 
 const locale = ref(localStorage.getItem("locale") || i18nLocale.value || "en");
@@ -118,19 +119,17 @@ const zeroGeoSensors = computed(() => {
 const getSensorLink = (sensor) => {
   const provider = localStorage.getItem("provider_type") || "remote";
   const measureType = (localStorage.getItem("currentUnit") || "pm10").toLowerCase();
-  return (
-    window.location.origin +
-    "/#/" +
-    provider +
-    "/" +
-    measureType +
-    "/20/" +
-    sensor.geo.lat +
-    "/" +
-    sensor.geo.lng +
-    "/" +
-    sensor.sensor_id
-  );
+  return router.resolve({
+    name: "main",
+    query: {
+      provider: provider,
+      type: measureType,
+      zoom: config.MAP.zoom,
+      lat: sensor.geo.lat,
+      lng: sensor.geo.lng,
+      sensor: sensor.sensor_id,
+    },
+  }).href;
 };
 
 const showsensor = (sensor) => {

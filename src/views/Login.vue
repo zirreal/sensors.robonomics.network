@@ -70,7 +70,10 @@ import { encryptText } from "../idb";
 import { getTypeProvider } from "../utils/utils";
 
 const accountStore = useAccountStore();
-const ogImage = new URL('@/assets/images/pages/login/og-login.webp', import.meta.url).href;
+const ogImage = new URL(
+  new URL("@/assets/images/pages/login/og-login.webp", import.meta.url).pathname,
+  config.SITE_URL
+).href;
 const MAGIC = "altruist-v1";
 const router = useRouter();
 let redirectTimer = null;
