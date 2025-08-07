@@ -1,15 +1,15 @@
-import { createRouter, createWebHashHistory } from "vue-router";
+import { createRouter, createWebHistory } from "vue-router";
+import AirMeasurements from "./views/AirMeasurements.vue";
+import AltruistCompare from "./views/AltruistCompare.vue";
+import AltruistTimeline from "./views/AltruistTimeline.vue";
+import AltruistUseCases from "./views/AltruistUseCases.vue";
+import Login from "./views/Login.vue";
 import Main from "./views/Main.vue";
 import PrivacyPolicy from "./views/PrivacyPolicy.vue";
-import AirMeasurements from "./views/AirMeasurements.vue";
-import AltruistUseCases from "./views/AltruistUseCases.vue";
-import AltruistTimeline from "./views/AltruistTimeline.vue";
-import AltruistCompare from "./views/AltruistCompare.vue";
-import Login from "./views/Login.vue";
 // import SensorEmbed from "./views/SensorEmbed.vue";
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory(),
   scrollBehavior(to) {
     if (to.hash) {
       return { el: to.hash, top: 30 };
@@ -17,11 +17,12 @@ const router = createRouter({
   },
   routes: [
     {
-      path: "/:provider?/:type?/:zoom?/:lat?/:lng?/:sensor?",
+      path: "/",
+      // path: "/:provider?/:type?/:zoom?/:lat?/:lng?/:sensor?",
       name: "main",
       component: Main,
       props: (route) => {
-        return Object.fromEntries(Object.entries(route.params).filter(([_, v]) => v !== ""));
+        return route.query;
       },
     },
     {
@@ -61,5 +62,24 @@ const router = createRouter({
     // },
   ],
 });
+
+// Support old urls
+(async () => {
+  if (window.location.hash) {
+    const [, provider, type, zoom, lat, lng, sensor] = window.location.hash.split("/");
+    const options = {
+      name: "main",
+      query: {
+        provider: provider,
+        type: type,
+        zoom: zoom,
+        lat: lat,
+        lng: lng,
+        sensor: sensor,
+      },
+    };
+    window.location.href = router.resolve(options).href;
+  }
+})();
 
 export default router;
