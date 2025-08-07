@@ -35,11 +35,6 @@ jobs:
         env:
           VITE_CONFIG_ENV: ${{ vars.VITE_CONFIG_ENV }}
 
-      - name: Static generate with timeout
-        run: timeout 2m yarn static-generate
-        env:
-          VITE_CONFIG_ENV: ${{ vars.VITE_CONFIG_ENV }}
-
       - name: Cleanup lingering preview servers on port 4173
         run: |
           echo "Killing processes on port 4173"
