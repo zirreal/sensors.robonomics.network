@@ -405,13 +405,18 @@ const updatert = () => {
 }
 
 const closesensor = () => {
-  const urlStr = window.location.href;
-  if (urlStr.includes(sensor_id.value)) {
-    const u = urlStr.replace(sensor_id.value, "");
-    window.location.href = u;
-  }
+  router.replace({
+    name: route.name,
+    query: {
+      provider: route.query.provider,
+      type: route.query.type,
+      zoom: route.query.zoom,
+      lat: route.query.lat,
+      lng: route.query.lng,
+    },
+  });
   emit("close");
-}
+};
 
 const setAddressUnrecognised = (lat, lng) => {
   state.address = {
