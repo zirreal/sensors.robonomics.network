@@ -96,11 +96,7 @@ const locale = computed(() => {
   return i18nLocale.value || localStorage.getItem("locale") || "en";
 });
 
-const ogImage = computed(() => {
-  return locale.value === 'ru'
-    ? new URL('../assets/images/pages/altruist-use-cases/ru/altruist-use-cases-all.webp', import.meta.url).href
-    : new URL('../assets/images/pages/altruist-use-cases/altruist-use-cases-all.webp', import.meta.url).href;
-});
+import ogImage from '../assets/images/pages/altruist-use-cases/altruist-use-cases-all.webp';
 
 const image1 = computed(() => {
   return locale.value === 'ru'

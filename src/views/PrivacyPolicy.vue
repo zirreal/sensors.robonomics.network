@@ -93,7 +93,7 @@ import MetaInfo from "../components/MetaInfo.vue";
 import OptOutForm from "../components/matomo/OptOutForm.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
 
-const ogImage = new URL('../assets/images/pages/privacy-policy/og-privacy-policy.webp', import.meta.url).href;
+import ogImage from '../assets/images/pages/privacy-policy/og-privacy-policy.webp';
 
 onMounted(() => {
   const instance = getCurrentInstance();

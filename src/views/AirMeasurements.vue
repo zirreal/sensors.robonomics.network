@@ -60,7 +60,7 @@ import MetaInfo from '../components/MetaInfo.vue';
 import measurements from '../measurements';
 import PageTextLayout from "../components/layouts/PageText.vue";
 
-const ogImage = new URL('../assets/images/pages/air-measurements/og-air-measurements.webp', import.meta.url).href;
+import ogImage from '../assets/images/pages/air-measurements/og-air-measurements.webp';
 
 const { locale } = useI18n();
 const currentLocale = ref(locale.value);
