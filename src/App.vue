@@ -5,7 +5,6 @@
 
 <script setup>
 import { RouterView } from "vue-router";
-
 import { onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 
