@@ -177,13 +177,13 @@ const getHistory = () => {
 watch(type, async (val) => {
   await router.push({
     name: "main",
-    params: {
+    query: {
       provider: getTypeProvider(),
       type: val,
-      zoom: route.params.zoom,
-      lat: route.params.lat,
-      lng: route.params.lng,
-      sensor: route.params.sensor,
+      zoom: route.query.zoom,
+      lat: route.query.lat,
+      lng: route.query.lng,
+      sensor: route.query.sensor,
     },
   });
   // router.go(0)
