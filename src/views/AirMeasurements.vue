@@ -55,19 +55,11 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-
-import config from "@config";
 import PageTextLayout from "../components/layouts/PageText.vue";
 import MetaInfo from '../components/MetaInfo.vue';
 import measurements from '../measurements';
 
-const ogImage = new URL(
-  new URL(
-    "@/assets/images/pages/air-measurements/og-air-measurements.webp",
-    import.meta.url
-  ).pathname,
-  config.SITE_URL
-).href;
+import ogImage from '../assets/images/pages/air-measurements/og-air-measurements.webp';
 
 const { locale } = useI18n();
 const currentLocale = ref(locale.value);

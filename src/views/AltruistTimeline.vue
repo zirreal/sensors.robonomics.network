@@ -65,13 +65,10 @@
 
 
 <script setup>
-import config from "@config";
+import MetaInfo from '../components/MetaInfo.vue';
 import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
 import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";
 
-const ogImage = new URL(
-  new URL("@/assets/images/pages/altruist-timeline/timeline.webp", import.meta.url).pathname,
-  config.SITE_URL
-).href;
+import ogImage from '../assets/images/pages/altruist-timeline/timeline.webp';
 </script>

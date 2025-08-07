@@ -69,11 +69,9 @@ import PageTextLayout from "../components/layouts/PageText.vue";
 import { encryptText } from "../idb";
 import { getTypeProvider } from "../utils/utils";
 
+import ogImage from '../assets/images/pages/login/og-login.webp';
+
 const accountStore = useAccountStore();
-const ogImage = new URL(
-  new URL("@/assets/images/pages/login/og-login.webp", import.meta.url).pathname,
-  config.SITE_URL
-).href;
 const MAGIC = "altruist-v1";
 const router = useRouter();
 let redirectTimer = null;
