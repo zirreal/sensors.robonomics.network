@@ -288,13 +288,13 @@ onMounted(async () => {
     if (!(await state.providerObj.status())) {
       router.push({
         name: route.name,
-        params: {
+        query: {
           provider: "realtime",
           type: props.type,
-          zoom: route.params.zoom,
-          lat: route.params.lat,
-          lng: route.params.lng,
-          sensor: route.params.sensor,
+          zoom: route.query.zoom,
+          lat: route.query.lat,
+          lng: route.query.lng,
+          sensor: route.query.sensor,
         },
       });
       return;
@@ -323,8 +323,8 @@ onMounted(async () => {
     localStorage.setItem("currentUnit", props.type);
   }
 
-  if(route.params.sensor) {
-    handleActivePoint(route.params.sensor)
+  if (route.query.sensor) {
+    handleActivePoint(route.query.sensor);
   }
 
   const instance = getCurrentInstance();

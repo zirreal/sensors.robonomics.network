@@ -202,7 +202,7 @@ const state = reactive({
   isShowPath: false,
   start: moment().format("YYYY-MM-DD"),
   maxDate: moment().format("YYYY-MM-DD"),
-  provider: getTypeProvider(route.params),
+  provider: getTypeProvider(route.query),
   rttime: null,
   rtdata: [],
   sharedDefault: false,
@@ -221,7 +221,7 @@ const dewPoint = ref(null)
 
 // computed
 const sensor_id = computed(() => {
-  return props.point?.sensor_id || route.params.sensor || null;
+  return props.point?.sensor_id || route.query.sensor || null;
 });
 
 const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
@@ -230,7 +230,7 @@ const geo = computed(() => {
   if (props.point?.geo && props.point.geo.lat && props.point.geo.lng) {
     return props.point.geo;
   }
-  const { lat, lng } = route.params;
+  const { lat, lng } = route.query;
   return { lat: Number(lat) || 0, lng: Number(lng) || 0 };
 });
 
@@ -275,7 +275,9 @@ const scales = computed(() => {
   const buffer = [];
   Object.keys(measurements).forEach((key) => {
     if (units.value.some((unit) => unit === key)) {
-      buffer.push(measurements[key]);
+      if(measurements[key].zones) {
+       buffer.push(measurements[key]);
+      }
     }
   });
   
@@ -290,10 +292,10 @@ const linkSensor = computed(() => {
   if (geo.value?.lat && geo.value?.lng && sensor_id.value) {
     const resolved = router.resolve({
       name: "main",
-      params: {
+      query: {
         provider: state.provider,
-        type: route.params.type || config.MAP.measure,
-        zoom: route.params.zoom || config.MAP.zoom,
+        type: route.query.type || config.MAP.measure,
+        zoom: route.query.zoom || config.MAP.zoom,
         lat: geo.value.lat,
         lng: geo.value.lng,
         sensor: sensor_id.value,
@@ -405,13 +407,18 @@ const updatert = () => {
 }
 
 const closesensor = () => {
-  const urlStr = window.location.href;
-  if (urlStr.includes(sensor_id.value)) {
-    const u = urlStr.replace(sensor_id.value, "");
-    window.location.href = u;
-  }
+  router.replace({
+    name: route.name,
+    query: {
+      provider: route.query.provider,
+      type: route.query.type,
+      zoom: route.query.zoom,
+      lat: route.query.lat,
+      lng: route.query.lng,
+    },
+  });
   emit("close");
-}
+};
 
 const setAddressUnrecognised = (lat, lng) => {
   state.address = {
@@ -509,10 +516,10 @@ watch(
     if (newPoint && newPoint.sensor_id && newPoint.geo) {
       router.replace({
         name: route.name, // Assumes the route name remains the same
-        params: {
+        query: {
           provider: state.provider,
           type: props.type.toLowerCase(),
-          zoom: route.params.zoom || config.MAP.zoom, // trying to keep zoom
+          zoom: route.query.zoom || config.MAP.zoom, // trying to keep zoom
           lat: newPoint.geo.lat,
           lng: newPoint.geo.lng,
           sensor: newPoint.sensor_id,
@@ -796,6 +803,11 @@ watch(
   font-size: 0.8em;
   font-weight: 900;
 }
+
+.rt-number {
+  color: var(--color-blue);
+}
+
 /* - realtime */
 
 .sensor-title {

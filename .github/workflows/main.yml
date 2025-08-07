@@ -31,12 +31,7 @@ jobs:
         run: yarn install
 
       - name: Build project
-        run: yarn static-generate
-        env:
-          VITE_CONFIG_ENV: ${{ vars.VITE_CONFIG_ENV }}
-
-      - name: Static generate with timeout
-        run: timeout 2m yarn static-generate
+        run: yarn build
         env:
           VITE_CONFIG_ENV: ${{ vars.VITE_CONFIG_ENV }}
 

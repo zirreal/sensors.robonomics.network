@@ -38,7 +38,7 @@ import Header from "../components/header/Header.vue";
 import Chart from "../components/sensor/Chart.vue";
 
 const route = useRoute();
-const sensorId = route.params.id;
+const sensorId = route.query.id;
 const data = ref({});
 const log = ref([]);
 

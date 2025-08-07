@@ -1,10 +1,10 @@
 import { fileURLToPath, URL } from "node:url";
 
+import prerender from "@prerenderer/rollup-plugin";
 import vue from "@vitejs/plugin-vue";
-import { defineConfig, loadEnv } from "vite";
 import fs from "node:fs";
 import path from "node:path";
-
+import { defineConfig, loadEnv } from "vite";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -23,10 +23,21 @@ export default defineConfig(({ mode }) => {
   console.log("Load config:", configEnv);
 
   return {
-    base: "",
+    base: "/",
     // server: { https: true },
     plugins: [
       vue(),
+      prerender({
+        routes: [
+          "/",
+          "/privacy-policy",
+          "/air-measurements",
+          "/altruist-timeline",
+          "/altruist-use-cases",
+          "/altruist-compare",
+        ],
+        renderer: "@prerenderer/renderer-puppeteer",
+      }),
     ],
     resolve: {
       alias: {

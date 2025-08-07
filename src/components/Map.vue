@@ -96,13 +96,13 @@ export default {
       console.debug("relocatemap", lat, lng, zoom, type);
       const options = {
         name: "main",
-        params: {
+        query: {
           provider: getTypeProvider(),
-          type: this.$route.params.type || "pm10",
+          type: this.$route.query.type || "pm10",
           zoom: zoom,
           lat: lat,
           lng: lng,
-          sensor: this.$route.params.sensor,
+          sensor: this.$route.query.sensor,
         },
       };
 
@@ -173,26 +173,26 @@ export default {
     },
 
     handleActivePoint() {
-      if(this.$route.params.sensor) {
-        document?.querySelectorAll("[data-children]").forEach(el => {
-          if(el.dataset.children.split(',').includes(this.$route.params.sensor))
-            el.classList.add('with-active-sensor')
-        })
+      if (this.$route.query.sensor) {
+        document?.querySelectorAll("[data-children]").forEach((el) => {
+          if (el.dataset.children.split(",").includes(this.$route.query.sensor))
+            el.classList.add("with-active-sensor");
+        });
 
-        this.$emit("activateMarker", this.$route.params.sensor);
+        this.$emit("activateMarker", this.$route.query.sensor);
       }
     },
 
     checkPosFromURI() {
-      if (this.$route.params.lat || this.$route.params.lng || this.$route.params.zoom) {
+      if (this.$route.query.lat || this.$route.query.lng || this.$route.query.zoom) {
         return true;
       }
       return false;
     },
     setPosFromURI() {
-      const lat = this.$route.params.lat || config.MAP.position.lat;
-      const lng = this.$route.params.lng || config.MAP.position.lng;
-      const zoom = this.$route.params.zoom || config.MAP.zoom;
+      const lat = this.$route.query.lat || config.MAP.position.lat;
+      const lng = this.$route.query.lng || config.MAP.position.lng;
+      const zoom = this.$route.query.zoom || config.MAP.zoom;
       this.mapStore.setmapposition(lat, lng, zoom, true);
     },
     setPosDefault() {

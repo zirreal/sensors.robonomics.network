@@ -18,8 +18,10 @@
 <script setup>
 import { computed, onMounted } from "vue";
 import { useBookmarksStore } from "@/stores/bookmarks";
+import { useRouter } from "vue-router";
 import { IDBworkflow } from "../idb";
 
+const router = useRouter();
 const bookmarksStore = useBookmarksStore();
 const bookmarks = computed(() => bookmarksStore.idbBookmarks);
 
@@ -53,21 +55,17 @@ function getlink(bookmark) {
   if (bookmark.link && bookmark.geo) {
     const g = JSON.parse(bookmark.geo);
     const provider = localStorage.getItem("provider_type") || "remote";
-    return (
-      window.location.origin +
-      "/#/" +
-      provider +
-      "/" +
-      "pm10" +
-      "/" +
-      "20" +
-      "/" +
-      g.lat +
-      "/" +
-      g.lng +
-      "/" +
-      bookmark.link
-    );
+    return router.resolve({
+      name: "main",
+      query: {
+        provider: provider,
+        type: "pm10",
+        zoom: "20",
+        lat: g.lat,
+        lng: g.lng,
+        sensor: bookmark.link,
+      },
+    }).href;
   }
 }
 

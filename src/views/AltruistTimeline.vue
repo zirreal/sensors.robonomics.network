@@ -70,5 +70,5 @@ import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
 import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";
 
-const ogImage = new URL('@/assets/images/pages/altruist-timeline/timeline.webp', import.meta.url).href
+import ogImage from '../assets/images/pages/altruist-timeline/timeline.webp';
 </script>

@@ -13,10 +13,10 @@
 
 
 <script setup>
-import MetaInfo from '../components/MetaInfo.vue';
 import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
+import MetaInfo from '../components/MetaInfo.vue';
 import PageTextLayout from "../components/layouts/PageText.vue";
 import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";
 
-const ogImage = new URL('@/assets/images/pages/altruist-compare/og-altruist-compare.webp', import.meta.url).href
+import ogImage from '../assets/images/pages/altruist-compare/og-altruist-compare.webp';
 </script>

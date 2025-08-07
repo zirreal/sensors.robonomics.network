@@ -87,13 +87,13 @@ async function deleteAccount(acc) {
 function getSensorLink(sensor) {
   return {
     name: "main",
-    params: {
+    query: {
       provider: getTypeProvider(),
       type: config.MAP.measure,
       zoom: config.MAP.zoom,
-      lat: config.MAP.position.lat,
+      lat: config.MAP.position.lat, // если нужна попытка получить координаты — доработай тут
       lng: config.MAP.position.lng,
-      sensor,
+      sensor: sensor,
     },
   };
 }
