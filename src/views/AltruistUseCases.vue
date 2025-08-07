@@ -94,12 +94,10 @@ import image1Def from "@/assets/images/pages/altruist-use-cases/altruist-use-cas
 import image2Def from "@/assets/images/pages/altruist-use-cases/altruist-use-cases-2.webp";
 import image3Def from "@/assets/images/pages/altruist-use-cases/altruist-use-cases-3.webp";
 import image4Def from "@/assets/images/pages/altruist-use-cases/altruist-use-cases-4.webp";
-import imageAllDef from "@/assets/images/pages/altruist-use-cases/altruist-use-cases-all.webp";
 import image1Ru from "@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-1.webp";
 import image2Ru from "@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-2.webp";
 import image3Ru from "@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-3.webp";
 import image4Ru from "@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-4.webp";
-import imageAllRu from "@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-all.webp";
 
 const { locale: i18nLocale } = useI18n();
 

@@ -55,8 +55,6 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-
-import config from "@config";
 import PageTextLayout from "../components/layouts/PageText.vue";
 import MetaInfo from '../components/MetaInfo.vue';
 import measurements from '../measurements';
