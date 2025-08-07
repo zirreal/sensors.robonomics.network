@@ -91,7 +91,6 @@ const localeComputed = computed(() => localStorage.getItem("locale") || locale.v
 const zoom = computed(() => mapStore.mapposition.zoom);
 const lat = computed(() => mapStore.mapposition.lat);
 const lng = computed(() => mapStore.mapposition.lng);
-const isMainRoute = computed(() => route.path === '/');
 
 /* + Realtime watch */
 let unwatchRealtime = null;
@@ -276,18 +275,6 @@ watch(
     }
   }
 );
-
-// следим это карта или нет
-watch(isMainRoute, (isMain) => {
-  const app = document.getElementById('app');
-  if (app) {
-    if (isMain) {
-      app.classList.add('map');
-    } else {
-      app.classList.remove('map');
-    }
-  }
-}, { immediate: true });
 
 
 onMounted(async () => {

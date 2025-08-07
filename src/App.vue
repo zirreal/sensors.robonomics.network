@@ -5,22 +5,37 @@
 
 <script setup>
 import { RouterView } from "vue-router";
-import { onMounted } from "vue";
+
+import { onMounted, watch } from "vue";
+import { useRoute } from "vue-router";
 
 import { useAccountStore } from "@/stores/account";
-import { useMapStore } from "@/stores/map";
-
-import { decryptText } from "@/idb";
+import { IDBgettable, decryptText } from "@/idb";
 import config from "@/config/default/config.json";
-import { getSensorsForLastDay } from "./utils/utils";
+
+const route = useRoute();
 
 const accountStore = useAccountStore();
-const mapStore = useMapStore();
+
+function updateAppClass() {
+  const app = document.getElementById('app');
+  if (!app) return;
+  if (route.name === 'main') {
+    app.classList.add('map');
+  } else {
+    app.classList.remove('map');
+  }
+}
+
+watch(() => route.name, updateAppClass, { immediate: true });
 
 onMounted(async () => {
 
-  /* + INIT ACCOUNT */
-  const accounts = await accountStore.getDB();
+  const accounts = await IDBgettable(
+    config.INDEXEDDB.accounts.dbname,
+    config.INDEXEDDB.accounts.dbversion,
+    config.INDEXEDDB.accounts.tablename
+  );
 
   if (accounts && accounts.length > 0) {
     let selected = accounts.find(acc => acc.active);
@@ -40,15 +55,6 @@ onMounted(async () => {
       selected.devices
     );
   }
-  /* - INIT ACCOUNT */
-
-  /* + INIT SENSORS */
-  const sensors = await getSensorsForLastDay();
-  if (Array.isArray(sensors)) {
-    mapStore.setSensors(sensors);
-  }
-  /* - INIT SENSORS */
-
 });
 </script>
 
