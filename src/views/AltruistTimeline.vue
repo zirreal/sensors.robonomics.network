@@ -65,7 +65,7 @@
 
 
 <script setup>
-import MetaInfo from '../components/MetaInfo.vue';
+import config from "@config";
 import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
 import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";
