@@ -31,7 +31,7 @@ jobs:
         run: yarn install
 
       - name: Build project
-        run: yarn static-generate
+        run: yarn build
         env:
           VITE_CONFIG_ENV: ${{ vars.VITE_CONFIG_ENV }}
 
