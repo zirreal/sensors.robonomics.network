@@ -90,6 +90,17 @@ import PageTextLayout from "../components/layouts/PageText.vue";
 
 import { useI18n } from "vue-i18n";
 
+import image1Def from "@/assets/images/pages/altruist-use-cases/altruist-use-cases-1.webp";
+import image2Def from "@/assets/images/pages/altruist-use-cases/altruist-use-cases-2.webp";
+import image3Def from "@/assets/images/pages/altruist-use-cases/altruist-use-cases-3.webp";
+import image4Def from "@/assets/images/pages/altruist-use-cases/altruist-use-cases-4.webp";
+import imageAllDef from "@/assets/images/pages/altruist-use-cases/altruist-use-cases-all.webp";
+import image1Ru from "@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-1.webp";
+import image2Ru from "@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-2.webp";
+import image3Ru from "@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-3.webp";
+import image4Ru from "@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-4.webp";
+import imageAllRu from "@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-all.webp";
+
 const { locale: i18nLocale } = useI18n();
 
 const locale = computed(() => {
@@ -97,34 +108,32 @@ const locale = computed(() => {
 });
 
 const ogImage = computed(() => {
-  return locale.value === 'ru'
-    ? new URL('../assets/images/pages/altruist-use-cases/ru/altruist-use-cases-all.webp', import.meta.url).href
-    : new URL('../assets/images/pages/altruist-use-cases/altruist-use-cases-all.webp', import.meta.url).href;
+  return locale.value === "ru"
+    ? imageAllRu
+    : imageAllDef
 });
 
 const image1 = computed(() => {
-  return locale.value === 'ru'
-    ? new URL('@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-1.webp', import.meta.url).href
-    : new URL('@/assets/images/pages/altruist-use-cases/altruist-use-cases-1.webp', import.meta.url).href;
+  return locale.value === "ru"
+  ? image1Ru
+  : image1Def
 });
 
 const image2 = computed(() => {
-  return locale.value === 'ru'
-    ? new URL('@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-2.webp', import.meta.url).href
-    : new URL('@/assets/images/pages/altruist-use-cases/altruist-use-cases-2.webp', import.meta.url).href;
+  return locale.value === "ru"
+    ? image2Ru
+    : image2Def
 });
 
 const image3 = computed(() => {
-  return locale.value === 'ru'
-    ? new URL('@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-3.webp', import.meta.url).href
-    : new URL('@/assets/images/pages/altruist-use-cases/altruist-use-cases-3.webp', import.meta.url).href;
+  return locale.value === "ru"
+    ? image3Ru
+    : image3Def
 });
 
 const image4 = computed(() => {
-  return locale.value === 'ru'
-    ? new URL('@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-4.webp', import.meta.url).href
-    : new URL('@/assets/images/pages/altruist-use-cases/altruist-use-cases-4.webp', import.meta.url).href;
+  return locale.value === "ru"
+    ? image4Ru
+    : image4Def
 });
-
-
 </script>
