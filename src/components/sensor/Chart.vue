@@ -129,7 +129,7 @@ function buildSeriesArray(log, realtime, maxVisible, legendKey) {
               fullLabel: full,
               showInLegend: isMain,
               linkedTo: isMain ? undefined : mainId,
-              dashStyle: isMain ? 'Solid' : 'ShortDot',
+              dashStyle: isMain || id === 'dewpoint' ? 'Solid' : 'ShortDot',
               data: [],
               zones: zonesMap[id] || [],
               dataGrouping: { enabled: true, units: [['minute', [5]]] }
