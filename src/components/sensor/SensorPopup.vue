@@ -275,7 +275,9 @@ const scales = computed(() => {
   const buffer = [];
   Object.keys(measurements).forEach((key) => {
     if (units.value.some((unit) => unit === key)) {
-      buffer.push(measurements[key]);
+      if(measurements[key].zones) {
+       buffer.push(measurements[key]);
+      }
     }
   });
   
@@ -801,6 +803,11 @@ watch(
   font-size: 0.8em;
   font-weight: 900;
 }
+
+.rt-number {
+  color: var(--color-blue);
+}
+
 /* - realtime */
 
 .sensor-title {

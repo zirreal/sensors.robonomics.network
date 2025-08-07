@@ -98,8 +98,8 @@ const locale = computed(() => {
 
 const ogImage = computed(() => {
   return locale.value === 'ru'
-    ? new URL('@/assets/images/pages/altruist-use-cases/ru/altruist-use-cases-all.png', import.meta.url).href
-    : new URL('@/assets/images/pages/altruist-use-cases/altruist-use-cases-all.png', import.meta.url).href;
+    ? new URL('../assets/images/pages/altruist-use-cases/ru/altruist-use-cases-all.webp', import.meta.url).href
+    : new URL('../assets/images/pages/altruist-use-cases/altruist-use-cases-all.webp', import.meta.url).href;
 });
 
 const image1 = computed(() => {
