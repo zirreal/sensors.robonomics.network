@@ -7,6 +7,8 @@
   --color-blue: #007bff; 
   --color-teal: #12bfcc;
   --color-green: #60bc2a;
+  --color-green-bright: hsl(83, 100%, 71%);
+  --color-bright-green-dim: hsla(83, 100%, 71%, 0.372);
   --color-red: #fc0202; 
   --color-bright-red: #ff4d00;
   --color-yellow: #f5ff00;
@@ -67,5 +69,8 @@
     --app-controlsgap: calc(var(--gap) * 0.5);
     --app-buttoncolor:hsl(219, 100%, 60%);
     --app-buttoncolor-hover:hsl(219, 100%, 50%);
+    --color-light-gray: #6d6d6d;
+    --color-green-bright: hsl(83, 64%, 29%);
+    --color-bright-green-dim:  hsla(83, 64%, 29%, 0.55);
   }
 }

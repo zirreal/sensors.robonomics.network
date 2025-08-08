@@ -365,7 +365,7 @@ const calculateDewPoint = (t, h) => {
   const gamma = (a * t) / (b + t) + Math.log(h / 100);
   const dewPoint = (b * gamma) / (a - gamma);
 
-  return parseFloat(dewPoint.toFixed(1));
+  return parseFloat(dewPoint.toFixed(2));
 
 }
 
@@ -464,6 +464,20 @@ watch(
 watch(() => log.value, (i) => {
     if(Array.isArray(i) && i.length > 0) {
 
+      log.value.forEach(entry => {
+        if (
+          entry?.data &&
+          typeof entry.data.temperature === 'number' &&
+          typeof entry.data.humidity === 'number'
+        ) {
+          const dew = calculateDewPoint(entry.data.temperature, entry.data.humidity);
+          entry.data = {
+            ...entry.data,
+            ['dewpoint']: dew,
+          };
+        }
+      });
+
       // EN: Checks if log is ready to show Chart
       updatert();
 
@@ -481,21 +495,6 @@ watch(() => log.value, (i) => {
       const oldUnits = units.value;
       const changed = newUnits.length !== oldUnits.length || newUnits.some((u, i) => u !== oldUnits[i]);
       if (changed) units.value = newUnits
-
-
-      log.value.forEach(entry => {
-        if (
-          entry?.data &&
-          typeof entry.data.temperature === 'number' &&
-          typeof entry.data.humidity === 'number'
-        ) {
-          const dew = calculateDewPoint(entry.data.temperature, entry.data.humidity);
-          entry.data = {
-            ...entry.data,
-            ['dewpoint']: dew,
-          };
-        }
-      });
 
       if (latestValidLog.value) {
         const { temperature, humidity } = latestValidLog.value.data;

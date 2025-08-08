@@ -277,31 +277,15 @@ h2 {
 }
 
 .mark-good {
-  background-color: #f3ffed;
+  background-color: var(--color-green-bright);
 }
 
 .mark-bad {
-  background-color: #ffefee;
+  background-color: var(--color-light-gray);
 }
 
 .mark-neutral {
-  background-color: #f1f1f1;
-}
-
-@media (prefers-color-scheme: dark) {
-
-  .mark-good {
-    background-color: #043107;
-  }
-
-  .mark-bad {
-    background-color: #5f0f09;
-  }
-
-  .mark-neutral {
-    background-color: #3f3f3f;
-  }
-
+  background-color: var(--color-bright-green-dim);
 }
 
 @media (width > 1000px) {
