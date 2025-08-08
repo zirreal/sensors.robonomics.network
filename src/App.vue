@@ -9,12 +9,16 @@ import { onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 
 import { useAccountStore } from "@/stores/account";
-import { IDBgettable, decryptText } from "@/idb";
+import { useMapStore } from "@/stores/map";
+
+import { decryptText } from "@/idb";
 import config from "@/config/default/config.json";
+import { getSensorsForLastDay } from "./utils/utils";
 
 const route = useRoute();
 
 const accountStore = useAccountStore();
+const mapStore = useMapStore();
 
 function updateAppClass() {
   const app = document.getElementById('app');
@@ -30,11 +34,8 @@ watch(() => route.name, updateAppClass, { immediate: true });
 
 onMounted(async () => {
 
-  const accounts = await IDBgettable(
-    config.INDEXEDDB.accounts.dbname,
-    config.INDEXEDDB.accounts.dbversion,
-    config.INDEXEDDB.accounts.tablename
-  );
+   /* + INIT ACCOUNT */
+  const accounts = await accountStore.getDB();
 
   if (accounts && accounts.length > 0) {
     let selected = accounts.find(acc => acc.active);
@@ -54,6 +55,14 @@ onMounted(async () => {
       selected.devices
     );
   }
+  /* - INIT ACCOUNT */
+
+  /* + INIT SENSORS */
+  const sensors = await getSensorsForLastDay();
+  if (Array.isArray(sensors)) {
+    mapStore.setSensors(sensors);
+  }
+  /* - INIT SENSORS */
 });
 </script>
 
