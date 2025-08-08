@@ -66,7 +66,12 @@ const router = createRouter({
 // Support old urls
 (async () => {
   if (window.location.hash) {
+    const routes = router.options.routes.map((item) => item.path.split("/")[1]);
     const [, provider, type, zoom, lat, lng, sensor] = window.location.hash.split("/");
+    if (routes.includes(provider)) {
+      window.location.href = `${provider}/`;
+      return;
+    }
     const options = {
       name: "main",
       query: {
