@@ -224,16 +224,13 @@ export default {
   "Latest dew point": "Latest dew point",
   "Daily Recap": "Daily Recap",
   "Realtime": "Realtime",
-  "Dust & Particles": "Dust & Particles",
-  "Noise": "Noise",
   "Climate": "Climate",
   "Pressure": "Pressure",
-  "Latest PM AQI": "Latest PM AQI",
   "Good": "Good",
   "Moderate": "Moderate",
   "Unhealthy for Sensitive Groups": "Unhealthy for Sensitive Groups",
   "Unhealthy": "Unhealthy",
   "Very Unhealthy": "Very Unhealthy",
   "Hazardous": "Hazardous",
-  "Last updated": "Last updated"
+  "AQI of the day": "AQI of the day"
 };

@@ -8,32 +8,36 @@
         <span v-if="addressformatted && addressformatted !==''">{{ addressformatted }}</span>
         <span v-else class="skeleton-text"></span>
       </h3>
-      <div class="flexline" v-if="latestAQI">
-        <div class="aqi-badge">
-          <div class="aqi-box" :style="[{backgroundColor: latestAQI.Final_Color}, {color: latestAQI.Final_Label === 'Moderate' ? '#111111' : '#ffffff'}]">
-            <span class="aqi-value"> {{ latestAQI.Final_AQI  }}</span>
-          </div>
-          <div class="aqi-text">
-            <div class="aqi-label">{{  $t(latestAQI.Final_Label)  }}</div>
-            <div class="aqi-subtext">{{ $t('Latest PM AQI') }}</div>
-            <div v-if="state.provider === 'realtime'" class="aqi-subtext">{{ $t('Last updated') }}: {{ latestAQI.timestamp }}</div>
-          </div>
-        </div>
-      </div>
     </section>
 
     <div class="scrollable-y">
-      <section class="flexline" :class="state.provider === 'realtime' ? 'flexline-mobile-column' : null">
-        <ProviderType />
+      <section class="flexline-mobile-column">
 
-        <div v-if="state.provider !== 'realtime'">
-          <input type="date" v-model="state.start" :max="state.maxDate" onchange="this.blur()" />
+        <div class="flexline mb">
+          <div class="aqi" v-if="latestAQI" :style="{backgroundColor: latestAQI.Final_Color}">
+            <div class="aqi-badge">
+              <div class="aqi-box">
+                <span class="aqi-value"> {{ latestAQI.Final_AQI  }}</span>
+              </div>
+              <div class="aqi-text">
+                <div v-if="state.provider === 'realtime'" class="aqi-subtext">{{ $t('AQI') }} ({{ latestAQI.timestamp }})</div>
+                <div v-else class="aqi-subtext">{{ $t('AQI of the day') }}</div>
+                <div class="aqi-label">{{  $t(latestAQI.Final_Label)  }}</div>
+              </div>
+            </div>
+          </div>
+          <ProviderType />
+
+          <div v-if="state.provider !== 'realtime'">
+            <input type="date" v-model="state.start" :max="state.maxDate" onchange="this.blur()" />
+          </div>
+
+          <div v-else>
+            <div v-if="state.rttime" class="rt-time">{{ state.rttime }}</div>
+          </div>
         </div>
 
         <div v-if="state.provider === 'realtime'" class="flexline">
-          <div>
-            <div v-if="state.rttime" class="rt-time">{{ state.rttime }}</div>
-          </div>
           <template v-if="state.rtdata && state.rtdata.length">
             <div v-for="item in state.rtdata" :key="item.key">
               <div class="rt-unit">{{ item.label }}</div>
@@ -852,17 +856,23 @@ watch(
 
 /* AQI */
 
+.flexline.mb {
+  margin-bottom: var(--gap);
+}
+
+.aqi {
+  height: 40px;
+  border-radius: 4px;
+  padding: 8px 15px;
+} 
+
 .aqi-badge {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: sans-serif;
 }
 
 .aqi-box {
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -877,17 +887,17 @@ watch(
 }
 
 .aqi-value {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .aqi-label {
-  font-size: 14px;
+  font-size: 7px;
   font-weight: bold;
 }
 
 .aqi-subtext {
-  font-size: 12px;
-  color: #666;
+  font-size: 10px;
+  font-weight: bold;
 }
 
 /* - realtime */

@@ -18,12 +18,12 @@ export const breakpoints = {
 };
 
 export function getAQILabelAndColor(aqi) {
-  if (aqi <= 50) return { label: "Good", color: "#60bc2a" };         
-  if (aqi <= 100) return { label: "Moderate", color: "#f5ff00" };   
-  if (aqi <= 150) return { label: "Unhealthy for Sensitive Groups", color: "#ff9d00" };
-  if (aqi <= 200) return { label: "Unhealthy", color: "#fc0202" };    
-  if (aqi <= 300) return { label: "Very Unhealthy", color: "#7a00da" }; 
-  return { label: "Hazardous", color: "#7e0023" };
+  if (aqi <= 50) return { label: "Good", color: "#76E436" };         
+  if (aqi <= 100) return { label: "Moderate", color: "#01EAEA" };   
+  if (aqi <= 150) return { label: "Unhealthy", color: "#FDCB24" };
+  if (aqi <= 200) return { label: "Very Unhealthy", color: "#FF8732" };    
+  if (aqi <= 300) return { label: "Unacceptable", color: "#FF5B32" }; 
+  return { label: "Hazardous", color: "#7У0023" };
 }              
 
 export function calcAQI(concentration, pollutant) {
