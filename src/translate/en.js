@@ -224,6 +224,8 @@ export default {
   "Latest dew point": "Latest dew point",
   "Daily Recap": "Daily Recap",
   "Realtime": "Realtime",
+  "Dust & Particles": "Dust & Particles",
+  "Noise": "Noise",
   "Climate": "Climate",
   "Pressure": "Pressure",
   "Good": "Good",
