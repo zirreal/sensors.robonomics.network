@@ -8,6 +8,18 @@
         <span v-if="addressformatted && addressformatted !==''">{{ addressformatted }}</span>
         <span v-else class="skeleton-text"></span>
       </h3>
+      <div class="flexline" v-if="latestAQI">
+        <div class="aqi-badge">
+          <div class="aqi-box" :style="[{backgroundColor: latestAQI.Final_Color}, {color: latestAQI.Final_Label === 'Moderate' ? '#111111' : '#ffffff'}]">
+            <span class="aqi-value"> {{ latestAQI.Final_AQI  }}</span>
+          </div>
+          <div class="aqi-text">
+            <div class="aqi-label">{{  $t(latestAQI.Final_Label)  }}</div>
+            <div class="aqi-subtext">{{ $t('Latest PM AQI') }}</div>
+            <div v-if="state.provider === 'realtime'" class="aqi-subtext">{{ $t('Last updated') }}: {{ latestAQI.timestamp }}</div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <div class="scrollable-y">
@@ -162,7 +174,7 @@
 </template>
 
 <script setup>
-import { reactive, computed, ref, watch, watchEffect, onMounted, getCurrentInstance } from "vue";
+import { reactive, computed, ref, watch, watchEffect, onMounted, getCurrentInstance, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import moment from "moment";
@@ -170,6 +182,7 @@ import config, { sensors } from "@config";
 import measurements from "../../measurements";
 import { getTypeProvider } from "../../utils/utils";
 import { getAddressByPos } from "../../utils/map/utils";
+import { getTodayAQI, getRealtimeAQI } from '../../utils/aqi.js';
 
 import Bookmark from "./Bookmark.vue";
 import Chart from "./Chart.vue";
@@ -218,6 +231,10 @@ const state = reactive({
 // const prevGeo = ref({ lat: null, lng: null });
 const units = ref([]);
 const dewPoint = ref(null)
+const latestAQI = ref(null)
+const previousAQI = ref(null);
+
+let AQIInterval;
 
 // computed
 const sensor_id = computed(() => {
@@ -427,6 +444,12 @@ const setAddressUnrecognised = (lat, lng) => {
   };
 }
 
+const updateAQI = () => {
+  const newAQI = getRealtimeAQI(log.value);
+  previousAQI.value = newAQI.Final_AQI;
+  latestAQI.value = newAQI;
+};
+
 // events
 
 onMounted(() => {
@@ -446,6 +469,13 @@ onMounted(() => {
     : moment().format("YYYY-MM-DD");
 
   updatert();
+
+});
+
+onUnmounted(() => {
+  if(AQIInterval) {
+    clearInterval(AQIInterval);
+  }
 });
 
 watch(
@@ -461,8 +491,21 @@ watch(
   }
 );
 
+
 watch(() => log.value, (i) => {
     if(Array.isArray(i) && i.length > 0) {
+
+      if(state.provider === 'realtime') {
+        const aqiRealtimeResult = getRealtimeAQI(log.value);
+        latestAQI.value = aqiRealtimeResult
+        if(!AQIInterval) {
+          previousAQI.value = latestAQI.value.Final_AQI;
+          AQIInterval = setInterval(updateAQI, 60000);
+        }
+       } else {
+        const aqiTodayResult = getTodayAQI(log.value);
+        latestAQI.value = aqiTodayResult
+      }
 
       log.value.forEach(entry => {
         if (
@@ -805,6 +848,46 @@ watch(
 
 .rt-number {
   color: var(--color-blue);
+}
+
+/* AQI */
+
+.aqi-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: sans-serif;
+}
+
+.aqi-box {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.aqi-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.aqi-value {
+  font-size: 20px;
+}
+
+.aqi-label {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.aqi-subtext {
+  font-size: 12px;
+  color: #666;
 }
 
 /* - realtime */

@@ -74,7 +74,7 @@ const deviceHeaders = [
 ];
 
 const priceLinks = [
-  'https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight/coming_soon?utm_source=sensors.social&utm_medium=compare',
+  'https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight?utm_source=sensors.social&utm_medium=compare',
   'https://www2.purpleair.com/products/purpleair-zen',
   'https://www.airgradient.com',
   'https://www.netatmo.com/en-gb/weather-station-original-sand',

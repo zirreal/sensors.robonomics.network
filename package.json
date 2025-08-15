@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "static-generate": "yarn build && node src/static-generate.js",
     "autotranslate": "node src/scripts/translate.js",
     "preview": "npx kill-port 4173 && vite preview --port 4173",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
