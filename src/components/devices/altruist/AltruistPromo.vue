@@ -32,7 +32,7 @@ const link = ref("");
 
 onMounted(() => {
   link.value =
-    "https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight/coming_soon" +
+    "https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight" +
     `?utm_source=sensors.social&utm_medium=${props.utmMedium}`;
 });
 

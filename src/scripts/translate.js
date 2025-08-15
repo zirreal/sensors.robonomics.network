@@ -16,7 +16,13 @@ const PRESERVE_KEYS = [
   "Daily Recap", 
   "Realtime",
   "RADIATION",
-  "Pressure"
+  "Pressure",
+  "Good",
+  "Moderate",
+  "Unhealthy for Sensitive Groups",
+  "Unhealthy",
+  "Very Unhealthy",
+  "Hazardous"
 ];
 const TRANSLATION_FILES_DIR = "src/translate";
 const CACHE_FILE = "src/scripts/openai-cache.json";
