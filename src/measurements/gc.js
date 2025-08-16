@@ -24,7 +24,7 @@ export default {
     },
     {
       value: 60,
-      color: "#60bc2a",
+      color: "var(--measure-green)",
       label: {
         en: "Moderate",
         ru: "Невысокая"
@@ -32,7 +32,7 @@ export default {
     },
     {
       value: 100,
-      color: "#ff9d00",
+      color: "var(--measure-yellow)",
       label: {
         en: "Elevated",
         ru: "Повышенная"
@@ -40,7 +40,7 @@ export default {
     },
     {
       value: 200,
-      color: "#ff4d00",
+      color: "var(--measure-orange)",
       label: {
         en: "High",
         ru: "Высокая"

@@ -15,7 +15,7 @@ export default {
   zones: [
     {
       value: 747,
-      color: "#12bfcc",
+      color: "var(--measure-bluegreen)",
       label: {
         en: "Very low",
         ru: "Очень низкое давление"
@@ -23,7 +23,7 @@ export default {
     },
     {
       value: 767,
-      color: "#60bc2a",
+      color: "var(--measure-green)",
       label: {
         en: "Normal",
         ru: "Нормальное давление"
@@ -31,14 +31,14 @@ export default {
     },
     {
       value: 775,
-      color: "#ff9d00",
+      color: "var(--measure-yellow)",
       label: {
         en: "High",
         ru: "Высокое давление"
       }
     },
     {
-      color: "#ff4d00",
+      color: "var(--measure-orange)",
       label: {
         en: "Very high",
         ru: "Очень высокое давление"

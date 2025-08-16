@@ -15,7 +15,7 @@ export default {
   zones: [
     {
       value: 40,
-      color: "#60bc2a",
+      color: "var(--measure-green)",
       label: {
         en: "Faint",
         ru: "Тихо"
@@ -23,7 +23,7 @@ export default {
     },
     {
       value: 70,
-      color: "#12bfcc",
+      color: "var(--measure-bluegreen)",
       label: {
         en: "Moderate",
         ru: "Удовлетворительно"
@@ -31,7 +31,7 @@ export default {
     },
     {
       value: 80,
-      color: "#ff9d00",
+      color: "var(--measure-yellow)",
       label: {
         en: "Loud",
         ru: "Шумно"
@@ -39,7 +39,7 @@ export default {
     },
     {
       value: 100,
-      color: "#ff4d00",
+      color: "var(--measure-orange)",
       label: {
         en: "Very loud",
         ru: "Очень шумно"

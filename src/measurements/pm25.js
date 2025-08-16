@@ -12,12 +12,12 @@ export default {
   },
   unit: "μg/m3",
   chartColor: "#89b268",
-  colors: ["#76E436", "#01EAEA", "#FDCB24"],
+  // colors: ["#76E436", "#01EAEA", "#FDCB24"],
   range: [0, 30, 55, 110, 250],
   zones: [
     {
       value: 30,
-      color: "#76E436",
+      color: "var(--measure-green)",
       label: {
         en: "Good",
         ru: "Хорошо"
@@ -25,7 +25,7 @@ export default {
     },
     {
       value: 55,
-      color: "#01EAEA",
+      color: "var(--measure-bluegreen)",
       label: {
         en: "Moderate",
         ru: "Приемлемо"
@@ -33,7 +33,7 @@ export default {
     },
     {
       value: 110,
-      color: "#FDCB24",
+      color: "var(--measure-yellow)",
       label: {
         en: "Unhealthy",
         ru: "Вредно для здоровья"
@@ -41,14 +41,14 @@ export default {
     },
     {
       value: 250,
-      color: "#FF8732",
+      color: "var(--measure-orange)",
       label: {
         en: "Very Unhealthy",
         ru: "Очень вредно для здоровья"
       }
     },
     {
-      color: "#FF5B32",
+      color: "var(--measure-red)",
       label: {
         en: "Unacceptable",
         ru: "Неприемлемо"

@@ -233,5 +233,5 @@ export default {
   "Unhealthy": "Вредное",
   "Very Unhealthy": "Очень вредное",
   "Hazardous": "Опасное",
-  "AQI of the day": "ИКВ дня"
+  "Today": "Сегодня"
 };

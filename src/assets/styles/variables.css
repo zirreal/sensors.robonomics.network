@@ -16,6 +16,18 @@
   --color-purple: #7a00da;
   --color-navy: hsl(219, 63%, 45%);
 
+
+  /* Measurements colors */
+  --measure-nodata: var(--color-light-gray);
+  --measure-green: #6bde28;
+  --measure-bluegreen: #01EAEA;
+  --measure-yellow: #FDCB24;
+  --measure-orange: #FF8732;
+  --measure-red: #FD4C1F;
+  --measure-darkred: #EB0004;
+  --measure-blue: #00aeff;
+  --measure-darkblue: #016ee3;
+
   --color-link: var(--color-blue);
   --color-link-hover: var(--color-green);
 

@@ -18,12 +18,12 @@ export const breakpoints = {
 };
 
 export function getAQILabelAndColor(aqi) {
-  if (aqi <= 50) return { label: "Good", color: "#76E436" };         
-  if (aqi <= 100) return { label: "Moderate", color: "#01EAEA" };   
-  if (aqi <= 150) return { label: "Unhealthy", color: "#FDCB24" };
-  if (aqi <= 200) return { label: "Very Unhealthy", color: "#FF8732" };    
-  if (aqi <= 300) return { label: "Unacceptable", color: "#FF5B32" }; 
-  return { label: "Hazardous", color: "#7У0023" };
+  if (aqi <= 50) return { label: "Good", color: "var(--measure-green)" };         
+  if (aqi <= 100) return { label: "Moderate", color: "var(--measure-bluegreen)" };   
+  if (aqi <= 150) return { label: "Unhealthy", color: "var(--measure-yellow)" };
+  if (aqi <= 200) return { label: "Very Unhealthy", color: "var(--measure-orange)" };    
+  if (aqi <= 300) return { label: "Unacceptable", color: "var(--measure-red)" }; 
+  return { label: "Hazardous", color: "var(--measure-darkred)" };
 }              
 
 export function calcAQI(concentration, pollutant) {
@@ -56,8 +56,8 @@ export function getRealtimeAQI(logs) {
   const pm10Info = aqiPM10 !== null ? getAQILabelAndColor(aqiPM10) : null;
 
   
-  let finalAQI = 0;
-  let finalInfo = { label: 'No Data', color: '#999999' };
+  let finalAQI = '–';
+  let finalInfo = { label: 'No Data', color: 'var(--measure-nodata)' };
 
   if (aqiPM25 !== null && aqiPM10 !== null) {
     finalAQI = Math.round(Math.max(aqiPM25, aqiPM10));

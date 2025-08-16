@@ -13,12 +13,12 @@ export default {
   unit: "mg/m3",
   icon: "vial-virus",
   chartColor: "#a1e37a",
-  colors: ["#60bc2a", "#ff9d00", "#fc0202"],
+  // colors: ["var(--measure-green)", "#ff9d00", "#fc0202"],
   range: [0, 15, 40],
   zones: [
     {
       value: 15,
-      color: "#60bc2a",
+      color: "var(--measure-green)",
       label: {
         en: "Good",
         ru: "Хорошо"
@@ -26,7 +26,7 @@ export default {
     },
     {
       value: 40,
-      color: "#ff9d00",
+      color: "var(--measure-yellow)",
       label: {
         en: "Satisfyingly",
         ru: "Удовлетворительно"

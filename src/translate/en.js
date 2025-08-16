@@ -234,5 +234,5 @@ export default {
   "Unhealthy": "Unhealthy",
   "Very Unhealthy": "Very Unhealthy",
   "Hazardous": "Hazardous",
-  "AQI of the day": "AQI of the day"
+  "Today": "Today"
 };

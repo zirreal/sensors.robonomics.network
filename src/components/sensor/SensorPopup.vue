@@ -14,18 +14,21 @@
       <section class="flexline-mobile-column">
 
         <div class="flexline mb">
-          <div class="aqi" v-if="latestAQI" :style="{backgroundColor: latestAQI.Final_Color}">
+          <!-- тут нужна проверка, что между крайними показаниями не меньше часа-->
+          <div class="aqi" v-if="latestAQI && state.provider !== 'realtime'" :style="{backgroundColor: latestAQI.Final_Color}">
             <div class="aqi-badge">
               <div class="aqi-box">
-                <span class="aqi-value"> {{ latestAQI.Final_AQI  }}</span>
+                <span class="aqi-value"> {{ latestAQI.Final_AQI }}</span>
               </div>
               <div class="aqi-text">
-                <div v-if="state.provider === 'realtime'" class="aqi-subtext">{{ $t('AQI') }} ({{ latestAQI.timestamp }})</div>
-                <div v-else class="aqi-subtext">{{ $t('AQI of the day') }}</div>
-                <div class="aqi-label">{{  $t(latestAQI.Final_Label)  }}</div>
+                <div class="aqi-subtext">AQI (US EPA)</div>
+                <div v-if="latestAQI.Final_Label" class="aqi-label">
+                  {{ $t(latestAQI.Final_Label) }}
+                </div>
               </div>
             </div>
           </div>
+
           <ProviderType />
 
           <div v-if="state.provider !== 'realtime'">

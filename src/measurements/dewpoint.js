@@ -14,7 +14,7 @@ export default {
   zones: [
     {
       value: 10,
-      color: "#ff4d00",
+      color: "var(--measure-orange)",
       label: {
         en: "Very Dry Air",
         ru: "Очень сухой воздух"
@@ -22,7 +22,7 @@ export default {
     },
     {
       value: 15,
-      color: "#ff9d00",
+      color: "var(--measure-yellow)",
       label: {
         en: "Dry",
         ru: "Сухо"
@@ -30,7 +30,7 @@ export default {
     },
     {
       value: 18,
-      color: "#60bc2a",
+      color: "var(--measure-green)",
       label: {
         en: "Comfortable",
         ru: "Комфортно"
@@ -38,7 +38,7 @@ export default {
     },
     {
       value: 21,
-      color: "#12bfcc",
+      color: "var(--measure-bluegreen)",
       label: {
         en: "Humid",
         ru: "Влажно"
@@ -46,14 +46,14 @@ export default {
     },
     {
       value: 24,
-      color: "#2a5cbc",
+      color: "var(--measure-blue)",
       label: {
         en: "High Humidity Level",
         ru: "Высокий уровень влажности"
       }
     },
     {
-      color: "#7a00da",
+      color: "var(--measure-darkblue)",
       label: {
         en: "Extremely Humid",
         ru: "Очень влажно"

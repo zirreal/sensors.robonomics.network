@@ -12,12 +12,12 @@ export default {
   },
   unit: "℃",
   chartColor: "#2d7ac7",
-  colors: ["#fc0202", "#ff9d00", "#60bc2a", "#ff9d00", "#fc0202"],
+  // colors: ["#fc0202", "#ff9d00", "var(--measure-green)", "#ff9d00", "#fc0202"],
   range: [-9, 1, 10, 25],
   zones: [
     {
       value: -9,
-      color: "#7a00da",
+      color: "var(--measure-darkblue)",
       label: {
         en: "Very cold",
         ru: "Очень холодно"
@@ -25,7 +25,7 @@ export default {
     },
     {
       value: 1,
-      color: "#2a5cbc",
+      color: "var(--measure-blue)",
       label: {
         en: "Cold",
         ru: "Холодно"
@@ -33,7 +33,7 @@ export default {
     },
     {
       value: 10,
-      color: "#03a5ed",
+      color: "var(--measure-bluegreen)",
       label: {
         en: "Cool",
         ru: "Прохладно"
@@ -41,17 +41,25 @@ export default {
     },
     {
       value: 25,
-      color: "#60bc2a",
+      color: "var(--measure-green)",
       label: {
         en: "Warm",
         ru: "Тепло"
       }
     },
     {
-      color: "#ff9d00",
+      value: 35,
+      color: "var(--measure-yellow)",
       label: {
         en: "Hot",
         ru: "Жарко"
+      }
+    },
+    {
+      color: "var(--measure-orange)",
+      label: {
+        en: "Very hot",
+        ru: "Очень жарко"
       }
     }
   ],

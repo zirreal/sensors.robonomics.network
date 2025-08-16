@@ -16,7 +16,7 @@ export default {
   zones: [
     {
       value: 30,
-      color: "#ff4d00",
+      color: "var(--measure-orange)",
       label: {
         en: "Very dry",
         ru: "Очень сухо"
@@ -24,7 +24,7 @@ export default {
     },
     {
       value: 40,
-      color: "#ff9d00",
+      color: "var(--measure-yellow)",
       label: {
         en: "Dry",
         ru: "Сухо"
@@ -32,7 +32,7 @@ export default {
     },
     {
       value: 60,
-      color: "#60bc2a",
+      color: "var(--measure-green)",
       label: {
         en: "Comfortable",
         ru: "Комфортно"
@@ -40,14 +40,14 @@ export default {
     },
     {
       value: 70,
-      color: "#12bfcc",
+      color: "var(--measure-bluegreen)",
       label: {
         en: "Humid",
         ru: "Влажно"
       }
     },
     {
-      color: "#2a5cbc",
+      color: "var(--measure-blue)",
       label: {
         en: "Very humid",
         ru: "Очень влажно"

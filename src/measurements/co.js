@@ -8,12 +8,12 @@ export default {
   },
   unit: "mg/m3",
   chartColor: "#c1c1c1",
-  colors: ["#60bc2a", "#ff9d00", "#fc0202"],
+  // colors: ["var(--measure-green)", "#ff9d00", "#fc0202"],
   range: [0, 2, 4, 14],
   zones: [
     {
       value: 0,
-      color: "#60bc2a",
+      color: "var(--measure-green)",
       label: {
         en: "Good",
         ru: "Хорошо"
@@ -21,7 +21,7 @@ export default {
     },
     {
       value: 2,
-      color: "#12bfcc",
+      color: "var(--measure-bluegreen)",
       label: {
         en: "Satisfyingly",
         ru: "Удовлетворительно"
@@ -29,7 +29,7 @@ export default {
     },
     {
       value: 4,
-      color: "#ff9d00",
+      color: "var(--measure-yellow)",
       label: {
         en: "Poor",
         ru: "Плохо"
