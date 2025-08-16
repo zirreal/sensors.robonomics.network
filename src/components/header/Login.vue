@@ -1,6 +1,6 @@
 <template>
   <router-link
-    v-if="!accountStore.address"
+    v-if="accounts.length === 0"
     to="/login/"
     class="button"
   >
@@ -60,8 +60,9 @@ import { getTypeProvider } from "@/utils/utils";
 const accountStore = useAccountStore();
 const accounts = ref([]);
 
+// Загружаем все аккаунты из БД/стора и подгружаем сенсоры
 async function loadAccounts() {
-  const stored = await accountStore.getDB();
+  const stored = await accountStore.getAccounts();
 
   accounts.value = stored.map(acc => ({
     ...acc,
@@ -76,14 +77,13 @@ async function loadAccounts() {
   }
 }
 
+// Удалить аккаунт по ключу, перезагрузить список
 async function deleteAccount(acc) {
-  await accountStore.deleteFromDB(acc.address);
+  await accountStore.removeAccounts(acc.address);
   await loadAccounts();
-  if (!accounts.value.length) {
-    accountStore.clearAccount();
-  }
 }
 
+// Сформировать ссылку на сенсор
 function getSensorLink(sensor) {
   return {
     name: "main",
@@ -91,7 +91,7 @@ function getSensorLink(sensor) {
       provider: getTypeProvider(),
       type: config.MAP.measure,
       zoom: config.MAP.zoom,
-      lat: config.MAP.position.lat, // если нужна попытка получить координаты — доработай тут
+      lat: config.MAP.position.lat,
       lng: config.MAP.position.lng,
       sensor: sensor,
     },

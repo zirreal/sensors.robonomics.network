@@ -23,13 +23,6 @@
     "remote": "Daily Recap"
   },
   "SERIES_MAX_VISIBLE": 3000,
-  "INDEXEDDB": {
-    "accounts": {
-      "dbname": "Altruist",
-      "dbversion": "1",
-      "tablename": "Accounts"
-    }
-  },
   "TITLE": "Map of independent air quality sensors",
   "DESC": "Welcome to the decentralized opensource sensors map which operates with the sole intent of serving the free will of individuals, without any beneficiaries.",
   "SITE_NAME": "Sensors.social",

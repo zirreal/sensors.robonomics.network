@@ -1,24 +1,21 @@
 import { defineStore } from "pinia";
-import { IDBgettable } from "../idb";
+import { IDBgettable, watchDBChange } from "../utils/idb";
+import schemas from "@/config/default/idb-schemas.json";
 
-export const useBookmarksStore = defineStore('bookmarks', {
+const schema = schemas?.SensorsDBBookmarks || {};
+const DB_NAME = schema.dbname || "SensorsDBBookmarks";
+const STORE = Object.keys(schema.stores || { bookmarks: {} })[0] || "bookmarks";
+
+export const useBookmarksStore = defineStore("bookmarks", {
   state: () => ({
-    idbBookmarkDbname: 'SensorsDBBookmarks',
-    idbBookmarkVDbver: 6,
-    idbBookmarkVDbtable: 'bookmarks',
-    idbWatcherBroadcast: 'idb_changed', /* this we need until IndexedDB Observer will be available in browsers */
-    idbBookmarks: null,
+    idbBookmarks: [],
   }),
   actions: {
     async idbBookmarkGet() {
-      this.idbBookmarks = await IDBgettable(this.idbBookmarkDbname, this.idbBookmarkVDbver, this.idbBookmarkVDbtable);
-
-      const bc = new BroadcastChannel(this.idbWatcherBroadcast);
-      bc.onmessage = async (e) => {
-        if(e.data === this.idbBookmarkVDbtable) {
-          this.idbBookmarks = await IDBgettable(this.idbBookmarkDbname, this.idbBookmarkVDbver, this.idbBookmarkVDbtable);
-        }
-      };
+      this.idbBookmarks = await IDBgettable(DB_NAME, STORE);
+    },
+    watchBookmarks() {
+      return watchDBChange(DB_NAME, STORE, () => this.idbBookmarkGet());
     },
   },
 });

@@ -1,0 +1,16 @@
+{
+  "Altruist": {
+    "dbname": "Altruist",
+    "dbversion": 1,
+    "stores": {
+      "Accounts": { "keyPath": "address", "autoIncrement": false }
+    }
+  },
+  "SensorsDBBookmarks": {
+    "dbname": "SensorsDBBookmarks",
+    "dbversion": 6,
+    "stores": {
+      "bookmarks": { "keyPath": "id", "autoIncrement": true }
+    }
+  }
+}

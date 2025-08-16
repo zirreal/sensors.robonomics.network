@@ -56,31 +56,29 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAccountStore } from "@/stores/account";
-import config from "@config";
 
 import { mnemonicValidate, encodeAddress } from "@polkadot/util-crypto";
 import { Keyring } from "@polkadot/keyring";
 
 import MetaInfo from '../components/MetaInfo.vue';
 import PageTextLayout from "../components/layouts/PageText.vue";
-import { encryptText } from "../idb";
+import { encryptText } from "../utils/idb";
 import { getTypeProvider } from "../utils/utils";
-
+import config from "@config";
 import ogImage from '../assets/images/pages/login/og-login.webp';
 
 const accountStore = useAccountStore();
-const MAGIC = "altruist-v1";
 const router = useRouter();
 let redirectTimer = null;
 
 const passPhrase = ref("");
 const keepSigned = ref(false);
 const error = ref("");
-const keyType = ref("sr25519"); // По умолчанию sr25519
-const loginStatus = ref("idle"); // idle | success | error
+const keyType = ref("sr25519");
+const loginStatus = ref("idle");
 const sensorLink = ref(null);
 const redirectCountdown = ref(15);
 
@@ -125,10 +123,8 @@ async function getUserSensors(owner) {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-
     const result = await response.json();
     return Array.isArray(result.sensors) ? result.sensors : [];
-
   } catch (error) {
     console.warn('getUserSensors error:', error);
     return [];
@@ -150,8 +146,8 @@ function redirect() {
       provider: getTypeProvider(),
       type: config.MAP.measure,
       zoom: config.MAP.zoom,
-      lat: config.MAP.position.lat, // тут надо сделать попытку получить гео от сенсора >> sensorLat || config.MAP.position.lat
-      lng: config.MAP.position.lng, // тут тоже
+      lat: config.MAP.position.lat,
+      lng: config.MAP.position.lng,
       sensor: accountStore.devices[0],
     },
   };
@@ -216,8 +212,8 @@ async function handleLogin(e) {
       return;
     }
   } else {
-    // убеждаемся, что аккаунт не сохранен в бд, так как пользователь больше этого не хочет
-    accountStore.deleteFromDB(address);
+    // Если пользователь не хочет сохранять — просто удаляем из БД
+    await accountStore.deleteFromDB(address);
   }
 
   accountStore.setAccount(phrase, address, type, devices);
@@ -225,11 +221,12 @@ async function handleLogin(e) {
   passPhrase.value = "";
   loginStatus.value = "success";
 
-  if (devices.length > 0) {
-    // redirect();
-  }
+  // if (devices.length > 0) {
+  //   redirect();
+  // }
 }
 </script>
+
 
 <style scoped>
 h3 {
