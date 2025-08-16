@@ -16,26 +16,29 @@ import config from "@/config/default/config.json";
 import { getSensorsForLastDay } from "./utils/utils";
 
 const route = useRoute();
-
 const accountStore = useAccountStore();
 const mapStore = useMapStore();
 
+/*
+  Класс для /main
+*/
 function updateAppClass() {
-  const app = document.getElementById('app');
+  const app = document.getElementById("app");
   if (!app) return;
-  if (route.name === 'main') {
-    app.classList.add('map');
-  } else {
-    app.classList.remove('map');
-  }
+  if (route.name === "main") app.classList.add("map");
+  else app.classList.remove("map");
 }
-
 watch(() => route.name, updateAppClass, { immediate: true });
 
+/*
+  При маунте: загружаем аккаунты из IndexedDB через стор,
+  затем для каждого обновляем devices из сети (getUserSensors) и
+  сохраняем обратно через addAccount.
+*/
 onMounted(async () => {
-
-   /* + INIT ACCOUNT */
-  const accounts = await accountStore.getDB();
+  
+  /* + INIT ACCOUNT */
+  const accounts = await accountStore.getAccounts();
 
   if (accounts && accounts.length > 0) {
     let selected = accounts.find(acc => acc.active);

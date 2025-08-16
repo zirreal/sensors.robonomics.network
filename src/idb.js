@@ -1,132 +1,155 @@
-/* Functions for working with IndexedDB */
+import IDB_CONFIG from "@/config/default/idb-schemas.json";
 
-/*  
-    function IDBworkflow
-    Basic for InxedDB:
-    - opens and checks for uppropriate version;
-    - creates objectStore for dbtable
+/*
+    Все функции используют схему из IDB_CONFIG.
+    Для добавления новых БД/objectStore достаточно расширить json.
+*/
 
-    Usage example:
-    idbworkflow('db', 1, 'dbtable', 'readonly', store => {
-        let somearray = []
-        store.openCursor().addEventListener('success', e => {
-            const cursor = e.target.result
-            if(cursor){
-                somearray.push(cursor.value)
-                cursor.continue()
-            }
-        })
-    })
- */
-export function IDBworkflow(dbname, dbver, dbtable, mode, onsuccess, keyPath, autoIncrement = true) {
+/*
+    getDBConfig(dbname)
+    Возвращает конфиг выбранной БД из IDB_CONFIG.
+*/
+function getDBConfig(dbname) {
+    const db = IDB_CONFIG[dbname];
+    if (!db) throw new Error(`No config for db: ${dbname}`);
+    return db;
+}
 
-    console.log('IDBworkflow', dbname, dbver, dbtable, mode, onsuccess, keyPath, autoIncrement)
-    const IDB = window.indexedDB || window.webkitIndexedDB
-    if(!IDB) { return }
+/*
+    getStoreConfig(dbname, dbtable)
+    Возвращает схему objectStore выбранной БД.
+*/
+function getStoreConfig(dbname, dbtable) {
+    const db = getDBConfig(dbname);
+    const store = db.stores[dbtable];
+    if (!store) throw new Error(`No schema for objectStore: ${dbtable} in ${dbname}`);
+    return store;
+}
 
-    let db = null
-    const DBOpenReq = IDB.open(dbname, dbver)
-    
+/*
+    IDBworkflow(dbname, dbtable, mode, onsuccess)
+    Открывает БД и инициирует транзакцию для objectStore.
+    - dbname: имя БД
+    - dbtable: имя objectStore
+    - mode: 'readonly' | 'readwrite'
+    - onsuccess: функция(store), где store — экземпляр objectStore
+    Используй для операций записи/изменения одной или нескольких записей.
+    Пример:
+        IDBworkflow('SensorsDBBookmarks', 'bookmarks', 'readwrite', store => { store.put({...}) })
+*/
+export function IDBworkflow(dbname, dbtable, mode, onsuccess) {
+    const dbconf = getDBConfig(dbname);
+    const { dbversion } = dbconf;
+    const { keyPath, autoIncrement } = getStoreConfig(dbname, dbtable);
+
+    const IDB = window.indexedDB || window.webkitIndexedDB;
+    if (!IDB) { return; }
+
+    let db = null;
+    const DBOpenReq = IDB.open(dbname, dbversion);
+
     DBOpenReq.addEventListener('error', err => {
-        console.warn(err)
-    })
+        console.warn(err);
+    });
 
     DBOpenReq.addEventListener('success', e => {
         db = e.target.result;
-
-        if(db.objectStoreNames.contains(dbtable)) {
+        if (db.objectStoreNames.contains(dbtable)) {
             let tx = db.transaction(dbtable, mode);
-            tx.addEventListener('error', err => {
-                console.warn(err)
-            })
-            const store = tx.objectStore(dbtable)
-            onsuccess(store)
+            tx.addEventListener('error', err => { console.warn(err); });
+            const store = tx.objectStore(dbtable);
+            onsuccess(store);
         }
-    })
-
+    });
 
     DBOpenReq.addEventListener('upgradeneeded', (e) => {
-        db = e.target.result
-            
-        const oldVersion = e.oldVersion
-        const newVersion = e.newVersion || db.version
-
-        if(oldVersion === 0) {
-            console.log('DB updated from version', oldVersion, 'to', newVersion);
-        } else {
-            IDBcleartable(dbname, dbver, dbtable);
-            console.log('DB version is outdated, all data will be cleared for further compatible work');
-        }
-
-        if (!db.objectStoreNames.contains(dbtable)) {
-            db.createObjectStore(dbtable, { keyPath, autoIncrement })
-        }
-    })
+        db = e.target.result;
+        // создаёт или пересоздаёт все objectStore согласно конфигу для выбранной БД
+        Object.entries(dbconf.stores).forEach(([storeName, { keyPath, autoIncrement }]) => {
+            if (db.objectStoreNames.contains(storeName)) {
+                db.deleteObjectStore(storeName);
+            }
+            db.createObjectStore(storeName, { keyPath, autoIncrement });
+        });
+    });
 }
 
-/* get all data from the table */
-export function IDBgettable(dbname, dbver, dbtable, keyPath = 'id', autoIncrement = true) {
+/*
+    IDBgettable(dbname, dbtable)
+    Возвращает Promise со всеми записями objectStore из выбранной БД в виде массива.
+    Пример:
+        IDBgettable('SensorsDBBookmarks', 'bookmarks').then(arr => ...)
+*/
+export function IDBgettable(dbname, dbtable) {
     return new Promise((resolve) => {
-        let datafromtable = []
-        IDBworkflow(dbname, dbver, dbtable, 'readonly', store => {
+        let datafromtable = [];
+        IDBworkflow(dbname, dbtable, 'readonly', store => {
             store.openCursor().addEventListener('success', e => {
-                const cursor = e.target.result
-                if(cursor){
-                    datafromtable.push(cursor.value)
-                    cursor.continue()
+                const cursor = e.target.result;
+                if (cursor) {
+                    datafromtable.push(cursor.value);
+                    cursor.continue();
                 } else {
-                    resolve(datafromtable)
+                    resolve(datafromtable);
                 }
-            })
-        }, keyPath, autoIncrement)
-    })
+            });
+        });
+    });
 }
 
-
-export function IDBdeleteByKey(dbname, dbver, dbtable, key) {
-  return new Promise((resolve, reject) => {
-    IDBworkflow(
-      dbname,
-      dbver,
-      dbtable,
-      "readwrite",
-      (store) => {
-        const req = store.delete(key);
-        req.onsuccess = () => resolve();
-        req.onerror = (e) => reject(e);
-      }
-    );
-  });
+/*
+    IDBdeleteByKey(dbname, dbtable, key)
+    Удаляет одну запись по ключу из выбранной БД/objectStore.
+    Возвращает Promise, который resolve после удаления.
+    Пример:
+        IDBdeleteByKey('SensorsDBBookmarks', 'bookmarks', 5)
+*/
+export function IDBdeleteByKey(dbname, dbtable, key) {
+    return new Promise((resolve, reject) => {
+        IDBworkflow(
+            dbname,
+            dbtable,
+            "readwrite",
+            (store) => {
+                const req = store.delete(key);
+                req.onsuccess = () => resolve();
+                req.onerror = (e) => reject(e);
+            }
+        );
+    });
 }
 
-/* delete all data from the table */
-export function IDBcleartable(dbname, dbver, dbtable) {
-
-    IDBworkflow(dbname, dbver, dbtable, 'readwrite', store => {
+/*
+    IDBcleartable(dbname, dbtable)
+    Очищает objectStore полностью в выбранной БД.
+    Не возвращает ничего, просто очищает.
+    Пример:
+        IDBcleartable('SensorsDBBookmarks', 'bookmarks')
+*/
+export function IDBcleartable(dbname, dbtable) {
+    IDBworkflow(dbname, dbtable, 'readwrite', store => {
         const request = store.clear();
 
-        request.onsuccess = ()=> {
+        request.onsuccess = () => {
             console.log(`DB ${dbtable} cleared`);
             const bc = new BroadcastChannel('idb_changed');
             bc.postMessage(dbtable);
             bc.close();
             return true;
-        }
-    
-        request.onerror = (err)=> {
+        };
+
+        request.onerror = (err) => {
             console.log(`Error to empty Object Store: ${err}`);
             return false;
-        }
+        };
     });
-    
 }
 
-/*  
+/*
     encryptText(text)
     Возвращает объект { ciphertext, iv, key }
-    Используется для безопасного хранения текста
+    Для безопасного хранения строки в IndexedDB.
 */
-
 export async function encryptText(text) {
     const MAGIC = "altruist-v1";
     const enc = new TextEncoder();
@@ -151,8 +174,8 @@ export async function encryptText(text) {
 
 /*
     decryptText(data)
-    data — объект {ciphertext, iv, key}
-    Возвращает расшифрованный текст или null, если ошибка
+    Дешифрует объект, полученный из encryptText.
+    Возвращает строку или null при ошибке.
 */
 export async function decryptText(data) {
     try {
@@ -171,11 +194,57 @@ export async function decryptText(data) {
             new Uint8Array(data.ciphertext)
         );
         const str = dec.decode(new Uint8Array(decrypted));
-        if(str.startsWith(MAGIC + ":")) {
+        if (str.startsWith(MAGIC + ":")) {
             return str.slice(MAGIC.length + 1);
         }
         return null;
-    } catch(e) {
+    } catch (e) {
         return null;
     }
+}
+
+/*
+    notifyDBChange(dbname, dbtable)
+    Отправляет событие в BroadcastChannel, что в objectStore произошли изменения.
+    Вызывай после любых операций изменения данных в IndexedDB, чтобы другие вкладки/компоненты могли отреагировать.
+    Пример:
+        notifyDBChange('Altruist', 'Accounts')
+*/
+export function notifyDBChange(dbname, dbtable) {
+    const bc = new BroadcastChannel('idb_changed');
+    bc.postMessage({ dbname, tablename: dbtable });
+    bc.close();
+}
+
+/*
+    watchDBChange(dbname, dbtable, callback)
+    Подписывается на изменения конкретного objectStore.
+    - dbname: имя базы
+    - dbtable: имя objectStore
+    - callback: функция, вызываемая при изменении
+    Возвращает функцию для отписки.
+    Пример:
+        const stop = watchDBChange('Altruist', 'Accounts', loadAccounts);
+        onUnmounted(stop);
+*/
+export function watchDBChange(dbname, dbtable, callback) {
+    const bc = new BroadcastChannel('idb_changed');
+
+    bc.onmessage = (event) => {
+        const { dbname: changedDB, tablename: changedTable } = event.data || {};
+        if (changedDB === dbname && changedTable === dbtable) {
+            callback();
+        }
+    };
+
+    return () => bc.close();
+}
+
+/*
+    hasIndexedDB()
+    Проверяет поддержку IndexedDB в окружении.
+*/
+export function hasIndexedDB() {
+    const IDB = window.indexedDB || window.webkitIndexedDB;
+    return !!IDB;
 }
