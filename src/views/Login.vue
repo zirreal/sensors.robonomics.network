@@ -65,7 +65,7 @@ import { Keyring } from "@polkadot/keyring";
 
 import MetaInfo from '../components/MetaInfo.vue';
 import PageTextLayout from "../components/layouts/PageText.vue";
-import { encryptText } from "../idb";
+import { encryptText } from "../utils/idb";
 import { getTypeProvider } from "../utils/utils";
 import config from "@config";
 import ogImage from '../assets/images/pages/login/og-login.webp';

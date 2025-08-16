@@ -12,17 +12,28 @@
       :area-label="$t('sensorpopup.bookmarkbutton')"
       :title="$t('sensorpopup.bookmarkbutton')"
     >
-      <template v-if="!IsBookmarked"
-        ><font-awesome-icon icon="fa-solid fa-bookmark"
-      /></template>
-      <template v-else><font-awesome-icon icon="fa-solid fa-check" /></template>
+      <template v-if="!IsBookmarked">
+        <font-awesome-icon icon="fa-solid fa-bookmark" />
+      </template>
+      <template v-else>
+        <font-awesome-icon icon="fa-solid fa-check" />
+      </template>
     </button>
   </form>
 </template>
 
 <script>
 import { useBookmarksStore } from "@/stores/bookmarks";
-import { IDBgettable, IDBworkflow } from "../../idb";
+import {
+  IDBgettable,
+  IDBworkflow,
+  notifyDBChange,
+} from "../../utils/idb";
+import schemas from "@/config/default/idb-schemas.json";
+
+const schema = schemas?.SensorsDBBookmarks || {};
+const DB_NAME = schema.dbname || "SensorsDBBookmarks";
+const STORE = Object.keys(schema.stores || { bookmarks: {} })[0] || "bookmarks";
 
 export default {
   props: ["address", "link", "geo", "id"],
@@ -30,7 +41,6 @@ export default {
   data() {
     return {
       IsBookmarked: false,
-      db: null,
       bookmarks: [],
       bookmarkid: null,
       bookmarkname: "",
@@ -41,88 +51,73 @@ export default {
   computed: {
     buttonclasses() {
       return {
-        [`button`]: true,
-        [`button-green`]: this.IsBookmarked,
-        // [`flexline`]: true,
+        button: true,
+        "button-green": this.IsBookmarked,
       };
     },
   },
 
   methods: {
     async findbookmark() {
-      const bookmarks = await IDBgettable(
-        this.bookmarksStore.idbBookmarkDbname,
-        this.bookmarksStore.idbBookmarkVDbver,
-        this.bookmarksStore.idbBookmarkVDbtable
-      );
+      const bookmarks = await IDBgettable(DB_NAME, STORE);
       return bookmarks.find((bookmark) => bookmark.id === this.$props.id);
     },
 
     async addbookmark() {
       const bookmark = await this.findbookmark();
-      const sensorElement = document.querySelector(`[data-id="${this.$props.id}"]`);
-
+      const sensorElement = document.querySelector(
+        `[data-id="${this.$props.id}"]`
+      );
 
       if (bookmark) {
         if (this.bookmarkid) {
-          IDBworkflow(
-            this.bookmarksStore.idbBookmarkDbname,
-            this.bookmarksStore.idbBookmarkVDbver,
-            this.bookmarksStore.idbBookmarkVDbtable,
-            "readwrite",
-            (store) => {
-              const request = store.get(this.bookmarkid);
+          IDBworkflow(DB_NAME, STORE, "readwrite", (store) => {
+            const request = store.get(this.bookmarkid);
 
-              request.addEventListener("error", (e) => {
+            request.addEventListener("error", (e) => {
+              console.error(e);
+            });
+
+            request.addEventListener("success", (e) => {
+              const data = e.target.result;
+              data.customName = this.bookmarkname;
+              const requestUpdate = store.put(data);
+
+              requestUpdate.addEventListener("error", (e) => {
                 console.error(e);
               });
 
-              request.addEventListener("success", (e) => {
-                const data = e.target.result;
-                data.customName = this.bookmarkname;
-                const requestUpdate = store.put(data);
-
-                requestUpdate.addEventListener("error", (e) => {
-                  console.error(e);
-                });
-
-              requestUpdate.addEventListener("success", (e) => {
-                if (sensorElement && !sensorElement.classList.contains('sensor-bookmarked')) {
-                  sensorElement.classList.add('sensor-bookmarked');
+              requestUpdate.addEventListener("success", () => {
+                if (
+                  sensorElement &&
+                  !sensorElement.classList.contains("sensor-bookmarked")
+                ) {
+                  sensorElement.classList.add("sensor-bookmarked");
                 }
-                  this.IsBookmarked = true;
-                });
+                this.IsBookmarked = true;
+                notifyDBChange(DB_NAME, STORE);
               });
-            }
-          );
+            });
+          });
         }
       } else {
-        IDBworkflow(
-          this.bookmarksStore.idbBookmarkDbname,
-          this.bookmarksStore.idbBookmarkVDbver,
-          this.bookmarksStore.idbBookmarkVDbtable,
-          "readwrite",
-          (store) => {
-            store.add({
-              customName: this.bookmarkname,
-              id: this.$props.id,
-              // address: this.$props.address,
-              link: this.$props.link,
-              geo: JSON.stringify(this.$props.geo),
-            });
-            if (sensorElement && !sensorElement.classList.contains('sensor-bookmarked')) {
-              sensorElement.classList.add('sensor-bookmarked');
-            }
-            this.IsBookmarked = true;
+        IDBworkflow(DB_NAME, STORE, "readwrite", (store) => {
+          store.add({
+            customName: this.bookmarkname,
+            id: this.$props.id,
+            link: this.$props.link,
+            geo: JSON.stringify(this.$props.geo),
+          });
+          if (
+            sensorElement &&
+            !sensorElement.classList.contains("sensor-bookmarked")
+          ) {
+            sensorElement.classList.add("sensor-bookmarked");
           }
-        );
+          this.IsBookmarked = true;
+          notifyDBChange(DB_NAME, STORE);
+        });
       }
-
-      
-
-      const bc = new BroadcastChannel(this.bookmarksStore.idbWatcherBroadcast);
-      bc.postMessage(this.bookmarksStore.idbBookmarkVDbtable);
-      bc.close();
     },
   },
 

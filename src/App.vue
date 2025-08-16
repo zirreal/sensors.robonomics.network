@@ -11,7 +11,7 @@ import { useRoute } from "vue-router";
 import { useAccountStore } from "@/stores/account";
 import { useMapStore } from "@/stores/map";
 
-import { decryptText } from "@/idb";
+import { decryptText } from "./utils/idb";
 import config from "@/config/default/config.json";
 import { getSensorsForLastDay } from "./utils/utils";
 
@@ -36,29 +36,6 @@ watch(() => route.name, updateAppClass, { immediate: true });
   сохраняем обратно через addAccount.
 */
 onMounted(async () => {
-  
-  /* + INIT ACCOUNT */
-  const accounts = await accountStore.getAccounts();
-
-  if (accounts && accounts.length > 0) {
-    let selected = accounts.find(acc => acc.active);
-    if (!selected) selected = accounts[0];
-
-    let phrase = "";
-    try {
-      phrase = await decryptText(selected.data);
-    } catch (e) {
-      phrase = "";
-    }
-
-    accountStore.setAccount(
-      phrase,
-      selected.address,
-      selected.type,
-      selected.devices
-    );
-  }
-  /* - INIT ACCOUNT */
 
   /* + INIT SENSORS */
   const sensors = await getSensorsForLastDay();
@@ -66,6 +43,23 @@ onMounted(async () => {
     mapStore.setSensors(sensors);
   }
   /* - INIT SENSORS */
+  
+  /* + INIT ACCOUNT */
+  const accounts = await accountStore.getAccounts();
+
+  if (accounts && accounts.length > 0) {
+    for (const acc of accounts) {
+      const sensors = await accountStore.getUserSensors(acc.address);
+      await accountStore.addAccount({
+        phrase: acc.phrase || "",
+        address: acc.address,
+        type: acc.type,
+        devices: sensors,
+        ts: acc.ts,
+      });
+    }
+  }
+  /* - INIT ACCOUNT */
 });
 </script>
 

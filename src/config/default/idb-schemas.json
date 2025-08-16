@@ -8,7 +8,7 @@
   },
   "SensorsDBBookmarks": {
     "dbname": "SensorsDBBookmarks",
-    "dbversion": 1,
+    "dbversion": 6,
     "stores": {
       "bookmarks": { "keyPath": "id", "autoIncrement": true }
     }

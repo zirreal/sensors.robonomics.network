@@ -1,5 +1,3 @@
-// useAccountStore.ts
-
 import { defineStore } from "pinia";
 import {
   IDBworkflow,
@@ -8,7 +6,7 @@ import {
   IDBcleartable,
   notifyDBChange,
   hasIndexedDB,
-} from "@/idb";
+} from "../utils/idb";
 import schemas from "@/config/default/idb-schemas.json";
 
 const schema = schemas?.Altruist || {};
