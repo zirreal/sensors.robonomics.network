@@ -80,10 +80,12 @@ Follow these steps to deploy your own instance of **sensors.social** on GitHub P
 
 4️⃣ **Enable GitHub Actions**  
    - A workflow file is already provided in `.github/workflows/`. It builds the project and pushes the `dist` folder into the `gh-pages` branch. The workflow runs on every push to `master` or `main`.
-   - Go to **Settings → Pages → Build and deployment**. Choose **Deploy from a branch**, set **Branch: master (or main)**, **Folder: /(root)**. 
-   - For the first run, please, start it manually:  go to **Actions** → **github pages workflow** → **Run workflow** ; This will create the gh-pages branch automatically.
-
-5️⃣ **Activate GitHub Pages**  
+   - Before the first deployment, create an empty `gh-pages` branch manually in your fork: 
+    ```sh
+    git checkout --orphan gh-pages
+    git commit --allow-empty -m "Initialize gh-pages branch"
+    git push origin gh-pages
+     ```
    - Go to **Settings → Pages → Build and deployment**.  
    - Choose **Deploy from a branch**, set **Branch: gh-pages**, **Folder: /(root)**.  
 
