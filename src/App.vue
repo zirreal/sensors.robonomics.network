@@ -16,7 +16,6 @@ import config from "@/config/default/config.json";
 import { getSensorsForLastDay } from "./utils/utils";
 
 const route = useRoute();
-const accountStore = useAccountStore();
 const mapStore = useMapStore();
 
 /*
@@ -45,18 +44,21 @@ onMounted(async () => {
   /* - INIT SENSORS */
   
   /* + INIT ACCOUNT */
-  const accounts = await accountStore.getAccounts();
+  if(config.SERVICES.accounts) {
+    const accountStore = useAccountStore();
+    const accounts = await accountStore.getAccounts();
 
-  if (accounts && accounts.length > 0) {
-    for (const acc of accounts) {
-      const sensors = await accountStore.getUserSensors(acc.address);
-      await accountStore.addAccount({
-        phrase: acc.phrase || "",
-        address: acc.address,
-        type: acc.type,
-        devices: sensors,
-        ts: acc.ts,
-      });
+    if (accounts && accounts.length > 0) {
+      for (const acc of accounts) {
+        const sensors = await accountStore.getUserSensors(acc.address);
+        await accountStore.addAccount({
+          phrase: acc.phrase || "",
+          address: acc.address,
+          type: acc.type,
+          devices: sensors,
+          ts: acc.ts,
+        });
+      }
     }
   }
   /* - INIT ACCOUNT */

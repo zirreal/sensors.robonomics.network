@@ -75,7 +75,7 @@
           <font-awesome-icon icon="fa-solid fa-bars" />
         </button>
 
-        <Login />
+        <Login v-if="config.SERVICES.accounts" />
         
         <!-- <a class="button button-promo" href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight?utm_source=sensors.social&utm_medium=header-button" target="_blank">Altruist on Indiegogo</a> -->
       </div>

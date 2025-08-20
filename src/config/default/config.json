@@ -20,6 +20,9 @@
     },
     "measure": "pm25"
   },
+  "SERVICES": {
+    "accounts": true
+  },
   "SHOW_MESSAGES": true,
   "DEFAULT_TYPE_PROVIDER": "remote",
   "VALID_DATA_PROVIDERS": {
