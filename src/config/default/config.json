@@ -14,6 +14,10 @@
       "lat": "39.0277",
       "lng": "8.7891"
     },
+    "boundsDelta": {
+      "lat": "",
+      "lng": ""
+    },
     "measure": "pm25"
   },
   "SHOW_MESSAGES": true,

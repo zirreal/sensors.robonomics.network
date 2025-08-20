@@ -20,7 +20,7 @@ export const useAccountStore = defineStore("account", {
   }),
   actions: {
     async addAccount({ phrase, address, type, devices, ts }, { persist = true } = {}) {
-      console.log('addAccount', phrase, address, type, devices, ts, persist)
+      // console.log('addAccount', phrase, address, type, devices, ts, persist)
       const idx = this.accounts.findIndex(a => a.address === address);
       const item = { phrase, address, type, devices, ts: ts || Date.now() };
       if (idx !== -1) this.accounts[idx] = item; else this.accounts.push(item);
