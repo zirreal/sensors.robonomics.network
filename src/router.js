@@ -9,7 +9,7 @@ import PrivacyPolicy from "./views/PrivacyPolicy.vue";
 // import SensorEmbed from "./views/SensorEmbed.vue";
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   scrollBehavior(to) {
     if (to.hash) {
       return { el: to.hash, top: 30 };

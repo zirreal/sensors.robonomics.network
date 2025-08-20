@@ -67,25 +67,43 @@ Follow these steps to deploy your own instance of **sensors.social** on GitHub P
      cp -r src/config/template src/config/my-map
      ```  
    - Edit `src/config/my-map/config.json` and `agents.json` as needed (see [example config](src/config/main/config.json)).  
-   - Set the environment variable in GitHub:  
+   - Set the environment variable in GitHub:
      `VITE_CONFIG_ENV=my-map` (Settings → Secrets and variables → Variables).
 
-3️⃣ **Prepare for deployment**  
-   - In `vite.config.js`, add base path for your fork (replace `<repo>`):  
-     ```js
-     base: "/<repo>/",
-     ```  
-   - If you want to use a custom domain, create a repo variable `PAGES_CNAME` with your domain.  
-   - Otherwise, leave it empty to use the default `https://<username>.github.io/<repo>/`.
+3️⃣ **Prepare for deployment**
+
+  - If you want to host the map **not at the root of a domain** (for example, the default GitHub Pages URL like `https://<username>.github.io/<repo>/`), set the base path to your repository name:
+
+      ```js
+      // vite.config.js
+      base: mode === "production" ? "/<repo>/" : "/",
+      ```
+
+      In this case, you do **not** need to set the `PAGES_CNAME` variable.
+
+  - If you want to host the map **at the root of a domain** (for example, when you configure a custom domain such as `https://example.com` or use the root Pages site of a user/organization), set the base path to `/`:
+
+      ```js
+      // vite.config.js
+      base: "/",
+      ```
+
+      And set the repository variable `PAGES_CNAME` to your domain:
+
+      ```sh
+      PAGES_CNAME=example.com
+      ```
 
 4️⃣ **Enable GitHub Actions**  
    - A workflow file is already provided in `.github/workflows/`. It builds the project and pushes the `dist` folder into the `gh-pages` branch. The workflow runs on every push to `master` or `main`.
-   - Before the first deployment, create an empty `gh-pages` branch manually in your fork: 
-    ```sh
-    git checkout --orphan gh-pages
-    git commit --allow-empty -m "Initialize gh-pages branch"
-    git push origin gh-pages
+   - Before the first deployment, create an empty `gh-pages` branch manually in your fork:
+
+   ```sh
+     git checkout --orphan gh-pages
+     git commit --allow-empty -m "Initialize gh-pages branch"
+     git push origin gh-pages
      ```
+
    - Go to **Settings → Pages → Build and deployment**.  
    - Choose **Deploy from a branch**, set **Branch: gh-pages**, **Folder: /(root)**.  
 
