@@ -1,11 +1,9 @@
 <template>
-  <MetaInfo
-    pageTitle="Login"
-    :pageImage="ogImage"
-  />
+  <MetaInfo pageTitle="Login" :pageImage="ogImage" />
 
   <PageTextLayout>
     <h3>Login for Altruist holder</h3>
+    {{accountStore.accounts}}
     <form @submit="handleLogin">
       <input
         type="password"
@@ -28,26 +26,22 @@
       </div>
 
       <label v-if="account && canKeepSigned" class="label-line">
-        <input type="checkbox" v-model="keepSigned">
+        <input type="checkbox" v-model="keepSigned" />
         <span>Keep me signed (I trust this device)</span>
       </label>
 
-      <button 
+      <button
         class="button"
         :class="loginStatus === 'success' ? 'button-green' : null"
-        :disabled="loginStatus === 'success' ? true : false"
+        :disabled="loginStatus === 'success'"
       >
-        {{loginStatus === 'success' ? 'Signed in' : 'Sign in'}}
+        {{ loginStatus === 'success' ? 'Signed in' : 'Sign in' }}
       </button>
 
-      <div v-if="!account && loginStatus === 'success'" class="preview">
-
-        <div style="text-align: center">You signed in as: <b>{{ formatAddress(accountStore.address) }}</b></div>
-
-        <div style="text-align: center" v-if="accountStore.devices.length > 0 && sensorLink">
-          Redirecting to your <router-link :to="sensorLink">sensor</router-link> in {{redirectCountdown}} seconds ...
+      <div v-if="loginStatus === 'success' && lastAddress" class="preview">
+        <div style="text-align: center">
+          You signed in as: <b>{{ formatAddress(lastAddress) }}</b>
         </div>
-
       </div>
 
       <div v-if="loginStatus === 'error'">{{ error }}</div>
@@ -57,33 +51,27 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
 import { useAccountStore } from "@/stores/account";
-
 import { mnemonicValidate, encodeAddress } from "@polkadot/util-crypto";
 import { Keyring } from "@polkadot/keyring";
 
-import MetaInfo from '../components/MetaInfo.vue';
+import MetaInfo from "../components/MetaInfo.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
-import { encryptText } from "../utils/idb";
-import { getTypeProvider } from "../utils/utils";
-import config from "@config";
-import ogImage from '../assets/images/pages/login/og-login.webp';
+import ogImage from "../assets/images/pages/login/og-login.webp";
 
 const accountStore = useAccountStore();
-const router = useRouter();
-let redirectTimer = null;
 
 const passPhrase = ref("");
 const keepSigned = ref(false);
 const error = ref("");
 const keyType = ref("sr25519");
 const loginStatus = ref("idle");
-const sensorLink = ref(null);
-const redirectCountdown = ref(15);
 
-const canKeepSigned = computed(() =>
-  !!(window.crypto?.subtle || window.crypto?.webkitSubtle) && !!window.indexedDB
+// локальные значения для экрана после логина
+const lastAddress = ref("");
+
+const canKeepSigned = computed(
+  () => !!(window.crypto?.subtle || window.crypto?.webkitSubtle) && !!window.indexedDB
 );
 
 const account = computed(() => {
@@ -106,72 +94,22 @@ function formatAddress(addr) {
 }
 
 function getRobonomicsAddressByType(phrase, type) {
-  let pair;
-  try {
-    const keyring = new Keyring({ type });
-    pair = keyring.addFromMnemonic(phrase);
-  } catch {
-    throw new Error(`Cannot create ${type} account from this mnemonic`);
-  }
+  const keyring = new Keyring({ type });
+  const pair = keyring.addFromMnemonic(phrase);
   const address = encodeAddress(pair.publicKey, 32);
   return { address, type, publicKey: pair.publicKey };
-}
-
-async function getUserSensors(owner) {
-  try {
-    const response = await fetch(`https://roseman.airalab.org/api/sensor/sensors/${owner}`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const result = await response.json();
-    return Array.isArray(result.sensors) ? result.sensors : [];
-  } catch (error) {
-    console.warn('getUserSensors error:', error);
-    return [];
-  }
 }
 
 function resetStatus() {
   loginStatus.value = "idle";
   error.value = "";
-  clearTimeout(redirectTimer);
-  redirectCountdown.value = 15;
-  sensorLink.value = null;
-}
-
-function redirect() {
-  sensorLink.value = {
-    name: "main",
-    query: {
-      provider: getTypeProvider(),
-      type: config.MAP.measure,
-      zoom: config.MAP.zoom,
-      lat: config.MAP.position.lat,
-      lng: config.MAP.position.lng,
-      sensor: accountStore.devices[0],
-    },
-  };
-  redirectCountdown.value = 15;
-  clearTimeout(redirectTimer);
-
-  function tick() {
-    if (redirectCountdown.value > 0) {
-      redirectCountdown.value -= 1;
-      redirectTimer = setTimeout(tick, 1000);
-    } else {
-      router.push(sensorLink.value);
-    }
-  }
-  tick();
 }
 
 async function handleLogin(e) {
   e.preventDefault();
   error.value = "";
   loginStatus.value = "idle";
-  sensorLink.value = null;
-  clearTimeout(redirectTimer);
-  redirectCountdown.value = 15;
+
   const phrase = passPhrase.value.trim();
 
   if (phrase.split(/\s+/).length !== 12) {
@@ -179,7 +117,6 @@ async function handleLogin(e) {
     loginStatus.value = "error";
     return;
   }
-
   if (!mnemonicValidate(phrase)) {
     error.value = "Invalid mnemonic";
     loginStatus.value = "error";
@@ -194,44 +131,30 @@ async function handleLogin(e) {
     loginStatus.value = "error";
     return;
   }
+
   const { address, type } = accountData;
-  const devices = await getUserSensors(address);
 
   if (keepSigned.value) {
-    try {
-      const encrypted = await encryptText(phrase);
-      await accountStore.saveToDB({
-        address,
-        data: encrypted,
-        type,
-        devices
-      });
-    } catch (e) {
-      error.value = "Encryption error";
-      loginStatus.value = "error";
-      return;
-    }
+    await accountStore.addAccount(
+      { phrase, address, type, devices: [], ts: Date.now() },
+      { persist: true }
+    );
   } else {
-    // Если пользователь не хочет сохранять — просто удаляем из БД
-    await accountStore.deleteFromDB(address);
+    await accountStore.removeAccounts(address);
+    await accountStore.addAccount(
+      { phrase, address, type, devices: [], ts: Date.now() },
+      { persist: false }
+    );
   }
 
-  accountStore.setAccount(phrase, address, type, devices);
-
+  lastAddress.value = address;
   passPhrase.value = "";
   loginStatus.value = "success";
-
-  // if (devices.length > 0) {
-  //   redirect();
-  // }
 }
 </script>
 
-
 <style scoped>
-h3 {
-  text-align: center;
-}
+h3 { text-align: center; }
 
 form {
   display: grid;
@@ -247,9 +170,7 @@ input, button, select {
   height: auto;
 }
 
-.preview {
-  --font-size: 1rem;
-}
+.preview { --font-size: 1rem; }
 
 .label-line {
   display: flex;
