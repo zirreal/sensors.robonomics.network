@@ -19,7 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1) Создаём gh-pages при первом запуске (если её ещё нет)
       - name: Ensure gh-pages branch exists
         run: |
           if ! git ls-remote --exit-code --heads origin gh-pages; then
@@ -51,7 +50,6 @@ jobs:
           yarn -v
 
       - name: Install dependencies
-        # Если строго нужно совпадение lock-файла, верни --frozen-lockfile
         run: yarn install
 
       - name: Build project
@@ -59,8 +57,6 @@ jobs:
         env:
           VITE_CONFIG_ENV: ${{ vars.VITE_CONFIG_ENV }}
 
-      # 2) (опционально) Поддержка кастомного домена для форков:
-      #    Задайте в репозитории переменную PAGES_CNAME = "example.com"
       - name: Write CNAME if provided
         run: |
           if [ -n "${PAGES_CNAME}" ]; then
@@ -72,7 +68,6 @@ jobs:
         env:
           PAGES_CNAME: ${{ vars.PAGES_CNAME }}
 
-      # 3) Деплой собранной папки dist в gh-pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
