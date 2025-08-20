@@ -1,76 +1,67 @@
 <template></template>
 
 <script setup>
-import { computed } from 'vue'
+import { reactive, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useHead } from '@vueuse/head'
+import { useI18n } from 'vue-i18n'
 
-import config from "@config";
+import config from '@config'
 
-import { useI18n } from "vue-i18n";
-
-const { locale: i18nLocale } = useI18n();
+const { locale: i18nLocale } = useI18n()
 
 const props = defineProps({
-  pageTitle: { type: String, default: '' },
-  pageDescription: {
-    type: String,
-    default:
-      'Robonomics team invite you to use new internet technologies for your IoT devices. This map is open source project with aim to present example of using ipfs, ethereum and polkadot tech for Smart cities applications developers.'
-  },
-  pageImage: { type: String, default: '' },
-  pageImageWidth: { type: String, default: '1280' },
-  pageImageHeight: { type: String, default: '765' }
+  pageTitle: { type: String },
+  pageDescription: { type: String },
+  pageImage: { type: String },
+  pageImageWidth: { type: String },
+  pageImageHeight: { type: String }
 })
 
-const siteName = config.SITE_NAME;
-const siteUrl = config.SITE_URL;
+const ogdata = reactive({
+  site_name: config?.SITE_NAME || 'Sensors map',
+  title: props.pageTitle || config?.TITLE || config?.SITE_NAME || 'Sensors map',
+  description: props.pageDescription || config?.DESC || null,
+  image: props.pageImage || null,
+  image_width: props.pageImage ? props.pageImageWidth || '1280' : null,
+  image_height: props.pageImage ? props.pageImageHeight || '765' : null,
+  twitter: config?.TWITTER || null
+})
 
 const route = useRoute()
-
-const title = computed(() =>
-  props.pageTitle ? `${props.pageTitle} / ${siteName}` : siteName
-)
-
-const description = computed(() => props.pageDescription)
-
-const image = computed(() =>
-  props.pageImage ? props.pageImage : siteUrl + '/og-default.webp'
-)
-
-const fullUrl = computed(() => siteUrl + route.fullPath)
+const fullUrl = computed(() => (config?.SITE_URL || '') + route.fullPath)
 
 const locale = computed(() => {
-  return i18nLocale.value || localStorage.getItem("locale") || "en";
-});
+  return i18nLocale.value || localStorage.getItem('locale') || 'en'
+})
+
+const meta = computed(() => [
+  ogdata.description && { name: 'description', content: ogdata.description },
+
+  { property: 'og:type', content: 'website' },
+  ogdata.site_name && { property: 'og:site_name', content: ogdata.site_name },
+  ogdata.title && { property: 'og:title', content: ogdata.title },
+  ogdata.description && { property: 'og:description', content: ogdata.description },
+  ogdata.image && { property: 'og:image', content: ogdata.image },
+  ogdata.image && ogdata.image_width && { property: 'og:image:width', content: ogdata.image_width },
+  ogdata.image && ogdata.image_height && { property: 'og:image:height', content: ogdata.image_height },
+  { property: 'og:url', content: fullUrl.value },
+
+  { name: 'twitter:card', content: 'summary_large_image' },
+  ogdata.title && { name: 'twitter:title', content: ogdata.title },
+  ogdata.image && { name: 'twitter:image', content: ogdata.image },
+  ogdata.description && { name: 'twitter:description', content: ogdata.description },
+  ogdata.twitter && { name: 'twitter:site', content: ogdata.twitter },
+  ogdata.twitter && { name: 'twitter:creator', content: ogdata.twitter }
+].filter(Boolean))
 
 useHead({
-  title: title.value,
+  title: () => ogdata.title,
   htmlAttrs: {
-    lang: locale,
+    lang: () => locale.value,
     amp: true,
     dir: 'ltr'
   },
-  meta: [
-    { name: 'description', content: description.value },
-
-    // Open Graph
-    { property: 'og:type', content: 'website' },
-    { property: 'og:site_name', content: siteName },
-    { property: 'og:title', content: title.value },
-    { property: 'og:description', content: description.value },
-    { property: 'og:image', content: image.value },
-    { property: 'og:image:width', content: props.pageImageWidth },
-    { property: 'og:image:height', content: props.pageImageHeight },
-    { property: 'og:url', content: fullUrl.value },
-
-    // Twitter
-    { name: 'twitter:card', content: 'summary_large_image' },
-    { name: 'twitter:title', content: title.value },
-    { name: 'twitter:image', content: image.value },
-    { name: 'twitter:description', content: description.value },
-    { name: 'twitter:site', content: config.TWITTER },
-    { name: 'twitter:creator', content: config.TWITTER }
-  ]
+  meta: () => meta.value
 })
 </script>

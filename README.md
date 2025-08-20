@@ -13,11 +13,11 @@ For more details on connectivity and how to deploy your own map interface (or ev
 
 ---
 
-## 🚀 Deployment
+## 🔧 How to work with the code locally
 
 This section is intended for contributors working on the existing map and developers setting up their own map interface. For comprehensive instructions on configuring your own user interface, refer to the next sections.
 
-### 1️⃣ Fork & Clone the Repository
+1️⃣ **Fork & Clone the Repository**  
 
 If you plan to contribute or customize the project extensively, consider forking it first. Then clone the repository:
 
@@ -27,7 +27,7 @@ If you plan to contribute or customize the project extensively, consider forking
 
 If you plan to contribute or customize the project extensively, consider forking it first.
 
-### 2️⃣ Install Dependencies
+2️⃣ **Install Dependencies**
 
 Ensure **Node.js** and **Yarn** are installed:
 
@@ -42,7 +42,7 @@ Then install the required dependencies:
  yarn install
 ```
 
-### 3️⃣ Start the Server Locally for Development
+3️⃣ **Start the Server Locally for Development**
 
 ```sh
  yarn dev
@@ -51,72 +51,101 @@ Then install the required dependencies:
 ---
 
 
-## 🔧 Setup Your Own Map (For Experienced Users)
+## 🗺️ How to setup your own map (for experienced users)
 
-### 1️⃣ Deploy Your Own Instance of the Map
+### Steps to fork
 
-Refer to the "🚀 Deployment" section.
+Follow these steps to deploy your own instance of **sensors.social** on GitHub Pages:
 
-### 2️⃣ Enable GitHub Actions
+1️⃣ **Fork the repository**  
+   - Click **Fork** on GitHub.  
+   - In your fork, go to **Settings → Actions → General → Workflow permissions** and enable **Read and write permissions**.
 
-To activate GitHub Actions in your repository:
+2️⃣ **Adjust configuration**  
+   - Copy the template config:  
+     ```sh
+     cp -r src/config/template src/config/my-map
+     ```  
+   - Edit `src/config/my-map/config.json` and `agents.json` as needed (see [example config](src/config/main/config.json)).  
+   - Set the environment variable in GitHub:  
+     `VITE_CONFIG_ENV=my-map` (Settings → Secrets and variables → Variables).
 
-- Navigate to the **Actions** tab in your GitHub repository.
-- If prompted, enable workflows by clicking **Enable GitHub Actions**.
-- Ensure that workflows are correctly set up in `.github/workflows/`.
+3️⃣ **Prepare for deployment**  
+   - In `vite.config.js`, add base path for your fork (replace `<repo>`):  
+     ```js
+     base: "/<repo>/",
+     ```  
+   - If you want to use a custom domain, create a repo variable `PAGES_CNAME` with your domain.  
+   - Otherwise, leave it empty to use the default `https://<username>.github.io/<repo>/`.
 
-### 3️⃣ Configure Deployment
+4️⃣ **Enable GitHub Actions**  
+   - Ensure `.github/workflows/pages.yml` exists (already provided).  
+   - Push any commit to `main`/`master` or run workflow manually.
 
-#### Option 1: Deploy Without a Custom Domain
+5️⃣ **Activate GitHub Pages**  
+   - Go to **Settings → Pages → Build and deployment**.  
+   - Choose **Deploy from a branch**, set **Branch: gh-pages**, **Folder: /(root)**.  
 
-- Open `.github/workflows/main.yaml` and remove the line:
-  ```yaml
-  cname: sensors.social
-  ```
-- Add the following permissions block right below `runs-on: ubuntu-latest`:
-  ```yaml
-  permissions:
-    contents: write
-  ```
-- In `vite.config.js`, add the following line to the `defineConfig` object, just above the `plugins` section:
-  ```javascript
-  base: "/<repository_name>/",
-  ```
-  Replace `<repository_name>` with the name of your fork.
+After the workflow completes, your map will be available at the GitHub Pages URL (or your custom domain if configured).
 
-#### Option 2: Deploy With a Custom Domain
+### Basic configuration
+```json
+{
+  "LIBP2P": "Configuration for initializing the LIBP2P library",
+  "REMOTE_PROVIDER": "Server with Rozman",
+  "WIND_PROVIDER": "Server with wind data",
+  "MAP": {
+    "zoom": "Zoom level",
+    "position": {
+      "lat": "Latitude",
+      "lng": "Longitude"
+    },
+    "measure": "pm25"
+  },
+  // Boolean value (true/false) indicating whether to display user messages on the map
+  "SHOW_MESSAGES": "true",
+  // DEFAULT_TYPE_PROVIDER - Default data provider type (remote or realtime). Remote - 24 hours data
+  "DEFAULT_TYPE_PROVIDER": "realtime",
+  // VALID_DATA_PROVIDERS - an object whose keys are the valid provider identifiers (e.g. "realtime", "remote") and whose values are the human-readable labels shown in the UI.
+  "VALID_DATA_PROVIDERS": {
+    "realtime": "Realtime",
+    "remote": "Daily Recap"
+  },
+  // Maximum number of data points on the chart before grouping is applied (For sensor's chart)
+  "SERIES_MAX_VISIBLE": 3000,
+  "TITLE": "Project title",
+  "DESC": "Welcome to the decentralized opensource sensors map which operates with the sole intent of serving the free will of individuals, without any beneficiaries.",
+  "SITE_NAME": "Sensors.social",
+  // SITE_URL - use / for local forks
+  "SITE_URL": "https://sensors.social",
+  "REPO_NAME": "airalab/sensors.social",
+  // TWITTER - optional. Is for Open Graph tags
+  "TWITTER": "@AIRA_Robonomics"
+}
+```
+**Example**: [config.json](https://github.com/airalab/sensors.social/blob/master/src/config/main/config.json)
 
-- Open `.github/workflows/main.yaml` and replace:
-  ```yaml
-  cname: sensors.social
-  ```
-  with your custom domain:
-  ```yaml
-  cname: your-custom-domain.com
-  ```
-- Add the following permissions block right below `runs-on: ubuntu-latest`:
-  ```yaml
-  permissions:
-    contents: write
-  ```
 
-### 4️⃣ Finalizing Deployment
+### Libp2p agents configuration
 
-After modifying the necessary files, deploy your instance of the map by following these steps:
+In the `src/config/my-project/agents.json` file, specify a list of libp2p identifiers from which data can be received via pubsub in realtime mode.
 
-1. Commit and push the changes to your forked repository:
-   ```sh
-   git add .
-   git commit -m "Configured deployment settings"
-   git push origin main
-   ```
-2. Wait until the GitHub Actions workflow successfully completes.
-3. Navigate to the **Pages** section in your repository **Settings**.
-4. Enable GitHub Pages by selecting **Deploy from a branch** as the source.
-5. Choose the `gh-pages` branch and the root folder.
-6. Save the settings—GitHub Pages will deploy your instance of the map.
+**Example**: [agents.json](https://github.com/airalab/sensors.social/blob/master/src/config/main/agents.json)
 
-You can now access your deployed map using the provided GitHub Pages URL.
+### Sensors configuration
+
+In the `src/config/main/sensors.js` file, you can set an icon and a website link for a specific sensor:
+
+```json
+{
+  "HASH ID_SENSOR": {
+    "icon": "Path to the icon file",
+    "link": "URL of the website"
+  }
+}
+```
+
+**Example**: [sensors.json](https://github.com/airalab/sensors.social/blob/master/src/config/main/sensors.js)
 
 
 ---
@@ -238,83 +267,6 @@ You can automatically translate interface strings using OpenAI's API. To enable 
    Once complete, your translations will be available in the appropriate language files in `src/translate`.
 
 ---
-
-
-## How to Fork the Repository with Custom Configuration Files
-
-1️⃣ Copy the `src/config/template` directory to your own:
-
-```sh
-cp -r src/config/template src/config/my-project
-```
-
-2️⃣ In the `src/config/my-project/config.json` file, all parameters are optional. You can configure the following settings:
-
-```json
-{
-  "LIBP2P": "Configuration for initializing the LIBP2P library",
-  "REMOTE_PROVIDER": "Server with Rozman",
-  "WIND_PROVIDER": "Server with wind data",
-  "MAP": {
-    "zoom": "Zoom level",
-    "position": {
-      "lat": "Latitude",
-      "lng": "Longitude"
-    },
-    "measure": "pm25"
-  },
-  "SHOW_MESSAGES": "Boolean value (true/false) indicating whether to display user messages on the map",
-  "DEFAULT_TYPE_PROVIDER": "Default data provider type (remote or realtime)",
-  // VALID_DATA_PROVIDERS - an object whose keys are the valid provider identifiers (e.g. "realtime", "remote") and whose values are the human-readable labels shown in the UI.
-  "VALID_DATA_PROVIDERS": {
-    "realtime": "Realtime",
-    "remote": "Daily Recap"
-  },
-  // For sensor chart
-  "SERIES_MAX_VISIBLE": 3000,
-  // accounts - local DB for signed in altruist holders (in development now)
-  "INDEXEDDB": {
-    "accounts": {
-      "dbname": "Altruist",
-      "dbversion": "1",
-      "tablename": "Accounts"
-    }
-  },
-  "TITLE": "Project title",
-  "SERIES_MAX_VISIBLE": "Maximum number of data points on the chart before grouping is applied"
-}
-```
-**Example**: [config.json](https://github.com/airalab/sensors.social/blob/master/src/config/main/config.json)
-
-3️⃣ In the `src/config/my-project/agents.json` file, specify a list of libp2p identifiers from which data can be received via pubsub in realtime mode.
-
-**Example**: [agents.json](https://github.com/airalab/sensors.social/blob/master/src/config/main/agents.json)
-
-4️⃣ In the `src/config/main/sensors.js` file, you can set an icon and a website link for a specific sensor:
-
-```json
-{
-  "HASH ID_SENSOR": {
-    "icon": "Path to the icon file",
-    "link": "URL of the website"
-  }
-}
-```
-
-**Example**: [sensors.json](https://github.com/airalab/sensors.social/blob/master/src/config/main/sensors.js)
-
-5️⃣ To ensure that your configuration is loaded in the final build, set the following environment variable:
-
-```
-VITE_CONFIG_ENV=my-project
-```
-
-You can configure this in your GitHub project settings under the Environments section.
-
-<img src="https://github.com/user-attachments/assets/97368424-ac08-4b62-9beb-3c36a61a1b47" width="500">
-
----
-
 
 ## ❓ Support
 
