@@ -139,7 +139,12 @@
 
         <div class="infoline flexline" v-if="geo && geo.lat && geo.lng">
           <div class="infoline-title">{{ t("sensorpopup.infosensorgeo") }}:</div>
-          <div class="infoline-info">{{ geo.lat }}, {{ geo.lng }}</div>
+          <div class="infoline-info">
+            <a 
+              :href="getMapLink(geo.lat, geo.lng, `Air Sensor: ${sensor_id}` )"
+              target="_blank"
+            >{{ geo.lat }}, {{ geo.lng }}</a>
+          </div>
         </div>
 
         <div class="infoline flexline" v-if="dewPoint">
@@ -457,7 +462,19 @@ const updateAQI = () => {
   latestAQI.value = newAQI;
 };
 
-// events
+function getMapLink(lat, lon, label = "Sensor") {
+  const ua = navigator.userAgent || "";
+  const isIOS = /iPad|iPhone|iPod/.test(ua);
+  const isAndroid = /Android/.test(ua);
+
+  if (isIOS) {
+    return `https://maps.apple.com/?ll=${lat},${lon}&q=${encodeURIComponent(label)}`;
+  }
+  if (isAndroid) {
+    return `geo:${lat},${lon}?q=${lat},${lon}(${encodeURIComponent(label)})`;
+  }
+  return `https://www.google.com/maps?q=${lat},${lon}`;
+}
 
 onMounted(() => {
 
