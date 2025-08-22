@@ -16,6 +16,13 @@ vx.x.x
 - Refactor: no geo popup (slight redesign)
 - Refactor: default measure type in config moved to "map section" added usage of the default measure from config
 - Refactor: added using of Roseman api, instead of BroadCasting for getting sensors list
+- Feat: limitation for geo in config (no zoom out or pan for outer space) - useful for forks
+- Feat: limitation for Sensor Counter, now sows only counted sensors for limited by geo map - useful for forks
+- Refactor: config structure
+- Feat: condiguration for map themes now available
+- Feat: AQI Index for individual sensors available
+- Refactor: measurements colors more vivid
+- Feat: in sensor popup added geo link - if you click it, you will get system map link (Google, Apple - depends on your device)
 
 v2.1.6
 - Feat: combined dust and noise values in the chart
