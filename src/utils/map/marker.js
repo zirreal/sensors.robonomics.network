@@ -1,4 +1,4 @@
-import config, { sensors } from "@config";
+import { settings, sensors } from "@config";
 import Queue from "js-queue";
 import L from "leaflet";
 import "leaflet-arrowheads";
@@ -108,7 +108,7 @@ export async function init(map, type, cb) {
       iconCreateFunction: (cluster) => iconCreateMsg(cluster, type),
     });
   }
-  if (config.SHOW_MESSAGES) {
+  if (settings.SHOW_MESSAGES) {
     for (const messagesLayer of Object.values(messagesLayers)) {
       map.addLayer(messagesLayer);
     }

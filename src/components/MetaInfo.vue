@@ -6,7 +6,7 @@ import { useRoute } from 'vue-router'
 import { useHead } from '@vueuse/head'
 import { useI18n } from 'vue-i18n'
 
-import config from '@config'
+import { settings } from '@config'
 
 const { locale: i18nLocale } = useI18n()
 
@@ -19,17 +19,17 @@ const props = defineProps({
 })
 
 const ogdata = reactive({
-  site_name: config?.SITE_NAME || 'Sensors map',
-  title: props.pageTitle || config?.TITLE || config?.SITE_NAME || 'Sensors map',
-  description: props.pageDescription || config?.DESC || null,
+  site_name: settings?.SITE_NAME || 'Sensors map',
+  title: props.pageTitle || settings?.TITLE || settings?.SITE_NAME || 'Sensors map',
+  description: props.pageDescription || settings?.DESC || null,
   image: props.pageImage || null,
   image_width: props.pageImage ? props.pageImageWidth || '1280' : null,
   image_height: props.pageImage ? props.pageImageHeight || '765' : null,
-  twitter: config?.TWITTER || null
+  twitter: settings?.TWITTER || null
 })
 
 const route = useRoute()
-const fullUrl = computed(() => (config?.SITE_URL || '') + route.fullPath)
+const fullUrl = computed(() => (settings?.SITE_URL || '') + route.fullPath)
 
 const locale = computed(() => {
   return i18nLocale.value || localStorage.getItem('locale') || 'en'

@@ -29,9 +29,9 @@ import {
   IDBworkflow,
   notifyDBChange,
 } from "../../utils/idb";
-import schemas from "@/config/default/idb-schemas.json";
+import { idbschemas } from "@config";
 
-const schema = schemas?.SensorsDBBookmarks || {};
+const schema = idbschemas?.SensorsDBBookmarks || {};
 const DB_NAME = schema.dbname || "SensorsDBBookmarks";
 const STORE = Object.keys(schema.stores || { bookmarks: {} })[0] || "bookmarks";
 

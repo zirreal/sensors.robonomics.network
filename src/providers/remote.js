@@ -1,9 +1,9 @@
-import config from "@config";
+import { settings } from "@config";
 import axios from "axios";
 import io from "socket.io-client";
 
 const axiosConfig = {
-  baseURL: `${config.REMOTE_PROVIDER}api/sensor`,
+  baseURL: `${settings.REMOTE_PROVIDER}api/sensor`,
 };
 
 export const api = axios.create(axiosConfig);
@@ -30,7 +30,7 @@ class Provider {
 
   async status() {
     try {
-      const result = await axios.get(`${config.REMOTE_PROVIDER}api/sensor/cities`);
+      const result = await axios.get(`${settings.REMOTE_PROVIDER}api/sensor/cities`);
       if (result.status === 200) {
         return true;
       }

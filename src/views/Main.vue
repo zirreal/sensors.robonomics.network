@@ -1,7 +1,7 @@
 <template>
   <MetaInfo
-    :pageTitle= "config.TITLE"
-    :pageDescription = "config.DESC"
+    :pageTitle= "settings.TITLE"
+    :pageDescription = "settings.DESC"
   />
   <Header />
 
@@ -42,7 +42,7 @@ import MessagePopup from "../components/message/MessagePopup.vue";
 import SensorPopup from "../components/sensor/SensorPopup.vue";
 import MetaInfo from '../components/MetaInfo.vue';
 
-import config from "@config";
+import { settings } from "@config";
 import * as providers from "../providers";
 import { instanceMap } from "../utils/map/instance";
 import * as markers from "../utils/map/marker";
@@ -284,7 +284,7 @@ onMounted(async () => {
 
   // Инициализируем объект провайдера
   if (props.provider === "remote") {
-    state.providerObj = new providers.Remote(config.REMOTE_PROVIDER);
+    state.providerObj = new providers.Remote(settings.REMOTE_PROVIDER);
     if (!(await state.providerObj.status())) {
       router.push({
         name: route.name,
@@ -300,7 +300,7 @@ onMounted(async () => {
       return;
     }
   } else {
-    state.providerObj = new providers.Libp2p(config.LIBP2P);
+    state.providerObj = new providers.Libp2p(settings.LIBP2P);
   }
 
   state.providerObj.ready().then(() => {

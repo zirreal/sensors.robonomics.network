@@ -1,4 +1,4 @@
-import config from "@config";
+import { settings } from "@config";
 
 
 /**
@@ -9,20 +9,20 @@ export function setTypeProvider(type) {
   const candidate =
     type ||
     localStorage.getItem('provider_type') ||
-    config.DEFAULT_TYPE_PROVIDER;
+    settings.DEFAULT_TYPE_PROVIDER;
 
   // Only proceed if the provided type is one of the valid keys
-  if (Object.prototype.hasOwnProperty.call(config.VALID_DATA_PROVIDERS, candidate)) {
+  if (Object.prototype.hasOwnProperty.call(settings.VALID_DATA_PROVIDERS, candidate)) {
     localStorage.setItem('provider_type', candidate);
     return candidate;
   } else {
     console.warn(
       `setTypeProvider: invalid provider_type "${type}". Expected one of [${Object.keys(
-        config.VALID_DATA_PROVIDERS
+        settings.VALID_DATA_PROVIDERS
       ).join(', ')}].`
     )
     // Optionally, you could reset to the default provider here:
-    // localStorage.setItem('provider_type', config.DEFAULT_TYPE_PROVIDER)
+    // localStorage.setItem('provider_type', settings.DEFAULT_TYPE_PROVIDER)
   }
 }
 
@@ -33,15 +33,15 @@ export function setTypeProvider(type) {
  */
 export function getTypeProvider(routeParams) {
 
-  // We need to check config.VALID_DATA_PROVIDERS list in case of broken value
+  // We need to check settings.VALID_DATA_PROVIDERS list in case of broken value
   // For routeParams maybe we can find something better
 
   const candidate =
     routeParams?.provider ||
     localStorage.getItem('provider_type') ||
-    config.DEFAULT_TYPE_PROVIDER;
+    settings.DEFAULT_TYPE_PROVIDER;
 
-  if (Object.prototype.hasOwnProperty.call(config.VALID_DATA_PROVIDERS, candidate)) {
+  if (Object.prototype.hasOwnProperty.call(settings.VALID_DATA_PROVIDERS, candidate)) {
     return candidate;
   }
 }

@@ -20,10 +20,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import config from '@config';
+import { settings } from '@config';
 
 // Use the repo name from your config
-const repoName = ref(config.REPO_NAME);
+const repoName = ref(settings.REPO_NAME);
 
 // Holds the tag name of the latest release
 const latestRelease = ref('loading...');

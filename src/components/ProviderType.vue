@@ -13,14 +13,14 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useRoute, useRouter } from "vue-router";
-import config from '@config';
+import { settings } from '@config';
 import { getTypeProvider, setTypeProvider } from '@/utils/utils';
 
 const router = useRouter();
 const route = useRoute();
 
 // List of all available providers
-const options = computed(() => Object.entries(config.VALID_DATA_PROVIDERS));
+const options = computed(() => Object.entries(settings.VALID_DATA_PROVIDERS));
 
 // Current provider (key)
 const dataMode = ref(getTypeProvider(route.query));

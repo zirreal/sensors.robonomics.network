@@ -68,7 +68,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import moment from "moment";
-import config from "@config";
+import { settings } from "@config";
 import Bookmarks from "@/components/Bookmarks.vue";
 import HistoryImport from "./HistoryImport.vue";
 import { instanceMap } from "../../utils/map/instance";
@@ -102,7 +102,7 @@ const start = ref(moment().format("YYYY-MM-DD"));
 const maxDate = ref(moment().format("YYYY-MM-DD"));
 const realtime = ref(props.currentProvider === "realtime");
 const wind = ref(false);
-const messages = ref(config.SHOW_MESSAGES);
+const messages = ref(settings.SHOW_MESSAGES);
 
 // выбор измерения
 const type = ref(props.measuretype.toLowerCase());

@@ -18,7 +18,12 @@
       "lat": "",
       "lng": ""
     },
-    "measure": "pm25"
+    "measure": "pm25",
+    "theme": {
+      "light": "carto-light",
+      "dark": "carto-dark",
+      "invertForDark": false
+    }
   },
   "SERVICES": {
     "accounts": true

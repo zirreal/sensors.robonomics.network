@@ -1,16 +1,16 @@
-import IDB_CONFIG from "@/config/default/idb-schemas.json";
+import { idbschemas } from "@config";
 
 /*
-    Все функции используют схему из IDB_CONFIG.
+    Все функции используют схему из idbschemas.
     Для добавления новых БД/objectStore достаточно расширить json.
 */
 
 /*
     getDBConfig(dbname)
-    Возвращает конфиг выбранной БД из IDB_CONFIG.
+    Возвращает конфиг выбранной БД из idbschemas.
 */
 function getDBConfig(dbname) {
-    const db = IDB_CONFIG[dbname];
+    const db = idbschemas[dbname];
     if (!db) throw new Error(`No config for db: ${dbname}`);
     return db;
 }

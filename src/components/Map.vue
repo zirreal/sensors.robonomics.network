@@ -29,7 +29,7 @@
 </template>
 
 <script>
-import config from "@config";
+import { settings } from "@config";
 import { toRaw } from "vue";
 import Footer from "../components/footer/Footer.vue";
 import { drawuser, init, removeMap, setTheme, setview } from "../utils/map/instance";
@@ -147,9 +147,9 @@ export default {
       const lastsettings =
         localStorage.getItem("map-position") ||
         JSON.stringify({
-          lat: config.MAP.position.lat,
-          lng: config.MAP.position.lng,
-          zoom: config.MAP.zoom,
+          lat: settings.MAP.position.lat,
+          lng: settings.MAP.position.lng,
+          zoom: settings.MAP.zoom,
         });
       let savelocally = true;
 
@@ -190,16 +190,16 @@ export default {
       return false;
     },
     setPosFromURI() {
-      const lat = this.$route.query.lat || config.MAP.position.lat;
-      const lng = this.$route.query.lng || config.MAP.position.lng;
-      const zoom = this.$route.query.zoom || config.MAP.zoom;
+      const lat = this.$route.query.lat || settings.MAP.position.lat;
+      const lng = this.$route.query.lng || settings.MAP.position.lng;
+      const zoom = this.$route.query.zoom || settings.MAP.zoom;
       this.mapStore.setmapposition(lat, lng, zoom, true);
     },
     setPosDefault() {
       this.mapStore.setmapposition(
-        config.MAP.position.lat,
-        config.MAP.position.lng,
-        config.MAP.zoom,
+        settings.MAP.position.lat,
+        settings.MAP.position.lng,
+        settings.MAP.zoom,
         true
       );
     },

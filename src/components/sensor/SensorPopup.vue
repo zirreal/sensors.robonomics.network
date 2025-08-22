@@ -141,16 +141,12 @@
           <div class="infoline-title">{{ t("sensorpopup.infosensorgeo") }}:</div>
           <div class="infoline-info">
             <a 
+              v-if="sensor_id"
               :href="getMapLink(geo.lat, geo.lng, `Air Sensor: ${sensor_id}` )"
               target="_blank"
             >{{ geo.lat }}, {{ geo.lng }}</a>
+            <span v-else>{{ geo.lat }}, {{ geo.lng }}</span>
           </div>
-        </div>
-
-        <div class="infoline flexline" v-if="dewPoint">
-          <div class="infoline-title">{{ $t("Latest dew point") }}:</div>
-          <div class="infoline-info">{{ dewPoint }} ℃</div>
-          
         </div>
 
         <div class="infoline flexline" v-if="link">
@@ -190,7 +186,7 @@ import { reactive, computed, ref, watch, watchEffect, onMounted, getCurrentInsta
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import moment from "moment";
-import config, { sensors } from "@config";
+import { settings, sensors } from "@config";
 import measurements from "../../measurements";
 import { getTypeProvider } from "../../utils/utils";
 import { getAddressByPos } from "../../utils/map/utils";
@@ -204,7 +200,7 @@ import AltruistPromo from "../devices/altruist/AltruistPromo.vue";
 import ReleaseInfo from "../ReleaseInfo.vue";
 import Icon from "./Icon.vue";
 
-// Props и emits
+
 const props = defineProps({
   type: String,
   point: Object,
@@ -239,7 +235,6 @@ const state = reactive({
 });
 
 
-// some refs
 // const prevGeo = ref({ lat: null, lng: null });
 const units = ref([]);
 const dewPoint = ref(null)
@@ -248,7 +243,7 @@ const previousAQI = ref(null);
 
 let AQIInterval;
 
-// computed
+
 const sensor_id = computed(() => {
   return props.point?.sensor_id || route.query.sensor || null;
 });
@@ -323,8 +318,8 @@ const linkSensor = computed(() => {
       name: "main",
       query: {
         provider: state.provider,
-        type: route.query.type || config.MAP.measure,
-        zoom: route.query.zoom || config.MAP.zoom,
+        type: route.query.type || settings.MAP.measure,
+        zoom: route.query.zoom || settings.MAP.zoom,
         lat: geo.value.lat,
         lng: geo.value.lng,
         sensor: sensor_id.value,
@@ -354,7 +349,7 @@ const latestValidLog = computed(() => {
 const shareData = () => {
   if (navigator.share) {
     navigator.share({
-      title: config.TITLE,
+      title: settings.TITLE,
       url: linkSensor.value || link.value,
     });
   }
@@ -585,7 +580,7 @@ watch(
         query: {
           provider: state.provider,
           type: props.type.toLowerCase(),
-          zoom: route.query.zoom || config.MAP.zoom, // trying to keep zoom
+          zoom: route.query.zoom || settings.MAP.zoom, // trying to keep zoom
           lat: newPoint.geo.lat,
           lng: newPoint.geo.lng,
           sensor: newPoint.sensor_id,

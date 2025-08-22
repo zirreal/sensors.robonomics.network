@@ -226,7 +226,6 @@ export default {
   "Daily Recap": "Ежедневная сводка",
   "Realtime": "В реальном времени",
   "RADIATION": "Радиация",
-  "Latest dew point": "Последняя точка росы",
   "Good": "Хорошее",
   "Moderate": "Умеренное",
   "Unhealthy for Sensitive Groups": "Вредное для чувствительных групп населения",

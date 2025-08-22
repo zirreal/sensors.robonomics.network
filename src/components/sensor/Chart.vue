@@ -26,7 +26,7 @@ import Highcharts from 'highcharts';
 import stockInit from 'highcharts/modules/stock';
 import { Chart } from 'highcharts-vue';
 import unitsettings from '../../measurements';
-import config from '@config';
+import { settings } from '@config';
 import { getTypeProvider } from '../../utils/utils';
 
 stockInit(Highcharts);
@@ -42,7 +42,7 @@ const router = useRouter();
 const { t: tr, locale } = useI18n();
 
 const WINDOW_MS   = 60 * 60 * 1000;
-const MAX_VISIBLE = config.SERIES_MAX_VISIBLE;
+const MAX_VISIBLE = settings.SERIES_MAX_VISIBLE;
 const VALID_TYPES = Object.keys(unitsettings).map(k => k.toLowerCase());
 
 const GROUPS = {

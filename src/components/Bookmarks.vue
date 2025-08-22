@@ -22,11 +22,10 @@ import { computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useBookmarksStore } from "@/stores/bookmarks";
 import { IDBdeleteByKey, notifyDBChange } from "../utils/idb";
-import schemas from "@/config/default/idb-schemas.json";
-import config from "@/config/default/config.json";
+import {settings, idbschemas} from "@config";
 import { getTypeProvider } from "@/utils/utils";
 
-const schema = schemas?.SensorsDBBookmarks || {};
+const schema = idbschemas?.SensorsDBBookmarks || {};
 const DB_NAME = schema.dbname || "SensorsDBBookmarks";
 const STORE = Object.keys(schema.stores || { bookmarks: {} })[0] || "bookmarks";
 
@@ -57,7 +56,7 @@ function getlink(bookmark) {
     name: "main",
     query: {
       provider: getTypeProvider(),
-      type: config.MAP.measure,
+      type: settings.MAP.measure,
       zoom: 18,
       lat: g.lat,
       lng: g.lng,

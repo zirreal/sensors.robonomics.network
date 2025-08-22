@@ -10,7 +10,7 @@
     <div class="header-content flexline space-between">
       <div class="flexline align-start">
         <router-link to="/" class="appicon">
-          <img :alt="config.TITLE" src="../../../public/app-icon-512.png" />
+          <img :alt="settings.TITLE" src="../../../public/app-icon-512.png" />
         </router-link>
         <details v-if="mapStore.sensors?.length > 0" tabindex="0" class="sensors details-popup">
           <summary>
@@ -75,7 +75,7 @@
           <font-awesome-icon icon="fa-solid fa-bars" />
         </button>
 
-        <Login v-if="config.SERVICES.accounts" />
+        <Login v-if="settings.SERVICES.accounts" />
         
         <!-- <a class="button button-promo" href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight?utm_source=sensors.social&utm_medium=header-button" target="_blank">Altruist on Indiegogo</a> -->
       </div>
@@ -86,7 +86,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from "vue";
 import { languages } from "@/translate";
-import config from "@config";
+import { settings } from "@config";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 
@@ -124,7 +124,7 @@ const getSensorLink = (sensor) => {
     query: {
       provider: provider,
       type: measureType,
-      zoom: config.MAP.zoom,
+      zoom: settings.MAP.zoom,
       lat: sensor.geo.lat,
       lng: sensor.geo.lng,
       sensor: sensor.sensor_id,

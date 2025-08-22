@@ -1,12 +1,12 @@
-import config from "@config";
+import { settings } from "@config";
 import { defineStore } from "pinia";
 
 export const useMapStore = defineStore('map', {
   state: () => ({
     mapposition: {
-      zoom: config?.MAP.zoom || '4',
-      lat:  config?.MAP.position.lat || '0',
-      lng:  config?.MAP.position.lng || '0',
+      zoom: settings?.MAP.zoom || '4',
+      lat:  settings?.MAP.position.lat || '0',
+      lng:  settings?.MAP.position.lng || '0',
     },
     mapinactive: false,
     sensors: [], // all uploaded sensors (getting via broadcast messages)

@@ -1,4 +1,4 @@
-import config from "@config";
+import { settings } from "@config";
 import axios from "axios";
 import L from "leaflet";
 import "leaflet-velocity";
@@ -9,7 +9,7 @@ export const immediate = false;
 let windLayer;
 
 export function init() {
-  return axios.get(config.WIND_PROVIDER).then((r) => {
+  return axios.get(settings.WIND_PROVIDER).then((r) => {
     windLayer = L.velocityLayer({
       displayValues: false,
       data: r.data,

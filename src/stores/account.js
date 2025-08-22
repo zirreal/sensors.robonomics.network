@@ -8,9 +8,9 @@ import {
   notifyDBChange,
   hasIndexedDB,
 } from "../utils/idb";
-import schemas from "@/config/default/idb-schemas.json";
+import { idbschemas } from "@config";
 
-const schema = schemas?.Altruist || {};
+const schema = idbschemas?.Altruist || {};
 const DB_NAME = schema.dbname || "Altruist";
 const STORE = Object.keys(schema.stores || { Accounts: {} })[0] || "Accounts";
 

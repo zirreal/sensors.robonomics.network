@@ -56,7 +56,7 @@
 </template>
 
 <script>
-import config from "@config";
+import { settings } from "@config";
 import axios from "axios";
 import moment from "moment";
 
@@ -99,7 +99,7 @@ export default {
       return Number(moment(this.end + " 23:59:59", "YYYY-MM-DD HH:mm:ss").format("X"));
     },
     link() {
-      return `${config.REMOTE_PROVIDER}api/sensor/csv/${this.startTimestamp}/${this.endTimestamp}/${this.city}`;
+      return `${settings.REMOTE_PROVIDER}api/sensor/csv/${this.startTimestamp}/${this.endTimestamp}/${this.city}`;
     },
   },
   watch: {
@@ -115,7 +115,7 @@ export default {
   },
   async created() {
     try {
-      const result = await axios.get(`${config.REMOTE_PROVIDER}api/sensor/cities`);
+      const result = await axios.get(`${settings.REMOTE_PROVIDER}api/sensor/cities`);
       this.cities = result.data.result;
       const country = Object.keys(this.cities);
       const state = Object.keys(this.cities[country[0]]);
