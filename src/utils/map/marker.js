@@ -72,26 +72,64 @@ function createLooseClusterGroup(iconCreateFn) {
   });
 }
 
-/*
-  Детерминированный «jitter» на основе sensor_id.
-  Смещение до ~15м, чтобы очень близкие точки визуально не перекрывались.
-*/
-function jitterCoord([lat, lng], seed, meters = 15) {
-  let h = 5381;
-  const s = String(seed);
-  for (let i = 0; i < s.length; i++) h = (h * 33) ^ s.charCodeAt(i);
-  const rnd = (x) => ((x >>> 0) % 1000) / 1000;
-  const ang = rnd(h) * 2 * Math.PI;
-  const dist = rnd(h ^ 0x9e3779b9) * meters;
+/**
+ * Apply a deterministic "jitter" to coordinates based on a unique seed.
+ *
+ * Purpose:
+ *   Sensors or markers located very close to each other often overlap visually on the map.
+ *   This function slightly offsets each point (by up to ~`meters`) in a deterministic way
+ *   so that nearby points become distinguishable without randomly "jumping" on reload.
+ *
+ * How it works:
+ *   - Converts input lat/lng to numbers, safely handling invalid values.
+ *   - Generates a pseudo-random but deterministic hash from the `seed` (e.g. sensor_id).
+ *   - Uses that hash to pick an angle and a distance within the given radius (`meters`).
+ *   - Converts the offset from meters to degrees, accounting for latitude distortion.
+ *   - Returns a slightly shifted [lat, lng] that is stable for the same `seed`.
+ *
+ * @param {[number|string, number|string]} coords  Original [lat, lng] (may be strings).
+ * @param {string|number} seed  Unique identifier (e.g. sensor_id) to ensure deterministic offset.
+ * @param {number} [meters=15]  Maximum jitter radius in meters.
+ * @returns {[number, number]}  Adjusted coordinates with jitter applied.
+ */
+function jitterCoord([latRaw, lngRaw], seed, meters = 15) {
+  const lat0 = Number(latRaw);
+  const lng0 = Number(lngRaw);
 
+  // If lat/lng cannot be parsed as numbers, return as-is
+  if (!Number.isFinite(lat0) || !Number.isFinite(lng0)) return [lat0, lng0];
+
+  // Create a deterministic hash from the seed
+  let h = 5381 >>> 0;
+  const s = String(seed);
+  for (let i = 0; i < s.length; i++) {
+    h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  }
+
+  // Generate repeatable pseudo-random values in [0, 1)
+  const rnd01 = (x) => ((x >>> 0) % 1000) / 1000;
+
+  // Pick jitter direction (angle) and distance
+  const ang = rnd01(h) * 2 * Math.PI;
+  const dist = rnd01(h ^ 0x9e3779b9) * meters;
+
+  // Offset in meters
   const dx = Math.cos(ang) * dist;
   const dy = Math.sin(ang) * dist;
 
-  const dLat = dy / 111111;
-  const dLng = dx / (111111 * Math.cos((lat * Math.PI) / 180));
+  // Convert meter offsets to degrees
+  const dLat = dy / 111111; // ~111.1 km per degree latitude
+  const cosLat = Math.cos((lat0 * Math.PI) / 180);
+  const denom = 111111 * (Math.abs(cosLat) < 1e-6 ? 1e-6 : cosLat); // Avoid poles
+  const dLng = dx / denom;
 
-  return [lat + dLat, lng + dLng];
+  const lat = lat0 + dLat;
+  const lng = lng0 + dLng;
+
+  // Only return jittered coords if valid numbers
+  return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : [lat0, lng0];
 }
+
 
 export async function init(map, type, cb) {
   for (const index of Object.keys(messageTypes)) {
@@ -135,6 +173,8 @@ export async function init(map, type, cb) {
   // менее агрессивные настройки кластеров
   markersLayer = createLooseClusterGroup(iconCreate);
   map.addLayer(markersLayer);
+
+  
 
   pathsLayer = new L.layerGroup();
   map.addLayer(pathsLayer);
