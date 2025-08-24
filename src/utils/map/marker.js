@@ -51,20 +51,26 @@ const messagesLayers = Object.values(messageTypes).reduce((result, item) => {
 }, {});
 
 /*
-  Менее агрессивная кластеризация + «расхлопывание» близких точек
+  Less aggressive clustering + "spiderfying" nearby points.
+  We override default MarkerClusterGroup settings so that:
+   - Clusters form later (smaller radius).
+   - At high zoom levels clustering is disabled.
+   - Spiderfy is used instead of zoom-to-bounds on click.
 */
 function createLooseClusterGroup(iconCreateFn) {
   return new L.MarkerClusterGroup({
     showCoverageOnHover: false,
     maxClusterRadius(zoom) {
-      // маленький радиус → позже слипается; с зумом радиус падает
+      // Smaller radius → clusters form later; radius shrinks as zoom increases
       return Math.max(6, 20 - zoom * 3.2);
     },
     disableClusteringAtZoom: 18,
-    spiderfyOnEveryZoom: true,
+    spiderfyOnEveryZoom: false,
     spiderfyOnMaxZoom: true,
     spiderfyDistanceMultiplier: 1.8,
-    chunkedLoading: true,
+    zoomToBoundsOnClick: false, // we implement custom click handling
+    spiderfyOnClick: false, // we handle spiderfy manually
+    chunkedLoading: true, // performance boost for many markers
     chunkDelay: 30,
     chunkInterval: 200,
     removeOutsideVisibleBounds: true,
@@ -170,20 +176,105 @@ export async function init(map, type, cb) {
   const scaleParams = getMeasurementByName(type);
   scale = generate(scaleParams.colors, scaleParams.range);
 
-  // менее агрессивные настройки кластеров
   markersLayer = createLooseClusterGroup(iconCreate);
   map.addLayer(markersLayer);
 
-  
+  /**
+   * Custom cluster click handling for sensor markers:
+   * - If the map is still far away OR cluster has many children:
+   *    → zoom in smoothly to the cluster bounds, then spiderfy.
+   * - If already close:
+   *    → spiderfy immediately without zooming.
+   * 
+   * This prevents "disappearing markers" and makes cluster expansion predictable.
+   */
+  markersLayer.on("clusterclick", (e) => {
+    const cluster = e.layer;
+    const nowZoom = map.getZoom();
+    const targetZoom = map.getBoundsZoom(cluster.getBounds(), true);
+    const MAX_SPIDER_CHILDREN = 20; // threshold for direct spiderfy
+    const ZOOM_DELTA_THRESHOLD = 1; // minimum zoom difference to trigger zooming
+    const PADDING = [40, 40]; // visual padding around zoomed cluster
+
+    // if we are far enough OR the cluster has many children — zoom in first
+    if ((targetZoom - nowZoom) >= ZOOM_DELTA_THRESHOLD || cluster.getChildCount() > MAX_SPIDER_CHILDREN) {
+      e.originalEvent?.preventDefault?.();
+      e.originalEvent?.stopPropagation?.();
+
+      const onZoomEnd = () => {
+        map.off("zoomend", onZoomEnd);
+        // Cluster might dissolve after zoom; find visible parent
+        const parent = markersLayer.getVisibleParent(cluster) || cluster;
+        if (parent && typeof parent.spiderfy === "function") {
+          try { parent.spiderfy(); } catch {}
+        }
+      };
+
+      map.on("zoomend", onZoomEnd);
+      // smooth zoom to the cluster bounds
+      map.fitBounds(cluster.getBounds(), {
+        padding: PADDING,
+        animate: true,
+        maxZoom: Math.min(targetZoom, 18),
+      });
+    } else {
+      // if already close to the points — spiderfy immediately without changing zoom
+      try { cluster.spiderfy(); } catch {}
+    }
+  });
+
 
   pathsLayer = new L.layerGroup();
   map.addLayer(pathsLayer);
   moveLayer = new L.layerGroup();
   map.addLayer(moveLayer);
 
+  // for (const type of Object.values(messageTypes)) {
+  //   messagesLayers[type] = createLooseClusterGroup((cluster) => iconCreateMsg(cluster, type));
+  // }
   for (const type of Object.values(messageTypes)) {
-    messagesLayers[type] = createLooseClusterGroup((cluster) => iconCreateMsg(cluster, type));
+    const layer = createLooseClusterGroup((cluster) => iconCreateMsg(cluster, type));
+
+    /**
+     * Same hybrid cluster click logic applied to message layers:
+     * - Zoom in + spiderfy if far or many children.
+     * - Direct spiderfy if already close.
+     */
+
+    layer.on("clusterclick", (e) => {
+      const cluster = e.layer;
+      const nowZoom = map.getZoom();
+      const targetZoom = map.getBoundsZoom(cluster.getBounds(), true);
+      const MAX_SPIDER_CHILDREN = 20;
+      const ZOOM_DELTA_THRESHOLD = 1;
+      const PADDING = [40, 40];
+
+      if ((targetZoom - nowZoom) >= ZOOM_DELTA_THRESHOLD || cluster.getChildCount() > MAX_SPIDER_CHILDREN) {
+        e.originalEvent?.preventDefault?.();
+        e.originalEvent?.stopPropagation?.();
+
+        const onZoomEnd = () => {
+          map.off("zoomend", onZoomEnd);
+          const parent = layer.getVisibleParent(cluster) || cluster;
+          if (parent && typeof parent.spiderfy === "function") {
+            try { parent.spiderfy(); } catch {}
+          }
+        };
+
+        map.on("zoomend", onZoomEnd);
+        map.fitBounds(cluster.getBounds(), {
+          padding: PADDING,
+          animate: true,
+          maxZoom: Math.min(targetZoom, 18),
+        });
+      } else {
+        try { cluster.spiderfy(); } catch {}
+      }
+    });
+
+    messagesLayers[type] = layer;
   }
+
   if (settings.SHOW_MESSAGES) {
     for (const messagesLayer of Object.values(messagesLayers)) {
       map.addLayer(messagesLayer);
