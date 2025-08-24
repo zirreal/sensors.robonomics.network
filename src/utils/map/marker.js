@@ -1,3 +1,5 @@
+// src/utils/map/marker.js
+
 import { settings, sensors } from "@config";
 import Queue from "js-queue";
 import L from "leaflet";
@@ -48,6 +50,49 @@ const messagesLayers = Object.values(messageTypes).reduce((result, item) => {
   return result;
 }, {});
 
+/*
+  Менее агрессивная кластеризация + «расхлопывание» близких точек
+*/
+function createLooseClusterGroup(iconCreateFn) {
+  return new L.MarkerClusterGroup({
+    showCoverageOnHover: false,
+    maxClusterRadius(zoom) {
+      // маленький радиус → позже слипается; с зумом радиус падает
+      return Math.max(6, 20 - zoom * 3.2);
+    },
+    disableClusteringAtZoom: 18,
+    spiderfyOnEveryZoom: true,
+    spiderfyOnMaxZoom: true,
+    spiderfyDistanceMultiplier: 1.8,
+    chunkedLoading: true,
+    chunkDelay: 30,
+    chunkInterval: 200,
+    removeOutsideVisibleBounds: true,
+    iconCreateFunction: iconCreateFn,
+  });
+}
+
+/*
+  Детерминированный «jitter» на основе sensor_id.
+  Смещение до ~15м, чтобы очень близкие точки визуально не перекрывались.
+*/
+function jitterCoord([lat, lng], seed, meters = 15) {
+  let h = 5381;
+  const s = String(seed);
+  for (let i = 0; i < s.length; i++) h = (h * 33) ^ s.charCodeAt(i);
+  const rnd = (x) => ((x >>> 0) % 1000) / 1000;
+  const ang = rnd(h) * 2 * Math.PI;
+  const dist = rnd(h ^ 0x9e3779b9) * meters;
+
+  const dx = Math.cos(ang) * dist;
+  const dy = Math.sin(ang) * dist;
+
+  const dLat = dy / 111111;
+  const dLng = dx / (111111 * Math.cos((lat * Math.PI) / 180));
+
+  return [lat + dLat, lng + dLng];
+}
+
 export async function init(map, type, cb) {
   for (const index of Object.keys(messageTypes)) {
     try {
@@ -87,12 +132,8 @@ export async function init(map, type, cb) {
   const scaleParams = getMeasurementByName(type);
   scale = generate(scaleParams.colors, scaleParams.range);
 
-  markersLayer = new L.MarkerClusterGroup({
-    showCoverageOnHover: false,
-    // zoomToBoundsOnClick: false,
-    maxClusterRadius: 120,
-    iconCreateFunction: iconCreate,
-  });
+  // менее агрессивные настройки кластеров
+  markersLayer = createLooseClusterGroup(iconCreate);
   map.addLayer(markersLayer);
 
   pathsLayer = new L.layerGroup();
@@ -101,12 +142,7 @@ export async function init(map, type, cb) {
   map.addLayer(moveLayer);
 
   for (const type of Object.values(messageTypes)) {
-    messagesLayers[type] = new L.MarkerClusterGroup({
-      showCoverageOnHover: false,
-      // zoomToBoundsOnClick: false,
-      maxClusterRadius: 120,
-      iconCreateFunction: (cluster) => iconCreateMsg(cluster, type),
-    });
+    messagesLayers[type] = createLooseClusterGroup((cluster) => iconCreateMsg(cluster, type));
   }
   if (settings.SHOW_MESSAGES) {
     for (const messagesLayer of Object.values(messagesLayers)) {
@@ -134,7 +170,7 @@ function iconCreate(cluster) {
       return;
     }
 
-    markersId.push(marker.options.data._id)
+    markersId.push(marker.options.data._id);
 
     childCountCalc++;
     sum += Number(marker.options.data.value);
@@ -167,11 +203,13 @@ function iconCreateMsg(cluster, type = "text") {
 function findMarker(sensor_id) {
   return new Promise((resolve) => {
     if (markersLayer) {
+      let found = false;
       markersLayer.eachLayer((m) => {
-        if (m.options.data.sensor_id === sensor_id) {
-          resolve(m);
+        if (!found && m.options.data.sensor_id === sensor_id) {
+          found = m;
         }
       });
+      if (found) return resolve(found);
     }
     resolve(false);
   });
@@ -180,11 +218,13 @@ function findMarker(sensor_id) {
 function findMarkerMoved(sensor_id) {
   return new Promise((resolve) => {
     if (moveLayer) {
+      let found = false;
       moveLayer.eachLayer((m) => {
-        if (m.options.data.sensor_id === sensor_id) {
-          resolve(m);
+        if (!found && m.options.data.sensor_id === sensor_id) {
+          found = m;
         }
       });
+      if (found) return resolve(found);
     }
     resolve(false);
   });
@@ -220,14 +260,10 @@ function createIconArrow(dir, speed, color) {
 }
 
 function iconCreateCircle(colors, isBookmarked, id) {
-  // return new L.DivIcon({
-  //   html: `<div class='marker-cluster-circle' style='color:${colors.border};background-color: rgba(${colors.rgb}, 0.7);border-color: ${colors.border};'></div>`,
-  //   className: "marker-cluster",
-  //   iconSize: new L.Point(40, 40),
-  // });
-
   return new L.DivIcon({
-    html: `<div data-id="${id ?? ''}" class='marker-cluster-circle ${isBookmarked ? "sensor-bookmarked" : ''}' style='color:${colors.border};background-color: ${colors.basic};border-color: ${colors.border};'></div>`,
+    html: `<div data-id="${id ?? ""}" class='marker-cluster-circle ${
+      isBookmarked ? "sensor-bookmarked" : ""
+    }' style='color:${colors.border};background-color: ${colors.basic};border-color: ${colors.border};'></div>`,
     className: "marker-cluster",
     iconSize: new L.Point(40, 40),
   });
@@ -255,16 +291,6 @@ function createMarkerCircle(coord, data, colors) {
     data: data,
     typeMarker: "circle",
   });
-  // return L.circleMarker(new L.LatLng(coord[0], coord[1]), {
-  //   radius: 15,
-  //   fillColor: colors.basic,
-  //   color: colors.border,
-  //   weight: 2,
-  //   // opacity: 0.7,
-  //   fillOpacity: 0.7,
-  //   data: data,
-  //   typeMarker: "circle",
-  // });
 }
 
 function createMarkerUser(coord, data) {
@@ -276,7 +302,8 @@ function createMarkerUser(coord, data) {
 }
 
 function createMarker(point, colors) {
-  const coord = [point.geo.lat, point.geo.lng];
+  // применяем «jitter» для визуального разведения близких точек
+  const coord = jitterCoord([point.geo.lat, point.geo.lng], point.sensor_id);
   let marker;
   if (sensors[point.sensor_id] && sensors[point.sensor_id].icon) {
     marker = createMarkerBrand(coord, point, colors);
@@ -302,7 +329,7 @@ function updateMarker(marker, point, colors) {
     marker.setIcon(iconCreateCircle(colors, point.isBookmarked, point.sensor_id));
   }
   if (point.model === 3) {
-    const coord = [point.geo.lat, point.geo.lng];
+    const coord = jitterCoord([point.geo.lat, point.geo.lng], point.sensor_id);
     marker.setLatLng(new L.LatLng(coord[0], coord[1]));
   }
 }
@@ -356,14 +383,14 @@ function markercolor(value) {
 }
 
 async function addMarker(point) {
-  // Проверка координат: если они близки к 0, пропускаем создание маркера
+  // пропускаем датчики с «нулевой» геопозицией
   const tolerance = 0.001;
   const lat = Number(point.geo.lat);
   const lng = Number(point.geo.lng);
   if (Math.abs(lat) < tolerance && Math.abs(lng) < tolerance) {
-    return; // Сенсор с нулевой геопозицией — не добавляем маркер
+    return;
   }
-  
+
   const colors = {
     basic: "#a1a1a1",
     border: "#999",
@@ -372,17 +399,16 @@ async function addMarker(point) {
   if (!point.isEmpty) {
     colors.basic = "color-mix(in srgb, " + markercolor(point.value) + " 70%, transparent)";
     colors.border = "color-mix(in srgb, " + colors.basic + ", #000 10%)";
-
     // colors.basic = getColor(scale, point.value);
     // colors.border = getColorDarken(scale, point.value);
     // colors.rgb = getColorRGB(scale, point.value);
   }
   const marker = await findMarker(point.sensor_id);
   if (!marker) {
-    const marker = createMarker(point, colors);
-    marker.on("click", handlerClickMarker);
+    const m = createMarker(point, colors);
+    m.on("click", handlerClickMarker);
     if (markersLayer) {
-      markersLayer.addLayer(marker);
+      markersLayer.addLayer(m);
     } else {
       console.log("Not found markersLayer");
     }
@@ -410,7 +436,7 @@ export async function moveMarkerTime(sensor_id, point, stop = false) {
   }
 
   if (marker) {
-    const coord = [point.geo.lat, point.geo.lng];
+    const coord = jitterCoord([point.geo.lat, point.geo.lng], sensor_id);
     marker.setLatLng(new L.LatLng(coord[0], coord[1]));
   }
 }
@@ -475,7 +501,7 @@ export async function hidePath(sensor_id) {
 }
 
 async function addMarkerUser(point) {
-  // Проверка координат: если они близки к 0, пропускаем создание маркера
+  // пропускаем «нулевые» координаты
   const tolerance = 0.001;
   const lat = Number(point.geo.lat);
   const lng = Number(point.geo.lng);
@@ -490,14 +516,14 @@ async function addMarkerUser(point) {
   };
   const marker = await findMarker(point.sensor_id);
   if (!marker) {
-    const marker = createMarker(point, colors);
-    marker.on("click", handlerClickMarker);
+    const m = createMarker(point, colors);
+    m.on("click", handlerClickMarker);
     if (
       point.measurement &&
       messageTypes[point.measurement.type] &&
       messagesLayers[messageTypes[point.measurement.type]]
     ) {
-      messagesLayers[messageTypes[point.measurement.type]].addLayer(marker);
+      messagesLayers[messageTypes[point.measurement.type]].addLayer(m);
     }
   }
 }
