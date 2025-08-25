@@ -211,12 +211,10 @@ export default {
   "AirVisual Pro & Outdoor": "AirVisual Pro & Outdoor",
   "Price": "Price",
   "Type": "Type",
-  "Altruist Bundles on": "Altruist Bundles on",
   "Altruist use cases": "Altruist use cases",
   "Altruist timeline": "Altruist timeline",
   "Altruist comparison table": "Altruist comparison table",
   "Air Sensor Comparison Table": "Air Sensor Comparison Table",
-  "Limited": "Limited",
   "Map data": "Map data",
   "OpenStreetMap contributors": "OpenStreetMap contributors",
   "Photo": "Photo",
@@ -233,5 +231,7 @@ export default {
   "Unhealthy": "Unhealthy",
   "Very Unhealthy": "Very Unhealthy",
   "Hazardous": "Hazardous",
-  "Today": "Today"
+  "Today": "Today",
+  "days left": "days left",
+  "Air quality monitor on": "Air quality monitor on"
 };

@@ -2,7 +2,8 @@
   <header :class="`route-${route.name || route.path.replaceAll('/', '-')}`">
     <div class="header-banner flexline align-center">
       <a href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight?utm_source=sensors.social&utm_medium=header-banner" target="_blank">
-        <span><b>{{$t('Limited')}}</b> {{ $t('Altruist Bundles on') }}</span>
+        <span><b>{{ daysLeft }} {{$t('days left')}}</b> <b>{{$t('Up to -42%')}}</b></span>
+        <span>{{ $t('Air quality monitor on') }} </span>
         <img class="header-banner-svg" alt="Indiegogo" src="../../assets/images/indiegogo.svg"/>
       </a>
     </div>
@@ -114,6 +115,16 @@ const zeroGeoSensors = computed(() => {
   });
 });
 
+// end of Indiegogo
+const deadline = new Date('2025-09-11');
+const now = ref(new Date());
+let timer;
+
+const daysLeft = computed(() => {
+  const diff = deadline - now.value;
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  return Math.max(0, days);
+});
 
 // Make a link for sensor. E.g. origin/#/provider/pm10/20/lat/lng/sensor_id
 const getSensorLink = (sensor) => {
@@ -168,17 +179,15 @@ onMounted(() => {
               }
       })
   }
+
+  // Update for Indiegogo timer hourly
+  timer = setInterval(() => { now.value = new Date() }, 1000 * 60 * 60);
 });
 
 </script>
 
-<style>
-  .header-banner b {
-    font-weight: 900;
-  }
-</style>
-
 <style scoped>
+
   header {
     left: 0;
     position: sticky;
@@ -263,8 +272,19 @@ onMounted(() => {
 
 /* + banner */
 .header-banner {
-  background-color: #4b01d4;
+  background-color: #ed006f;
   color: #fff;
+  padding-top: var(--gap);
+  padding-bottom: var(--gap);
+}
+
+.header-banner b {
+  font-weight: 900;
+  background-color: rgb(255, 234, 0);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #000;
+  margin-right: 15px;
 }
 
 .header-banner a {
@@ -285,14 +305,17 @@ onMounted(() => {
 /* - banner */
 
 
- @media screen and (max-width: 480px) {
-   .header-banner {
-      padding: calc(var(--gap) * 0.7);
+  @media screen and (max-width: 500px) {
+
+    .header-banner {
+      padding-top: calc(var(--gap) * 2);
+      padding-bottom: calc(var(--gap) * 2);
     }
-   
+
     .header-banner a {
       flex-direction: column;
       text-align: center;
+      gap: var(--gap);
     }
   }
 

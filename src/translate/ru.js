@@ -213,12 +213,10 @@ export default {
   "AirVisual Pro & Outdoor": "AirVisual Pro и Outdoor",
   "Price": "Цена",
   "Type": "Тип",
-  "Altruist Bundles on": "Комплект Альтруиста на",
   "Altruist use cases": "Сценарии использования Альтруиста",
   "Altruist timeline": "Временной отрезок Альтруиста",
   "Altruist comparison table": "Таблица сравнения альтруистов",
   "Air Sensor Comparison Table": "Таблица сравнения датчиков воздуха",
-  "Limited": "Ограниченный",
   "Map data": "Данные карты",
   "OpenStreetMap contributors": "Участники OpenStreetMap",
   "Photo": "Фотография",
@@ -232,5 +230,7 @@ export default {
   "Unhealthy": "Вредное",
   "Very Unhealthy": "Очень вредное",
   "Hazardous": "Опасное",
-  "Today": "Сегодня"
+  "Today": "Сегодня",
+  "days left": "осталось дней",
+  "Air quality monitor on": "Датчик качества воздуха"
 };
