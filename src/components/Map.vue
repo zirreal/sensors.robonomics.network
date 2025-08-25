@@ -412,11 +412,26 @@ export default {
 }
 /* - open source leaflet map rewritings */
 
-.marker-cluster-circle {
+.marker-cluster-circle, .marker-icon-brand {
   border-width: 2px;
   border-style: solid;
   border-radius: 18px;
+  transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+  will-change: transform, box-shadow, filter;
 }
+
+.is-hovered .marker-cluster-circle, .is-hovered .marker-icon-brand {
+  transform: scale(1.22);
+  box-shadow: 0 0 5px 3px rgba(211, 211, 211, 0.55);
+  filter: saturate(1.1);
+}
+
+/* Touch tap flash (brief visual feedback on tap) */
+.tap-highlight .marker-cluster-circle, .tap-highlight .marker-icon-brand {
+  transform: scale(1.18);
+  box-shadow: 0 0 0 3px rgba(57, 57, 57, 0.45);
+}
+
 .marker-cluster-circle span {
   line-height: 27px;
   font-weight: bold;

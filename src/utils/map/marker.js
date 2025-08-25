@@ -78,6 +78,185 @@ function createLooseClusterGroup(iconCreateFn) {
   });
 }
 
+/* + Helpers for hover effect */
+
+// Lightweight hover/touch highlight helpers
+const IS_HOVERABLE =
+  typeof window !== "undefined" &&
+  window.matchMedia &&
+  window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+const IS_TOUCH =
+  typeof window !== "undefined" &&
+  ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+
+// ensure marker icon DOM is always interactive and above spider legs
+function ensureInteractiveIcon(marker) {
+  const el = marker && marker._icon;
+  if (!el) return;
+  // Make sure the marker receives hover/click events
+  el.style.pointerEvents = "auto";
+  // Raise z-index to avoid spider legs or cluster SVG paths intercepting mouse events
+  el.style.zIndex = el.style.zIndex || "500000";
+  // Add a helper CSS class (optional for styling/debugging)
+  el.classList.add("hoverable");
+}
+
+/**
+ * Attach highlight handlers to a Leaflet marker.
+ * Idempotent: if already attached, does nothing.
+ *
+ * - On desktop: toggles `.is-hovered` class on mouseover/out.
+ * - On touch devices: flashes `.tap-highlight` briefly on tap.
+ * - On (re)add: ensures the marker icon stays interactive.
+ */
+function attachHighlightHandlers(marker) {
+  if (marker.__hoverBound) return; // prevent duplicate bindings
+  marker.__hoverBound = true;
+
+  const onOver = () => marker._icon && marker._icon.classList.add("is-hovered");
+  const onOut  = () => marker._icon && marker._icon.classList.remove("is-hovered");
+  marker.on("mouseover", onOver);
+  marker.on("mouseout", onOut);
+
+  // Ensure interactivity each time the marker is added back to the map
+  const onAdd = () => ensureInteractiveIcon(marker);
+  marker.on("add", onAdd);
+
+  // Touch-specific "flash" effect
+  const addTouchFlash = () => {
+    if (!IS_TOUCH) return;
+    marker.on("click", () => {
+      const el = marker._icon;
+      if (!el) return;
+      el.classList.add("tap-highlight");
+      setTimeout(() => el.classList.remove("tap-highlight"), 550);
+    });
+  };
+
+  addTouchFlash();
+  /// Apply interactivity immediately if icon already exists
+  ensureInteractiveIcon(marker);
+
+  // Keep references for debugging if needed
+  marker.__hoverHandlers = { onOver, onOut, onAdd };
+}
+
+// attach both highlight and micro-spiderfy to a marker in one call
+function attachEnhancements(marker, map, layerGroup) {
+  attachHighlightHandlers(marker);
+  attachMicroSpiderfyHandlers(marker, map, layerGroup);
+}
+
+/* - Helpers for hover effect */
+
+/* +++++ Mini‑spiderfy (fan-out) helpers +++++++++++++++++++++++++++++++++++++ */
+
+/**
+ * Find markers that overlap with a given marker in screen space.
+ * Checks distance in pixels between layer points to detect overlaps.
+ */
+function getOverlappingMarkers(map, marker, layerGroup, pxRadius = 24) {
+  const p0 = map.latLngToLayerPoint(marker.getLatLng());
+  const pool = [];
+  layerGroup?.eachLayer?.((x) => {
+    if (x instanceof L.Marker && x._icon) pool.push(x);
+  });
+
+  const out = [];
+  for (const m of pool) {
+    if (m === marker) continue;
+    const p = map.latLngToLayerPoint(m.getLatLng());
+    const dx = p.x - p0.x;
+    const dy = p.y - p0.y;
+    if (Math.hypot(dx, dy) <= pxRadius) out.push(m);
+  }
+  return out;
+}
+
+/**
+ * Fan out a group of overlapping markers around the anchor marker.
+ * Applies temporary CSS transforms and raises z-index so each marker becomes targetable.
+ */
+function fanOutOverlapped(anchor, overlapped, radiusPx = 16) {
+  anchor._fanOut = anchor._fanOut || { applied: false, items: [] };
+  if (anchor._fanOut.applied) return;
+
+  const all = [anchor, ...overlapped];
+  const n = all.length;
+
+  all.forEach((m, i) => {
+    const ang = (i / n) * 2 * Math.PI;
+    const dx = Math.cos(ang) * radiusPx;
+    const dy = Math.sin(ang) * radiusPx;
+
+    const el = m._icon;
+    if (!el) return;
+    const prevTransform = el.style.transform || "";
+    const prevZ = el.style.zIndex || "";
+
+    el.style.transform = `${prevTransform} translate(${dx}px, ${dy}px)`;
+    el.style.zIndex = "400000";
+    m.setZIndexOffset(2000);
+
+    anchor._fanOut.items.push({ m, el, prevTransform, prevZ });
+  });
+
+  anchor._fanOut.applied = true;
+}
+
+/** Restore markers after fanOutOverlapped(...) */
+function restoreOverlapped(anchor) {
+  if (!anchor._fanOut || !anchor._fanOut.applied) return;
+  for (const { m, el, prevTransform, prevZ } of anchor._fanOut.items) {
+    if (el) {
+      el.style.transform = prevTransform;
+      el.style.zIndex = prevZ;
+    }
+    m.setZIndexOffset(0);
+  }
+  anchor._fanOut.items = [];
+  anchor._fanOut.applied = false;
+}
+
+/**
+ * Attach micro-spiderfy handlers to a marker.
+ * Idempotent: binds only once per marker.
+ *
+ * - On mouseover: detect overlapping markers in the same layer and fan them out slightly.
+ * - On mouseout: restore markers to their original positions.
+ * - On touch click: temporarily fan out and restore after a short delay.
+ * - On remove: cleanup (restore transforms/z-index).
+ */
+function attachMicroSpiderfyHandlers(marker, map, layerGroup) {
+  if (!marker || marker.__microBound) return;
+  marker.__microBound = true;
+
+  marker.on("mouseover", () => {
+    const overlaps = getOverlappingMarkers(map, marker, layerGroup, 24);
+    if (overlaps.length) fanOutOverlapped(marker, overlaps, 16);
+  });
+
+  marker.on("mouseout", () => {
+    restoreOverlapped(marker);
+  });
+
+  // Touch-friendly: do a short fan-out on tap/click
+  marker.on("click", () => {
+    if (!IS_TOUCH) return;
+    const overlaps = getOverlappingMarkers(map, marker, layerGroup, 24);
+    if (overlaps.length) {
+      fanOutOverlapped(marker, overlaps, 16);
+      setTimeout(() => restoreOverlapped(marker), 650);
+    }
+  });
+
+  // Safety: when marker removed from map, ensure cleanup
+  marker.on("remove", () => restoreOverlapped(marker));
+}
+
+/* ----- Mini‑spiderfy helpers end ------------------------------------------ */
+
 /**
  * Apply a deterministic "jitter" to coordinates based on a unique seed.
  *
@@ -223,6 +402,18 @@ export async function init(map, type, cb) {
     }
   });
 
+  // When a cluster spiderfies, re-attach hover/micro-spiderfy to all exposed children
+  markersLayer.on("spiderfied", (e) => {
+    // e.markers is an array of child markers now visible around the cluster
+    if (Array.isArray(e.markers)) {
+      // сначала делаем иконки кликабельными и наверху, затем навешиваем обработчики (идемпотентно)
+      e.markers.forEach((m) => {
+        ensureInteractiveIcon(m);
+        attachEnhancements(m, map, markersLayer);
+      });
+    }
+  });
+
 
   pathsLayer = new L.layerGroup();
   map.addLayer(pathsLayer);
@@ -269,6 +460,15 @@ export async function init(map, type, cb) {
         });
       } else {
         try { cluster.spiderfy(); } catch {}
+      }
+    });
+
+    layer.on("spiderfied", (e) => {
+      if (Array.isArray(e.markers)) {
+        e.markers.forEach((m) => {
+          ensureInteractiveIcon(m);
+          attachEnhancements(m, map, layer);
+        });
       }
     });
 
@@ -392,13 +592,12 @@ function createIconArrow(dir, speed, color) {
 
 function iconCreateCircle(colors, isBookmarked, id) {
   return new L.DivIcon({
-    html: `<div data-id="${id ?? ""}" class='marker-cluster-circle ${
-      isBookmarked ? "sensor-bookmarked" : ""
-    }' style='color:${colors.border};background-color: ${colors.basic};border-color: ${colors.border};'></div>`,
+    html: `<div data-id="${id ?? ""}" class='marker-cluster-circle ${isBookmarked ? "sensor-bookmarked" : ""}' style='color:${colors.border};background-color: ${colors.basic};border-color: ${colors.border};'></div>`,
     className: "marker-cluster",
     iconSize: new L.Point(40, 40),
   });
 }
+
 
 function createMarkerBrand(coord, data, colors) {
   return L.marker(new L.LatLng(coord[0], coord[1]), {
@@ -538,6 +737,9 @@ async function addMarker(point) {
   if (!marker) {
     const m = createMarker(point, colors);
     m.on("click", handlerClickMarker);
+
+    attachEnhancements(m, map, markersLayer);
+
     if (markersLayer) {
       markersLayer.addLayer(m);
     } else {
@@ -649,6 +851,17 @@ async function addMarkerUser(point) {
   if (!marker) {
     const m = createMarker(point, colors);
     m.on("click", handlerClickMarker);
+
+    // figure out the layer where this user marker will live
+    const layer =
+      point.measurement &&
+      messageTypes[point.measurement.type] &&
+      messagesLayers[messageTypes[point.measurement.type]]
+        ? messagesLayers[messageTypes[point.measurement.type]]
+        : null;
+
+    attachEnhancements(m, map, layer || markersLayer);
+
     if (
       point.measurement &&
       messageTypes[point.measurement.type] &&
