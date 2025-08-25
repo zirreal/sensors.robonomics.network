@@ -233,5 +233,6 @@ export default {
   "Hazardous": "Hazardous",
   "Today": "Today",
   "days left": "days left",
-  "Air quality monitor on": "Air quality monitor on"
+  "Air quality monitor on": "Air quality monitor on",
+  "Up to -42%": "Up to -42%"
 };
