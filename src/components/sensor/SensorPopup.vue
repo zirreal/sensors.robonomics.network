@@ -507,7 +507,7 @@ watch(
 watch(() => log.value, (i) => {
     if(Array.isArray(i) && i.length > 0) {
 
-    const aqiTodayResult = getTodayAQI(log.value);
+    const aqiTodayResult = getTodayAQI(log.value, last.value.timestamp)
     latestAQI.value = aqiTodayResult
 
       log.value.forEach(entry => {
