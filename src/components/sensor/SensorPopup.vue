@@ -21,7 +21,7 @@
                 <span class="aqi-value"> {{ latestAQI.Final_AQI }}</span>
               </div>
               <div class="aqi-text">
-                <div class="aqi-subtext">AQI (US EPA)</div>
+                <div class="aqi-subtext">AQI (US EPA) - beta</div>
                 <div v-if="latestAQI.Final_Label" class="aqi-label">
                   {{ $t(latestAQI.Final_Label) }}
                 </div>

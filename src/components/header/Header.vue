@@ -3,7 +3,7 @@
     <div class="header-banner flexline align-center">
       <a href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight?utm_source=sensors.social&utm_medium=header-banner" target="_blank">
         <span><b>{{ daysLeft }} {{$t('days left')}}</b> <b>{{$t('Up to -42%')}}</b></span>
-        <span>{{ $t('Air quality monitor on') }} </span>
+        <span>{{ $t('Air quality monitor on') }}</span>
         <img class="header-banner-svg" alt="Indiegogo" src="../../assets/images/indiegogo.svg"/>
       </a>
     </div>
