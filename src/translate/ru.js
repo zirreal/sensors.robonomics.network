@@ -232,5 +232,6 @@ export default {
   "Hazardous": "Опасное",
   "Today": "Сегодня",
   "days left": "осталось дней",
-  "Air quality monitor on": "Датчик качества воздуха"
+  "Air quality monitor on": "Датчик качества воздуха",
+  "Up to -42%": "До -42%"
 };

@@ -160,19 +160,39 @@ export function getRealtimeAQI(logs) {
   Daily Recap: средние концентрации с 00:00 локального дня → AQI.
   Отрицательные/NaN значения не учитываются. Для дебага — почасовые средние.
 */
-export function getTodayAQI(logs) {
+export function getTodayAQI(logs, target = Date.now()) {
   const now = new Date();
-  const startOfDayLocal = new Date(
-    now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0
-  ).getTime();
+  let targetDate;
+  
+  if (target) {
+  targetDate = new Date(target * 1000);
 
-  const todayLogs = (logs || []).filter(l => l.timestamp * 1000 >= startOfDayLocal);
+  // If target year is not current year → use today
+  if (targetDate.getFullYear() !== now.getFullYear()) {
+    targetDate = now;
+    }
+  } else {
+    targetDate = now;
+  }
+
+  // Start and end of target day in LOCAL time
+  const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0).getTime();
+  const endOfDay   = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999).getTime();
+
+  const dayLogs = (logs || []).filter(l => {
+    const ts = l.timestamp * 1000;
+    if(!target) {
+      return ts >= startOfDay;
+    } else {
+      return ts >= startOfDay && ts <= endOfDay;
+    }
+  });
 
   const pm25All = [];
   const pm10All = [];
   const hourlyData = {};
 
-  todayLogs.forEach(l => {
+  dayLogs.forEach(l => {
     const localHour = new Date(l.timestamp * 1000);
     const hourKey = `${localHour.getFullYear()}-${String(localHour.getMonth() + 1).padStart(2,'0')}-${String(localHour.getDate()).padStart(2,'0')} ${String(localHour.getHours()).padStart(2,'0')}`;
 

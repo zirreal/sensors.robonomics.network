@@ -22,7 +22,10 @@ const PRESERVE_KEYS = [
   "Unhealthy for Sensitive Groups",
   "Unhealthy",
   "Very Unhealthy",
-  "Hazardous"
+  "Hazardous",
+  "Today",
+  "Dust & Particles",
+  "Noise"
 ];
 const TRANSLATION_FILES_DIR = "src/translate";
 const CACHE_FILE = "src/scripts/openai-cache.json";
