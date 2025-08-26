@@ -1,4 +1,4 @@
-import { converterPpmToMgm3 } from "./tools";
+// import { converterPpmToMgm3 } from "./tools";
 
 export default {
   label: "CO",
@@ -6,7 +6,11 @@ export default {
     en: "Carbon monoxide",
     ru: "Угарный газ"
   },
-  unit: "mg/m3",
+  nameshort: {
+    en: "CO",
+    ru: "CO"
+  },
+  unit: "ppm",
   chartColor: "#c1c1c1",
   // colors: ["var(--measure-green)", "#ff9d00", "#fc0202"],
   range: [0, 2, 4, 14],
@@ -43,9 +47,9 @@ export default {
       }
     },
   ],
-  calculate: function (v) {
-    return converterPpmToMgm3(v, 28.01);
-  },
+  // calculate: function (v) {
+  //   return converterPpmToMgm3(v, 28.01);
+  // },
   info: "Carbon monoxide. It is formed during the incomplete decomposition of organic compounds and during the combustion of biomass during forest fires.",
   description: "The particles of CO (carbon monoxide) outdoors represent gaseous pollution formed during incomplete combustion of hydrocarbons, especially in the exhaust gases of vehicles. Elevated levels of CO can have a negative impact on health, leading to poisoning. Restricting emissions and using protective masks can help reduce CO levels and improve air quality.Outdoors, the level of CO pollution (carbon monoxide) is typically measured in milligrams per cubic meter (mg/m³) of air.",
   recommendations: [
