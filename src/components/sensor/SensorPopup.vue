@@ -190,7 +190,7 @@ import { settings, sensors } from "@config";
 import measurements from "../../measurements";
 import { getTypeProvider } from "../../utils/utils";
 import { getAddressByPos } from "../../utils/map/utils";
-import { getTodayAQI, getRealtimeAQI } from '../../utils/aqi.js';
+import { getTodayAQI } from '../../utils/aqi.js';
 
 import Bookmark from "./Bookmark.vue";
 import Chart from "./Chart.vue";
@@ -239,7 +239,6 @@ const state = reactive({
 const units = ref([]);
 const dewPoint = ref(null)
 const latestAQI = ref(null)
-const previousAQI = ref(null);
 
 let AQIInterval;
 
@@ -451,12 +450,6 @@ const setAddressUnrecognised = (lat, lng) => {
   };
 }
 
-const updateAQI = () => {
-  const newAQI = getRealtimeAQI(log.value);
-  previousAQI.value = newAQI.Final_AQI;
-  latestAQI.value = newAQI;
-};
-
 function getMapLink(lat, lon, label = "Sensor") {
   const ua = navigator.userAgent || "";
   const isIOS = /iPad|iPhone|iPod/.test(ua);
@@ -514,17 +507,8 @@ watch(
 watch(() => log.value, (i) => {
     if(Array.isArray(i) && i.length > 0) {
 
-      if(state.provider === 'realtime') {
-        const aqiRealtimeResult = getRealtimeAQI(log.value);
-        latestAQI.value = aqiRealtimeResult
-        if(!AQIInterval) {
-          previousAQI.value = latestAQI.value.Final_AQI;
-          AQIInterval = setInterval(updateAQI, 60000);
-        }
-       } else {
-        const aqiTodayResult = getTodayAQI(log.value);
-        latestAQI.value = aqiTodayResult
-      }
+    const aqiTodayResult = getTodayAQI(log.value);
+    latestAQI.value = aqiTodayResult
 
       log.value.forEach(entry => {
         if (

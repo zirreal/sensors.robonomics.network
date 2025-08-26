@@ -35,75 +35,9 @@ export function calcAQI(concentration, pollutant) {
   return ((I_hi - I_lo) / (BP_hi - BP_lo)) * (concentration - BP_lo) + I_lo;
 }
 
-export function getRealtimeAQI(logs) {
-  if (!logs || logs.length === 0) return null;
-
-  const latestLog = logs[logs.length - 1];
-
-  if (!latestLog || !latestLog.data) return null;
-
-  const pm25Value = typeof latestLog.data.pm25 === "number" ? latestLog.data.pm25 : null;
-  const pm10Value = typeof latestLog.data.pm10 === "number" ? latestLog.data.pm10 : null;
-
-  let aqiPM25 = pm25Value !== null ? calcAQI(pm25Value, 'pm25') : null;
-  let aqiPM10 = pm10Value !== null ? calcAQI(pm10Value, 'pm10') : null;
-
-  
-  if (aqiPM25 === null && pm25Value !== null) aqiPM25 = 500;
-  if (aqiPM10 === null && pm10Value !== null) aqiPM10 = 500;
-
-  const pm25Info = aqiPM25 !== null ? getAQILabelAndColor(aqiPM25) : null;
-  const pm10Info = aqiPM10 !== null ? getAQILabelAndColor(aqiPM10) : null;
-
-  
-  let finalAQI = '–';
-  let finalInfo = { label: 'No Data', color: 'var(--measure-nodata)' };
-
-  if (aqiPM25 !== null && aqiPM10 !== null) {
-    finalAQI = Math.round(Math.max(aqiPM25, aqiPM10));
-    finalInfo = getAQILabelAndColor(finalAQI);
-  } else if (aqiPM25 !== null) {
-    finalAQI = Math.round(aqiPM25);
-    finalInfo = pm25Info;
-  } else if (aqiPM10 !== null) {
-    finalAQI = Math.round(aqiPM10);
-    finalInfo = pm10Info;
-  }
-
-  const now = Date.now();
-  const logTime = latestLog.timestamp * 1000;
-  const diffMs = now - logTime;
-  const diffMins = Math.floor(diffMs / 60000);
-
-  let lastUpdated;
-  if (diffMins < 1) {
-    lastUpdated = "just now";
-  } else if (diffMins < 60) {
-    lastUpdated = `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
-  } else {
-    const diffHours = Math.floor(diffMins / 60);
-    lastUpdated = `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-  }
-
-  return {
-    timestamp: lastUpdated,
-    AQI_PM25: aqiPM25 !== null ? Math.round(aqiPM25) : null,
-    Label_PM25: pm25Info ? pm25Info.label : null,
-    Color_PM25: pm25Info ? pm25Info.color : null,
-    AQI_PM10: aqiPM10 !== null ? Math.round(aqiPM10) : null,
-    Label_PM10: pm10Info ? pm10Info.label : null,
-    Color_PM10: pm10Info ? pm10Info.color : null,
-    Final_AQI: finalAQI,
-    Final_Label: finalInfo.label,
-    Final_Color: finalInfo.color
-  };
-}
-
-
 export function getTodayAQI(logs) {
   const now = new Date();
 
-  
   const startOfDayLocal = new Date(
     now.getFullYear(),
     now.getMonth(),
@@ -120,44 +54,53 @@ export function getTodayAQI(logs) {
     const hourKey = `${localHour.getFullYear()}-${String(localHour.getMonth() + 1).padStart(2,'0')}-${String(localHour.getDate()).padStart(2,'0')} ${String(localHour.getHours()).padStart(2,'0')}`;
 
     if (!hourlyData[hourKey]) hourlyData[hourKey] = { pm25: [], pm10: [] };
-    if (typeof l.data.pm25 === "number") hourlyData[hourKey].pm25.push(l.data.pm25);
-    if (typeof l.data.pm10 === "number") hourlyData[hourKey].pm10.push(l.data.pm10);
+    if (typeof l.data.pm25 === "number" && l.data.pm25 > 0) {
+      hourlyData[hourKey].pm25.push(l.data.pm25);
+    }
+    if (typeof l.data.pm10 === "number" && l.data.pm10 > 0) {
+      hourlyData[hourKey].pm10.push(l.data.pm10);
+    }
   });
 
   const debugTable = [];
   const hourlyAQIs = { pm25: [], pm10: [] };
 
   for (const hour of Object.keys(hourlyData).sort()) {
-    const pm25Values = hourlyData[hour].pm25;
-    const pm10Values = hourlyData[hour].pm10;
+    const pm25Values = hourlyData[hour].pm25.filter(v => v > 0);
+    const pm10Values = hourlyData[hour].pm10.filter(v => v > 0);
 
+    const worstPM25 = pm25Values.length ? Math.max(...pm25Values) : null;
+    const worstPM10 = pm10Values.length ? Math.max(...pm10Values) : null;
 
-    const worstPM25 = pm25Values.length ? Math.max(...pm25Values) : 0;
-    const worstPM10 = pm10Values.length ? Math.max(...pm10Values) : 0;
+    const aqiPM25 = worstPM25 !== null ? calcAQI(worstPM25, 'pm25') : null;
+    const aqiPM10 = worstPM10 !== null ? calcAQI(worstPM10, 'pm10') : null;
 
-    let aqiPM25 = calcAQI(worstPM25, 'pm25');
-    let aqiPM10 = calcAQI(worstPM10, 'pm10');
+    if (aqiPM25 !== null) {
+      hourlyAQIs.pm25.push(aqiPM25);
+    }
+    if (aqiPM10 !== null) {
+      hourlyAQIs.pm10.push(aqiPM10);
+    }
 
-    if (aqiPM25 === null) aqiPM25 = 500;
-    if (aqiPM10 === null) aqiPM10 = 500;
+    const pm25Info = aqiPM25 !== null ? getAQILabelAndColor(aqiPM25) : { label: "No data", color: "var(--measure-nodata)" };
+    const pm10Info = aqiPM10 !== null ? getAQILabelAndColor(aqiPM10) : { label: "No data", color: "var(--measure-nodata)" };
 
-    const pm25Info = getAQILabelAndColor(aqiPM25);
-    const pm10Info = getAQILabelAndColor(aqiPM10);
+    const worstPollutant = aqiPM25 !== null && aqiPM10 !== null
+      ? (aqiPM25 >= aqiPM10 ? "PM2.5" : "PM10")
+      : (aqiPM25 !== null ? "PM2.5" : aqiPM10 !== null ? "PM10" : "None");
 
-    hourlyAQIs.pm25.push(aqiPM25);
-    hourlyAQIs.pm10.push(aqiPM10);
-
-    const worstPollutant = aqiPM25 >= aqiPM10 ? 'PM2.5' : 'PM10';
-    const worstColor = aqiPM25 >= aqiPM10 ? pm25Info.color : pm10Info.color;
+    const worstColor = aqiPM25 !== null && aqiPM10 !== null
+      ? (aqiPM25 >= aqiPM10 ? pm25Info.color : pm10Info.color)
+      : (aqiPM25 !== null ? pm25Info.color : aqiPM10 !== null ? pm10Info.color : "var(--measure-nodata)");
 
     debugTable.push({
       hour,
-      worstPM25: worstPM25.toFixed(2),
-      aqiPM25: Math.round(aqiPM25),
+      worstPM25: worstPM25 !== null ? worstPM25.toFixed(2) : "-",
+      aqiPM25: aqiPM25 !== null ? Math.round(aqiPM25) : "-",
       labelPM25: pm25Info.label,
       colorPM25: pm25Info.color,
-      worstPM10: worstPM10.toFixed(2),
-      aqiPM10: Math.round(aqiPM10),
+      worstPM10: worstPM10 !== null ? worstPM10.toFixed(2) : "-",
+      aqiPM10: aqiPM10 !== null ? Math.round(aqiPM10) : "-",
       labelPM10: pm10Info.label,
       colorPM10: pm10Info.color,
       worstPollutant,
@@ -165,28 +108,33 @@ export function getTodayAQI(logs) {
     });
   }
 
-  const worstAQIpm25 = hourlyAQIs.pm25.length ? Math.max(...hourlyAQIs.pm25) : 0;
-  const worstAQIpm10 = hourlyAQIs.pm10.length ? Math.max(...hourlyAQIs.pm10) : 0;
+  const worstAQIpm25 = hourlyAQIs.pm25.length ? Math.max(...hourlyAQIs.pm25) : null;
+  const worstAQIpm10 = hourlyAQIs.pm10.length ? Math.max(...hourlyAQIs.pm10) : null;
 
-  const finalAQI = Math.round(Math.max(worstAQIpm25, worstAQIpm10));
-  const finalInfo = getAQILabelAndColor(finalAQI);
+  let finalAQI, finalInfo;
+  if (worstAQIpm25 === null && worstAQIpm10 === null) {
+    finalAQI = "-";
+    finalInfo = { label: "No data", color: "var(--measure-nodata)" };
+  } else {
+    finalAQI = Math.round(Math.max(worstAQIpm25 ?? 0, worstAQIpm10 ?? 0));
+    finalInfo = getAQILabelAndColor(finalAQI);
+  }
 
-  // console.table(debugTable)
+  // console.table(debugTable);
 
   return {
     debugTable,
-    AQI_PM25: Math.round(worstAQIpm25),
-    Label_PM25: getAQILabelAndColor(worstAQIpm25).label,
-    Color_PM25: getAQILabelAndColor(worstAQIpm25).color,
-    AQI_PM10: Math.round(worstAQIpm10),
-    Label_PM10: getAQILabelAndColor(worstAQIpm10).label,
-    Color_PM10: getAQILabelAndColor(worstAQIpm10).color,
+    AQI_PM25: worstAQIpm25 !== null ? Math.round(worstAQIpm25) : "-",
+    Label_PM25: worstAQIpm25 !== null ? getAQILabelAndColor(worstAQIpm25).label : "No data",
+    Color_PM25: worstAQIpm25 !== null ? getAQILabelAndColor(worstAQIpm25).color : "var(--measure-nodata)",
+    AQI_PM10: worstAQIpm10 !== null ? Math.round(worstAQIpm10) : "-",
+    Label_PM10: worstAQIpm10 !== null ? getAQILabelAndColor(worstAQIpm10).label : "No data",
+    Color_PM10: worstAQIpm10 !== null ? getAQILabelAndColor(worstAQIpm10).color : "var(--measure-nodata)",
     Final_AQI: finalAQI,
     Final_Label: finalInfo.label,
     Final_Color: finalInfo.color
   };
 }
-
 
 
 
