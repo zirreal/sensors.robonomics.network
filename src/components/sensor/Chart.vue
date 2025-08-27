@@ -24,12 +24,18 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import Highcharts from 'highcharts';
 import stockInit from 'highcharts/modules/stock';
+import Boost from "highcharts/modules/boost";
+import Exporting from "highcharts/modules/exporting";
+import OfflineExporting from "highcharts/modules/offline-exporting";
 import { Chart } from 'highcharts-vue';
 import unitsettings from '../../measurements';
 import { settings } from '@config';
 import { getTypeProvider } from '../../utils/utils';
 
 stockInit(Highcharts);
+Boost(Highcharts);
+// Exporting(Highcharts);
+// OfflineExporting(Highcharts);
 
 const props = defineProps({
   log:  { type: Array, default: () => [] },
@@ -44,6 +50,9 @@ const { t: tr, locale } = useI18n();
 const WINDOW_MS   = 60 * 60 * 1000;
 const MAX_VISIBLE = settings.SERIES_MAX_VISIBLE;
 const VALID_TYPES = Object.keys(unitsettings).map(k => k.toLowerCase());
+
+// Determine total points across all series
+const isLargeDataset = computed(() => props.log.length > 2500);
 
 const GROUPS = {
   dust:    { members: ['pm10', 'pm25'], labelKey: 'Dust & Particles' },
@@ -132,8 +141,12 @@ function buildSeriesArray(log, realtime, maxVisible, legendKey) {
               dashStyle: isMain || id === 'dewpoint' ? 'Solid' : 'ShortDot',
               data: [],
               zones: zonesMap[id] || [],
-              dataGrouping: { enabled: true, units: [['minute', [5]]] }
-            });
+              dataGrouping:  {
+              enabled: true,
+              units: isLargeDataset.value
+                ? [["hour", [1]]] 
+                : [["minute", [5]]] 
+            }});
           }
         } else {
           if (!seriesMap.has(id)) {
@@ -145,8 +158,12 @@ function buildSeriesArray(log, realtime, maxVisible, legendKey) {
               showInLegend: true,
               data: [],
               zones: zonesMap[id] || [],
-              dataGrouping: { enabled: true, units: [['minute', [5]]] }
-            });
+              dataGrouping: {
+              enabled: true,
+              units: isLargeDataset.value
+                ? [["hour", [1]]] 
+                : [["minute", [5]]] 
+            }});
           }
         }
         seriesMap.get(id).data.push([t, parseFloat(val)]);
@@ -170,7 +187,12 @@ function buildSeriesArray(log, realtime, maxVisible, legendKey) {
       data: arr,
       dataGrouping: realtime
         ? { enabled: false }
-        : (many ? { enabled: true, approximation: 'high', units: [['minute', [5]]] } : s.dataGrouping)
+        :  {
+              enabled: true,
+              units: isLargeDataset.value
+                ? [["hour", [1]]] 
+                : (many ? { enabled: true, approximation: 'high', units: [['minute', [5]]] } : s.dataGrouping)
+            }
     };
   });
   return out.sort((a, b) => a.name.localeCompare(b.name));
@@ -210,13 +232,38 @@ const chartOptions = computed(() => {
     plotOptions: {
       series: {
         showInNavigator: true,
-        dataGrouping: isRealtime.value ? { enabled: false } : { enabled: true, units: [['minute', [5]]] }
+        dataGrouping: !isRealtime.value
+          ? {
+              enabled: true,
+              units: isLargeDataset.value
+                ? [["hour", [1]]] // aggregate by hour for month data
+                : [["minute", [5]]] // fine-grained for 24h data
+            }
+          : { enabled: false },
+        turboThreshold: isLargeDataset.value ? 5000 : 0,
+        boostThreshold: isLargeDataset.value ? 10 : 500,
+        boost: {
+          useGPUTranslations: true,
+          allowForce: true
+        },
+        animation: !isLargeDataset.value
       }
     },
+    // exporting: {
+    //   sourceWidth: 1200,
+    //   sourceHeight: 600,
+    //   chartOptions: {
+    //     chart: { renderer: 'SVG' },
+    //     plotOptions: { series: { dataGrouping: { enabled: false } } }
+    //   }
+    // },
     series,
     credits: { enabled: false }
   };
 });
+
+
+
 
 function onLegendClick(legendKey) {
   if (legendKey === activeLegendKey.value) return;

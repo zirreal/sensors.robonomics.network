@@ -14,6 +14,7 @@
     @modal="handlerModal"
     @close="handlerClose"
     @history="handlerHistoryLog"
+    @getMonthScope="getMonthScope"
     :startTime="state?.start"
   />
 
@@ -120,6 +121,35 @@ const isSensor = computed(() => {
     ? !(state.point.measurement && state.point.measurement.message)
     : !!props.sensor;
 });
+
+
+const getRollingMonthRange = (targetDate = new Date()) => {
+  const end = new Date(
+    targetDate.getFullYear(),
+    targetDate.getMonth(),
+    targetDate.getDate(),
+    23, 59, 59, 999
+  );
+
+  let start = new Date(
+    targetDate.getFullYear(),
+    targetDate.getMonth() - 1,
+    targetDate.getDate(),
+    0, 0, 0, 0
+  );
+
+  if (start.getMonth() === targetDate.getMonth()) {
+    start = new Date(
+      targetDate.getFullYear(),
+      targetDate.getMonth(),
+      0, 
+      0, 0, 0, 0
+    );
+  }
+
+  return { start, end };
+}
+
 
 
 const removeAllActivePoints = () => {
@@ -236,6 +266,15 @@ const handlerHistoryLog = async ({ sensor_id, start, end }) => {
     state.point = { ...state.point, log: [...log] };
   }
 };
+
+const getMonthScope = async () => {
+  const { start, end } = getRollingMonthRange(new Date());
+  await handlerHistoryLog({
+    sensor_id: state.point.sensor_id,
+    start: Math.floor(start.getTime() / 1000),
+    end: Math.floor(end.getTime() / 1000)
+  });
+}
 
 const handlerClose = () => {
   mapStore.mapinactive = false;
