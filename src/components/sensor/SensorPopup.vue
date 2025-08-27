@@ -55,6 +55,9 @@
       <section>
         <Chart v-show="state.chartReady" :log="log" :unit="measurements[props.type]?.unit" />
         <div v-show="!state.chartReady" class="chart-skeleton"></div>
+
+        <button v-if="state.chartReady && state.provider !== 'realtime'" @click="getMonthlyScope" class="button month-scope-btn"> View 1-Month History </button>
+        <span v-if="state.monthLogLoading" class="month-scope-btn skeleton-text"> Loading monthly data </span>
       </section>
 
       <section class="flexline space-between">
@@ -206,7 +209,7 @@ const props = defineProps({
   point: Object,
   startTime: [Number, String],
 });
-const emit = defineEmits(["history", "close"]);
+const emit = defineEmits(["history", "close", 'getMonthScope']);
 
 // Глобальные объекты
 const route = useRoute();
@@ -230,6 +233,7 @@ const state = reactive({
   sharedLink: false,
   chartEverLoaded: false,
   chartReady: false,
+  monthLogLoading: false,
   lastCoords: { lat: null, lon: null },
   address: ""
 });
@@ -376,6 +380,13 @@ const getHistory = () => {
     start: startTimestamp.value,
     end: endTimestamp.value,
   });
+}
+
+const getMonthlyScope = () => {
+  if (state.provider === "realtime") return;
+  state.chartReady = false;
+  state.monthLogLoading = true
+  emit("getMonthScope");
 }
 
 const calculateDewPoint = (t, h) => {
@@ -529,6 +540,7 @@ watch(() => log.value, (i) => {
 
       if (!state.chartReady) {
         state.chartReady = true;
+        state.monthLogLoading = false
       }
 
       // EN: Checks if units set is changed (to show scales)
@@ -662,6 +674,19 @@ watch(
 
 .close svg {
   height: 2rem;
+}
+
+.month-scope-btn {
+  display: block;
+  margin: 0 0 30px;
+}
+
+.month-scope-btn.skeleton-text {
+  height: 2rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Стили скелетона для заглушки графика */
