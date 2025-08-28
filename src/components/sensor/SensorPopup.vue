@@ -38,7 +38,7 @@
             <div v-if="state.rttime" class="rt-time">{{ state.rttime }}</div>
           </div>
 
-          <div v-if="state.provider !== 'realtime'" class="flexline-i-right" style="display: none">
+          <div v-if="state.provider !== 'realtime'" class="flexline-i-right" style="display: none;">
             <template v-if="state.monthLogLoading"><Loader /></template>
             <button v-if="state.chartReady" @click="getMonthlyScope" class="button">Analyze month</button>
           </div>
@@ -57,9 +57,12 @@
 
       </section>
 
-      <section>
+      <section class="chart-wrapper">
         <Chart v-show="state.chartReady" :log="log" :unit="measurements[props.type]?.unit" />
         <div v-show="!state.chartReady" class="chart-skeleton"></div>
+        <div v-if="state.monthLogLoading" class="monthly-scope-warning">
+           <font-awesome-icon icon="fa-solid fa-circle-exclamation" />
+           WARNING: monthly scope is still in beta and may freeze at the time.</div>
       </section>
 
       <section class="flexline space-between">
@@ -677,6 +680,18 @@ watch(
 
 .close svg {
   height: 2rem;
+}
+
+.chart-wrapper {
+  position: relative;
+}
+
+.monthly-scope-warning {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-weight: 600;
+  transform: translateX(-50%);
 }
 
 /* Стили скелетона для заглушки графика */

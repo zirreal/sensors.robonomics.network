@@ -2,6 +2,7 @@ import { library } from "@fortawesome/fontawesome-svg-core";
 import {
   faBars,
   faBookmark,
+  faCircleExclamation,
   faCheck,
   faCompass,
   faCopy,
@@ -23,6 +24,7 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 library.add(
   faBars,
   faBookmark,
+  faCircleExclamation,
   faCheck,
   faCompass,
   faCopy,

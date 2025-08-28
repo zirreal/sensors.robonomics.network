@@ -37,6 +37,24 @@ Boost(Highcharts);
 // Exporting(Highcharts);
 // OfflineExporting(Highcharts);
 
+Highcharts.SVGRenderer.prototype.symbols.download = function (x, y, w, h) {
+    const path = [
+        // Arrow stem
+        'M', x + w * 0.5, y,
+        'L', x + w * 0.5, y + h * 0.7,
+        // Arrow head
+        'M', x + w * 0.3, y + h * 0.5,
+        'L', x + w * 0.5, y + h * 0.7,
+        'L', x + w * 0.7, y + h * 0.5,
+        // Box
+        'M', x, y + h * 0.9,
+        'L', x, y + h,
+        'L', x + w, y + h,
+        'L', x + w, y + h * 0.9
+    ];
+    return path;
+};
+
 const props = defineProps({
   log:  { type: Array, default: () => [] },
   unit: { type: String }
@@ -144,7 +162,7 @@ function buildSeriesArray(log, realtime, maxVisible, legendKey) {
               dataGrouping:  {
               enabled: true,
               units: isLargeDataset.value
-                ? [["hour", [1]]] 
+                ? [["hour", [3]]] 
                 : [["minute", [5]]] 
             }});
           }
@@ -161,7 +179,7 @@ function buildSeriesArray(log, realtime, maxVisible, legendKey) {
               dataGrouping: {
               enabled: true,
               units: isLargeDataset.value
-                ? [["hour", [1]]] 
+                ? [["hour", [3]]] 
                 : [["minute", [5]]] 
             }});
           }
@@ -190,7 +208,7 @@ function buildSeriesArray(log, realtime, maxVisible, legendKey) {
         :  {
               enabled: true,
               units: isLargeDataset.value
-                ? [["hour", [1]]] 
+                ? [["hour", [3]]]
                 : (many ? { enabled: true, approximation: 'high', units: [['minute', [5]]] } : s.dataGrouping)
             }
     };
@@ -198,7 +216,60 @@ function buildSeriesArray(log, realtime, maxVisible, legendKey) {
   return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-const makeSeriesArray = (log, legendKey) => buildSeriesArray(log, isRealtime.value, MAX_VISIBLE, legendKey);
+
+function buildMonthlyOverlaySeries(log, legendKey) {
+  const seriesMap = new Map(); 
+
+  for (const { timestamp, data } of log) {
+    if (!timestamp || !data) continue;
+    const ts = String(timestamp).length === 10 ? timestamp * 1000 : timestamp;
+    const d = new Date(ts);
+    const dayStr = d.toISOString().slice(0,10);
+    let hour = d.getHours();
+    hour = Math.floor(hour / 3) * 3; 
+
+    for (const [key, val] of Object.entries(data)) {
+      const id = key.toLowerCase();
+      const group = idToGroup[id];
+      if (!((group && group === legendKey) || (!group && id === legendKey))) continue;
+
+      const sid = `${id}_${dayStr}`;
+      if (!seriesMap.has(sid)) {
+        const set = unitsettings[id] || {};
+        seriesMap.set(sid, {
+          id: sid,
+          name: `${set.nameshort?.[locale.value] || id.toUpperCase()} • ${dayStr}`,
+          fullLabel: set.namelong?.[locale.value] || set.nameshort?.[locale.value] || id.toUpperCase(),
+          unit: set.unit || '',
+          data: Array.from({ length: 8 }, () => []), 
+          dashStyle: group && id !== (GROUPS[group]?.members[0]) ? 'ShortDot' : 'Solid',
+          marker: { enabled: false },
+          zones: set.zones || [],
+          showInLegend: false,
+          dayStr
+        });
+      }
+
+      
+      const bucketIndex = hour / 3;
+      seriesMap.get(sid).data[bucketIndex].push([hour, parseFloat(val)]);
+    }
+  }
+
+  
+  return Array.from(seriesMap.values()).map(s => {
+    const averaged = s.data
+      .map(arr => arr.length ? [arr[0][0], arr.reduce((a,b)=>a+b[1],0)/arr.length] : null)
+      .filter(Boolean);
+    return { ...s, data: averaged };
+  });
+}
+
+const makeSeriesArray = (log, legendKey) => {
+  return isLargeDataset.value
+    ? buildMonthlyOverlaySeries(log, legendKey) 
+    : buildSeriesArray(log, isRealtime.value, MAX_VISIBLE, legendKey); 
+};
 
 const chartOptions = computed(() => {
   const unitsArr = [...new Set(chartSeries.value.map(s => s.unit))];
@@ -212,57 +283,95 @@ const chartOptions = computed(() => {
     visible: true
   }));
 
+  const xAxis = isLargeDataset.value
+    ? {
+        type: 'linear',
+        min: 0,
+        max: 23,
+        tickInterval: 1,
+        title: { text: 'Hour' },
+        labels: { formatter() { return this.value.toString().padStart(2,'0') + ':00'; } }
+      }
+    : {
+        type: 'datetime',
+        labels: { format: '{value: %H:%M}' },
+        ordinal: !isRealtime.value
+  };
+
+  const tooltip = isLargeDataset.value
+    ? {
+      shared: true,
+      crosshairs: true,
+      formatter() {
+        const d = new Date(this.x);
+        const hour = d.getHours();
+        const rows = this.points.map(p => {
+          const s = p.series.userOptions;
+          return `<span style="color:${p.color}">●</span> ${s.fullLabel} (${s.dayStr}): <b>${p.y.toFixed(2)} ${s.unit}</b>`;
+        });
+        return `<b>${hour}:00</b><br/>${rows.join('<br/>')}`;
+      }
+    }
+    : {
+        shared: true,
+        valueDecimals: 2,
+        xDateFormat: '%Y-%m-%d %H:%M:%S',
+        formatter() {
+          const xStr = new Date(this.x).toLocaleString();
+          const rows = this.points.map(p => `<span style="color:${p.color}">●</span> ${p.series.userOptions.fullLabel || p.series.name}: <b>${p.y.toFixed(2)}</b>`);
+          return `<b>${xStr}</b><br/>${rows.join('<br/>')}`;
+        }
+    };
+
+
   return {
     chart: { type: 'spline', height: 400 },
     rangeSelector: { enabled: false },
     legend: { enabled: false },
     title:  { text: '' },
     time:   { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, useUTC: false },
-    xAxis:  {type: 'datetime', labels: { format: '{value:%H:%M}' }, ordinal: !isRealtime.value },
+    xAxis,
     yAxis,
-    tooltip: {
-      valueDecimals: 2,
-      shared: true,
-      xDateFormat: '%Y-%m-%d %H:%M:%S',
-      formatter() {
-        const rows = this.points.map(p => `<span style="color:${p.color}">●</span> ${(p.series.userOptions.fullLabel || p.series.name)}: <b>${p.y.toFixed(2)}</b>`);
-        return `<b>${new Date(this.x).toLocaleString()}</b><br/>${rows.join('<br/>')}`;
-      }
-    },
+    tooltip,
     plotOptions: {
       series: {
         showInNavigator: true,
-        dataGrouping: !isRealtime.value
-          ? {
-              enabled: true,
-              units: isLargeDataset.value
-                ? [["hour", [1]]] // aggregate by hour for month data
-                : [["minute", [5]]] // fine-grained for 24h data
-            }
-          : { enabled: false },
-        turboThreshold: isLargeDataset.value ? 5000 : 0,
-        boostThreshold: isLargeDataset.value ? 10 : 500,
+        dataGrouping: !isLargeDataset.value
+          ? { enabled: true, units: [["minute",[5]]] }
+          : { approximation: 'average',
+            units: [['hour', [1]]], },  
+        turboThreshold: isLargeDataset.value ? 50000 : 0,
+        boostThreshold: isLargeDataset.value ? 50 : 500,
         boost: {
           useGPUTranslations: true,
           allowForce: true
         },
-        animation: !isLargeDataset.value
+        animation: !isLargeDataset.value,
+        stickyTracking: false 
       }
     },
-    // exporting: {
+    // export: {
+    //   enabled: true,
     //   sourceWidth: 1200,
     //   sourceHeight: 600,
     //   chartOptions: {
-    //     chart: { renderer: 'SVG' },
-    //     plotOptions: { series: { dataGrouping: { enabled: false } } }
+    //     plotOptions: { series: { dataLabels: { enabled: true }, boost: { enabled: false } } }
+    //   },
+    //   filename: 'chart1',
+    //   buttons: {
+    //     contextButton: {
+    //       symbol: 'download',
+    //       // symbolFill: 'red',
+    //       // symbolStroke: 'red',
+    //       // symbolX: 5,
+    //       // symbolY: -5
+    //     }
     //   }
     // },
     series,
     credits: { enabled: false }
   };
 });
-
-
 
 
 function onLegendClick(legendKey) {
