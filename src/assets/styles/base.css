@@ -276,6 +276,21 @@ label {
 .flexline.align-start {
   align-items: start;
 }
+
+.flexline-i-right {
+  margin-left: auto;
+}
+
+@media screen  and (max-width: 960px) {
+  .flexline-mobile-column .flexline {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .flexline-mobile-column .flexline-i-right {
+    margin-left: initial;
+  }
+}
 /* - FLEX */
 
 /* + TEXT */

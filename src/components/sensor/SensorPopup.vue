@@ -14,7 +14,6 @@
       <section class="flexline-mobile-column">
 
         <div class="flexline mb">
-          <!-- тут нужна проверка, что между крайними показаниями не меньше часа-->
           <div class="aqi" v-if="latestAQI && state.provider !== 'realtime'" :style="{backgroundColor: latestAQI.Final_Color}">
             <div class="aqi-badge">
               <div class="aqi-box">
@@ -38,6 +37,11 @@
           <div v-else>
             <div v-if="state.rttime" class="rt-time">{{ state.rttime }}</div>
           </div>
+
+          <div v-if="state.provider !== 'realtime'" class="flexline-i-right" style="display: none">
+            <template v-if="state.monthLogLoading"><Loader /></template>
+            <button v-if="state.chartReady" @click="getMonthlyScope" class="button">Analyze month</button>
+          </div>
         </div>
 
         <div v-if="state.provider === 'realtime'" class="flexline">
@@ -50,14 +54,12 @@
             </div>
           </template>
         </div>
+
       </section>
 
       <section>
         <Chart v-show="state.chartReady" :log="log" :unit="measurements[props.type]?.unit" />
         <div v-show="!state.chartReady" class="chart-skeleton"></div>
-
-        <button v-if="state.chartReady && state.provider !== 'realtime'" @click="getMonthlyScope" class="button month-scope-btn"> View 1-Month History </button>
-        <span v-if="state.monthLogLoading" class="month-scope-btn skeleton-text"> Loading monthly data </span>
       </section>
 
       <section class="flexline space-between">
@@ -202,6 +204,7 @@ import ProviderType from "../ProviderType.vue";
 import AltruistPromo from "../devices/altruist/AltruistPromo.vue";
 import ReleaseInfo from "../ReleaseInfo.vue";
 import Icon from "./Icon.vue";
+import Loader from "../Loader.vue";
 
 
 const props = defineProps({
@@ -676,19 +679,6 @@ watch(
   height: 2rem;
 }
 
-.month-scope-btn {
-  display: block;
-  margin: 0 0 30px;
-}
-
-.month-scope-btn.skeleton-text {
-  height: 2rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* Стили скелетона для заглушки графика */
 .chart-skeleton {
   height: 300px;
@@ -727,13 +717,6 @@ watch(
   }
 }
 
-@media screen  and (max-width: 9600px) {
-  .flexline-mobile-column .flexline {
-    flex-wrap: wrap;
-    align-items: flex-start;
-  }
-}
-
 @media screen and (max-width: 700px) {
   .popup-js.active {
     left: 0;
@@ -754,11 +737,6 @@ watch(
     width: 40px;
     height: 40px;
   } */
-
-  .flexline-mobile-column {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 }
 
 @container popup (min-width: 400px) {
