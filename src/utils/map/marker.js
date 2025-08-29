@@ -693,12 +693,12 @@ export async function addPoint(point) {
   }
 }
 
-function markercolor(value) {
+function markercolor(value, aqi) {
   let color = null;
   const unit = localStorage.getItem("currentUnit") ?? null;
-  const zones = measurements[unit].zones || "pm10";
+  const zones = measurements[unit]?.zones || "pm10";
 
-  if (unit) {
+  if (unit && unit !== 'aqi') {
     const match = zones.find((i) => value <= i?.value);
     if (match) {
       color = match?.color;
@@ -707,6 +707,10 @@ function markercolor(value) {
         color = zones[zones.length - 1]?.color;
       }
     }
+  }
+
+  if(aqi) {
+    return aqi.Final_Color
   }
 
   return color || "#a1a1a1";
@@ -727,7 +731,7 @@ async function addMarker(point) {
     rgb: [161, 161, 161],
   };
   if (!point.isEmpty) {
-    colors.basic = "color-mix(in srgb, " + markercolor(point.value) + " 70%, transparent)";
+    colors.basic = "color-mix(in srgb, " + markercolor(point.value, point.aqi) + " 70%, transparent)";
     colors.border = "color-mix(in srgb, " + colors.basic + ", #000 10%)";
     // colors.basic = getColor(scale, point.value);
     // colors.border = getColorDarken(scale, point.value);

@@ -153,7 +153,7 @@ const availableOptions = computed(() => {
       };
     })
     .filter((item) => Boolean(item));
-  return opts;
+    return [...opts, {value: 'aqi', name: 'Air Quality Index'}];
 });
 
 // вычисления для истории

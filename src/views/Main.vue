@@ -49,6 +49,7 @@ import { instanceMap } from "../utils/map/instance";
 import * as markers from "../utils/map/marker";
 import { getAddressByPos } from "../utils/map/utils";
 import { getTypeProvider, setTypeProvider } from "../utils/utils";
+import { getTodayAQI } from "../utils/aqi";
 import { useI18n } from "vue-i18n";
 
 const props = defineProps({
@@ -210,15 +211,34 @@ const handlerNewPoint = async (point) => {
     ? Object.fromEntries(Object.entries(point.data).map(([k, v]) => [k.toLowerCase(), v]))
     : {};
 
+    if(props.type === 'aqi') {
+      let log = [];
+      if (state.status === "history") {
+        log = await state.providerObj.getHistoryPeriodBySensor(
+          point.sensor_id,
+          state.providerObj.start,
+          state.providerObj.end
+        );
+      } else {
+        log = await state.providerObj.getHistoryBySensor(point.sensor_id);
+      }
+      point.aqi = getTodayAQI(log)
+    }
 
   point.isBookmarked = bookmarksStore.idbBookmarks?.some(bookmark => bookmark.id === point.sensor_id) || false;
 
-
-  markers.addPoint({
+  const markerData = {
     ...point,
     isEmpty: !point.data[props.type.toLowerCase()],
     value: point.data[props.type.toLowerCase()],
-  });
+  };
+
+  if (props.type === "aqi") {
+    markerData.aqi = point.aqi;
+    markerData.isEmpty = false
+  }
+
+  markers.addPoint(markerData);
 
   if (point.sensor_id === props.sensor) {
     await handlerClick(point);
