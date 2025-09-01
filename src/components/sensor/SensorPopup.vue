@@ -37,11 +37,6 @@
           <div v-else>
             <div v-if="state.rttime" class="rt-time">{{ state.rttime }}</div>
           </div>
-
-          <div v-if="state.provider !== 'realtime'" class="flexline-i-right" style="display: none;">
-            <template v-if="state.monthLogLoading"><Loader /></template>
-            <button v-if="state.chartReady" @click="getMonthlyScope" class="button">Analyze month</button>
-          </div>
         </div>
 
         <div v-if="state.provider === 'realtime'" class="flexline">
@@ -57,12 +52,9 @@
 
       </section>
 
-      <section class="chart-wrapper">
+      <section>
         <Chart v-show="state.chartReady" :log="log" :unit="measurements[props.type]?.unit" />
         <div v-show="!state.chartReady" class="chart-skeleton"></div>
-        <div v-if="state.monthLogLoading" class="monthly-scope-warning">
-           <font-awesome-icon icon="fa-solid fa-circle-exclamation" />
-           WARNING: monthly scope is still in beta and may freeze at the time.</div>
       </section>
 
       <section class="flexline space-between">
@@ -91,6 +83,23 @@
             <font-awesome-icon icon="fa-solid fa-check" v-if="state.sharedLink" />
           </button>
         </div>
+      </section>
+
+      <section class="monthly-analysis" v-if="state.chartReady" style="display: none">
+        <h2>Analysis / Reports </h2>
+        <div v-if="state.provider !== 'realtime'" class="flexline">
+          <template v-if="state.monthLogLoading"><Loader /></template>
+          <button v-if="!state.monthLogLoading" @click="getScope('week')" class="button" :disabled="state.analysisType === 'week'">{{ state.analysisType === 'week' && state.chartScopeReady ? 'Weekly report ready' : 'Generate weekly report' }}</button>
+          <button v-if="!state.monthLogLoading" @click="getScope('month')" class="button" :disabled="state.analysisType === 'month'"> {{ state.analysisType === 'month' && state.chartScopeReady ? 'Monthly report ready' : 'Generate monthly report' }}</button>
+        </div>
+        <div class="chart-wrapper" v-if="state.showAnalysisChart">
+          <AnalysisChart v-show="state.chartScopeReady" :log="scopeLog" :unit="measurements[props.type]?.unit" :currentScope="state.analysisType" />
+          <div v-show="!state.chartScopeReady" class="chart-skeleton"></div>
+          <div v-if="state.monthLogLoading" class="monthly-scope-warning">
+           <font-awesome-icon icon="fa-solid fa-circle-exclamation" />
+           WARNING: Data scope is still in beta and may freeze at the time.
+          </div>
+        </div>        
       </section>
 
       <AltruistPromo />
@@ -202,6 +211,7 @@ import { getTodayAQI } from '../../utils/aqi.js';
 
 import Bookmark from "./Bookmark.vue";
 import Chart from "./Chart.vue";
+import AnalysisChart from "./ChartAnalysis.vue";
 import Copy from "./Copy.vue";
 import ProviderType from "../ProviderType.vue";
 import AltruistPromo from "../devices/altruist/AltruistPromo.vue";
@@ -215,7 +225,7 @@ const props = defineProps({
   point: Object,
   startTime: [Number, String],
 });
-const emit = defineEmits(["history", "close", 'getMonthScope']);
+const emit = defineEmits(["history", "close", 'getScope']);
 
 // Глобальные объекты
 const route = useRoute();
@@ -239,7 +249,10 @@ const state = reactive({
   sharedLink: false,
   chartEverLoaded: false,
   chartReady: false,
+  chartScopeReady: false,
   monthLogLoading: false,
+  showAnalysisChart: false,
+  analysisType: null,
   lastCoords: { lat: null, lon: null },
   address: ""
 });
@@ -271,6 +284,7 @@ const donated_by = computed(() => props.point?.donated_by || null);
 
 // Гарантируем, что log всегда массив
 const log = computed(() => (Array.isArray(props.point?.log) ? props.point.log : []));
+const scopeLog = computed(() => (Array.isArray(props.point?.scopeLog) ? props.point.scopeLog : []));
 const model = computed(() => props.point?.model || null);
 const sender = computed(() => props.point?.sender || null);
 
@@ -388,11 +402,13 @@ const getHistory = () => {
   });
 }
 
-const getMonthlyScope = () => {
+const getScope = (type) => {
   if (state.provider === "realtime") return;
-  state.chartReady = false;
+  state.chartScopeReady = false
   state.monthLogLoading = true
-  emit("getMonthScope");
+  state.showAnalysisChart = true
+  state.analysisType = type
+  emit("getScope", type);
 }
 
 const calculateDewPoint = (t, h) => {
@@ -458,6 +474,8 @@ const closesensor = () => {
     },
   });
   emit("close");
+
+  state.showAnalysisChart = false
 };
 
 const setAddressUnrecognised = (lat, lng) => {
@@ -572,6 +590,43 @@ watch(() => log.value, (i) => {
   { immediate: true }
 );
 
+// watcher for analysis chart
+watch(() => scopeLog.value, (i) => {
+    if(Array.isArray(i) && i.length > 0) {
+      scopeLog.value.forEach(entry => {
+        if (
+          entry?.data &&
+          typeof entry.data.temperature === 'number' &&
+          typeof entry.data.humidity === 'number'
+        ) {
+          const dew = calculateDewPoint(entry.data.temperature, entry.data.humidity);
+          entry.data = {
+            ...entry.data,
+            ['dewpoint']: dew,
+          };
+        }
+      });
+
+      if (!state.chartScopeReady) {
+        state.chartScopeReady = true;
+        state.monthLogLoading = false
+      }
+
+      const unitsSet = new Set();
+      i.forEach((item) => {
+        if (item.data)
+          Object.keys(item.data).forEach((u) => unitsSet.add(u.toLowerCase()))
+      });
+      const newUnits = Array.from(unitsSet).sort();
+      const oldUnits = units.value;
+      const changed = newUnits.length !== oldUnits.length || newUnits.some((u, i) => u !== oldUnits[i]);
+      if (changed) units.value = newUnits
+    }
+  },
+  { immediate: true }
+);
+
+
 // EN: Change URL for valid point if sensor_id is present and geo is okay
 watch(
   () => props.point,
@@ -680,6 +735,19 @@ watch(
 
 .close svg {
   height: 2rem;
+}
+
+.monthly-analysis {
+  margin-top: calc(var(--gap) * 3);
+  margin-bottom: calc(var(--gap) * 2);
+}
+
+.monthly-analysis h2 {
+  margin-bottom: calc(var(--gap) * 0.5);;
+}
+
+.monthly-analysis .flexline {
+  margin-bottom: var(--gap);
 }
 
 .chart-wrapper {

@@ -14,7 +14,7 @@
     @modal="handlerModal"
     @close="handlerClose"
     @history="handlerHistoryLog"
-    @getMonthScope="getMonthScope"
+    @getScope="getScope"
     :startTime="state?.start"
   />
 
@@ -123,6 +123,10 @@ const isSensor = computed(() => {
 });
 
 
+/**
+ * Returns the start and end of the last month (rolling month)
+ */
+
 const getRollingMonthRange = (targetDate = new Date()) => {
   const end = new Date(
     targetDate.getFullYear(),
@@ -151,6 +155,20 @@ const getRollingMonthRange = (targetDate = new Date()) => {
 }
 
 
+/**
+ * Returns the start and end of the last 7 days (rolling week)
+ * End = today, start = 7 days ago
+ */
+function getRollingWeekRange(date = new Date()) {
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+
+  const start = new Date(date);
+  start.setDate(start.getDate() - 7 + 1);
+  start.setHours(0, 0, 0, 0);
+
+  return { start, end };
+}
 
 const removeAllActivePoints = () => {
   document.querySelectorAll('.current-active-marker').forEach(el => {
@@ -267,13 +285,19 @@ const handlerHistoryLog = async ({ sensor_id, start, end }) => {
   }
 };
 
-const getMonthScope = async () => {
-  const { start, end } = getRollingMonthRange(new Date());
-  await handlerHistoryLog({
-    sensor_id: state.point.sensor_id,
-    start: Math.floor(start.getTime() / 1000),
-    end: Math.floor(end.getTime() / 1000)
-  });
+/* Returns scope depending on type ('week' or 'month') */
+const getScope = async (type) => {
+
+  const range = type === "week"
+    ? getRollingWeekRange(new Date())
+    : getRollingMonthRange(new Date());
+
+  const { start, end } = range;
+
+  if (state.status === "history") {
+    const log = await state.providerObj.getHistoryPeriodBySensor(state.point.sensor_id, Math.floor(start.getTime() / 1000), Math.floor(end.getTime() / 1000));
+    state.point = { ...state.point, scopeLog: [...log] };
+  }
 }
 
 const handlerClose = () => {

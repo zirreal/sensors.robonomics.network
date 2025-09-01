@@ -164,7 +164,6 @@ input[type=submit]:not(:disabled):active, .button:not(:disabled):active { --app-
 input[type=submit]:not(:disabled):hover, .button:not(:disabled):hover { --app-buttoncolor: var(--app-buttoncolor-hover); }
 
 select:not([disabled]),
-input[type=checkbox]:not([disabled]),
 input[type=submit]:not([disabled]),
 .button:not([disabled]) {
   cursor: pointer;
@@ -176,6 +175,13 @@ input[type=submit]:not([disabled]),
 
 .button > *:not(:last-child) {
   margin-right: calc(var(--gap) * 0.5);
+}
+
+.button:disabled {
+  color: var(--color-dark);
+ background-color: var(--color-light-gray);
+ border-color: var(--color-light-gray);
+ opacity: 0.5;
 }
 
 label {
