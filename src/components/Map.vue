@@ -479,6 +479,12 @@ export default {
 .popoovergeo-tipclose.svg-inline--fa path {
   fill: var(--color-light) !important;
 }
+
+/* Spider legs should not block map dragging */
+.leaflet-overlay-pane .leaflet-spider-leg {
+  pointer-events: none !important;
+}
+
 </style>
 
 <style scoped>

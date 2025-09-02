@@ -1,12 +1,19 @@
 <template>
   <header :class="`route-${route.name || route.path.replaceAll('/', '-')}`">
-    <div class="header-banner flexline align-center">
+    <!-- <div class="header-banner flexline align-center">
       <a href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight?utm_source=sensors.social&utm_medium=header-banner" target="_blank">
         <span><b>{{ daysLeft }} {{$t('days left')}}</b> <b>{{$t('Up to -42%')}}</b></span>
         <span>{{ $t('Air quality monitor on') }}</span>
         <img class="header-banner-svg" alt="Indiegogo" src="../../assets/images/indiegogo.svg"/>
       </a>
-    </div>
+    </div> -->
+
+    <!-- <div class="header-banner flexline align-center">
+      <a href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight?utm_source=sensors.social&utm_medium=header-banner" target="_blank">
+        <img alt="" src="../../assets/images/altruist-device/Altruist-bundle-yellow.webp" />
+        <span><b>Support token from €8 >></b></span>
+      </a>
+    </div> -->
 
     <div class="header-content flexline space-between">
       <div class="flexline align-start">
@@ -37,6 +44,11 @@
       </div>
 
       <div class="flexline">
+        <a class="promobutton" href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight?utm_source=sensors.social&utm_medium=header-button" target="_blank">
+          <img alt="" src="../../assets/images/altruist-device/Altruist-bundle-pink.webp" />
+          <span>Support <span class="hidemobiles">from {{ supportPriceText }}</span></span>
+        </a>
+
         <select v-model="locale">
           <option v-for="lang in locales" :key="lang.code" :value="lang.code">
             {{ lang.title }}
@@ -72,11 +84,12 @@
 
           <ReleaseInfo />
         </div>
+
         <button class="popovercontrol" popovertarget="about">
           <font-awesome-icon icon="fa-solid fa-bars" />
         </button>
 
-        <Login v-if="settings.SERVICES.accounts" />
+        <!-- <Login v-if="settings.SERVICES.accounts" /> -->
         
         <!-- <a class="button button-promo" href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight?utm_source=sensors.social&utm_medium=header-button" target="_blank">Altruist on Indiegogo</a> -->
       </div>
@@ -116,15 +129,15 @@ const zeroGeoSensors = computed(() => {
 });
 
 // end of Indiegogo
-const deadline = new Date('2025-09-11');
-const now = ref(new Date());
-let timer;
+// const deadline = new Date('2025-09-11');
+// const now = ref(new Date());
+// let timer;
 
-const daysLeft = computed(() => {
-  const diff = deadline - now.value;
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  return Math.max(0, days);
-});
+// const daysLeft = computed(() => {
+//   const diff = deadline - now.value;
+//   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+//   return Math.max(0, days);
+// });
 
 // Make a link for sensor. E.g. origin/#/provider/pm10/20/lat/lng/sensor_id
 const getSensorLink = (sensor) => {
@@ -160,6 +173,42 @@ const formatSensorId = (id) => {
   return id;
 };
 
+
+/* + Token support price */
+const euroCountries = [
+  "AT","BE","CY","EE","FI","FR","DE","GR","IE","IT","LV","LT",
+  "LU","MT","NL","PT","SK","SI","ES"
+];
+
+const supportPrice = ref({ value: 8, currency: "EUR" });
+
+const supportPriceText = computed(() => {
+  return supportPrice.value.currency === "EUR"
+    ? `€${supportPrice.value.value}`
+    : `$${supportPrice.value.value}`;
+});
+
+async function getCountryCodeByIP() {
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    const data = await res.json();
+    return data?.country || null;
+  } catch {
+    return null;
+  }
+}
+
+async function updateSupportPrice() {
+  const country = await getCountryCodeByIP();
+  if (country && euroCountries.includes(country)) {
+    supportPrice.value = { value: 8, currency: "EUR" };
+  } else {
+    supportPrice.value = { value: 9, currency: "USD" };
+  }
+}
+
+/* - Token support price */
+
 watch(locale, (newValue) => {
   i18nLocale.value = newValue;
   localStorage.setItem("locale", newValue);
@@ -181,7 +230,9 @@ onMounted(() => {
   }
 
   // Update for Indiegogo timer hourly
-  timer = setInterval(() => { now.value = new Date() }, 1000 * 60 * 60);
+  // timer = setInterval(() => { now.value = new Date() }, 1000 * 60 * 60);
+
+  updateSupportPrice();
 });
 
 </script>
@@ -248,14 +299,15 @@ onMounted(() => {
   align-items: center;
   gap: 3px;
   color: #000;
-  background: var(--color-orange);
+  background: #fff;
   border-radius: 5px;
   padding: 4px 5px;
   font-weight: bold;
+  border: var(--app-borderwidth) solid var(--app-bordercolor);
 }
 
 .sensors-mainicon {
-  width: 22px;
+  width: 19px;
 }
 
 .sensors-list a {
@@ -272,19 +324,55 @@ onMounted(() => {
 
 /* + banner */
 .header-banner {
-  background-color: #ed006f;
+  /* background-color: var(--color-orange); */
+
+  background-color: var(--color-blue);
+
+  /* background-color: #ed006f; */
+
+  /* background-color: #eaeaea;
+  box-shadow: inset #8e8e8e 0 0 40px; */
   color: #fff;
-  padding-top: var(--gap);
-  padding-bottom: var(--gap);
+  /* padding-top: var(--gap); */
+  /* padding-bottom: var(--gap); */
 }
 
 .header-banner b {
   font-weight: 900;
-  background-color: rgb(255, 234, 0);
+  /* background-color: rgb(255, 234, 0); */
+  background-color: #fff;
   padding: 2px 6px;
   border-radius: 4px;
   color: #000;
   margin-right: 15px;
+  font-size: 18px;
+  box-shadow: 4px 4px 0 #222;
+}
+
+.promobutton {
+  /* background-color: var(--color-blue); */
+  background-color: rgb(255, 234, 0);
+  /* box-shadow: 4px 4px 0 #222; */
+  border: var(--app-borderwidth) solid var(--app-bordercolor);
+  padding: 4px 12px;
+  border-radius: 4px;
+  color: #000;
+  font-weight: bold;
+  display: flex;
+  gap: var(--gap);
+  text-decoration: none;
+  align-items: center;
+}
+
+.promobutton img {
+  display: block;
+  max-width: 30px;
+}
+
+@media screen and (max-width: 600px) {
+  .hidemobiles {
+    display: none;
+  }
 }
 
 .header-banner a {
@@ -296,6 +384,12 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   text-decoration: none;
+  gap: var(--gap);
+}
+
+.header-banner img {
+  display: inline-block;
+  max-width: 100px;
 }
 
 .header-banner-svg {

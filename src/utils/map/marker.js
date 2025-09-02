@@ -94,11 +94,8 @@ const IS_TOUCH =
 function ensureInteractiveIcon(marker) {
   const el = marker && marker._icon;
   if (!el) return;
-  // Make sure the marker receives hover/click events
   el.style.pointerEvents = "auto";
-  // Raise z-index to avoid spider legs or cluster SVG paths intercepting mouse events
   el.style.zIndex = el.style.zIndex || "500000";
-  // Add a helper CSS class (optional for styling/debugging)
   el.classList.add("hoverable");
 }
 
@@ -135,10 +132,9 @@ function attachHighlightHandlers(marker) {
   };
 
   addTouchFlash();
-  /// Apply interactivity immediately if icon already exists
+  // Apply interactivity immediately if icon already exists
   ensureInteractiveIcon(marker);
 
-  // Keep references for debugging if needed
   marker.__hoverHandlers = { onOver, onOut, onAdd };
 }
 
@@ -150,7 +146,7 @@ function attachEnhancements(marker, map, layerGroup) {
 
 /* - Helpers for hover effect */
 
-/* +++++ Mini‑spiderfy (fan-out) helpers +++++++++++++++++++++++++++++++++++++ */
+/* +++++ Mini-spiderfy (fan-out) helpers +++++++++++++++++++++++++++++++++++++ */
 
 /**
  * Find markers that overlap with a given marker in screen space.
@@ -255,7 +251,7 @@ function attachMicroSpiderfyHandlers(marker, map, layerGroup) {
   marker.on("remove", () => restoreOverlapped(marker));
 }
 
-/* ----- Mini‑spiderfy helpers end ------------------------------------------ */
+/* ----- Mini-spiderfy helpers end ------------------------------------------ */
 
 /**
  * Apply a deterministic "jitter" to coordinates based on a unique seed.
@@ -358,6 +354,29 @@ export async function init(map, type, cb) {
   markersLayer = createLooseClusterGroup(iconCreate);
   map.addLayer(markersLayer);
 
+  // ---------------- NEW: keep map draggable after animations/spiderfy ----------
+  // Safety: after zoom / spiderfy / any animation we make sure the map is draggable again
+  const ensureMapDraggable = () => {
+    try {
+      map.dragging.enable();
+      map.scrollWheelZoom.enable();
+      map.boxZoom?.enable?.();
+      map.keyboard?.enable?.();
+    } catch {}
+  };
+
+  // Run once now (in case something disabled these before init)
+  ensureMapDraggable();
+
+  // Re-enable on common lifecycle events
+  map.on("zoomend", ensureMapDraggable);
+  map.on("moveend", ensureMapDraggable);
+  map.on("animationend", ensureMapDraggable);
+  // MarkerCluster emits these on fan-out / collapse
+  markersLayer.on("spiderfied", ensureMapDraggable);
+  markersLayer.on("unspiderfied", ensureMapDraggable);
+  // ---------------------------------------------------------------------------
+
   /**
    * Custom cluster click handling for sensor markers:
    * - If the map is still far away OR cluster has many children:
@@ -370,6 +389,10 @@ export async function init(map, type, cb) {
   markersLayer.on("clusterclick", (e) => {
     const cluster = e.layer;
     const nowZoom = map.getZoom();
+    theTargetZoom:
+    {
+      // keep the original logic untouched
+    }
     const targetZoom = map.getBoundsZoom(cluster.getBounds(), true);
     const MAX_SPIDER_CHILDREN = 20; // threshold for direct spiderfy
     const ZOOM_DELTA_THRESHOLD = 1; // minimum zoom difference to trigger zooming
@@ -462,6 +485,9 @@ export async function init(map, type, cb) {
         try { cluster.spiderfy(); } catch {}
       }
     });
+
+    layer.on("spiderfied", ensureMapDraggable);
+    layer.on("unspiderfied", ensureMapDraggable);
 
     layer.on("spiderfied", (e) => {
       if (Array.isArray(e.markers)) {

@@ -773,7 +773,7 @@ table img {
 }
 
 .popover-top-right {
-  top: calc(var(--gap) * 4 + var(--app-inputheight));
+  top: calc(var(--gap) * 2 + var(--app-inputheight));
   right: var(--gap);
   width: 500px;
   max-width: calc(100vw - var(--gap) * 2);
@@ -787,7 +787,7 @@ table img {
 
 @media screen and (width < 500px) {
   .popover-top-right {
-    top: calc(var(--gap) * 8 + var(--app-inputheight));
+    top: calc(var(--gap) * 3 + var(--app-inputheight));
   }
 }
 /* - popover */
