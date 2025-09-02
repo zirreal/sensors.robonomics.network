@@ -24,18 +24,12 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import Highcharts from 'highcharts';
 import stockInit from 'highcharts/modules/stock';
-import Boost from "highcharts/modules/boost";
-import Exporting from "highcharts/modules/exporting";
-import OfflineExporting from "highcharts/modules/offline-exporting";
 import { Chart } from 'highcharts-vue';
 import unitsettings from '../../measurements';
 import { settings } from '@config';
 import { getTypeProvider } from '../../utils/utils';
 
 stockInit(Highcharts);
-Boost(Highcharts);
-// Exporting(Highcharts);
-// OfflineExporting(Highcharts);
 
 Highcharts.SVGRenderer.prototype.symbols.download = function (x, y, w, h) {
     const path = [
@@ -57,7 +51,8 @@ Highcharts.SVGRenderer.prototype.symbols.download = function (x, y, w, h) {
 
 const props = defineProps({
   log:  { type: Array, default: () => [] },
-  unit: { type: String }
+  unit: { type: String },
+  isChartReady: { type: Boolean }
 });
 const chartRef = ref(null);
 
@@ -68,9 +63,6 @@ const { t: tr, locale } = useI18n();
 const WINDOW_MS   = 60 * 60 * 1000;
 const MAX_VISIBLE = settings.SERIES_MAX_VISIBLE;
 const VALID_TYPES = Object.keys(unitsettings).map(k => k.toLowerCase());
-
-// Determine total points across all series
-const isLargeDataset = computed(() => props.log.length > 2500);
 
 const GROUPS = {
   dust:    { members: ['pm10', 'pm25'], labelKey: 'Dust & Particles' },
@@ -161,9 +153,7 @@ function buildSeriesArray(log, realtime, maxVisible, legendKey) {
               zones: zonesMap[id] || [],
               dataGrouping:  {
               enabled: true,
-              units: isLargeDataset.value
-                ? [["hour", [3]]] 
-                : [["minute", [5]]] 
+              units: [["minute", [5]]] 
             }});
           }
         } else {
@@ -178,9 +168,7 @@ function buildSeriesArray(log, realtime, maxVisible, legendKey) {
               zones: zonesMap[id] || [],
               dataGrouping: {
               enabled: true,
-              units: isLargeDataset.value
-                ? [["hour", [3]]] 
-                : [["minute", [5]]] 
+              units: [["minute", [5]]] 
             }});
           }
         }
@@ -207,68 +195,15 @@ function buildSeriesArray(log, realtime, maxVisible, legendKey) {
         ? { enabled: false }
         :  {
               enabled: true,
-              units: isLargeDataset.value
-                ? [["hour", [3]]]
-                : (many ? { enabled: true, approximation: 'high', units: [['minute', [5]]] } : s.dataGrouping)
+              units: (many ? { enabled: true, approximation: 'high', units: [['minute', [5]]] } : s.dataGrouping)
             }
     };
   });
   return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-
-function buildMonthlyOverlaySeries(log, legendKey) {
-  const seriesMap = new Map(); 
-
-  for (const { timestamp, data } of log) {
-    if (!timestamp || !data) continue;
-    const ts = String(timestamp).length === 10 ? timestamp * 1000 : timestamp;
-    const d = new Date(ts);
-    const dayStr = d.toISOString().slice(0,10);
-    let hour = d.getHours();
-    hour = Math.floor(hour / 3) * 3; 
-
-    for (const [key, val] of Object.entries(data)) {
-      const id = key.toLowerCase();
-      const group = idToGroup[id];
-      if (!((group && group === legendKey) || (!group && id === legendKey))) continue;
-
-      const sid = `${id}_${dayStr}`;
-      if (!seriesMap.has(sid)) {
-        const set = unitsettings[id] || {};
-        seriesMap.set(sid, {
-          id: sid,
-          name: `${set.nameshort?.[locale.value] || id.toUpperCase()} • ${dayStr}`,
-          fullLabel: set.namelong?.[locale.value] || set.nameshort?.[locale.value] || id.toUpperCase(),
-          unit: set.unit || '',
-          data: Array.from({ length: 8 }, () => []), 
-          dashStyle: group && id !== (GROUPS[group]?.members[0]) ? 'ShortDot' : 'Solid',
-          marker: { enabled: false },
-          zones: set.zones || [],
-          showInLegend: false,
-          dayStr
-        });
-      }
-
-      
-      const bucketIndex = hour / 3;
-      seriesMap.get(sid).data[bucketIndex].push([hour, parseFloat(val)]);
-    }
-  }
-
-  
-  return Array.from(seriesMap.values()).map(s => {
-    const averaged = s.data
-      .map(arr => arr.length ? [arr[0][0], arr.reduce((a,b)=>a+b[1],0)/arr.length] : null)
-      .filter(Boolean);
-    return { ...s, data: averaged };
-  });
-}
-
 const makeSeriesArray = (log, legendKey) => {
-  return isLargeDataset.value
-    ? buildMonthlyOverlaySeries(log, legendKey) 
-    : buildSeriesArray(log, isRealtime.value, MAX_VISIBLE, legendKey); 
+  return buildSeriesArray(log, isRealtime.value, MAX_VISIBLE, legendKey); 
 };
 
 const chartOptions = computed(() => {
@@ -283,46 +218,22 @@ const chartOptions = computed(() => {
     visible: true
   }));
 
-  const xAxis = isLargeDataset.value
-    ? {
-        type: 'linear',
-        min: 0,
-        max: 23,
-        tickInterval: 1,
-        title: { text: 'Hour' },
-        labels: { formatter() { return this.value.toString().padStart(2,'0') + ':00'; } }
-      }
-    : {
-        type: 'datetime',
-        labels: { format: '{value: %H:%M}' },
-        ordinal: !isRealtime.value
+  const xAxis =  {
+    type: 'datetime',
+    labels: { format: '{value: %H:%M}' },
+    ordinal: !isRealtime.value
   };
 
-  const tooltip = isLargeDataset.value
-    ? {
-      shared: true,
-      crosshairs: true,
-      formatter() {
-        const d = new Date(this.x);
-        const hour = d.getHours();
-        const rows = this.points.map(p => {
-          const s = p.series.userOptions;
-          return `<span style="color:${p.color}">●</span> ${s.fullLabel} (${s.dayStr}): <b>${p.y.toFixed(2)} ${s.unit}</b>`;
-        });
-        return `<b>${hour}:00</b><br/>${rows.join('<br/>')}`;
-      }
+  const tooltip = {
+    shared: true,
+    valueDecimals: 2,
+    xDateFormat: '%Y-%m-%d %H:%M:%S',
+    formatter() {
+      const xStr = new Date(this.x).toLocaleString();
+      const rows = this.points.map(p => `<span style="color:${p.color}">●</span> ${p.series.userOptions.fullLabel || p.series.name}: <b>${p.y.toFixed(2)}</b>`);
+      return `<b>${xStr}</b><br/>${rows.join('<br/>')}`;
     }
-    : {
-        shared: true,
-        valueDecimals: 2,
-        xDateFormat: '%Y-%m-%d %H:%M:%S',
-        formatter() {
-          const xStr = new Date(this.x).toLocaleString();
-          const rows = this.points.map(p => `<span style="color:${p.color}">●</span> ${p.series.userOptions.fullLabel || p.series.name}: <b>${p.y.toFixed(2)}</b>`);
-          return `<b>${xStr}</b><br/>${rows.join('<br/>')}`;
-        }
-    };
-
+  };
 
   return {
     chart: { type: 'spline', height: 400 },
@@ -336,38 +247,9 @@ const chartOptions = computed(() => {
     plotOptions: {
       series: {
         showInNavigator: true,
-        dataGrouping: !isLargeDataset.value
-          ? { enabled: true, units: [["minute",[5]]] }
-          : { approximation: 'average',
-            units: [['hour', [1]]], },  
-        turboThreshold: isLargeDataset.value ? 50000 : 0,
-        boostThreshold: isLargeDataset.value ? 50 : 500,
-        boost: {
-          useGPUTranslations: true,
-          allowForce: true
-        },
-        animation: !isLargeDataset.value,
-        stickyTracking: false 
+        dataGrouping: { enabled: true, units: [["minute",[5]]] },
       }
     },
-    // export: {
-    //   enabled: true,
-    //   sourceWidth: 1200,
-    //   sourceHeight: 600,
-    //   chartOptions: {
-    //     plotOptions: { series: { dataLabels: { enabled: true }, boost: { enabled: false } } }
-    //   },
-    //   filename: 'chart1',
-    //   buttons: {
-    //     contextButton: {
-    //       symbol: 'download',
-    //       // symbolFill: 'red',
-    //       // symbolStroke: 'red',
-    //       // symbolX: 5,
-    //       // symbolY: -5
-    //     }
-    //   }
-    // },
     series,
     credits: { enabled: false }
   };
