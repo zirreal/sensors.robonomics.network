@@ -127,7 +127,6 @@
           </div>
         </div>
 
-            {{ isRussia ? 'true' : 'false' }}
         <p class="textsmall">
           <template v-if="isRussia">{{ t("notice_with_fz") }}</template>
           <template v-else>{{ t("notice_without_fz") }}</template>

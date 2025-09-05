@@ -23,6 +23,7 @@ vx.x.x
 - Feat: AQI Index for individual sensors available
 - Refactor: measurements colors more vivid
 - Feat: in sensor popup added geo link - if you click it, you will get system map link (Google, Apple - depends on your device)
+- Feat: AQI index coloring fr points and clusters
 
 v2.1.6
 - Feat: combined dust and noise values in the chart
