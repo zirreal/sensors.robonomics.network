@@ -28,6 +28,7 @@ import { Chart } from 'highcharts-vue';
 import unitsettings from '../../measurements';
 import { settings } from '@config';
 import { getTypeProvider } from '../../utils/utils';
+import { useMapStore } from '@/stores/map';
 
 stockInit(Highcharts);
 
@@ -59,10 +60,12 @@ const chartRef = ref(null);
 const route  = useRoute();
 const router = useRouter();
 const { t: tr, locale } = useI18n();
+const mapStore = useMapStore();
+// priority auto-selection removed per request
+
 
 const WINDOW_MS   = 60 * 60 * 1000;
 const MAX_VISIBLE = settings.SERIES_MAX_VISIBLE;
-const VALID_TYPES = Object.keys(unitsettings).map(k => k.toLowerCase());
 
 const GROUPS = {
   dust:    { members: ['pm10', 'pm25'], labelKey: 'Dust & Particles' },
@@ -74,9 +77,28 @@ const idToGroup = Object.fromEntries(Object.entries(GROUPS).flatMap(([g, { membe
 // Запоминаем уникальные типы
 const presentIdsSet = ref(new Set());
 
+// Precompute zones map once (avoid recomputing on every tab switch)
+const zonesMap = Object.fromEntries(
+  Object.entries(unitsettings).map(([k, v]) => {
+    if (!v.zones) return [k.toLowerCase(), []];
+    const highchartsZones = v.zones.map((zone) => ({ value: zone.valueMax, color: zone.color }));
+    return [k.toLowerCase(), highchartsZones];
+  })
+);
+
+// Cache series per (legendKey, logSignature) to speed up tab switches
+const seriesCache = new Map();
+function getLogSignature(log) {
+  if (!Array.isArray(log) || log.length === 0) return '0-0';
+  const lastTs = log[log.length - 1]?.timestamp || 0;
+  return `${log.length}-${lastTs}`;
+}
+
 const visibleLegend = computed(() => {
   const ids = presentIdsSet.value;
   const legend = [];
+
+  
 
   Object.entries(GROUPS).forEach(([g, info]) => {
     if (info.members.some(m => ids.has(m))) {
@@ -118,9 +140,10 @@ const chartSeries = ref([]);
  * - In realtime mode, stretches each series to the last hour window by adding a virtual point if needed.
  */
 function buildSeriesArray(log, realtime, maxVisible, legendKey) {
-  const zonesMap = Object.fromEntries(
-    Object.entries(unitsettings).map(([k, v]) => [k.toLowerCase(), v.zones])
-  );
+  // Try cache first
+  const sig = `${legendKey}|${getLogSignature(log)}`;
+  const cached = seriesCache.get(sig);
+  if (cached) return cached;
 
   const firstSeen = {};
   const seriesMap = new Map();
@@ -199,12 +222,49 @@ function buildSeriesArray(log, realtime, maxVisible, legendKey) {
             }
     };
   });
-  return out.sort((a, b) => a.name.localeCompare(b.name));
+  const sorted = out.sort((a, b) => a.name.localeCompare(b.name));
+  seriesCache.set(sig, sorted);
+  return sorted;
 }
 
 const makeSeriesArray = (log, legendKey) => {
   return buildSeriesArray(log, isRealtime.value, MAX_VISIBLE, legendKey); 
 };
+
+// Apply series array to an existing chart instance with minimal reflow
+function applySeriesDiffToChart(chart, nextSeries) {
+  if (!chart) return;
+  const raw = nextSeries.sort((a, b) => a.name.localeCompare(b.name));
+
+  // Remember visibility state
+  const prevVis = {};
+  (chart.series || []).forEach(s => { if (s && s.options) prevVis[s.options.id] = s.visible; });
+
+  // Remove series that are no longer present
+  (chart.series || []).slice().forEach(s => {
+    if (s && s.options && !raw.find(ns => ns.id === s.options.id)) {
+      s.remove(false);
+    }
+  });
+
+  // Add/update series
+  raw.forEach(ns => {
+    const existing = chart.get(ns.id);
+    if (existing) {
+      existing.update({
+        name: ns.name,
+        zones: ns.zones,
+        dataGrouping: ns.dataGrouping
+      }, false);
+      existing.setData(ns.data, false, false, false);
+      if (typeof prevVis[ns.id] === 'boolean') existing.setVisible(prevVis[ns.id], false);
+    } else {
+      chart.addSeries({ ...ns, visible: true }, false);
+    }
+  });
+
+  chart.redraw(false);
+}
 
 const chartOptions = computed(() => {
   const unitsArr = [...new Set(chartSeries.value.map(s => s.unit))];
@@ -260,30 +320,56 @@ function onLegendClick(legendKey) {
   if (legendKey === activeLegendKey.value) return;
   let targetType;
   if (GROUPS[legendKey]) {
-    targetType = GROUPS[legendKey].members.find(m => presentIdsSet.value.has(m));
+    // Special case: Dust on remote with both pm25 and pm10 → prefer AQI
+    if (
+      legendKey === 'dust' &&
+      getTypeProvider() === 'remote' &&
+      presentIdsSet.value.has('pm25') &&
+      presentIdsSet.value.has('pm10')
+    ) {
+      targetType = 'aqi';
+    } else {
+      // otherwise pick first present id of the group
+      targetType = GROUPS[legendKey].members.find(m => presentIdsSet.value.has(m));
+    }
   } else {
     targetType = legendKey;
   }
+  // Update URL for deep-linking
   router.replace({ query: { ...route.query, type: targetType } });
+  // Also synchronize reactive unit with the map store.
+  // While popup is open, Map.vue will ignore this and not repaint.
+  mapStore.setCurrentUnit(targetType);
 }
+
+// auto-priority watcher removed per request
+
+// Keep Dust preference (remote → AQI, realtime → PM2.5) when Dust tab is active
+
 
 watch(
   [() => props.log, () => activeLegendKey.value],
   async ([log, legendKey]) => {
     if (!legendKey || !log.length) return;
     const all = makeSeriesArray(log, legendKey);
+    const chart = chartRef.value?.chart;
+    if (chart) {
+      applySeriesDiffToChart(chart, all);
+    }
     chartSeries.value = all;
     if (isRealtime.value) {
       await nextTick();
-      const chart = chartRef.value.chart;
-      const lastX = Math.max(...all.map(s => s.data.at(-1)?.[0] || 0));
-      if (lastX) {
-        chart.xAxis[0].setExtremes(
-          lastX - WINDOW_MS,
-          lastX,
-          true,
-          false
-        );
+      const chart = chartRef.value?.chart;
+      if (chart && chart.xAxis && chart.xAxis[0]) {
+        const lastX = Math.max(...all.map(s => s.data.at(-1)?.[0] || 0));
+        if (lastX) {
+          chart.xAxis[0].setExtremes(
+            lastX - WINDOW_MS,
+            lastX,
+            true,
+            false
+          );
+        }
       }
     }
   },
@@ -294,7 +380,8 @@ watch(
   () => props.log.length,
   async (newLen, oldLen) => {
     if (!isRealtime.value || newLen <= oldLen || !activeLegendKey.value) return;
-    const chart = chartRef.value.chart;
+    const chart = chartRef.value?.chart;
+    if (!chart) return;
 
     const raw = makeSeriesArray(props.log, activeLegendKey.value)
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -359,7 +446,7 @@ watch(
       }
     }
 
-    chart.redraw();
+    chart.redraw(false);
   }
 );
 
@@ -397,8 +484,44 @@ watch(
   () => route.query.type,
   () => {
     if (!activeLegendKey.value) return;
-    chartSeries.value = makeSeriesArray(props.log, activeLegendKey.value);
+    const all = makeSeriesArray(props.log, activeLegendKey.value);
+    const chart = chartRef.value?.chart;
+    if (chart) applySeriesDiffToChart(chart, all);
+    chartSeries.value = all;
   }
+);
+
+// If current unit is not available in this sensor, switch to the first available one
+watch(
+  () => Array.from(presentIdsSet.value),
+  (idsArr) => {
+    if (!idsArr || idsArr.length === 0) return;
+    const ids = new Set(idsArr);
+    const provider = getTypeProvider();
+    const cur = (mapStore.currentUnit || route.query.type || '').toLowerCase();
+    const hasPM25 = ids.has('pm25');
+    const hasPM10 = ids.has('pm10');
+    const aqiAvailable = provider === 'remote' && hasPM25 && hasPM10;
+    const curAvailable = cur === 'aqi' ? aqiAvailable : ids.has(cur);
+    if (curAvailable) return;
+    let next = null;
+    if (cur === 'aqi') {
+      next = hasPM25 ? 'pm25' : (hasPM10 ? 'pm10' : null);
+    }
+    if (!next) {
+      // Prefer AQI instead of bare pm10 when conditions allow it
+      if (idsArr[0] === 'pm10' && aqiAvailable) {
+        next = 'aqi';
+      } else {
+        next = idsArr[0];
+      }
+    }
+    if (next) {
+      mapStore.setCurrentUnit(next);
+      router.replace({ query: { ...route.query, type: next } });
+    }
+  },
+  { immediate: true }
 );
 </script>
 

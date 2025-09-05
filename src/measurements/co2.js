@@ -11,11 +11,10 @@ export default {
     ru: "CO₂"
   },
   unit: "ppm",
-  chartColor: "#76c7c0",
-  range: [0, 400, 1000, 2000, 5000],
+  
   zones: [
     {
-      value: 400,
+      valueMax: 400,
       color: "#03a5ed",
       label: {
         en: "Background",
@@ -23,7 +22,7 @@ export default {
       }
     },
     {
-      value: 1000,
+      valueMax: 1000,
       color: "var(--measure-green)",
       label: {
         en: "Moderate",
@@ -31,7 +30,7 @@ export default {
       }
     },
     {
-      value: 2000,
+      valueMax: 2000,
       color: "var(--measure-yellow)",
       label: {
         en: "Elevated",
@@ -39,7 +38,7 @@ export default {
       }
     },
     {
-      value: 5000,
+      valueMax: 5000,
       color: "var(--measure-orange)",
       label: {
         en: "High",

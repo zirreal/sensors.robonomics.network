@@ -10,6 +10,7 @@ export const useMapStore = defineStore('map', {
     },
     mapinactive: false,
     sensors: [], // all uploaded sensors (getting via broadcast messages)
+    currentUnit: (localStorage.getItem('currentUnit') || settings?.MAP?.measure || 'pm25').toLowerCase(),
   }),
   actions: {
     setmapposition(lat, lng, zoom, save = true) {
@@ -27,5 +28,10 @@ export const useMapStore = defineStore('map', {
     clearSensors() {
       this.sensors = [];
     },
+    setCurrentUnit(unit) {
+      const u = String(unit || '').toLowerCase();
+      this.currentUnit = u;
+      try { localStorage.setItem('currentUnit', u); } catch {}
+    }
   },
 });

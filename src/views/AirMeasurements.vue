@@ -21,7 +21,12 @@
             <b>
             {{ zone.label[locale] ? zone.label[locale] : zone.label.en }}
             </b>
-            <span v-if="zone.value">{{ $t("scales.upto")}}  {{ zone.value }} {{ measurement.unit }}</span>
+            <span v-if="typeof zone.valueMax === 'number'">
+              {{ $t("scales.upto") }} {{ zone.valueMax }}
+              <template v-if="measurement.unit && measurement.unit !== ''">
+                {{ ' ' + measurement.unit }}
+              </template>
+            </span>
             <span v-else>{{ $t("scales.above") }}</span>
           </div>
         </div>

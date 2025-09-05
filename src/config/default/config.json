@@ -35,6 +35,11 @@
     "remote": "Daily Recap"
   },
   "SERIES_MAX_VISIBLE": 3000,
+  "GEOCODER": {
+    "urlTemplate": "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={lat}&lon={lon}&zoom={zoom}&addressdetails={addressdetails}&accept-language={lang}",
+    "cacheTtlDays": 7,
+    "zoom": { "city": 14, "address": 18 }
+  },
   "TITLE": "Map of independent air quality sensors",
   "DESC": "Welcome to the decentralized opensource sensors map which operates with the sole intent of serving the free will of individuals, without any beneficiaries.",
   "SITE_NAME": "Sensors.social",

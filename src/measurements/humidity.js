@@ -11,11 +11,9 @@ export default {
     ru: "Влажность"
   },
   unit: "%",
-  chartColor: "#6fd3ff",
-  range: [0, 30, 40, 60, 70],
   zones: [
     {
-      value: 30,
+      valueMax: 30,
       color: "var(--measure-orange)",
       label: {
         en: "Very dry",
@@ -23,7 +21,7 @@ export default {
       }
     },
     {
-      value: 40,
+      valueMax: 40,
       color: "var(--measure-yellow)",
       label: {
         en: "Dry",
@@ -31,7 +29,7 @@ export default {
       }
     },
     {
-      value: 60,
+      valueMax: 60,
       color: "var(--measure-green)",
       label: {
         en: "Comfortable",
@@ -39,7 +37,7 @@ export default {
       }
     },
     {
-      value: 70,
+      valueMax: 70,
       color: "var(--measure-bluegreen)",
       label: {
         en: "Humid",

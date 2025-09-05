@@ -11,13 +11,9 @@ export default {
     ru: "NH3"
   },
   unit: "mg/m3",
-  icon: "vial-virus",
-  chartColor: "#a1e37a",
-  // colors: ["var(--measure-green)", "#ff9d00", "#fc0202"],
-  range: [0, 15, 40],
   zones: [
     {
-      value: 15,
+      valueMax: 15,
       color: "var(--measure-green)",
       label: {
         en: "Good",
@@ -25,7 +21,7 @@ export default {
       }
     },
     {
-      value: 40,
+      valueMax: 40,
       color: "var(--measure-yellow)",
       label: {
         en: "Satisfyingly",

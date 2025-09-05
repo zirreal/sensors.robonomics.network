@@ -1,5 +1,3 @@
-// src/utils/map/marker.js
-
 import { settings, sensors } from "@config";
 import Queue from "js-queue";
 import L from "leaflet";
@@ -9,6 +7,7 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import { getMeasurementByName } from "../../measurements/tools";
 import generate, { getColor, getColorDarkenRGB, getColorRGB } from "../../utils/color";
+import { calculateAQIIndex } from "../aqiIndex";
 
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
@@ -22,6 +21,7 @@ let markersLayer;
 let pathsLayer;
 let moveLayer;
 let handlerClickMarker;
+let map;
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -153,7 +153,11 @@ function attachEnhancements(marker, map, layerGroup) {
  * Checks distance in pixels between layer points to detect overlaps.
  */
 function getOverlappingMarkers(map, marker, layerGroup, pxRadius = 24) {
+  if (!map || !map.latLngToLayerPoint) return [];
+  
   const p0 = map.latLngToLayerPoint(marker.getLatLng());
+  if (!p0) return [];
+  
   const pool = [];
   layerGroup?.eachLayer?.((x) => {
     if (x instanceof L.Marker && x._icon) pool.push(x);
@@ -163,6 +167,7 @@ function getOverlappingMarkers(map, marker, layerGroup, pxRadius = 24) {
   for (const m of pool) {
     if (m === marker) continue;
     const p = map.latLngToLayerPoint(m.getLatLng());
+    if (!p) continue;
     const dx = p.x - p0.x;
     const dy = p.y - p0.y;
     if (Math.hypot(dx, dy) <= pxRadius) out.push(m);
@@ -312,7 +317,11 @@ function jitterCoord([latRaw, lngRaw], seed, meters = 15) {
 }
 
 
-export async function init(map, type, cb) {
+export async function init(mapInstance, type, cb) {
+  map = mapInstance;
+  
+  // Clean expired AQI cache entries on initialization
+  aqiCache.cleanExpired();
   for (const index of Object.keys(messageTypes)) {
     try {
       messageIconType[index] = (
@@ -349,29 +358,125 @@ export async function init(map, type, cb) {
   };
 
   const scaleParams = getMeasurementByName(type);
-  scale = generate(scaleParams.colors, scaleParams.range);
+  // Build range and colors strictly from zones
+  const zones = scaleParams?.zones || [];
+  const dynamicRange = zones
+    .map((z) => (typeof z.valueMax === 'number' ? z.valueMax : undefined))
+    .filter((v) => typeof v === 'number');
+  
+  // Convert CSS variables to actual colors by reading from computed styles
+  const cssVarToColor = (cssVar) => {
+    if (!cssVar.startsWith('var(--')) return cssVar;
+    
+    // Create a temporary element to get computed CSS variable value
+    const tempEl = document.createElement('div');
+    tempEl.style.color = cssVar;
+    document.body.appendChild(tempEl);
+    const computedColor = getComputedStyle(tempEl).color;
+    document.body.removeChild(tempEl);
+    
+    // Convert rgb() to hex if needed
+    if (computedColor.startsWith('rgb')) {
+      const rgb = computedColor.match(/\d+/g);
+      if (rgb && rgb.length >= 3) {
+        const hex = '#' + rgb.map(x => {
+          const hex = parseInt(x).toString(16);
+          return hex.length === 1 ? '0' + hex : hex;
+        }).join('');
+        return hex;
+      }
+    }
+    
+    return computedColor || cssVar;
+  };
+  
+  // Generate colors from zones, converting CSS vars to actual colors
+  const dynamicColors = zones.map(z => cssVarToColor(z.color));
+  
+  scale = generate(dynamicColors, [0, ...dynamicRange]);
 
   markersLayer = createLooseClusterGroup(iconCreate);
   map.addLayer(markersLayer);
 
-  // ---------------- NEW: keep map draggable after animations/spiderfy ----------
+  // keep map draggable after animations/spiderfy
   // Safety: after zoom / spiderfy / any animation we make sure the map is draggable again
+  let isEnsuringDraggable = false;
   const ensureMapDraggable = () => {
+    if (isEnsuringDraggable) return; // Prevent recursion
+    isEnsuringDraggable = true;
+    
     try {
-      map.dragging.enable();
-      map.scrollWheelZoom.enable();
-      map.boxZoom?.enable?.();
-      map.keyboard?.enable?.();
-    } catch {}
+      // Simple, single timeout to avoid recursion
+      setTimeout(() => {
+        if (map) {
+          if (!map.dragging.enabled()) {
+            map.dragging.enable();
+          }
+          if (!map.scrollWheelZoom.enabled()) {
+            map.scrollWheelZoom.enable();
+          }
+          if (map.boxZoom && !map.boxZoom.enabled()) {
+            map.boxZoom.enable();
+          }
+          if (map.keyboard && !map.keyboard.enabled()) {
+            map.keyboard.enable();
+          }
+        }
+        isEnsuringDraggable = false;
+      }, 50);
+    } catch (error) {
+      console.warn('Failed to re-enable map interactions:', error);
+      isEnsuringDraggable = false;
+    }
   };
 
   // Run once now (in case something disabled these before init)
   ensureMapDraggable();
 
-  // Re-enable on common lifecycle events
+  // Re-enable on common lifecycle events (avoid events that can cause recursion)
   map.on("zoomend", ensureMapDraggable);
-  map.on("moveend", ensureMapDraggable);
-  map.on("animationend", ensureMapDraggable);
+  // Remove moveend and animationend to reduce potential conflicts
+  // map.on("moveend", ensureMapDraggable);
+  // map.on("animationend", ensureMapDraggable);
+  
+  // Prevent infinite recursion in panInsideBounds and setView
+  let isPanningInsideBounds = false;
+  let isSettingView = false;
+  
+  const originalPanInsideBounds = map.panInsideBounds;
+  map.panInsideBounds = function(bounds, options) {
+    if (isPanningInsideBounds) {
+      console.warn('Prevented recursive panInsideBounds call');
+      return this;
+    }
+    isPanningInsideBounds = true;
+    try {
+      const result = originalPanInsideBounds.call(this, bounds, options);
+      return result;
+    } finally {
+      setTimeout(() => {
+        isPanningInsideBounds = false;
+      }, 100);
+    }
+  };
+  
+  const originalSetView = map.setView;
+  map.setView = function(center, zoom, options) {
+    if (isSettingView) {
+      console.warn('Prevented recursive setView call');
+      return this;
+    }
+    isSettingView = true;
+    try {
+      const result = originalSetView.call(this, center, zoom, options);
+      return result;
+    } finally {
+      setTimeout(() => {
+        isSettingView = false;
+      }, 100);
+    }
+  };
+  
   // MarkerCluster emits these on fan-out / collapse
   markersLayer.on("spiderfied", ensureMapDraggable);
   markersLayer.on("unspiderfied", ensureMapDraggable);
@@ -389,10 +494,7 @@ export async function init(map, type, cb) {
   markersLayer.on("clusterclick", (e) => {
     const cluster = e.layer;
     const nowZoom = map.getZoom();
-    theTargetZoom:
-    {
-      // keep the original logic untouched
-    }
+    
     const targetZoom = map.getBoundsZoom(cluster.getBounds(), true);
     const MAX_SPIDER_CHILDREN = 20; // threshold for direct spiderfy
     const ZOOM_DELTA_THRESHOLD = 1; // minimum zoom difference to trigger zooming
@@ -516,36 +618,199 @@ export function isReadyLayers() {
 }
 
 function iconCreate(cluster) {
-  const markers = cluster.getAllChildMarkers();
-  const childCount = cluster.getChildCount();
-  let childCountCalc = 0;
-  let sum = 0;
-  const markersId = [];
-
-  markers.forEach((marker) => {
-    if (marker.options.data.value === undefined && marker.options.data.value !== "") {
-      return;
+  try {
+    const markers = cluster.getAllChildMarkers();
+    const childCount = cluster.getChildCount();
+    let childCountCalc = 0;
+    let sum = 0;
+    const markersId = [];
+    const unit = localStorage.getItem("currentUnit") ?? null;
+    let winningColor = "#a1a1a1"; // default color
+    
+    
+    
+    // Early return if no markers
+    if (childCount === 0 || markers.length === 0) {
+      
+      return new L.DivIcon({
+        html: `<div class='marker-cluster-circle' style='color:#333;background-color: color-mix(in srgb, #a1a1a1 70%, transparent);border-color: #999;' data-children=""><span>${childCount}</span></div>`,
+        className: "marker-cluster",
+        iconSize: new L.Point(40, 40),
+      });
     }
+  
+  
+  
+  
 
-    markersId.push(marker.options.data._id);
+  
 
-    childCountCalc++;
-    sum += Number(marker.options.data.value);
-  });
-  if (childCountCalc > 0) {
-    sum = sum / childCountCalc;
+
+  // For AQI, use simplified logic - just use the first marker's color
+  if (unit === 'aqi') {
+    
+    
+    // Simple approach: use the first marker's color
+    let clusterColor = "#a1a1a1"; // default gray
+    
+    for (const marker of markers) {
+      const data = marker.options.data;
+      if (data?.logs && data.logs.length > 0) {
+        // Use cached AQI value if available
+        let aqiValue;
+        if (aqiCache.has(data.sensor_id, data.logs.length)) {
+          aqiValue = aqiCache.get(data.sensor_id, data.logs.length);
+          
+        } else {
+          aqiValue = calculateAQIIndex(data.logs);
+          aqiCache.set(data.sensor_id, data.logs.length, aqiValue);
+          
+        }
+        if (aqiValue !== null) {
+          clusterColor = getColorForValue(aqiValue, 'aqi', data);
+          
+          break; // Use first valid color
+        }
+      } else {
+        // No logs yet — try latest cached AQI by sensorId for immediate color
+        const latest = aqiCache.getLatestBySensorId(data.sensor_id);
+        if (latest !== null) {
+          const zones = measurements.aqi?.zones || [];
+          const match = zones.find((i) => latest <= i?.valueMax);
+          if (match) {
+            clusterColor = match.color;
+            
+            break;
+          } else if (zones.length > 0 && !zones[zones.length - 1]?.valueMax) {
+            clusterColor = zones[zones.length - 1].color;
+            
+            break;
+          }
+        }
+      }
+      markersId.push(data._id);
+    }
+    
+    // Convert color to RGB for border calculation
+    let colorBorder = "#999";
+    let isDark = false;
+    
+    if (clusterColor && clusterColor !== "#a1a1a1") {
+      const tempEl = document.createElement('div');
+      tempEl.style.color = clusterColor;
+      document.body.appendChild(tempEl);
+      const computedColor = getComputedStyle(tempEl).color;
+      document.body.removeChild(tempEl);
+      
+      if (computedColor.startsWith('rgb')) {
+        const rgb = computedColor.match(/\d+/g);
+        if (rgb && rgb.length >= 3) {
+          const r = parseInt(rgb[0]);
+          const g = parseInt(rgb[1]);
+          const b = parseInt(rgb[2]);
+          colorBorder = `rgb(${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)})`;
+          isDark = (r * 0.299 + g * 0.587 + b * 0.114) < 128;
+        }
+      }
+    }
+    
+    
+    return new L.DivIcon({
+      html: `<div class='marker-cluster-circle' style='color:${
+        isDark ? "#eee" : "#333"
+      };background-color: color-mix(in srgb, ${clusterColor} 70%, transparent);border-color: ${colorBorder};' data-children="${markersId}"><span>${childCount}</span></div>`,
+      className: "marker-cluster",
+      iconSize: new L.Point(40, 40),
+    });
+  } else {
+    // Regular measurement handling - count zones instead of averaging
+    const zoneCounts = new Map(); // zone color -> count
+    
+    // Sort markers by sensor_id for consistent results across zooms
+    const sortedMarkers = [...markers].sort((a, b) => {
+      const idA = a.options.data?.sensor_id || '';
+      const idB = b.options.data?.sensor_id || '';
+      return idA.localeCompare(idB);
+    });
+    
+    sortedMarkers.forEach((marker) => {
+      // Skip markers without data
+      if (marker.options.data.value === undefined || marker.options.data.value === "") {
+        return;
+      }
+
+      markersId.push(marker.options.data._id);
+
+      childCountCalc++;
+      const value = marker.options.data.value;
+
+      
+      // Get color for this marker's value using unified method
+      const markerColor = getColorForValue(value, unit, marker.options.data);
+      
+      // Count this zone
+      zoneCounts.set(markerColor, (zoneCounts.get(markerColor) || 0) + 1);
+    });
+    
+    // Find the winning zone (most common color)
+    let maxCount = 0;
+    for (const [color, count] of zoneCounts) {
+      if (count > maxCount) {
+        maxCount = count;
+        winningColor = color;
+      }
+    }
   }
-  const color = getColorRGB(scale, sum);
-  const colorBorder = getColorDarkenRGB(scale, sum);
-  const isDark = scale(sum).luminance() < 0.4;
+  
+  // For regular measurements, use the winning zone color
+  let color = "#a1a1a1"; // default color
+  let colorBorder = "#999";
+  let isDark = false;
+  
+  if (unit && unit !== 'aqi' && childCountCalc > 0) {
+    // Use the winning color from zone counting
+    color = winningColor;
+    
+    // Convert color to RGB for border calculation
+    const tempEl = document.createElement('div');
+    tempEl.style.color = color;
+    document.body.appendChild(tempEl);
+    const computedColor = getComputedStyle(tempEl).color;
+    document.body.removeChild(tempEl);
+    
+    if (computedColor.startsWith('rgb')) {
+      const rgb = computedColor.match(/\d+/g);
+      if (rgb && rgb.length >= 3) {
+        const r = parseInt(rgb[0]);
+        const g = parseInt(rgb[1]);
+        const b = parseInt(rgb[2]);
+        colorBorder = `rgb(${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)})`;
+        isDark = (r * 0.299 + g * 0.587 + b * 0.114) < 128;
+      }
+    }
+  } else if (unit === 'aqi') {
+    // This should not happen as AQI is handled above, but just in case
+    color = "#a1a1a1";
+    colorBorder = "#999";
+  }
 
+  
   return new L.DivIcon({
     html: `<div class='marker-cluster-circle' style='color:${
       isDark ? "#eee" : "#333"
-    };background-color: rgba(${color}, 0.7);border-color: rgba(${colorBorder}, 1);' data-children="${markersId}"><span>${childCount}</span></div>`,
+    };background-color: color-mix(in srgb, ${color} 70%, transparent);border-color: ${colorBorder};' data-children="${markersId}"><span>${childCount}</span></div>`,
     className: "marker-cluster",
     iconSize: new L.Point(40, 40),
   });
+  } catch (error) {
+    console.error(`iconCreate error: ${error.message}`, error);
+    // Return default cluster on error
+    return new L.DivIcon({
+      html: `<div class='marker-cluster-circle' style='color:#333;background-color: color-mix(in srgb, #a1a1a1 70%, transparent);border-color: #999;' data-children=""><span>${cluster.getChildCount()}</span></div>`,
+      className: "marker-cluster",
+      iconSize: new L.Point(40, 40),
+    });
+  }
 }
 
 function iconCreateMsg(cluster, type = "text") {
@@ -674,6 +939,16 @@ function createMarker(point, colors) {
 }
 
 function updateMarker(marker, point, colors) {
+  // Update marker data first
+  marker.options.data = point;
+  
+  // Recalculate colors for AQI if needed
+  if (localStorage.getItem("currentUnit") === 'aqi' && !point.isEmpty) {
+    const color = markercolor(point.value, point);
+    colors.basic = "color-mix(in srgb, " + color + " 70%, transparent)";
+    colors.border = "color-mix(in srgb, " + colors.basic + ", #000 10%)";
+  }
+  
   if (marker.options.typeMarker === "brand") {
     marker.setIcon(createIconBrand(point.sensor_id, colors.rgb));
   } else if (
@@ -691,19 +966,11 @@ function updateMarker(marker, point, colors) {
 }
 
 export async function addPoint(point) {
-  if (point.sensor_id === "ab9de1c7a82d9b193fd9f169d8af1b64ce4f7b391d9f50f9ac127a49615a9693") {
-    console.log("GRAY PM10", point);
-  }
-
-  if (point.sensor_id === "3eb468d90d6640bcef0b0b792a947d05bcc4da1b11316b283dda59e79336fdaa") {
-    console.log("GREEN PM10", point);
-  }
-
   queue.add(makeRequest.bind(queue, point));
   async function makeRequest(point) {
     try {
       if (point.model === 1) {
-        console.log(point);
+        // Handle model 1 if needed
       } else if (point.model === 2) {
         await addMarker(point);
       } else if (point.model === 3) {
@@ -713,29 +980,217 @@ export async function addPoint(point) {
         await addMarkerUser(point);
       }
     } catch (error) {
-      console.log(error);
+      // Handle error silently
     }
     this.next();
   }
 }
 
-function markercolor(value) {
-  let color = null;
-  const unit = localStorage.getItem("currentUnit") ?? null;
-  const zones = measurements[unit].zones || "pm10";
+// Cache for AQI calculations with localStorage and TTL
+const AQI_CACHE_KEY = 'aqi_cache';
+const AQI_LOGS_CACHE_KEY = 'aqi_logs_cache';
+const AQI_CACHE_TTL = 3600; // 1 hour in seconds
 
-  if (unit) {
-    const match = zones.find((i) => value <= i?.value);
-    if (match) {
-      color = match?.color;
-    } else {
-      if (!zones[zones.length - 1]?.value) {
-        color = zones[zones.length - 1]?.color;
+// (in-memory color cache removed)
+
+// AQI Cache with localStorage and TTL
+const aqiCache = {
+  // Get cached AQI value
+  get(sensorId, logsLength) {
+    try {
+      const cacheKey = `${sensorId}_${logsLength}`;
+      const cached = localStorage.getItem(AQI_CACHE_KEY);
+      
+      if (!cached) return null;
+      
+      const cacheData = JSON.parse(cached);
+      const item = cacheData[cacheKey];
+      
+      if (!item) return null;
+      
+      // Check if cache is expired
+      const now = Math.floor(Date.now() / 1000);
+      if (now - item.timestamp > AQI_CACHE_TTL) {
+        // Remove expired item
+        delete cacheData[cacheKey];
+        localStorage.setItem(AQI_CACHE_KEY, JSON.stringify(cacheData));
+        return null;
       }
+      
+      return item.aqiValue;
+    } catch (error) {
+      console.warn('AQI cache get error:', error);
+      return null;
+    }
+  },
+
+
+  // Set cached AQI value
+  set(sensorId, logsLength, aqiValue) {
+    try {
+      const cacheKey = `${sensorId}_${logsLength}`;
+      const cached = localStorage.getItem(AQI_CACHE_KEY);
+      let cacheData = cached ? JSON.parse(cached) : {};
+      
+      cacheData[cacheKey] = {
+        aqiValue: aqiValue,
+        timestamp: Math.floor(Date.now() / 1000),
+        ttl: AQI_CACHE_TTL
+      };
+      
+      localStorage.setItem(AQI_CACHE_KEY, JSON.stringify(cacheData));
+    } catch (error) {
+      console.warn('AQI cache set error:', error);
+    }
+  },
+  
+  // Check if cache has value
+  has(sensorId, logsLength) {
+    return this.get(sensorId, logsLength) !== null;
+  },
+  
+  // Clear all cache
+  clear() {
+    try {
+      localStorage.removeItem(AQI_CACHE_KEY);
+    } catch (error) {
+      console.warn('AQI cache clear error:', error);
+    }
+  },
+  
+  // Clean expired entries
+  cleanExpired() {
+    try {
+      const cached = localStorage.getItem(AQI_CACHE_KEY);
+      if (!cached) return;
+      
+      const cacheData = JSON.parse(cached);
+      const now = Math.floor(Date.now() / 1000);
+      let hasChanges = false;
+      
+      for (const key in cacheData) {
+        const item = cacheData[key];
+        if (now - item.timestamp > AQI_CACHE_TTL) {
+          delete cacheData[key];
+          hasChanges = true;
+        }
+      }
+      
+      if (hasChanges) {
+        localStorage.setItem(AQI_CACHE_KEY, JSON.stringify(cacheData));
+      }
+    } catch (error) {
+      console.warn('AQI cache clean error:', error);
+    }
+  },
+  
+  // Get the latest valid AQI value for a sensorId regardless of logs length
+  getLatestBySensorId(sensorId) {
+    try {
+      const cached = localStorage.getItem(AQI_CACHE_KEY);
+      if (!cached) return null;
+      const cacheData = JSON.parse(cached);
+      const now = Math.floor(Date.now() / 1000);
+      let best = null;
+      let bestTs = -1;
+      const prefix = `${sensorId}_`;
+      for (const key in cacheData) {
+        if (!key.startsWith(prefix)) continue;
+        const item = cacheData[key];
+        if (!item || typeof item.timestamp !== 'number') continue;
+        if (now - item.timestamp > (item.ttl || AQI_CACHE_TTL)) continue;
+        if (item.timestamp > bestTs) {
+          best = item;
+          bestTs = item.timestamp;
+        }
+      }
+      return best ? best.aqiValue ?? null : null;
+    } catch (error) {
+      console.warn('AQI cache getLatestBySensorId error:', error);
+      return null;
+    }
+  }
+};
+
+/**
+ * Universal color calculation method for both individual markers and clusters
+ * @param {number|null} value - The value to get color for
+ * @param {string} unit - The measurement unit (pm10, pm25, temperature, etc.)
+ * @param {Object} point - The point data (for AQI calculation)
+ * @returns {string} - The color for the value
+ */
+function getColorForValue(value, unit, point = null) {
+  
+  // Handle AQI calculation with localStorage caching
+  if (unit === 'aqi' && point) {
+    // If logs are present, prefer precise cache by logs length; otherwise use latest by sensorId
+    if (point.logs && aqiCache.has(point.sensor_id, point.logs.length)) {
+      const aqiValue = aqiCache.get(point.sensor_id, point.logs.length);
+      if (aqiValue !== null) {
+        const zones = measurements.aqi?.zones || [];
+        const match = zones.find((i) => aqiValue <= i?.valueMax);
+        if (match) return match.color;
+        if (zones.length > 0 && !zones[zones.length - 1]?.valueMax) return zones[zones.length - 1].color;
+      }
+    }
+
+    // If no logs yet or no cache hit for logs-length — try latest by sensorId
+    if (!point.logs || !Array.isArray(point.logs) || point.logs.length === 0) {
+      const latest = aqiCache.getLatestBySensorId(point.sensor_id);
+      if (latest !== null) {
+        const zones = measurements.aqi?.zones || [];
+        const match = zones.find((i) => latest <= i?.valueMax);
+        if (match) return match.color;
+        if (zones.length > 0 && !zones[zones.length - 1]?.valueMax) return zones[zones.length - 1].color;
+      }
+    }
+
+    // If logs exist but no cache — calculate, store, and return
+    if (point.logs && Array.isArray(point.logs) && point.logs.length > 0) {
+      try {
+        const aqiValue = calculateAQIIndex(point.logs);
+        aqiCache.set(point.sensor_id, point.logs.length, aqiValue);
+        if (aqiValue !== null) {
+          const zones = measurements.aqi?.zones || [];
+          const match = zones.find((i) => aqiValue <= i?.valueMax);
+          if (match) return match.color;
+          if (zones.length > 0 && !zones[zones.length - 1]?.valueMax) return zones[zones.length - 1].color;
+        }
+      } catch (_) {}
+    }
+
+    return "#a1a1a1";
+  }
+  else if (unit === 'aqi') {
+    return "#a1a1a1";
+  }
+  
+  // Regular measurement handling
+  if (value === null || value === undefined || isNaN(value)) {
+    return "#a1a1a1"; // Default color for no data
+  }
+  
+  const scaleParams = getMeasurementByName(unit);
+  const zones = scaleParams?.zones || [];
+  if (unit && zones.length > 0) {
+    const match = zones.find((i) => value <= i?.valueMax);
+    if (match) {
+      return match.color;
+    } else if (!zones[zones.length - 1]?.valueMax) {
+      return zones[zones.length - 1].color;
     }
   }
 
-  return color || "#a1a1a1";
+  return "#a1a1a1"; // Default color
+}
+
+function markercolor(value, point = null) {
+  const unit = localStorage.getItem("currentUnit") ?? null;
+  
+  if (unit === 'aqi') {
+    
+  }
+  return getColorForValue(value, unit, point);
 }
 
 async function addMarker(point) {
@@ -753,11 +1208,21 @@ async function addMarker(point) {
     rgb: [161, 161, 161],
   };
   if (!point.isEmpty) {
-    colors.basic = "color-mix(in srgb, " + markercolor(point.value) + " 70%, transparent)";
+    // For AQI, we need to pass the full point object with logs
+    
+    const color = markercolor(point.value, point);
+    colors.basic = "color-mix(in srgb, " + color + " 70%, transparent)";
     colors.border = "color-mix(in srgb, " + colors.basic + ", #000 10%)";
-    // colors.basic = getColor(scale, point.value);
-    // colors.border = getColorDarken(scale, point.value);
-    // colors.rgb = getColorRGB(scale, point.value);
+  } else {
+    // Even without logs, if current unit is AQI and cache has a recent value, color immediately
+    const unit = localStorage.getItem("currentUnit") ?? null;
+    if (unit === 'aqi') {
+      const colorImmediate = markercolor(point.value, point);
+      if (colorImmediate && colorImmediate !== "#a1a1a1") {
+        colors.basic = "color-mix(in srgb, " + colorImmediate + " 70%, transparent)";
+        colors.border = "color-mix(in srgb, " + colors.basic + ", #000 10%)";
+      }
+    }
   }
   const marker = await findMarker(point.sensor_id);
   if (!marker) {
@@ -768,10 +1233,17 @@ async function addMarker(point) {
 
     if (markersLayer) {
       markersLayer.addLayer(m);
-    } else {
-      console.log("Not found markersLayer");
     }
-  } else if (!point.isEmpty) {
+  } else {
+    // Always update existing marker, even if empty
+    // Recalculate colors for AQI if needed
+    if (localStorage.getItem("currentUnit") === 'aqi') {
+      const color = markercolor(point.value, point);
+      if (color && color !== "#a1a1a1") {
+        colors.basic = "color-mix(in srgb, " + color + " 70%, transparent)";
+        colors.border = "color-mix(in srgb, " + colors.basic + ", #000 10%)";
+      }
+    }
     updateMarker(marker, point, colors);
   }
 }
@@ -922,4 +1394,19 @@ export function switchMessagesLayer(map, enabled = false) {
       }
     }
   }
+}
+
+export function refreshClusters() {
+  if (markersLayer) {
+    markersLayer.refreshClusters();
+  }
+}
+
+// Export cache management functions for debugging
+export function clearAQICache() {
+  aqiCache.clear();
+}
+
+export function cleanExpiredAQICache() {
+  aqiCache.cleanExpired();
 }

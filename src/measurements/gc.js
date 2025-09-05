@@ -11,11 +11,10 @@ export default {
     ru: "Радиация"
   },
   unit: "μR/h",
-  chartColor: "#e99152",
-  range: [0, 10, 60, 100, 200],
+  
   zones: [
     {
-      value: 10,
+      valueMax: 10,
       color: "#03a5ed",
       label: {
         en: "Background",
@@ -23,7 +22,7 @@ export default {
       }
     },
     {
-      value: 60,
+      valueMax: 60,
       color: "var(--measure-green)",
       label: {
         en: "Moderate",
@@ -31,7 +30,7 @@ export default {
       }
     },
     {
-      value: 100,
+      valueMax: 100,
       color: "var(--measure-yellow)",
       label: {
         en: "Elevated",
@@ -39,7 +38,7 @@ export default {
       }
     },
     {
-      value: 200,
+      valueMax: 200,
       color: "var(--measure-orange)",
       label: {
         en: "High",

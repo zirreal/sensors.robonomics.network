@@ -2,6 +2,7 @@ import airtemp from "./airtemp";
 import airtempavg from "./airtempavg";
 import airtempmax from "./airtempmax";
 import airtempmin from "./airtempmin";
+import aqi from "./aqi";
 import co from "./co";
 import co2 from "./co2";
 import dewpoint from "./dewpoint";
@@ -30,6 +31,7 @@ export default {
   airtempavg,
   airtempmax,
   airtempmin,
+  aqi,
   co,
   co2,
   dewpoint,

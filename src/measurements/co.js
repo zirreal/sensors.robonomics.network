@@ -11,12 +11,9 @@ export default {
     ru: "CO"
   },
   unit: "ppm",
-  chartColor: "#c1c1c1",
-  // colors: ["var(--measure-green)", "#ff9d00", "#fc0202"],
-  range: [0, 2, 4, 14],
   zones: [
     {
-      value: 0,
+      valueMax: 0,
       color: "var(--measure-green)",
       label: {
         en: "Good",
@@ -24,7 +21,7 @@ export default {
       }
     },
     {
-      value: 2,
+      valueMax: 2,
       color: "var(--measure-bluegreen)",
       label: {
         en: "Satisfyingly",
@@ -32,7 +29,7 @@ export default {
       }
     },
     {
-      value: 4,
+      valueMax: 4,
       color: "var(--measure-yellow)",
       label: {
         en: "Poor",

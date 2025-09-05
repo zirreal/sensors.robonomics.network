@@ -11,10 +11,10 @@ export default {
     ru: "Шум"
   },
   unit: "dB",
-  range: [0, 40, 70, 80, 100],
+  
   zones: [
     {
-      value: 40,
+      valueMax: 40,
       color: "var(--measure-green)",
       label: {
         en: "Faint",
@@ -22,7 +22,7 @@ export default {
       }
     },
     {
-      value: 70,
+      valueMax: 70,
       color: "var(--measure-bluegreen)",
       label: {
         en: "Moderate",
@@ -30,7 +30,7 @@ export default {
       }
     },
     {
-      value: 80,
+      valueMax: 80,
       color: "var(--measure-yellow)",
       label: {
         en: "Loud",
@@ -38,7 +38,7 @@ export default {
       }
     },
     {
-      value: 100,
+      valueMax: 100,
       color: "var(--measure-orange)",
       label: {
         en: "Very loud",

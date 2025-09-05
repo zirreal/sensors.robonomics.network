@@ -11,12 +11,9 @@ export default {
     ru: "Температура"
   },
   unit: "℃",
-  chartColor: "#2d7ac7",
-  // colors: ["#fc0202", "#ff9d00", "var(--measure-green)", "#ff9d00", "#fc0202"],
-  range: [-9, 1, 10, 25],
   zones: [
     {
-      value: -9,
+      valueMax: -9,
       color: "var(--measure-darkblue)",
       label: {
         en: "Very cold",
@@ -24,7 +21,7 @@ export default {
       }
     },
     {
-      value: 1,
+      valueMax: 1,
       color: "var(--measure-blue)",
       label: {
         en: "Cold",
@@ -32,7 +29,7 @@ export default {
       }
     },
     {
-      value: 10,
+      valueMax: 10,
       color: "var(--measure-bluegreen)",
       label: {
         en: "Cool",
@@ -40,7 +37,7 @@ export default {
       }
     },
     {
-      value: 25,
+      valueMax: 25,
       color: "var(--measure-green)",
       label: {
         en: "Warm",
@@ -48,7 +45,7 @@ export default {
       }
     },
     {
-      value: 35,
+      valueMax: 35,
       color: "var(--measure-yellow)",
       label: {
         en: "Hot",

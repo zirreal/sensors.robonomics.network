@@ -6,6 +6,7 @@
     @history="historyhandler"
     :measuretype="measuretype"
     :isLoad="isLoad"
+    @typeChanged="handleTypeChange"
   >
     <button
       class="popovercontrol popoovergeo"
@@ -158,7 +159,7 @@ export default {
         savelocally = false;
       }
 
-      this.store.setmapposition(
+      this.mapStore.setmapposition(
         JSON.parse(lastsettings).lat,
         JSON.parse(lastsettings).lng,
         JSON.parse(lastsettings).zoom,
@@ -202,6 +203,15 @@ export default {
         settings.MAP.zoom,
         true
       );
+    },
+
+    handleTypeChange(newType) {
+      // If sensor popup is open — do not repaint the map now
+      if (this.$route.query.sensor) return;
+      // Otherwise, redraw markers for the new type
+      if (this.map) {
+        this.$emit('typeChanged', newType);
+      }
     },
 
     setgeo(forse = false) {
@@ -355,7 +365,11 @@ export default {
         this.loadMap();
       });
     /* - Operate with a map */
+
+    // keep measure type from props/route only
   },
+
+  watch: {},
 };
 </script>
 

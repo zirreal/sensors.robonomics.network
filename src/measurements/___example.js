@@ -1,28 +1,77 @@
+import { toFixed } from "./tools";
+
 export default {
-  label: "PM2.5", // ! Обязательное поле. Название
-  // Необязательное поле, для некоторых значений хочется более человеческого описания + локализация
+  label: "EXAMPLE", // ! Required field. Short label for the measurement
+  // Optional field for more human-readable description with localization
   name: {
-    en: "Humidity",
-    ru: "Влажность"
+    en: "Example Measurement",
+    ru: "Пример измерения"
   },
-  unit: "μg/m3", // ! Обязательное поле. Единица измерения
-  chartColor: "#89b268", // Цвет на графике
-  range: [0, 50, 90], // диапазон значений для отображения цвета
-  // colors: ["#60bc2a", "#ff9d00", "#fc0202"], // диапозон цвета в зависимости от значения для отрисовки маркера на карте
-  // зоны для графика, value - высшее значение, color - цвет на графике, label [en/ru] - локализованная подпись короткая
+  nameshort: {
+    en: "Example",
+    ru: "Пример"
+  },
+  unit: "units", // ! Required field. Unit of measurement
   zones: [
     {
-      value: 50,
-      color: "#60bc2a",
+      valueMax: 50, // Upper threshold for this zone
+      color: "var(--measure-green)", // CSS variable for color
       label: {
         en: "Good",
         ru: "Хорошо"
       }
+    },
+    {
+      valueMax: 100, // Next threshold
+      color: "var(--measure-yellow)",
+      label: {
+        en: "Moderate", 
+        ru: "Умеренно"
+      }
+    },
+    {
+      // Last zone without valueMax (unlimited)
+      color: "var(--measure-red)",
+      label: {
+        en: "Poor",
+        ru: "Плохо"
+      }
     }
   ],
   calculate: function (v) {
-    // преобразование значения, например для приведения к нужной единице измерения, только для реалтайм
-    return Number(v) * 2;
+    // Value transformation, e.g. for unit conversion, only for realtime data
+    // Return processed value or use toFixed(v) for simple rounding
+    return toFixed(v);
   },
-  info: "", // Описание | на данный момент не используется
+  description: [
+    {
+      tag: 'p', // Paragraph tag
+      text: {
+        en: 'This is an example measurement description. Explain what this measurement represents and why it\'s important for air quality monitoring.',
+        ru: 'Это пример описания измерения. Объясните, что представляет собой это измерение и почему оно важно для мониторинга качества воздуха.'
+      }
+    },
+    {
+      tag: 'subtitle', // Subtitle tag
+      text: {
+        en: 'If levels are high, take the following precautions:',
+        ru: 'Если уровень высок, соблюдайте следующие меры предосторожности:'
+      }
+    },
+    {
+      tag: 'ul', // Unordered list tag
+      items: {
+        en: [
+          'First recommendation',
+          'Second recommendation', 
+          'Third recommendation'
+        ],
+        ru: [
+          'Первая рекомендация',
+          'Вторая рекомендация',
+          'Третья рекомендация'
+        ]
+      }
+    }
+  ]
 };

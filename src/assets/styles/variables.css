@@ -18,7 +18,7 @@
 
 
   /* Measurements colors */
-  --measure-nodata: var(--color-light-gray);
+  --measure-nodata: #d5d3d3;
   --measure-green: #6bde28;
   --measure-bluegreen: #01EAEA;
   --measure-yellow: #FDCB24;

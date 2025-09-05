@@ -162,6 +162,15 @@ In this case, files will be loaded from `src/config/my-project/` with fallback t
 
   "SERIES_MAX_VISIBLE": "number. Maximum number of points in a sensor chart before downsampling/grouping is applied.",
 
+  "GEOCODER": {
+    "urlTemplate": "string. Reverse geocoding URL template with placeholders {lat} {lon} {zoom} {addressdetails} {lang}",
+    "cacheTtlDays": "number. Local cache TTL in days",
+    "zoom": {
+      "city": "number. Zoom level for city-level lookup",
+      "address": "number. Zoom level for precise address lookup"
+    }
+  },
+
   "TITLE": "string. Project title.",
   "DESC": "string. Project description.",
   "SITE_NAME": "string. Website or project name.",
@@ -172,6 +181,37 @@ In this case, files will be loaded from `src/config/my-project/` with fallback t
 ```
 
 **Example**: [config.json](https://github.com/airalab/sensors.social/blob/master/src/config/default/config.json)
+
+### Reverse geocoding provider (addresses)
+
+The map builds reverse‑geocoding requests from `GEOCODER.urlTemplate` using placeholders:
+
+- `{lat}`, `{lon}` — coordinates
+- `{zoom}` — use `GEOCODER.zoom.city` for city/locality or `GEOCODER.zoom.address` for precise address
+- `{addressdetails}` — `0` or `1`
+- `{lang}` — UI language
+
+Default (Nominatim):
+
+```json
+"GEOCODER": {
+  "urlTemplate": "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={lat}&lon={lon}&zoom={zoom}&addressdetails={addressdetails}&accept-language={lang}",
+  "cacheTtlDays": 7,
+  "zoom": { "city": 14, "address": 18 }
+}
+```
+
+Alternative (Photon by Komoot):
+
+```json
+"GEOCODER": {
+  "urlTemplate": "https://photon.komoot.io/reverse?lat={lat}&lon={lon}&lang={lang}",
+  "cacheTtlDays": 7,
+  "zoom": { "city": 14, "address": 18 }
+}
+```
+
+Note: If your provider returns a schema different from Nominatim JSON, adjust the normalizer in `src/utils/map/utils.js` if needed.
 
 #### Available map themes
 

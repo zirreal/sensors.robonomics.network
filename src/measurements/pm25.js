@@ -11,12 +11,9 @@ export default {
     ru: "PM2.5"
   },
   unit: "μg/m3",
-  chartColor: "#89b268",
-  // colors: ["#76E436", "#01EAEA", "#FDCB24"],
-  range: [0, 30, 55, 110, 250],
   zones: [
     {
-      value: 30,
+      valueMax: 30,
       color: "var(--measure-green)",
       label: {
         en: "Good",
@@ -24,7 +21,7 @@ export default {
       }
     },
     {
-      value: 55,
+      valueMax: 55,
       color: "var(--measure-bluegreen)",
       label: {
         en: "Moderate",
@@ -32,7 +29,7 @@ export default {
       }
     },
     {
-      value: 110,
+      valueMax: 110,
       color: "var(--measure-yellow)",
       label: {
         en: "Unhealthy",
@@ -40,7 +37,7 @@ export default {
       }
     },
     {
-      value: 250,
+      valueMax: 250,
       color: "var(--measure-orange)",
       label: {
         en: "Very Unhealthy",

@@ -11,10 +11,10 @@ export default {
     ru: "Давление"
   },
   unit: "mmHg",
-  range: [0, 747, 767, 775],
+  
   zones: [
     {
-      value: 747,
+      valueMax: 747,
       color: "var(--measure-bluegreen)",
       label: {
         en: "Very low",
@@ -22,7 +22,7 @@ export default {
       }
     },
     {
-      value: 767,
+      valueMax: 767,
       color: "var(--measure-green)",
       label: {
         en: "Normal",
@@ -30,7 +30,7 @@ export default {
       }
     },
     {
-      value: 775,
+      valueMax: 775,
       color: "var(--measure-yellow)",
       label: {
         en: "High",

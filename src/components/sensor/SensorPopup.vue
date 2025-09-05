@@ -5,8 +5,8 @@
         
         <Icon :sensorID="sensor_id" />
 
-        <span v-if="addressformatted && addressformatted !==''">{{ addressformatted }}</span>
-        <span v-else class="skeleton-text"></span>
+        <span v-if="state.addressLoading" class="skeleton-text"></span>
+        <span v-else>{{ addressformatted }}</span>
       </h3>
     </section>
 
@@ -14,19 +14,7 @@
       <section class="flexline-mobile-column">
 
         <div class="flexline mb">
-          <div class="aqi" v-if="latestAQI && state.provider !== 'realtime'" :style="{backgroundColor: latestAQI.Final_Color}">
-            <div class="aqi-badge">
-              <div class="aqi-box">
-                <span class="aqi-value"> {{ latestAQI.Final_AQI }}</span>
-              </div>
-              <div class="aqi-text">
-                <div class="aqi-subtext">AQI (US EPA) - beta</div>
-                <div v-if="latestAQI.Final_Label" class="aqi-label">
-                  {{ $t(latestAQI.Final_Label) }}
-                </div>
-              </div>
-            </div>
-          </div>
+          <AQIWidget v-if="state.provider !== 'realtime'" :logs="log" />
 
           <ProviderType />
 
@@ -114,7 +102,9 @@
                   {{item.nameshort[localeComputed]}}
                 </b>
                 <b v-else>{{ item.label }}</b>
-                ({{ item.unit }})
+                <template v-if="item.unit && item.unit !== ''">
+                  ({{ item.unit }})
+                </template>
               </p>
               <template v-for="zone in item.zones" :key="zone.color">
                 <div
@@ -125,7 +115,9 @@
                   <b>
                     {{ zone.label[localeComputed] ? zone.label[localeComputed] : zone.label.en }}
                   </b>
-                  (<template v-if="zone.value">{{ t("scales.upto") }} {{ zone.value }}</template>
+                  (<template v-if="typeof zone.valueMax === 'number'">
+                    {{ t("scales.upto") }} {{ zone.valueMax }}
+                  </template>
                   <template v-else>{{ t("scales.above") }}</template
                   >)
                 </div>
@@ -207,7 +199,7 @@ import { settings, sensors } from "@config";
 import measurements from "../../measurements";
 import { getTypeProvider } from "../../utils/utils";
 import { getAddressByPos } from "../../utils/map/utils";
-import { getTodayAQI } from '../../utils/aqi.js';
+import AQIWidget from './AQIWidget.vue';
 
 import Bookmark from "./Bookmark.vue";
 import Chart from "./Chart.vue";
@@ -218,6 +210,7 @@ import AltruistPromo from "../devices/altruist/AltruistPromo.vue";
 import ReleaseInfo from "../ReleaseInfo.vue";
 import Icon from "./Icon.vue";
 import Loader from "../Loader.vue";
+import { calculateAQIIndex } from '../../utils/aqiIndex';
 
 
 const props = defineProps({
@@ -254,14 +247,15 @@ const state = reactive({
   showAnalysisChart: false,
   analysisType: null,
   lastCoords: { lat: null, lon: null },
-  address: ""
+  address: "",
+  addressLoading: true,
+  addressReqId: 0
 });
 
 
 // const prevGeo = ref({ lat: null, lng: null });
 const units = ref([]);
 const dewPoint = ref(null)
-const latestAQI = ref(null)
 
 let AQIInterval;
 
@@ -273,9 +267,11 @@ const sensor_id = computed(() => {
 const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
 
 const geo = computed(() => {
-  if (props.point?.geo && props.point.geo.lat && props.point.geo.lng) {
-    return props.point.geo;
+  // Prefer sensor's own coordinates strictly
+  if (props.point?.geo && Number(props.point.geo.lat) && Number(props.point.geo.lng)) {
+    return { lat: Number(props.point.geo.lat), lng: Number(props.point.geo.lng) };
   }
+  // Fallback to URL only if sensor does not provide valid coordinates
   const { lat, lng } = route.query;
   return { lat: Number(lat) || 0, lng: Number(lng) || 0 };
 });
@@ -289,16 +285,15 @@ const model = computed(() => props.point?.model || null);
 const sender = computed(() => props.point?.sender || null);
 
 const addressformatted = computed(() => {
-  let buffer = "";
+  let parts = [];
   if (state.address && (state.address.length > 0 || Object.keys(state.address).length > 0)) {
-    if (state.address.country) {
-      buffer += state.address.country;
-    }
+    if (state.address.country) parts.push(state.address.country);
     if (Array.isArray(state.address.address) && state.address.address.length > 0) {
-      buffer += ", " + state.address.address.join(", ");
+      // join address parts without leading comma when country is empty
+      parts = parts.concat(state.address.address);
     }
   }
-  return buffer;
+  return parts.join(", ");
 });
 
 const isRussia = computed(() => {
@@ -446,12 +441,15 @@ const updatert = () => {
               color: undefined,
             };
             const zones = measurements[item].zones;
-            if (zones) {
-              const matchedZone = zones.find((i) => buffer.measure < i.value);
+            if (zones && zones.length) {
+              const matchedZone = zones.find((z) => typeof z.valueMax === 'number' && buffer.measure < z.valueMax);
               if (matchedZone) {
                 buffer.color = matchedZone.color;
-              } else if (buffer.measure > zones[zones.length - 2].value) {
-                buffer.color = zones[zones.length - 1].color;
+              } else if (zones.length > 1) {
+                const preLast = zones[zones.length - 2];
+                if (typeof preLast?.valueMax === 'number' && buffer.measure > preLast.valueMax) {
+                  buffer.color = zones[zones.length - 1].color;
+                }
               }
             }
             state.rtdata.push(buffer);
@@ -478,11 +476,68 @@ const closesensor = () => {
   state.showAnalysisChart = false
 };
 
+function addressQuality(addr) {
+  if (!addr) return -1;
+  const arr = Array.isArray(addr.address) ? addr.address : [];
+  const joined = arr.join(", ");
+  // Highest: has street/house (more than one segment)
+  if (arr.length >= 3) return 3;
+  // City-level
+  if (arr.length >= 1 && joined && isNaN(Number(joined))) return 2;
+  // Only coordinates (contains digits and comma)
+  if (arr.length === 1 && /-?\d+\.?\d*,\s*-?\d+\.?\d*/.test(arr[0])) return 0;
+  return 1;
+}
+
 const setAddressUnrecognised = (lat, lng) => {
-  state.address = {
-    country: "Unrecognised address",
+  const fallback = {
+    country: null,
     address: [`${lat}, ${lng}`]
   };
+  // Do not downgrade if we already have a better address
+  if (addressQuality(fallback) > addressQuality(state.address)) {
+    state.address = fallback;
+  }
+}
+
+const ADDRESS_FALLBACK_DELAY_MS = 2000;
+let addressFallbackTimer = null;
+
+function scheduleAddressFallback(lat, lng, reqId, delay = ADDRESS_FALLBACK_DELAY_MS) {
+  if (addressFallbackTimer) clearTimeout(addressFallbackTimer);
+  addressFallbackTimer = setTimeout(() => {
+    if (state.addressReqId !== reqId) return; // stale
+    if (!state.address || Object.keys(state.address).length === 0) {
+      setAddressUnrecognised(lat, lng);
+      state.addressLoading = false;
+    }
+  }, delay);
+}
+
+async function requestAddressForGeo(newGeo) {
+  if (!newGeo || !newGeo.lat || !newGeo.lng) {
+    setAddressUnrecognised(newGeo?.lat || '', newGeo?.lng || '');
+    state.addressLoading = false;
+    return;
+  }
+  state.addressLoading = true;
+  state.address = {};
+  const currentReq = ++state.addressReqId;
+  scheduleAddressFallback(newGeo.lat, newGeo.lng, currentReq);
+  try {
+    const res = await getAddressByPos(newGeo.lat, newGeo.lng, localeComputed.value);
+    if (state.addressReqId !== currentReq) return; // stale
+    if (res && Object.keys(res).length > 0) {
+      state.address = res;
+    } else {
+      setAddressUnrecognised(newGeo.lat, newGeo.lng);
+    }
+  } catch (err) {
+    console.error("Reverse geocoding error:", err);
+    setAddressUnrecognised(newGeo.lat, newGeo.lng);
+  } finally {
+    if (state.addressReqId === currentReq) state.addressLoading = false;
+  }
 }
 
 function getMapLink(lat, lon, label = "Sensor") {
@@ -500,16 +555,6 @@ function getMapLink(lat, lon, label = "Sensor") {
 }
 
 onMounted(() => {
-
-  // Если спустя 5 секунд address всё ещё пустой, подставляем координаты.
-  setTimeout(() => {
-    if (!state.address || Object.keys(state.address).length === 0) {
-      state.address = {
-        country: "Unrecognised address",
-        address: [`${geo.value.lat}, ${geo.value.lng}`],
-      };
-    }
-  }, 5000);
 
   state.start = props.startTime
     ? moment.unix(props.startTime).format("YYYY-MM-DD")
@@ -529,6 +574,12 @@ watch(
   () => sensor_id.value,
   () => {
     state.isShowPath = false;
+    // Force skeleton until fresh address is resolved for the new sensor
+    state.addressLoading = true;
+    state.address = {};
+    if (geo.value?.lat && geo.value?.lng) {
+      scheduleAddressFallback(geo.value.lat, geo.value.lng);
+    }
   }
 );
 watch(
@@ -541,9 +592,6 @@ watch(
 
 watch(() => log.value, (i) => {
     if(Array.isArray(i) && i.length > 0) {
-
-    const aqiTodayResult = getTodayAQI(log.value, last.value.timestamp)
-    latestAQI.value = aqiTodayResult
 
       log.value.forEach(entry => {
         if (
@@ -573,6 +621,11 @@ watch(() => log.value, (i) => {
         if (item.data)
           Object.keys(item.data).forEach((u) => unitsSet.add(u.toLowerCase()))
       });
+      // Add AQI scale if calculable for the available history
+      const aqiVal = calculateAQIIndex(log.value);
+      if (typeof aqiVal === 'number') {
+        unitsSet.add('aqi');
+      }
       const newUnits = Array.from(unitsSet).sort();
       const oldUnits = units.value;
       const changed = newUnits.length !== oldUnits.length || newUnits.some((u, i) => u !== oldUnits[i]);
@@ -652,46 +705,14 @@ watch(
 watch(
   () => geo.value,
   async (newGeo) => {
-    // 1) Use address from props.point if available
-    if (props.point?.address && Object.keys(props.point.address).length > 0) {
-      state.address = props.point.address;
-      state.lastCoords.lat = newGeo.lat;
-      state.lastCoords.lon = newGeo.lng;
-      return;
-    }
-
-    // 2) If valid coordinates are provided
-    if (newGeo.lat && newGeo.lng) {
-      // Only proceed if coordinates have actually changed
-      if (
-        newGeo.lat !== state.lastCoords.lat ||
-        newGeo.lng !== state.lastCoords.lon
-      ) {
-        // Update last known coordinates
-        state.lastCoords.lat = newGeo.lat;
-        state.lastCoords.lon = newGeo.lng;
-
-        try {
-          // Attempt reverse geocoding via your API helper
-          const res = await getAddressByPos(
-            newGeo.lat,
-            newGeo.lng,
-            localeComputed.value
-          );
-          // Assign result if valid, otherwise use fallback
-          if (res && Object.keys(res).length > 0) {
-            state.address = res;
-          } else {
-            setAddressUnrecognised(newGeo.lat, newGeo.lng);
-          }
-        } catch (err) {
-          console.error("Reverse geocoding error:", err);
-          setAddressUnrecognised(newGeo.lat, newGeo.lng);
-        }
-      }
-    } else {
-      // No coordinates provided – set fallback with empty values
-      setAddressUnrecognised(newGeo.lat || "", newGeo.lng || "");
+    // Only proceed if coordinates have actually changed
+    if (
+      newGeo?.lat !== state.lastCoords.lat ||
+      newGeo?.lng !== state.lastCoords.lon
+    ) {
+      state.lastCoords.lat = newGeo?.lat || null;
+      state.lastCoords.lon = newGeo?.lng || null;
+      await requestAddressForGeo(newGeo);
     }
   },
   { immediate: true, deep: true });
@@ -937,52 +958,6 @@ watch(
 
 .rt-number {
   color: var(--color-blue);
-}
-
-/* AQI */
-
-.flexline.mb {
-  margin-bottom: var(--gap);
-}
-
-.aqi {
-  height: 40px;
-  border-radius: 4px;
-  padding: 8px 15px;
-} 
-
-.aqi-badge {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.aqi-box {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 20px;
-}
-
-.aqi-text {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.aqi-value {
-  font-size: 18px;
-}
-
-.aqi-label {
-  font-size: 7px;
-  font-weight: bold;
-}
-
-.aqi-subtext {
-  font-size: 10px;
-  font-weight: bold;
 }
 
 /* - realtime */
