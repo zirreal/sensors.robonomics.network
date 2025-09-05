@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import moment from "moment";
+import { formatUnixLocale } from "@/utils/date";
 
 function preloadImages(sources, callback) {
   let counter = 0;
@@ -112,7 +112,7 @@ export default {
   },
   computed: {
     dateMsg: function () {
-      return moment(this.data.timestamp, "X").format("DD.MM.YYYY HH:mm:ss");
+      return formatUnixLocale(this.data.timestamp, this.$i18n?.locale);
     },
     classList() {
       return {

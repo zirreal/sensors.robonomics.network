@@ -73,6 +73,7 @@
         </div>
       </section>
 
+      <!-- monthly-analysis block is temporarily disabled
       <section class="monthly-analysis" v-if="state.chartReady" style="display: none">
         <h2>Analysis / Reports </h2>
         <div v-if="state.provider !== 'realtime'" class="flexline">
@@ -88,7 +89,7 @@
            WARNING: Data scope is still in beta and may freeze at the time.
           </div>
         </div>        
-      </section>
+      </section> -->
 
       <AltruistPromo />
 
@@ -126,6 +127,7 @@
           </div>
         </div>
 
+            {{ isRussia ? 'true' : 'false' }}
         <p class="textsmall">
           <template v-if="isRussia">{{ t("notice_with_fz") }}</template>
           <template v-else>{{ t("notice_without_fz") }}</template>
@@ -191,26 +193,26 @@
 </template>
 
 <script setup>
-import { reactive, computed, ref, watch, watchEffect, onMounted, getCurrentInstance, onUnmounted } from "vue";
+import { reactive, computed, ref, watch, onMounted, getCurrentInstance } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import moment from "moment";
 import { settings, sensors } from "@config";
 import measurements from "../../measurements";
 import { getTypeProvider } from "../../utils/utils";
 import { getAddressByPos } from "../../utils/map/utils";
-import AQIWidget from './AQIWidget.vue';
+import { calculateAQIIndex } from '../../utils/aqiIndex';
+import { dayISO, dayBoundsUnix } from '../../utils/date';
 
+import AQIWidget from './AQIWidget.vue';
 import Bookmark from "./Bookmark.vue";
 import Chart from "./Chart.vue";
-import AnalysisChart from "./ChartAnalysis.vue";
+// import AnalysisChart from "./ChartAnalysis.vue";
 import Copy from "./Copy.vue";
 import ProviderType from "../ProviderType.vue";
 import AltruistPromo from "../devices/altruist/AltruistPromo.vue";
 import ReleaseInfo from "../ReleaseInfo.vue";
 import Icon from "./Icon.vue";
-import Loader from "../Loader.vue";
-import { calculateAQIIndex } from '../../utils/aqiIndex';
+// import Loader from "../Loader.vue";
 
 
 const props = defineProps({
@@ -230,22 +232,19 @@ const globalWindow = window;
 
 // Единообразное описание локального состояния в одном реактивном объекте
 const state = reactive({
-  select: "",
-  measurement: props.type,
   isShowPath: false,
-  start: moment().format("YYYY-MM-DD"),
-  maxDate: moment().format("YYYY-MM-DD"),
+  start: dayISO(),
+  maxDate: dayISO(),
   provider: getTypeProvider(route.query),
   rttime: null,
   rtdata: [],
   sharedDefault: false,
   sharedLink: false,
-  chartEverLoaded: false,
   chartReady: false,
-  chartScopeReady: false,
-  monthLogLoading: false,
-  showAnalysisChart: false,
-  analysisType: null,
+  // chartScopeReady: false,
+  // monthLogLoading: false,
+  // showAnalysisChart: false,
+  // analysisType: null,
   lastCoords: { lat: null, lon: null },
   address: "",
   addressLoading: true,
@@ -256,8 +255,6 @@ const state = reactive({
 // const prevGeo = ref({ lat: null, lng: null });
 const units = ref([]);
 const dewPoint = ref(null)
-
-let AQIInterval;
 
 
 const sensor_id = computed(() => {
@@ -280,9 +277,8 @@ const donated_by = computed(() => props.point?.donated_by || null);
 
 // Гарантируем, что log всегда массив
 const log = computed(() => (Array.isArray(props.point?.log) ? props.point.log : []));
-const scopeLog = computed(() => (Array.isArray(props.point?.scopeLog) ? props.point.scopeLog : []));
+// const scopeLog = computed(() => (Array.isArray(props.point?.scopeLog) ? props.point.scopeLog : []));
 const model = computed(() => props.point?.model || null);
-const sender = computed(() => props.point?.sender || null);
 
 const addressformatted = computed(() => {
   let parts = [];
@@ -296,22 +292,12 @@ const addressformatted = computed(() => {
   return parts.join(", ");
 });
 
-const isRussia = computed(() => {
-  return state.address?.country === "Россия" || state.address?.country === "Russia";
-});
+const isRussia = computed(() => /^(RU|Россия|Russia)$/i.test(state.address?.country || ""));
 
 const last = computed(() => (log.value.length > 0 ? log.value[log.value.length - 1] : {}));
-const date = computed(() =>
-  last.value.timestamp ? moment(last.value.timestamp, "X").format("DD.MM.YYYY HH:mm:ss") : ""
-);
 
-const startTimestamp = computed(() => {
-  return Number(moment(state.start + " 00:00:00", "YYYY-MM-DD HH:mm:ss").format("X"));
-});
-
-const endTimestamp = computed(() => {
-  return Number(moment(state.start + " 23:59:59", "YYYY-MM-DD HH:mm:ss").format("X"));
-});
+const startTimestamp = computed(() => dayBoundsUnix(state.start).start);
+const endTimestamp = computed(() => dayBoundsUnix(state.start).end);
 
 const scales = computed(() => {
   const buffer = [];
@@ -397,14 +383,14 @@ const getHistory = () => {
   });
 }
 
-const getScope = (type) => {
-  if (state.provider === "realtime") return;
-  state.chartScopeReady = false
-  state.monthLogLoading = true
-  state.showAnalysisChart = true
-  state.analysisType = type
-  emit("getScope", type);
-}
+// const getScope = (type) => {
+//   if (state.provider === "realtime") return;
+//   state.chartScopeReady = false
+//   state.monthLogLoading = true
+//   state.showAnalysisChart = true
+//   state.analysisType = type
+//   emit("getScope", type);
+// }
 
 const calculateDewPoint = (t, h) => {
   if (typeof t !== 'number' || typeof h !== 'number' || h <= 0 || h > 100) {
@@ -418,6 +404,28 @@ const calculateDewPoint = (t, h) => {
 
   return parseFloat(dewPoint.toFixed(2));
 
+}
+
+// Helpers to keep watchers concise
+function enrichLogsWithDewPoint(logArr) {
+  logArr.forEach(entry => {
+    const data = entry?.data;
+    if (data && typeof data.temperature === 'number' && typeof data.humidity === 'number') {
+      const dew = calculateDewPoint(data.temperature, data.humidity);
+      entry.data = { ...data, ['dewpoint']: dew };
+    }
+  });
+}
+
+function buildUnitsList(logArr) {
+  const set = new Set();
+  logArr.forEach(item => {
+    if (item?.data) Object.keys(item.data).forEach(u => set.add(u.toLowerCase()));
+  });
+  // Add AQI scale if calculable for the available history
+  const aqiVal = calculateAQIIndex(log.value);
+  if (typeof aqiVal === 'number') set.add('aqi');
+  return Array.from(set).sort();
 }
 
 // Updates the realtime view: refreshes the timestamp and rebuilds state.rtdata with the latest measurements, labels, units, and zone colors.
@@ -556,19 +564,13 @@ function getMapLink(lat, lon, label = "Sensor") {
 
 onMounted(() => {
 
-  state.start = props.startTime
-    ? moment.unix(props.startTime).format("YYYY-MM-DD")
-    : moment().format("YYYY-MM-DD");
+  state.start = props.startTime ? dayISO(Number(props.startTime)) : dayISO();
 
   updatert();
 
 });
 
-onUnmounted(() => {
-  if(AQIInterval) {
-    clearInterval(AQIInterval);
-  }
-});
+// removed unused onUnmounted hook
 
 watch(
   () => sensor_id.value,
@@ -590,94 +592,50 @@ watch(
 );
 
 
-watch(() => log.value, (i) => {
-    if(Array.isArray(i) && i.length > 0) {
+watch(() => log.value, (arr) => {
+    if (!Array.isArray(arr) || arr.length === 0) return;
 
-      log.value.forEach(entry => {
-        if (
-          entry?.data &&
-          typeof entry.data.temperature === 'number' &&
-          typeof entry.data.humidity === 'number'
-        ) {
-          const dew = calculateDewPoint(entry.data.temperature, entry.data.humidity);
-          entry.data = {
-            ...entry.data,
-            ['dewpoint']: dew,
-          };
-        }
-      });
+    // enrich & update realtime view
+    enrichLogsWithDewPoint(log.value);
+    updatert();
 
-      // EN: Checks if log is ready to show Chart
-      updatert();
+    if (!state.chartReady) {
+      state.chartReady = true;
+      state.monthLogLoading = false;
+    }
 
-      if (!state.chartReady) {
-        state.chartReady = true;
-        state.monthLogLoading = false
-      }
+    // update units list for scales
+    const nextUnits = buildUnitsList(arr);
+    const prevUnits = units.value;
+    const changed = nextUnits.length !== prevUnits.length || nextUnits.some((u, i) => u !== prevUnits[i]);
+    if (changed) units.value = nextUnits;
 
-      // EN: Checks if units set is changed (to show scales)
-      const unitsSet = new Set();
-      i.forEach((item) => {
-        if (item.data)
-          Object.keys(item.data).forEach((u) => unitsSet.add(u.toLowerCase()))
-      });
-      // Add AQI scale if calculable for the available history
-      const aqiVal = calculateAQIIndex(log.value);
-      if (typeof aqiVal === 'number') {
-        unitsSet.add('aqi');
-      }
-      const newUnits = Array.from(unitsSet).sort();
-      const oldUnits = units.value;
-      const changed = newUnits.length !== oldUnits.length || newUnits.some((u, i) => u !== oldUnits[i]);
-      if (changed) units.value = newUnits
-
-      if (latestValidLog.value) {
-        const { temperature, humidity } = latestValidLog.value.data;
-        dewPoint.value = calculateDewPoint(temperature, humidity);
-      } else {
-        console.warn('No valid log entry for dew point was found');
-      }
-
+    // last dew point
+    if (latestValidLog.value) {
+      const { temperature, humidity } = latestValidLog.value.data;
+      dewPoint.value = calculateDewPoint(temperature, humidity);
+    } else {
+      console.warn('No valid log entry for dew point was found');
     }
   },
   { immediate: true }
 );
 
-// watcher for analysis chart
-watch(() => scopeLog.value, (i) => {
-    if(Array.isArray(i) && i.length > 0) {
-      scopeLog.value.forEach(entry => {
-        if (
-          entry?.data &&
-          typeof entry.data.temperature === 'number' &&
-          typeof entry.data.humidity === 'number'
-        ) {
-          const dew = calculateDewPoint(entry.data.temperature, entry.data.humidity);
-          entry.data = {
-            ...entry.data,
-            ['dewpoint']: dew,
-          };
-        }
-      });
-
-      if (!state.chartScopeReady) {
-        state.chartScopeReady = true;
-        state.monthLogLoading = false
-      }
-
-      const unitsSet = new Set();
-      i.forEach((item) => {
-        if (item.data)
-          Object.keys(item.data).forEach((u) => unitsSet.add(u.toLowerCase()))
-      });
-      const newUnits = Array.from(unitsSet).sort();
-      const oldUnits = units.value;
-      const changed = newUnits.length !== oldUnits.length || newUnits.some((u, i) => u !== oldUnits[i]);
-      if (changed) units.value = newUnits
-    }
-  },
-  { immediate: true }
-);
+// watcher for analysis chart (disabled)
+// watch(() => scopeLog.value, (arr) => {
+//     if (!Array.isArray(arr) || arr.length === 0) return;
+//     enrichLogsWithDewPoint(arr);
+//     if (!state.chartScopeReady) {
+//       state.chartScopeReady = true;
+//       state.monthLogLoading = false;
+//     }
+//     const nextUnits = buildUnitsList(arr);
+//     const prevUnits = units.value;
+//     const changed = nextUnits.length !== prevUnits.length || nextUnits.some((u, i) => u !== prevUnits[i]);
+//     if (changed) units.value = nextUnits;
+//   },
+//   { immediate: true }
+// );
 
 
 // EN: Change URL for valid point if sensor_id is present and geo is okay
@@ -872,15 +830,7 @@ watch(
   margin-right: 10px;
 }
 
-.shared-container span {
-  display: block;
-  width: 20px;
-  height: 20px;
-}
-
-.shared-container span svg {
-  fill: var(--color-light);
-}
+/* removed unused .shared-container span styles */
 
 @media screen and (max-width: 570px) {
   .shared-container {
@@ -932,20 +882,7 @@ watch(
 /* - scales */
 
 /* + realtime */
-.rt-title {
-  font-weight: 900;
-}
-.rt-title::before {
-  animation: blink infinite 1.5s;
-  background-color: var(--color-green);
-  border-radius: 50%;
-  content: "";
-  display: inline-block;
-  height: 8px;
-  margin-right: 5px;
-  vertical-align: middle;
-  width: 8px;
-}
+/* removed .rt-title indicator styles (not used) */
 .rt-time {
   font-size: 0.8em;
   font-weight: 300;

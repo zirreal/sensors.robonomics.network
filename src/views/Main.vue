@@ -36,7 +36,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useMapStore } from "@/stores/map";
 import { useBookmarksStore } from "@/stores/bookmarks";
 
-import moment from "moment";
+import { dayISO } from "@/utils/date";
 
 import Header from "../components/header/Header.vue";
 import Map from "../components/Map.vue";
@@ -203,8 +203,8 @@ const handlerHistory = async ({ start, end }) => {
   markers.clear();
   state.providerObj.setStartDate(start);
   state.providerObj.setEndDate(end);
-  const today = moment().format("YYYY-MM-DD");
-  const startDate = moment.unix(start).format("YYYY-MM-DD");
+  const today = dayISO();
+  const startDate = dayISO(Number(start));
   
   if (props.type === 'aqi') {
     // For AQI, we need to load PM2.5 and PM10 data and calculate AQI for each sensor

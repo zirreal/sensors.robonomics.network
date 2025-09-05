@@ -57,8 +57,7 @@
 
 <script>
 import { settings } from "@config";
-import axios from "axios";
-import moment from "moment";
+import { dayISO, addMonthsISO, dayBoundsUnix } from "@/utils/date";
 
 export default {
   props: {
@@ -68,9 +67,9 @@ export default {
   },
   data() {
     return {
-      start: moment().subtract(1, "days").format("YYYY-MM-DD"),
-      end: moment().format("YYYY-MM-DD"),
-      maxDate: moment().format("YYYY-MM-DD"),
+      start: dayISO(Date.now() - 24 * 60 * 60 * 1000),
+      end: dayISO(),
+      maxDate: dayISO(),
       cities: {},
       city: "",
 
@@ -93,10 +92,10 @@ export default {
   },
   computed: {
     startTimestamp: function () {
-      return Number(moment(this.start + " 00:00:00", "YYYY-MM-DD HH:mm:ss").format("X"));
+      return dayBoundsUnix(this.start).start;
     },
     endTimestamp: function () {
-      return Number(moment(this.end + " 23:59:59", "YYYY-MM-DD HH:mm:ss").format("X"));
+      return dayBoundsUnix(this.end).end;
     },
     link() {
       return `${settings.REMOTE_PROVIDER}api/sensor/csv/${this.startTimestamp}/${this.endTimestamp}/${this.city}`;
@@ -105,18 +104,20 @@ export default {
   watch: {
     period(newPeriod) {
       if (newPeriod === "24hours") {
-        this.start = moment().format("YYYY-MM-DD");
-        this.end = moment().format("YYYY-MM-DD");
+        this.start = dayISO();
+        this.end = dayISO();
       } else if (newPeriod === "currentMonth") {
-        this.start = moment().subtract(1, "month").format("YYYY-MM-DD");
-        this.end = moment().format("YYYY-MM-DD");
+        this.start = addMonthsISO(dayISO(), -1);
+        this.end = dayISO();
       }
     },
   },
   async created() {
     try {
-      const result = await axios.get(`${settings.REMOTE_PROVIDER}api/sensor/cities`);
-      this.cities = result.data.result;
+      const res = await fetch(`${settings.REMOTE_PROVIDER}api/sensor/cities`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Network response was not ok');
+      const result = await res.json();
+      this.cities = result.result;
       const country = Object.keys(this.cities);
       const state = Object.keys(this.cities[country[0]]);
       this.city = this.cities[country[0]][state[0]][0];

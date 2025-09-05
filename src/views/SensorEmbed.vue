@@ -30,7 +30,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
-import moment from "moment";
+import { dayBoundsUnix } from "@/utils/date";
 
 import { getAddressByPos } from "../utils/map/utils";
 
@@ -42,8 +42,7 @@ const sensorId = route.query.id;
 const data = ref({});
 const log = ref([]);
 
-const startTimestamp = moment().startOf("day").unix();
-const endTimestamp = moment().endOf("day").unix();
+const { start: startTimestamp, end: endTimestamp } = dayBoundsUnix(new Date().toISOString().slice(0,10));
 
 const apiUrl = `https://roseman.airalab.org/api/sensor/${sensorId}/${startTimestamp}/${endTimestamp}`;
 

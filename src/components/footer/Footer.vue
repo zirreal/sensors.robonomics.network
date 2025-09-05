@@ -67,7 +67,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
-import moment from "moment";
+import { dayISO, dayBoundsUnix } from "@/utils/date";
 import { settings } from "@config";
 import Bookmarks from "@/components/Bookmarks.vue";
 import HistoryImport from "./HistoryImport.vue";
@@ -98,8 +98,8 @@ const route = useRoute();
 const { locale: i18nLocale, t } = useI18n();
 
 // состояние
-const start = ref(moment().format("YYYY-MM-DD"));
-const maxDate = ref(moment().format("YYYY-MM-DD"));
+const start = ref(dayISO());
+const maxDate = ref(dayISO());
 const realtime = ref(props.currentProvider === "realtime");
 const wind = ref(false);
 const messages = ref(settings.SHOW_MESSAGES);
@@ -189,13 +189,8 @@ const availableOptions = computed(() => {
 });
 
 // вычисления для истории
-const startTimestamp = computed(() => {
-  return moment(`${start.value} 00:00:00`, "YYYY-MM-DD HH:mm:ss").format("X");
-});
-
-const endTimestamp = computed(() => {
-  return moment(`${start.value} 23:59:59`, "YYYY-MM-DD HH:mm:ss").format("X");
-});
+const startTimestamp = computed(() => String(dayBoundsUnix(start.value).start));
+const endTimestamp = computed(() => String(dayBoundsUnix(start.value).end));
 
 const bookmarksCount = computed(() => {
   return (bookmarksStore.idbBookmarks || []).length;

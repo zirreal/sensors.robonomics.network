@@ -1,12 +1,12 @@
 import { settings } from "@config";
-import axios from "axios";
 import io from "socket.io-client";
 
-const axiosConfig = {
-  baseURL: `${settings.REMOTE_PROVIDER}api/sensor`,
-};
-
-export const api = axios.create(axiosConfig);
+async function getJSON(path) {
+  const url = `${settings.REMOTE_PROVIDER}api/sensor${path}`;
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
 
 class Provider {
   constructor(url) {
@@ -30,8 +30,8 @@ class Provider {
 
   async status() {
     try {
-      const result = await axios.get(`${settings.REMOTE_PROVIDER}api/sensor/cities`);
-      if (result.status === 200) {
+      const res = await fetch(`${settings.REMOTE_PROVIDER}api/sensor/cities`, { cache: 'no-store' });
+      if (res.ok) {
         return true;
       }
     } catch (error) {
@@ -68,65 +68,55 @@ class Provider {
     this.end = end;
   }
 
-  lastValuesForPeriod(start, end, type) {
-    return api
-      .get(`/last/${start}/${end}/${type}`)
-      .then((result) => {
-        return result.data.result;
-      })
-      .catch(() => {
-        return {};
-      });
+  async lastValuesForPeriod(start, end, type) {
+    try {
+      const result = await getJSON(`/last/${start}/${end}/${type}`);
+      return result?.result || {};
+    } catch {
+      return {};
+    }
   }
 
-  maxValuesForPeriod(start, end, type) {
-    return api
-      .get(`/max/${start}/${end}/${type}`)
-      .then((result) => {
-        return result.data.result;
-      })
-      .catch(() => {
-        return {};
-      });
+  async maxValuesForPeriod(start, end, type) {
+    try {
+      const result = await getJSON(`/max/${start}/${end}/${type}`);
+      return result?.result || {};
+    } catch {
+      return {};
+    }
   }
 
-  messagesForPeriod(start, end) {
-    return api
-      .get(`/messages/${start}/${end}`)
-      .then((result) => {
-        return result.data.result;
-      })
-      .catch(() => {
-        return {};
-      });
+  async messagesForPeriod(start, end) {
+    try {
+      const result = await getJSON(`/messages/${start}/${end}`);
+      return result?.result || {};
+    } catch {
+      return {};
+    }
   }
 
-  getHistoryBySensor(sensor) {
-    return api
-      .get(`/${sensor}`)
-      .then((result) => {
-        return result.data.result;
-      })
-      .catch(() => {
-        return [];
-      });
+  async getHistoryBySensor(sensor) {
+    try {
+      const result = await getJSON(`/${sensor}`);
+      return result?.result || [];
+    } catch {
+      return [];
+    }
   }
 
-  getHistoryPeriodBySensor(sensor, start, end) {
-    return api
-      .get(`/${sensor}/${start}/${end}`)
-      .then((result) => {
-        return result.data.result;
-      })
-      .catch(() => {
-        return [];
-      });
+  async getHistoryPeriodBySensor(sensor, start, end) {
+    try {
+      const result = await getJSON(`/${sensor}/${start}/${end}`);
+      return result?.result || [];
+    } catch {
+      return [];
+    }
   }
 
   static async getMeasurements(start, end) {
     try {
-      const result = await api.get(`/measurements/${start}/${end}`);
-      return result.data.result;
+      const result = await getJSON(`/measurements/${start}/${end}`);
+      return result?.result || [];
     } catch {
       return [];
     }
