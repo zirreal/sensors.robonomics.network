@@ -1,4 +1,6 @@
-vx.x.x
+v3.0.0
+Crucial changes that might affect forks: configuration refactoring
+
 - Fix: timeline within points in a sensor's chart
 - Refactor: new structure for the header
 - Refactor: improved sensor's popup for small screens
@@ -7,7 +9,7 @@ vx.x.x
 - Refactor: improved code for the 'Measurements' page
 - Docs: new page about use cases of air sensor
 - Feat: added units in chart
-- Fix: removed update chart in 'Daily recap' mode
+- Fix: removed update chart in 'Daily recap' mode (needs to be checked)
 - Feat: combined Temperature and Humidity in one group
 - Feat: added navigation icon
 - Refactor: images paths structruzed better
