@@ -1,11 +1,12 @@
 /*
-  calculateAQIIndex(logs)
+  calculateAQIIndex(logs) - БАЗОВАЯ ВЕРСИЯ
   - Вход: массив логов как в SensorPopup.vue (элементы: { timestamp: seconds, data: { pm25?, pm10? } })
-  - Алгоритм: агрегирование «минуты → часы → период» по окну 2–12 часов (берём самые свежие 12 часов, если доступно больше)
+  - Алгоритм: агрегирование «минуты → часы → период» по окну 2–24 часов (берём самые свежие 24 часа, если доступно больше)
   - Выход: округлённый AQI (число) или undefined, если данных < 2 часов
+  - Стандарт: EPA США, без дополнительных поправок
 */
 
-import aqiMeasurement from "../measurements/aqi";
+import aqiMeasurement from "../../measurements/aqi";
 
 function normalizeReading(x, pollutant) {
   if (!Number.isFinite(x)) return null;
@@ -88,12 +89,12 @@ export function calculateAQIIndex(logs) {
   });
   if (hourEntries.length === 0) return undefined;
 
-  // 3) Окно 2–12 часов, берем самые свежие до 12ч
+  // 3) Окно 2–24 часов, берем самые свежие до 24ч
   hourEntries.sort((a, b) => a.ts - b.ts);
-  const windowHours = hourEntries.slice(-12);
+  const windowHours = hourEntries.slice(-24);
   if (windowHours.length < 2) return undefined;
 
-  // 4) Среднее по окну
+  // 4) Среднее по окну - БАЗОВАЯ ФОРМУЛА EPA
   const pm25Hourly = windowHours.map(h => h.pm25).filter(Number.isFinite);
   const pm10Hourly = windowHours.map(h => h.pm10).filter(Number.isFinite);
   const pm25Avg = average(pm25Hourly);
@@ -103,10 +104,11 @@ export function calculateAQIIndex(logs) {
   const aqiPM10 = pm10Avg !== null ? aqiFromConc(pm10Avg, 'pm10') : null;
 
   if (aqiPM25 === null && aqiPM10 === null) return undefined;
+  
+  // Базовый расчет без дополнительных поправок
   const final = Math.max(aqiPM25 ?? 0, aqiPM10 ?? 0);
-  return Math.round(final);
+  
+  return Math.round(Math.min(final, 500)); // ограничиваем максимумом AQI
 }
 
 export default calculateAQIIndex;
-
-

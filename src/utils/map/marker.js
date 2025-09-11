@@ -7,13 +7,18 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import { getMeasurementByName } from "../../measurements/tools";
 import generate, { getColor, getColorDarkenRGB, getColorRGB } from "../../utils/color";
-import { calculateAQIIndex, aqiFromConc } from "../aqiIndex";
+import { calculateAQIIndex as calculateAQIIndexUS, aqiFromConc } from "../aqiIndex/us";
+import { calculateAQIIndex as calculateAQIIndexEU, aqiFromConc as aqiFromConcEU } from "../aqiIndex/eu";
+import aqiMeasurement from "../../measurements/aqi";
+import aqiUSZones from "../../measurements/aqi_us";
+import aqiEUZones from "../../measurements/aqi_eu";
 
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
 import measurements from "../../measurements";
+import { useMapStore } from "../../stores/map";
 
 const queue = new Queue();
 let scale;
@@ -49,6 +54,18 @@ const messagesLayers = Object.values(messageTypes).reduce((result, item) => {
   result[item] = null;
   return result;
 }, {});
+
+// AQI version selector
+function getAQICalculator(version = 'us') {
+  switch (version) {
+    case 'us':
+      return calculateAQIIndexUS;
+    case 'eu':
+      return calculateAQIIndexEU;
+    default:
+      return calculateAQIIndexUS;
+  }
+}
 
 /*
   Less aggressive clustering + "spiderfying" nearby points.
@@ -410,10 +427,10 @@ export async function init(mapInstance, type, cb) {
       setTimeout(() => {
         if (map) {
           if (!map.dragging.enabled()) {
-            map.dragging.enable();
+      map.dragging.enable();
           }
           if (!map.scrollWheelZoom.enabled()) {
-            map.scrollWheelZoom.enable();
+      map.scrollWheelZoom.enable();
           }
           if (map.boxZoom && !map.boxZoom.enabled()) {
             map.boxZoom.enable();
@@ -619,11 +636,11 @@ export function isReadyLayers() {
 
 function iconCreate(cluster) {
   try {
-    const markers = cluster.getAllChildMarkers();
-    const childCount = cluster.getChildCount();
-    let childCountCalc = 0;
-    let sum = 0;
-    const markersId = [];
+  const markers = cluster.getAllChildMarkers();
+  const childCount = cluster.getChildCount();
+  let childCountCalc = 0;
+  let sum = 0;
+  const markersId = [];
     const unit = localStorage.getItem("currentUnit") ?? null;
     let winningColor = "#a1a1a1"; // default color
     
@@ -648,7 +665,8 @@ function iconCreate(cluster) {
 
   // For AQI, use simplified logic - just use the first marker's color
   if (unit === 'aqi') {
-    
+    const mapStore = useMapStore();
+    const currentDate = mapStore.currentDate;
     
     // Simple approach: use the first marker's color
     let clusterColor = "#a1a1a1"; // default gray
@@ -658,13 +676,22 @@ function iconCreate(cluster) {
       if (data?.logs && data.logs.length > 0) {
         // Use cached AQI value if available
         let aqiValue;
-        if (aqiCache.has(data.sensor_id, data.logs.length)) {
-          aqiValue = aqiCache.get(data.sensor_id, data.logs.length);
+        if (aqiCache.has(data.sensor_id, data.logs.length, currentDate)) {
+          aqiValue = aqiCache.get(data.sensor_id, data.logs.length, currentDate);
           
         } else {
-          aqiValue = calculateAQIIndex(data.logs);
-          aqiCache.set(data.sensor_id, data.logs.length, aqiValue);
+          // Check if logs have sufficient time coverage first
+          if (!hasSufficientTimeCoverage(data.logs)) {
+            // Don't calculate AQI for insufficient data
+            continue;
+          }
           
+          const calculateAQIIndex = getAQICalculator(mapStore.aqiVersion);
+          aqiValue = calculateAQIIndex(data.logs);
+          // Only cache if we have a valid AQI value
+          if (aqiValue !== null && aqiValue !== undefined) {
+            aqiCache.set(data.sensor_id, data.logs.length, aqiValue, currentDate);
+          }
         }
         if (aqiValue !== null) {
           clusterColor = getColorForValue(aqiValue, 'aqi', data);
@@ -673,9 +700,11 @@ function iconCreate(cluster) {
         }
       } else {
         // No logs yet — try latest cached AQI by sensorId for immediate color
-        const latest = aqiCache.getLatestBySensorId(data.sensor_id);
+        const latest = aqiCache.getLatestBySensorId(data.sensor_id, currentDate);
         if (latest !== null) {
-          const zones = measurements.aqi?.zones || [];
+          const zones = mapStore.aqiVersion === 'eu' ? 
+            aqiEUZones : 
+            aqiUSZones;
           const match = zones.find((i) => latest <= i?.valueMax);
           if (match) {
             clusterColor = match.color;
@@ -736,12 +765,12 @@ function iconCreate(cluster) {
     sortedMarkers.forEach((marker) => {
       // Skip markers without data
       if (marker.options.data.value === undefined || marker.options.data.value === "") {
-        return;
-      }
+      return;
+    }
 
-      markersId.push(marker.options.data._id);
+    markersId.push(marker.options.data._id);
 
-      childCountCalc++;
+    childCountCalc++;
       const value = marker.options.data.value;
 
       
@@ -794,7 +823,7 @@ function iconCreate(cluster) {
     colorBorder = "#999";
   }
 
-  
+
   return new L.DivIcon({
     html: `<div class='marker-cluster-circle' style='color:${
       isDark ? "#eee" : "#333"
@@ -807,9 +836,9 @@ function iconCreate(cluster) {
     // Return default cluster on error
     return new L.DivIcon({
       html: `<div class='marker-cluster-circle' style='color:#333;background-color: color-mix(in srgb, #a1a1a1 70%, transparent);border-color: #999;' data-children=""><span>${cluster.getChildCount()}</span></div>`,
-      className: "marker-cluster",
-      iconSize: new L.Point(40, 40),
-    });
+    className: "marker-cluster",
+    iconSize: new L.Point(40, 40),
+  });
   }
 }
 
@@ -986,34 +1015,163 @@ export async function addPoint(point) {
   }
 }
 
-// Cache for AQI calculations with localStorage and TTL
-const AQI_CACHE_KEY = 'aqi_cache';
-const AQI_LOGS_CACHE_KEY = 'aqi_logs_cache';
-const AQI_CACHE_TTL = 3600; // 1 hour in seconds
+// Cache for points data with localStorage and TTL based on date
+const POINTS_CACHE_PREFIX = 'points_cache_';
+const POINTS_CACHE_TTL = 3600; // 1 hour in seconds
 
-// (in-memory color cache removed)
+// Helper function to get points cache key for a specific date
+function getPointsCacheKey(date) {
+  return `${POINTS_CACHE_PREFIX}${date}`;
+}
 
-// AQI Cache with localStorage and TTL
-const aqiCache = {
-  // Get cached AQI value
-  get(sensorId, logsLength) {
+// Helper function to check if date is today
+function isToday(dateString) {
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  return dateString === today;
+}
+
+// Helper function to check if logs have sufficient time coverage (≥2 hours)
+function hasSufficientTimeCoverage(logs) {
+  if (!Array.isArray(logs) || logs.length < 2) {
+    return false;
+  }
+  
+  // Get timestamps and sort them
+  const timestamps = logs
+    .map(log => log.timestamp)
+    .filter(ts => Number.isFinite(ts))
+    .sort((a, b) => a - b);
+  
+  if (timestamps.length < 2) {
+    return false;
+  }
+  
+  // Check time span between first and last log
+  const firstLog = timestamps[0];
+  const lastLog = timestamps[timestamps.length - 1];
+  const timeSpanHours = (lastLog - firstLog) / 3600; // Convert seconds to hours
+  
+  return timeSpanHours >= 2;
+}
+
+// Points Cache with localStorage and simple TTL logic
+const pointsCache = {
+  // Save full sensor data for specific date
+  set(date, sensors, permanent = false) {
     try {
-      const cacheKey = `${sensorId}_${logsLength}`;
-      const cached = localStorage.getItem(AQI_CACHE_KEY);
+      if (!date || !Array.isArray(sensors)) {
+        return;
+      }
       
-      if (!cached) return null;
+      const cacheKey = getPointsCacheKey(date);
+      const cacheData = {
+        sensors: sensors,
+        timestamp: Math.floor(Date.now() / 1000),
+        date: date,
+        permanent: permanent // true = бессрочный, false = TTL 1 час
+      };
+      
+      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+    } catch (error) {
+      console.warn('Points cache set error:', error);
+    }
+  },
+  
+  // Get full sensor data for specific date
+  get(date) {
+    try {
+      if (!date) {
+        return null;
+      }
+      
+      const cacheKey = getPointsCacheKey(date);
+      const cached = localStorage.getItem(cacheKey);
+      
+      if (!cached) {
+        return null;
+      }
       
       const cacheData = JSON.parse(cached);
-      const item = cacheData[cacheKey];
       
-      if (!item) return null;
+      // If cache is marked as permanent, return immediately
+      if (cacheData.permanent === true) {
+        return cacheData.sensors;
+      }
       
-      // Check if cache is expired
+      // For non-permanent cache, check TTL (1 hour)
+      const now = Math.floor(Date.now() / 1000);
+      if (now - cacheData.timestamp > POINTS_CACHE_TTL) {
+        // Remove expired cache
+        localStorage.removeItem(cacheKey);
+        return null;
+      }
+      
+      return cacheData.sensors;
+    } catch (error) {
+      console.warn('Points cache get error:', error);
+      return null;
+    }
+  },
+  
+  // Check if cache exists for specific date
+  has(date) {
+    return this.get(date) !== null;
+  },
+  
+  // Clear cache for specific date
+  clear(date) {
+    try {
+      if (date) {
+        const cacheKey = getPointsCacheKey(date);
+        localStorage.removeItem(cacheKey);
+    } else {
+        // Clear all points caches if no date specified
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.startsWith(POINTS_CACHE_PREFIX)) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
+    } catch (error) {
+      console.warn('Points cache clear error:', error);
+    }
+  }
+};
+
+// AQI Cache with localStorage and TTL based on date
+const aqiCache = {
+  // Get cached AQI value for specific date
+  get(sensorId, logsLength, date) {
+    try {
+      if (!date) return null;
+      
+      const cacheKey = getCacheKey(date);
+      const sensorCacheKey = `${sensorId}_${logsLength}`;
+      const cached = localStorage.getItem(cacheKey);
+      
+      if (!cached) {
+        return null;
+      }
+      
+      const cacheData = JSON.parse(cached);
+      const item = cacheData[sensorCacheKey];
+      
+      if (!item) {
+        return null;
+      }
+      
+      // For past dates, cache is permanent (no TTL check)
+      if (!isToday(date)) {
+        return item.aqiValue;
+      }
+      
+      // For today's date, check TTL
       const now = Math.floor(Date.now() / 1000);
       if (now - item.timestamp > AQI_CACHE_TTL) {
         // Remove expired item
-        delete cacheData[cacheKey];
-        localStorage.setItem(AQI_CACHE_KEY, JSON.stringify(cacheData));
+        delete cacheData[sensorCacheKey];
+        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
         return null;
       }
       
@@ -1024,44 +1182,61 @@ const aqiCache = {
     }
   },
 
-
-  // Set cached AQI value
-  set(sensorId, logsLength, aqiValue) {
+  // Set cached AQI value for specific date
+  set(sensorId, logsLength, aqiValue, date) {
     try {
-      const cacheKey = `${sensorId}_${logsLength}`;
-      const cached = localStorage.getItem(AQI_CACHE_KEY);
+      if (!date) return;
+      
+      const cacheKey = getCacheKey(date);
+      const sensorCacheKey = `${sensorId}_${logsLength}`;
+      const cached = localStorage.getItem(cacheKey);
       let cacheData = cached ? JSON.parse(cached) : {};
       
-      cacheData[cacheKey] = {
+      cacheData[sensorCacheKey] = {
         aqiValue: aqiValue,
         timestamp: Math.floor(Date.now() / 1000),
-        ttl: AQI_CACHE_TTL
+        date: date,
+        isToday: isToday(date)
       };
       
-      localStorage.setItem(AQI_CACHE_KEY, JSON.stringify(cacheData));
+      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
     } catch (error) {
       console.warn('AQI cache set error:', error);
     }
   },
   
-  // Check if cache has value
-  has(sensorId, logsLength) {
-    return this.get(sensorId, logsLength) !== null;
+  // Check if cache has value for specific date
+  has(sensorId, logsLength, date) {
+    return this.get(sensorId, logsLength, date) !== null;
   },
   
-  // Clear all cache
-  clear() {
+  // Clear cache for specific date
+  clear(date) {
     try {
-      localStorage.removeItem(AQI_CACHE_KEY);
+      if (date) {
+        const cacheKey = getCacheKey(date);
+        localStorage.removeItem(cacheKey);
+      } else {
+        // Clear all AQI caches if no date specified
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.startsWith(AQI_CACHE_PREFIX)) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
     } catch (error) {
       console.warn('AQI cache clear error:', error);
     }
   },
   
-  // Clean expired entries
+  // Clean expired entries (only for today's caches)
   cleanExpired() {
     try {
-      const cached = localStorage.getItem(AQI_CACHE_KEY);
+      const today = new Date().toISOString().split('T')[0];
+      const cacheKey = getCacheKey(today);
+      const cached = localStorage.getItem(cacheKey);
+      
       if (!cached) return;
       
       const cacheData = JSON.parse(cached);
@@ -1077,33 +1252,48 @@ const aqiCache = {
       }
       
       if (hasChanges) {
-        localStorage.setItem(AQI_CACHE_KEY, JSON.stringify(cacheData));
+        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
       }
     } catch (error) {
       console.warn('AQI cache clean error:', error);
     }
   },
   
-  // Get the latest valid AQI value for a sensorId regardless of logs length
-  getLatestBySensorId(sensorId) {
+  // Get the latest valid AQI value for a sensorId regardless of logs length for specific date
+  getLatestBySensorId(sensorId, date) {
     try {
-      const cached = localStorage.getItem(AQI_CACHE_KEY);
+      if (!date) return null;
+      
+      const cacheKey = getCacheKey(date);
+      const cached = localStorage.getItem(cacheKey);
       if (!cached) return null;
+      
       const cacheData = JSON.parse(cached);
       const now = Math.floor(Date.now() / 1000);
       let best = null;
       let bestTs = -1;
       const prefix = `${sensorId}_`;
+      
       for (const key in cacheData) {
         if (!key.startsWith(prefix)) continue;
         const item = cacheData[key];
         if (!item || typeof item.timestamp !== 'number') continue;
-        if (now - item.timestamp > (item.ttl || AQI_CACHE_TTL)) continue;
-        if (item.timestamp > bestTs) {
-          best = item;
-          bestTs = item.timestamp;
+        
+        // For past dates, no TTL check
+        if (!isToday(date)) {
+          if (item.timestamp > bestTs) {
+            best = item;
+            bestTs = item.timestamp;
+          }
+        } else {
+          // For today's date, check TTL
+          if (now - item.timestamp <= AQI_CACHE_TTL && item.timestamp > bestTs) {
+            best = item;
+            bestTs = item.timestamp;
+          }
         }
       }
+      
       return best ? best.aqiValue ?? null : null;
     } catch (error) {
       console.warn('AQI cache getLatestBySensorId error:', error);
@@ -1124,22 +1314,35 @@ function getColorForValue(value, unit, point = null) {
   
   // Handle AQI calculation with localStorage caching
   if (unit === 'aqi' && point) {
+    const mapStore = useMapStore();
+    const currentDate = mapStore.currentDate;
+    
     // If logs are present, prefer precise cache by logs length; otherwise use latest by sensorId
-    if (point.logs && aqiCache.has(point.sensor_id, point.logs.length)) {
-      const aqiValue = aqiCache.get(point.sensor_id, point.logs.length);
+    if (point.logs && aqiCache.has(point.sensor_id, point.logs.length, currentDate)) {
+      const aqiValue = aqiCache.get(point.sensor_id, point.logs.length, currentDate);
       if (aqiValue !== null) {
-        const zones = measurements.aqi?.zones || [];
+        const zones = mapStore.aqiVersion === 'eu' ? 
+          aqiEUZones : 
+          aqiUSZones;
+        
+        
         const match = zones.find((i) => aqiValue <= i?.valueMax);
-        if (match) return match.color;
-        if (zones.length > 0 && !zones[zones.length - 1]?.valueMax) return zones[zones.length - 1].color;
+        if (match) {
+          return match.color;
+        }
+        if (zones.length > 0 && !zones[zones.length - 1]?.valueMax) {
+          return zones[zones.length - 1].color;
+        }
       }
     }
 
     // If no logs yet or no cache hit for logs-length — try latest by sensorId
     if (!point.logs || !Array.isArray(point.logs) || point.logs.length === 0) {
-      const latest = aqiCache.getLatestBySensorId(point.sensor_id);
+      const latest = aqiCache.getLatestBySensorId(point.sensor_id, currentDate);
       if (latest !== null) {
-        const zones = measurements.aqi?.zones || [];
+        const zones = mapStore.aqiVersion === 'eu' ? 
+          aqiEUZones : 
+          aqiUSZones;
         const match = zones.find((i) => latest <= i?.valueMax);
         if (match) return match.color;
         if (zones.length > 0 && !zones[zones.length - 1]?.valueMax) return zones[zones.length - 1].color;
@@ -1149,10 +1352,21 @@ function getColorForValue(value, unit, point = null) {
     // If logs exist but no cache — calculate, store, and return
     if (point.logs && Array.isArray(point.logs) && point.logs.length > 0) {
       try {
+        // Check if logs have sufficient time coverage first
+        if (!hasSufficientTimeCoverage(point.logs)) {
+          return "#a1a1a1"; // Return gray for insufficient data
+        }
+        
+        const calculateAQIIndex = getAQICalculator(mapStore.aqiVersion);
         const aqiValue = calculateAQIIndex(point.logs);
-        aqiCache.set(point.sensor_id, point.logs.length, aqiValue);
+        
+        // Only cache if we have a valid AQI value
         if (aqiValue !== null && aqiValue !== undefined) {
-          const zones = measurements.aqi?.zones || [];
+          aqiCache.set(point.sensor_id, point.logs.length, aqiValue, currentDate);
+          
+          const zones = mapStore.aqiVersion === 'eu' ? 
+            aqiEUZones : 
+            aqiUSZones;
           const match = zones.find((i) => aqiValue <= i?.valueMax);
           if (match) {
             return match.color;
@@ -1172,15 +1386,32 @@ function getColorForValue(value, unit, point = null) {
         const pm25 = point.data.pm25 || point.data.pm2_5;
         const pm10 = point.data.pm10;
         
-        // Calculate AQI from PM values using existing logic
-        const aqiPM25 = pm25 !== null && pm25 !== undefined ? aqiFromConc(pm25, 'pm25') : null;
-        const aqiPM10 = pm10 !== null && pm10 !== undefined ? aqiFromConc(pm10, 'pm10') : null;
+        console.log(`Marker point data:`, {
+          sensor_id: point.sensor_id,
+          pointData: point.data,
+          pm25,
+          pm10
+        });
         
-        if (aqiPM25 !== null || aqiPM10 !== null) {
-          const aqiValue = Math.round(Math.max(aqiPM25 || 0, aqiPM10 || 0));
+        // Calculate AQI from PM values using the selected version's logic
+        let aqiValue = null;
+        
+        // Calculate AQI from PM values using the appropriate version
+        const aqiFromConcFunction = mapStore.aqiVersion === 'eu' ? aqiFromConcEU : aqiFromConc;
+        const aqiPM25 = pm25 !== null && pm25 !== undefined ? aqiFromConcFunction(pm25, 'pm25') : null;
+        const aqiPM10 = pm10 !== null && pm10 !== undefined ? aqiFromConcFunction(pm10, 'pm10') : null;
+        aqiValue = aqiPM25 !== null || aqiPM10 !== null ? Math.round(Math.max(aqiPM25 || 0, aqiPM10 || 0)) : null;
+        
+        
+        if (aqiValue !== null && aqiValue !== undefined) {
           // Cache the calculated value
-          aqiCache.set(point.sensor_id, 0, aqiValue); // Use 0 as logs length for simple calculation
-          const zones = measurements.aqi?.zones || [];
+          aqiCache.set(point.sensor_id, 0, aqiValue, currentDate); // Use 0 as logs length for simple calculation
+          
+          // Use appropriate zones based on version
+          const zones = mapStore.aqiVersion === 'eu' ? 
+            aqiEUZones : 
+            aqiUSZones;
+            
           const match = zones.find((i) => aqiValue <= i?.valueMax);
           if (match) return match.color;
           if (zones.length > 0 && !zones[zones.length - 1]?.valueMax) return zones[zones.length - 1].color;
@@ -1263,7 +1494,7 @@ async function addMarker(point) {
     if (markersLayer) {
       markersLayer.addLayer(m);
     }
-  } else {
+    } else {
     // Always update existing marker, even if empty
     // Recalculate colors for AQI if needed
     if (localStorage.getItem("currentUnit") === 'aqi') {
@@ -1431,10 +1662,13 @@ export function refreshClusters() {
   }
 }
 
-// Export cache management functions for debugging
-export { aqiCache };
-export function clearAQICache() {
-  aqiCache.clear();
+// Export cache management functions
+export { aqiCache, pointsCache };
+export function clearAQICache(date = null) {
+  aqiCache.clear(date);
+}
+export function clearPointsCache(date = null) {
+  pointsCache.clear(date);
 }
 
 export function cleanExpiredAQICache() {

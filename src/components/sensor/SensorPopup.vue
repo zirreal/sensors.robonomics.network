@@ -199,7 +199,7 @@ import { settings, sensors } from "@config";
 import measurements from "../../measurements";
 import { getTypeProvider } from "../../utils/utils";
 import { getAddressByPos } from "../../utils/map/utils";
-import { calculateAQIIndex } from '../../utils/aqiIndex';
+import { calculateAQIIndex } from '../../utils/aqiIndex/us';
 import { dayISO, dayBoundsUnix } from '../../utils/date';
 import { useMapStore } from '@/stores/map';
 
@@ -594,15 +594,22 @@ watch(
     // Синхронизируем с глобальным store
     mapStore.setCurrentDate(newDate);
     
-    // Обновляем URL с новой датой
-    router.replace({
-      query: {
-        ...route.query,
-        date: newDate
-      }
-    });
+    // Обновляем URL без перезагрузки компонента
+    const newQuery = { ...route.query, date: newDate };
+    const newUrl = `${window.location.pathname}?${new URLSearchParams(newQuery).toString()}`;
+    window.history.replaceState({}, '', newUrl);
     
     getHistory();
+  }
+);
+
+// Watcher для изменений даты извне (например, из Footer)
+watch(
+  () => mapStore.currentDate,
+  (newDate) => {
+    if (newDate && newDate !== state.start) {
+      state.start = newDate;
+    }
   }
 );
 

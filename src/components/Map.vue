@@ -104,6 +104,7 @@ export default {
           lat: lat,
           lng: lng,
           sensor: this.$route.query.sensor,
+          date: this.$route.query.date, // Preserve date parameter
         },
       };
 
