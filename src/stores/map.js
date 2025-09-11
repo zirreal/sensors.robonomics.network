@@ -10,6 +10,7 @@ export const useMapStore = defineStore('map', {
     },
     mapinactive: false,
     sensors: [], // all uploaded sensors (getting via broadcast messages)
+    sensorsLoaded: false, // flag to indicate if sensors are loaded
     currentUnit: (localStorage.getItem('currentUnit') || settings?.MAP?.measure || 'pm25').toLowerCase(),
   }),
   actions: {
@@ -24,9 +25,11 @@ export const useMapStore = defineStore('map', {
     },
     setSensors(sensorsArr) {
       this.sensors = sensorsArr;
+      this.sensorsLoaded = true;
     },
     clearSensors() {
       this.sensors = [];
+      this.sensorsLoaded = false;
     },
     setCurrentUnit(unit) {
       const u = String(unit || '').toLowerCase();

@@ -14,7 +14,7 @@ function normalizeReading(x, pollutant) {
   return Math.trunc(x); // pm10 до целого
 }
 
-function aqiFromConc(conc, pollutant) {
+export function aqiFromConc(conc, pollutant) {
   const c = normalizeReading(conc, pollutant);
   if (c === null) return null;
 
