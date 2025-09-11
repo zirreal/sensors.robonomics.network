@@ -48,6 +48,7 @@ import { settings } from "@config";
 import * as providers from "../providers";
 import { instanceMap } from "../utils/map/instance";
 import * as markers from "../utils/map/marker";
+import { aqiCache } from "../utils/map/marker";
 import { getAddressByPos } from "../utils/map/utils";
 import { getTypeProvider, setTypeProvider } from "../utils/utils";
 import { useI18n } from "vue-i18n";
@@ -201,139 +202,50 @@ const handlerHistory = async ({ start, end }) => {
 
   handlerClose();
   markers.clear();
+  
+  // Set all markers to gray color immediately to show loading state
+  markers.setAllMarkersGray();
   state.providerObj.setStartDate(start);
   state.providerObj.setEndDate(end);
-  const today = dayISO();
-  const startDate = dayISO(Number(start));
   
-  if (props.type === 'aqi') {
-    // For AQI, we need to load PM2.5 and PM10 data and calculate AQI for each sensor
-    try {
-      // Get PM2.5 and PM10 data
-      let pm25Data, pm10Data;
-      if (today === startDate) {
-        pm25Data = await state.providerObj.lastValuesForPeriod(start, end, 'pm25');
-        pm10Data = await state.providerObj.lastValuesForPeriod(start, end, 'pm10');
-      } else {
-        pm25Data = await state.providerObj.maxValuesForPeriod(start, end, 'pm25');
-        pm10Data = await state.providerObj.maxValuesForPeriod(start, end, 'pm10');
-      }
+  // Use data from mapStore.sensors - no API calls needed
+  const sensorData = mapStore.sensors || [];
+  
+  // Only process if sensors are loaded
+  if (mapStore.sensorsLoaded && sensorData.length > 0) {
+    // Process each sensor with existing data
+    for (const sensor of sensorData) {
+      if (!sensor.sensor_id) continue;
       
-      // Combine data from both measurements
-      const combinedData = {};
+      // Create point with existing data
+      const point = {
+        sensor_id: sensor.sensor_id,
+        geo: sensor.geo || { lat: 0, lng: 0 },
+        model: 2,
+        data: sensor.data || {},
+        logs: sensor.logs || []
+      };
       
-      // Add PM2.5 data
-      for (const sensor in pm25Data) {
-        if (!combinedData[sensor]) {
-          combinedData[sensor] = [];
-        }
-        for (const item of pm25Data[sensor]) {
-          combinedData[sensor].push(item);
-        }
-      }
-      
-      // Add PM10 data
-      for (const sensor in pm10Data) {
-        if (!combinedData[sensor]) {
-          combinedData[sensor] = [];
-        }
-        for (const item of pm10Data[sensor]) {
-          combinedData[sensor].push(item);
-        }
-      }
-      
-      // First, show all sensors as gray points immediately
-      const sensorIds = Object.keys(combinedData);
-      for (const sensor of sensorIds) {
-        const point = {
-          sensor_id: sensor,
-          geo: combinedData[sensor][0]?.geo || { lat: 0, lng: 0 },
-          model: 2,
-          data: {},
-          logs: [] // Empty logs initially
-        };
-        
-        // Show gray point immediately
-        markers.addPoint({
-          ...point,
-          isEmpty: true, // Gray loading state
-          value: null,
-        });
-      }
-      
-      // Then load logs and update colors as they become available
-      const logsPromises = sensorIds.map(async (sensor) => {
-        try {
-          const logs = await state.providerObj.getHistoryPeriodBySensor(sensor, start, end);
-          return { sensor, logs: logs || [] };
-        } catch (error) {
-          console.warn(`Failed to get logs for sensor ${sensor}:`, error);
-          return { sensor, logs: [] };
-        }
-      });
-      
-      // Update points with colors as logs become available
-      for (const promise of logsPromises) {
-        promise.then(async ({ sensor, logs }) => {
-          const point = {
-            sensor_id: sensor,
-            geo: combinedData[sensor][0]?.geo || { lat: 0, lng: 0 },
-            model: 2,
-            data: {},
-            logs: logs
-          };
-          
-          
-          // Update point with calculated color
-          await handlerNewPoint(point);
-        }).catch(error => {
-          console.warn(`Failed to process sensor ${sensor}:`, error);
-        });
-      }
-      
-      // Wait for all requests to complete
-      await Promise.all(logsPromises);
-    } catch (error) {
-      console.error('Failed to load AQI data:', error);
+      // Add point with current type
+      await handlerNewPoint(point);
     }
-  } else {
-    // For regular measurements, load data normally
-    let sensorsData;
-    if (today === startDate) {
-      sensorsData = await state.providerObj.lastValuesForPeriod(start, end, props.type);
-    } else {
-      sensorsData = await state.providerObj.maxValuesForPeriod(start, end, props.type);
-    }
-    
-    // Process sensor data incrementally (display points as they become available)
-    const allItems = [];
-    for (const sensor in sensorsData) {
-      for (const item of sensorsData[sensor]) {
-        allItems.push(item);
-      }
-    }
-    
-    // Start processing all items in parallel but don't wait for all to complete
-    const itemPromises = allItems.map(async (item) => {
+  }
+  
+  // Load messages if needed (this might still make API calls, but it's for messages, not sensor data)
+  try {
+    const messages = await state.providerObj.messagesForPeriod(start, end);
+    const messagePromises = Object.values(messages).map(async (message) => {
       try {
-        await handlerNewPoint(item);
+        await handlerNewPoint(message);
       } catch (error) {
-        console.warn(`Failed to process item:`, error);
+        console.warn(`Failed to process message:`, error);
       }
     });
-    
-    // Wait for all items to be processed (but points are already being displayed)
-    await Promise.all(itemPromises);
+    await Promise.all(messagePromises);
+  } catch (error) {
+    console.warn('Failed to load messages:', error);
   }
-  const messages = await state.providerObj.messagesForPeriod(start, end);
-  const messagePromises = Object.values(messages).map(async (message) => {
-    try {
-      await handlerNewPoint(message);
-    } catch (error) {
-      console.warn(`Failed to process message:`, error);
-    }
-  });
-  await Promise.all(messagePromises);
+  
   state.isLoad = false;
 };
 
@@ -566,17 +478,16 @@ const handlerNewPointWithType = async (point, measurementType) => {
 const handlerClick = async (point) => {
   state.isLoad = true;
   state.point = [];
+  
+  // Use existing logs from mapStore.sensors - no API calls needed
   let log = [];
-  if (state.status === "history") {
-    log = await state.providerObj.getHistoryPeriodBySensor(
-      point.sensor_id,
-      state.providerObj.start,
-      state.providerObj.end
-    );
-    mapStore.mapinactive = true;
-  } else {
-    log = await state.providerObj.getHistoryBySensor(point.sensor_id);
+  const sensorData = mapStore.sensors.find(s => s.sensor_id === point.sensor_id);
+  if (sensorData && sensorData.logs) {
+    log = sensorData.logs;
   }
+  
+  mapStore.mapinactive = true;
+  
   document.querySelectorAll('.with-active-sensor').forEach(el => {
     el.classList.remove('with-active-sensor');
   });
@@ -589,8 +500,11 @@ const handlerClick = async (point) => {
 
 const handlerHistoryLog = async ({ sensor_id, start, end }) => {
   if (state.status === "history") {
-    const log = await state.providerObj.getHistoryPeriodBySensor(sensor_id, start, end);
-    state.point = { ...state.point, log: [...log] };
+    // Use existing logs from mapStore.sensors - no API calls needed
+    const sensorData = mapStore.sensors.find(s => s.sensor_id === sensor_id);
+    if (sensorData && sensorData.logs) {
+      state.point = { ...state.point, log: [...sensorData.logs] };
+    }
   }
 };
 
@@ -604,8 +518,11 @@ const getScope = async (type) => {
   const { start, end } = range;
 
   if (state.status === "history") {
-    const log = await state.providerObj.getHistoryPeriodBySensor(state.point.sensor_id, Math.floor(start.getTime() / 1000), Math.floor(end.getTime() / 1000));
-    state.point = { ...state.point, scopeLog: [...log] };
+    // Use existing logs from mapStore.sensors - no API calls needed
+    const sensorData = mapStore.sensors.find(s => s.sensor_id === state.point.sensor_id);
+    if (sensorData && sensorData.logs) {
+      state.point = { ...state.point, scopeLog: [...sensorData.logs] };
+    }
   }
 }
 
@@ -636,112 +553,34 @@ const handleTypeChange = async (newType) => {
   // Update localStorage
   localStorage.setItem("currentUnit", newType);
   
+  // Set all markers to gray color immediately to show loading state
+  markers.setAllMarkersGray();
+  
   // For AQI, don't clear markers - just update their colors
   if (newType !== 'aqi') {
     markers.clear();
   }
   
-  if (state.providerObj && state.providerReady) {
-    if (state.status === "history") {
-      if (newType === 'aqi') {
-        // For AQI, we need to load PM2.5 and PM10 data and calculate AQI for each sensor
-        try {
-          // Get PM2.5 and PM10 data
-          const pm25Data = await state.providerObj.lastValuesForPeriod(state.start, state.end, 'pm25');
-          const pm10Data = await state.providerObj.lastValuesForPeriod(state.start, state.end, 'pm10');
-          
-          // Combine data from both measurements
-          const combinedData = {};
-          
-          // Add PM2.5 data
-          for (const sensor in pm25Data) {
-            if (!combinedData[sensor]) {
-              combinedData[sensor] = [];
-            }
-            for (const item of pm25Data[sensor]) {
-              combinedData[sensor].push(item);
-            }
-          }
-          
-          // Add PM10 data
-          for (const sensor in pm10Data) {
-            if (!combinedData[sensor]) {
-              combinedData[sensor] = [];
-            }
-            for (const item of pm10Data[sensor]) {
-              combinedData[sensor].push(item);
-            }
-          }
-          
-          // First, show all sensors as gray points immediately
-          const sensorIds = Object.keys(combinedData);
-          for (const sensor of sensorIds) {
-            const point = {
-              sensor_id: sensor,
-              geo: combinedData[sensor][0]?.geo || { lat: 0, lng: 0 },
-              model: 2,
-              data: {},
-              logs: [] // Empty logs initially
-            };
-            
-            // Show gray point immediately
-            markers.addPoint({
-              ...point,
-              isEmpty: true, // Gray loading state
-              value: null,
-            });
-          }
-          
-          // Then load logs and update colors as they become available
-          const logsPromises = sensorIds.map(async (sensor) => {
-            try {
-              const logs = await state.providerObj.getHistoryPeriodBySensor(sensor, state.start, state.end);
-              return { sensor, logs: logs || [] };
-            } catch (error) {
-              console.warn(`Failed to get logs for sensor ${sensor}:`, error);
-              return { sensor, logs: [] };
-            }
-          });
-          
-          // Update points with colors as logs become available
-          for (const promise of logsPromises) {
-            promise.then(async ({ sensor, logs }) => {
-              const point = {
-                sensor_id: sensor,
-                geo: combinedData[sensor][0]?.geo || { lat: 0, lng: 0 },
-                model: 2,
-                data: {},
-                logs: logs
-              };
-              
-              
-              // Update point with calculated color
-              await handlerNewPointWithType(point, newType);
-            }).catch(error => {
-              console.warn(`Failed to process sensor ${sensor}:`, error);
-            });
-          }
-          
-          // Wait for all requests to complete
-          await Promise.all(logsPromises);
-        } catch (error) {
-          console.error('Failed to load AQI data:', error);
-        }
-      } else {
-        // For regular measurements, reload all data with new type
-        const sensorsData = await state.providerObj.lastValuesForPeriod(state.start, state.end, newType);
-        
-        for (const sensor in sensorsData) {
-          for (const item of sensorsData[sensor]) {
-            await handlerNewPointWithType(item, newType);
-          }
-        }
-      }
-    } else {
-      // For realtime mode, we can't easily update data without time range
-      // Skip updating for now - realtime data will be updated automatically
-      console.warn('Realtime mode: cannot update measurement type without time range');
-      return;
+  // Use data from mapStore.sensors - no API calls needed
+  const sensorData = mapStore.sensors || [];
+  
+  // Only process if sensors are loaded
+  if (mapStore.sensorsLoaded && sensorData.length > 0) {
+    // Process each sensor with existing data
+    for (const sensor of sensorData) {
+      if (!sensor.sensor_id) continue;
+      
+      // Create point with existing data
+      const point = {
+        sensor_id: sensor.sensor_id,
+        geo: sensor.geo || { lat: 0, lng: 0 },
+        model: 2,
+        data: sensor.data || {},
+        logs: sensor.logs || []
+      };
+      
+      // Update point with new type
+      await handlerNewPointWithType(point, newType);
     }
   }
   
@@ -873,4 +712,31 @@ onMounted(async () => {
   instance?.proxy?.$matomo && instance.proxy.$matomo.disableCookies();
   instance?.proxy?.$matomo && instance.proxy.$matomo.trackPageView();
 });
+
+// Watch for sensors loading and display points when ready
+watch(
+  () => mapStore.sensorsLoaded,
+  (loaded) => {
+    if (loaded && mapStore.sensors.length > 0) {
+      // Display all sensors as gray points initially
+      markers.setAllMarkersGray();
+      
+      // Process each sensor
+      mapStore.sensors.forEach(async (sensor) => {
+        if (!sensor.sensor_id) return;
+        
+        const point = {
+          sensor_id: sensor.sensor_id,
+          geo: sensor.geo || { lat: 0, lng: 0 },
+          model: 2,
+          data: sensor.data || {},
+          logs: sensor.logs || []
+        };
+        
+        await handlerNewPoint(point);
+      });
+    }
+  },
+  { immediate: true }
+);
 </script>
