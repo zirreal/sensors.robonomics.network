@@ -85,7 +85,7 @@ const state = reactive({
     timeout: 5000,
     maximumAge: 0,
   },
-  start: null,
+  start: route.query.date || mapStore.currentDate || null,
   end: null,
   isLoad: false,
   clusterUpdateScheduled: false,
@@ -639,7 +639,7 @@ watch(
       u = 'pm25';
       router.replace({
         name: route.name,
-        query: { ...route.query, type: u },
+        query: { ...route.query, type: u, date: route.query.date || mapStore.currentDate },
       }).catch(() => {});
     }
     if (u) { try { mapStore.setCurrentUnit(u); } catch {} }
@@ -668,6 +668,7 @@ onMounted(async () => {
           lat: route.query.lat,
           lng: route.query.lng,
           sensor: route.query.sensor,
+          date: route.query.date || mapStore.currentDate,
         },
       });
       return;
@@ -703,6 +704,7 @@ onMounted(async () => {
         lat: route.query.lat,
         lng: route.query.lng,
         sensor: route.query.sensor,
+        date: route.query.date || mapStore.currentDate,
       },
     });
     return;

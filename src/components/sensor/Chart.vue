@@ -108,7 +108,7 @@ const visibleLegend = computed(() => {
 
   const groupedIds = Object.values(GROUPS).flatMap(g => g.members);
   ids.forEach(id => {
-    if (!groupedIds.includes(id)) {
+    if (!groupedIds.includes(id) && id.toLowerCase() !== 'aqi') {
       legend.push({
         key: id,
         labelKey: unitsettings[id]?.namelong?.[locale.value] || unitsettings[id]?.nameshort?.[locale.value] || id.toUpperCase(),

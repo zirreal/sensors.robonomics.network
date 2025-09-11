@@ -201,6 +201,7 @@ import { getTypeProvider } from "../../utils/utils";
 import { getAddressByPos } from "../../utils/map/utils";
 import { calculateAQIIndex } from '../../utils/aqiIndex';
 import { dayISO, dayBoundsUnix } from '../../utils/date';
+import { useMapStore } from '@/stores/map';
 
 import AQIWidget from './AQIWidget.vue';
 import Bookmark from "./Bookmark.vue";
@@ -228,6 +229,7 @@ const { t, locale } = useI18n();
 const { proxy } = getCurrentInstance();
 const filters = proxy.$filters;
 const globalWindow = window;
+const mapStore = useMapStore();
 
 // Единообразное описание локального состояния в одном реактивном объекте
 const state = reactive({
@@ -477,6 +479,7 @@ const closesensor = () => {
         zoom: route.query.zoom,
         lat: route.query.lat,
         lng: route.query.lng,
+        date: route.query.date || mapStore.currentDate,
         // Убираем sensor из URL чтобы предотвратить автоматическое открытие
       },
     });
@@ -565,12 +568,10 @@ function getMapLink(lat, lon, label = "Sensor") {
   return `https://www.google.com/maps?q=${lat},${lon}`;
 }
 
+
 onMounted(() => {
-
-  state.start = props.startTime ? dayISO(Number(props.startTime)) : dayISO();
-
+  state.start = props.startTime ? dayISO(Number(props.startTime)) : mapStore.currentDate || dayISO();
   updatert();
-
 });
 
 // removed unused onUnmounted hook
@@ -589,7 +590,18 @@ watch(
 );
 watch(
   () => state.start,
-  () => {
+  (newDate) => {
+    // Синхронизируем с глобальным store
+    mapStore.setCurrentDate(newDate);
+    
+    // Обновляем URL с новой датой
+    router.replace({
+      query: {
+        ...route.query,
+        date: newDate
+      }
+    });
+    
     getHistory();
   }
 );
@@ -655,6 +667,7 @@ watch(
           lat: newPoint.geo.lat,
           lng: newPoint.geo.lng,
           sensor: newPoint.sensor_id,
+          date: route.query.date || mapStore.currentDate,
         },
       });
     }

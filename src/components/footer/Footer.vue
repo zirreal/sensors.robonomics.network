@@ -98,7 +98,7 @@ const route = useRoute();
 const { locale: i18nLocale, t } = useI18n();
 
 // состояние
-const start = ref(dayISO());
+const start = ref(route.query.date || mapStore.currentDate || dayISO());
 const maxDate = ref(dayISO());
 const realtime = ref(props.currentProvider === "realtime");
 const wind = ref(false);
@@ -218,6 +218,7 @@ watch(type, async (val) => {
       lat: route.query.lat,
       lng: route.query.lng,
       sensor: route.query.sensor,
+      date: route.query.date || mapStore.currentDate,
     },
   });
   
@@ -225,10 +226,35 @@ watch(type, async (val) => {
   emit('typeChanged', val);
 });
 
-watch(start, () => getHistory());
+watch(start, (newDate) => {
+  // Обновляем store и URL при изменении даты
+  mapStore.setCurrentDate(newDate);
+  
+  // Обновляем URL с датой
+  router.replace({
+    query: {
+      ...route.query,
+      date: newDate
+    }
+  });
+  
+  getHistory();
+});
 watch(
   () => props.canHistory,
   (v) => v && getHistory(),
+  { immediate: true }
+);
+
+// Следим за изменением даты в URL
+watch(
+  () => route.query.date,
+  (newDate) => {
+    if (newDate && newDate !== start.value) {
+      start.value = newDate;
+      mapStore.setCurrentDate(newDate);
+    }
+  },
   { immediate: true }
 );
 watch(wind, (v) => switchLayer(instanceMap(), v));
