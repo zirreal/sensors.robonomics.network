@@ -113,6 +113,15 @@ class Provider {
     }
   }
 
+  async getHistoryPeriod(start, end) {
+    try {
+      const result = await getJSON(`/last/${start}/${end}`);
+      return result?.result || {};
+    } catch {
+      return {};
+    }
+  }
+
   static async getMeasurements(start, end) {
     try {
       const result = await getJSON(`/measurements/${start}/${end}`);

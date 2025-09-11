@@ -1151,13 +1151,19 @@ function getColorForValue(value, unit, point = null) {
       try {
         const aqiValue = calculateAQIIndex(point.logs);
         aqiCache.set(point.sensor_id, point.logs.length, aqiValue);
-        if (aqiValue !== null) {
+        if (aqiValue !== null && aqiValue !== undefined) {
           const zones = measurements.aqi?.zones || [];
           const match = zones.find((i) => aqiValue <= i?.valueMax);
-          if (match) return match.color;
-          if (zones.length > 0 && !zones[zones.length - 1]?.valueMax) return zones[zones.length - 1].color;
+          if (match) {
+            return match.color;
+          }
+          if (zones.length > 0 && !zones[zones.length - 1]?.valueMax) {
+            return zones[zones.length - 1].color;
+          }
         }
-      } catch (_) {}
+      } catch (error) {
+        console.error(`Error calculating AQI for ${point.sensor_id}:`, error);
+      }
     }
 
     // If no cache and no logs, try to calculate from current PM data
@@ -1172,7 +1178,6 @@ function getColorForValue(value, unit, point = null) {
         
         if (aqiPM25 !== null || aqiPM10 !== null) {
           const aqiValue = Math.round(Math.max(aqiPM25 || 0, aqiPM10 || 0));
-          
           // Cache the calculated value
           aqiCache.set(point.sensor_id, 0, aqiValue); // Use 0 as logs length for simple calculation
           const zones = measurements.aqi?.zones || [];

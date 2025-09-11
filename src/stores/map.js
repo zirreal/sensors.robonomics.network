@@ -13,7 +13,7 @@ export const useMapStore = defineStore('map', {
     sensors: [], // all uploaded sensors (getting via broadcast messages)
     sensorsLoaded: false, // flag to indicate if sensors are loaded
     currentUnit: (localStorage.getItem('currentUnit') || settings?.MAP?.measure || 'pm25').toLowerCase(),
-    currentDate: localStorage.getItem('currentDate') || dayISO(), // current selected date
+    currentDate: dayISO(), // current selected date
   }),
   actions: {
     setmapposition(lat, lng, zoom, save = true) {
@@ -41,7 +41,6 @@ export const useMapStore = defineStore('map', {
     setCurrentDate(date) {
       const d = String(date || dayISO());
       this.currentDate = d;
-      try { localStorage.setItem('currentDate', d); } catch {}
     }
   },
 });

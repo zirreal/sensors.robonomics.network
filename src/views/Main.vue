@@ -62,6 +62,10 @@ const props = defineProps({
     type: String,
     default: "pm10",
   },
+  date: {
+    type: String,
+    default: null,
+  },
   sensor: String,
 });
 
@@ -85,7 +89,7 @@ const state = reactive({
     timeout: 5000,
     maximumAge: 0,
   },
-  start: route.query.date || mapStore.currentDate || null,
+  start: route.query.date || props.date || mapStore.currentDate || null,
   end: null,
   isLoad: false,
   clusterUpdateScheduled: false,
@@ -201,34 +205,62 @@ const handlerHistory = async ({ start, end }) => {
   unsubscribeRealtime();
 
   handlerClose();
-  markers.clear();
   
-  // Set all markers to gray color immediately to show loading state
-  markers.setAllMarkersGray();
+  // Очищаем сенсоры чтобы показать 0 во время загрузки
+  mapStore.clearSensors();
+  
+  // Полностью очищаем все маркеры и кеши
+  markers.clear();
+  markers.clearAQICache();
   state.providerObj.setStartDate(start);
   state.providerObj.setEndDate(end);
   
-  // Use data from mapStore.sensors - no API calls needed
-  const sensorData = mapStore.sensors || [];
-  
-  // Only process if sensors are loaded
-  if (mapStore.sensorsLoaded && sensorData.length > 0) {
-    // Process each sensor with existing data
-    for (const sensor of sensorData) {
-      if (!sensor.sensor_id) continue;
+  // Запрашиваем данные всех сенсоров за выбранный период одним запросом
+  try {
+    const allSensorData = await state.providerObj.getHistoryPeriod(start, end);
+    
+    if (allSensorData && typeof allSensorData === 'object') {
+      // Преобразуем данные API в формат массива сенсоров
+      const sensorsFromAPI = [];
       
-      // Create point with existing data
-      const point = {
-        sensor_id: sensor.sensor_id,
-        geo: sensor.geo || { lat: 0, lng: 0 },
-        model: 2,
-        data: sensor.data || {},
-        logs: sensor.logs || []
-      };
+      Object.keys(allSensorData).forEach(sensorId => {
+        const logs = allSensorData[sensorId];
+        if (logs && logs.length > 0) {
+          // Берем последнюю запись как основную информацию о сенсоре
+          const lastLog = logs[logs.length - 1];
+          
+          const sensor = {
+            sensor_id: sensorId,
+            geo: lastLog.geo || { lat: 0, lng: 0 },
+            model: lastLog.model || 2,
+            data: lastLog.data || {},
+            logs: logs
+          };
+          
+          sensorsFromAPI.push(sensor);
+          
+          // Create point with updated data
+          const point = {
+            sensor_id: sensor.sensor_id,
+            geo: sensor.geo,
+            model: sensor.model,
+            data: sensor.data,
+            logs: sensor.logs
+          };
+          
+          // Add point with current type
+          handlerNewPoint(point);
+        }
+      });
       
-      // Add point with current type
-      await handlerNewPoint(point);
+      // Обновляем mapStore.sensors всеми сенсорами из API
+      mapStore.setSensors(sensorsFromAPI);
     }
+  } catch (error) {
+    console.error('Error fetching sensor history:', error);
+    
+    // Fallback: очищаем сенсоры если запрос не удался
+    mapStore.clearSensors();
   }
   
   // Load messages if needed (this might still make API calls, but it's for messages, not sensor data)
@@ -245,6 +277,11 @@ const handlerHistory = async ({ start, end }) => {
   } catch (error) {
     console.warn('Failed to load messages:', error);
   }
+  
+  // Принудительно обновляем кластеры с новыми цветами после загрузки
+  setTimeout(() => {
+    markers.refreshClusters();
+  }, 100);
   
   state.isLoad = false;
 };
@@ -629,6 +666,16 @@ watch(
   }
 );
 
+// Следим за изменением даты и сохраняем её в store
+watch(
+  () => props.date,
+  (value) => {
+    if (value) {
+      mapStore.setCurrentDate(value);
+    }
+  }
+);
+
 // Keep currentUnit in sync with URL param `type`
 watch(
   () => route.query.type,
@@ -647,6 +694,19 @@ watch(
   { immediate: true }
 );
 
+// Keep currentDate in sync with URL param `date`
+watch(
+  () => route.query.date,
+  (val) => {
+    const d = String(val || props.date || mapStore.currentDate || dayISO());
+    if (d) { 
+      try { 
+        mapStore.setCurrentDate(d); 
+      } catch {} 
+    }
+  },
+  { immediate: true }
+);
 
 onMounted(async () => {
 
@@ -718,6 +778,16 @@ onMounted(async () => {
 
   if (route.query.sensor) {
     handleActivePoint(route.query.sensor);
+  }
+
+  // Добавляем параметр date в URL если его нет
+  if (!route.query.date && (props.date || mapStore.currentDate)) {
+    router.replace({
+      query: {
+        ...route.query,
+        date: props.date || mapStore.currentDate
+      }
+    }).catch(() => {});
   }
 
   const instance = getCurrentInstance();

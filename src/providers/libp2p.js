@@ -55,6 +55,17 @@ class Provider {
     return Promise.resolve(this.history[sensor] ? this.history[sensor] : []);
   }
 
+  getHistoryPeriod(start, end) {
+    // Для libp2p возвращаем все данные из истории
+    const result = {};
+    Object.keys(this.history).forEach(sensorId => {
+      if (this.history[sensorId]) {
+        result[sensorId] = this.history[sensorId];
+      }
+    });
+    return Promise.resolve(result);
+  }
+
   watch(cb) {
     this.node.services.pubsub.subscribe(topic);
     this.node.services.pubsub.addEventListener("message", (evt) => {
