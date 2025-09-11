@@ -7,7 +7,7 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import { getMeasurementByName } from "../../measurements/tools";
 import generate, { getColor, getColorDarkenRGB, getColorRGB } from "../../utils/color";
-import { calculateAQIIndex, aqiFromConc } from "../aqiIndex";
+import { calculateAQIIndex } from "../aqiIndex";
 
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
@@ -1112,7 +1112,6 @@ const aqiCache = {
   }
 };
 
-
 /**
  * Universal color calculation method for both individual markers and clusters
  * @param {number|null} value - The value to get color for
@@ -1152,29 +1151,6 @@ function getColorForValue(value, unit, point = null) {
         const aqiValue = calculateAQIIndex(point.logs);
         aqiCache.set(point.sensor_id, point.logs.length, aqiValue);
         if (aqiValue !== null) {
-          const zones = measurements.aqi?.zones || [];
-          const match = zones.find((i) => aqiValue <= i?.valueMax);
-          if (match) return match.color;
-          if (zones.length > 0 && !zones[zones.length - 1]?.valueMax) return zones[zones.length - 1].color;
-        }
-      } catch (_) {}
-    }
-
-    // If no cache and no logs, try to calculate from current PM data
-    if (point.data) {
-      try {
-        const pm25 = point.data.pm25 || point.data.pm2_5;
-        const pm10 = point.data.pm10;
-        
-        // Calculate AQI from PM values using existing logic
-        const aqiPM25 = pm25 !== null && pm25 !== undefined ? aqiFromConc(pm25, 'pm25') : null;
-        const aqiPM10 = pm10 !== null && pm10 !== undefined ? aqiFromConc(pm10, 'pm10') : null;
-        
-        if (aqiPM25 !== null || aqiPM10 !== null) {
-          const aqiValue = Math.round(Math.max(aqiPM25 || 0, aqiPM10 || 0));
-          
-          // Cache the calculated value
-          aqiCache.set(point.sensor_id, 0, aqiValue); // Use 0 as logs length for simple calculation
           const zones = measurements.aqi?.zones || [];
           const match = zones.find((i) => aqiValue <= i?.valueMax);
           if (match) return match.color;
@@ -1427,36 +1403,10 @@ export function refreshClusters() {
 }
 
 // Export cache management functions for debugging
-export { aqiCache };
 export function clearAQICache() {
   aqiCache.clear();
 }
 
 export function cleanExpiredAQICache() {
   aqiCache.cleanExpired();
-}
-
-// Function to set all markers to gray color (loading state)
-export function setAllMarkersGray() {
-  if (!markersLayer) return;
-  
-  const grayColors = {
-    basic: "#a1a1a1",
-    border: "#999",
-    rgb: [161, 161, 161],
-  };
-  
-  // Update all markers in the layer
-  markersLayer.eachLayer((layer) => {
-    if (layer.options.typeMarker === "brand") {
-      layer.setIcon(createIconBrand(layer.options.data.sensor_id, grayColors.rgb));
-    } else if (layer.options.typeMarker === "arrow") {
-      layer.setIcon(createIconArrow(0, 0, grayColors.basic));
-    } else if (layer.options.typeMarker === "circle") {
-      layer.setIcon(iconCreateCircle(grayColors, false, layer.options.data.sensor_id));
-    }
-  });
-  
-  // Refresh clusters to update their colors
-  refreshClusters();
 }
