@@ -1,32 +1,73 @@
 /*
-  calculateAQIIndex(logs) - ЕВРОПЕЙСКАЯ ВЕРСИЯ
-  - Вход: массив логов как в SensorPopup.vue (элементы: { timestamp: seconds, data: { pm25?, pm10? } })
-  - Алгоритм: агрегирование «минуты → часы → период» по окну 2–24 часов
-  - Выход: округлённый AQI (число) или undefined, если данных < 2 часов
-  - Стандарт: Европейский союз / ВОЗ (более строгие пороги)
-  
-  ЕВРОПЕЙСКИЕ ПОРОГИ (2024-2030):
-  - PM2.5: 0-10-25-50-75-100-150 (мкг/м³) вместо 0-12-35.4-55.4-150.4-250.4-500.4
-  - PM10: 0-20-40-80-120-200-300 (мкг/м³) вместо 0-54-154-254-354-424-604
-  - Основано на стандартах ЕС 2030 года и рекомендациях ВОЗ 2021
-*/
+ * =============================================================================
+ * AQI CALCULATOR - EUROPEAN STANDARD (EU/WHO)
+ * =============================================================================
+ * 
+ * EN: Air Quality Index calculation based on European Union standards and WHO guidelines.
+ *     Implements the 4-step aggregation algorithm: minutes → hours → time window → AQI.
+ *     Uses stricter thresholds compared to US EPA standards for better health protection.
+ * 
+ * RU: Расчет индекса качества воздуха по стандартам Европейского союза и ВОЗ.
+ *     Реализует 4-этапный алгоритм агрегации: минуты → часы → временное окно → AQI.
+ *     Использует более строгие пороги по сравнению со стандартами EPA США.
+ * 
+ * =============================================================================
+ * INPUT / ВХОДНЫЕ ДАННЫЕ
+ * =============================================================================
+ * 
+ * EN: logs: Array<{timestamp: number, data: {pm25?: number, pm10?: number}}>
+ *     - timestamp: Unix timestamp in seconds
+ *     - data.pm25: PM2.5 concentration in µg/m³
+ *     - data.pm10: PM10 concentration in µg/m³
+ * 
+ * RU: logs: Array<{timestamp: number, data: {pm25?: number, pm10?: number}}>
+ *     - timestamp: Unix timestamp в секундах
+ *     - data.pm25: Концентрация PM2.5 в мкг/м³
+ *     - data.pm10: Концентрация PM10 в мкг/м³
+ * 
+ * =============================================================================
+ * OUTPUT / ВЫХОДНЫЕ ДАННЫЕ
+ * =============================================================================
+ * 
+ * EN: number | undefined
+ *     - Rounded AQI value (0-500) if sufficient data (≥2 hours)
+ *     - undefined if insufficient data or invalid input
+ * 
+ * RU: number | undefined
+ *     - Округленное значение AQI (0-500) при достаточных данных (≥2 часа)
+ *     - undefined при недостаточных данных или неверном вводе
+ * 
+ * =============================================================================
+ * EUROPEAN THRESHOLDS (2024-2030) / ЕВРОПЕЙСКИЕ ПОРОГИ (2024-2030)
+ * =============================================================================
+ * 
+ * EN: PM2.5: 0-10-25-50-75-100-150 µg/m³ (vs US: 0-12-35.4-55.4-150.4-250.4-500.4)
+ *     PM10:  0-20-40-80-120-200-300 µg/m³ (vs US: 0-54-154-254-354-424-604)
+ *     Based on EU 2030 standards and WHO 2021 recommendations
+ * 
+ * RU: PM2.5: 0-10-25-50-75-100-150 мкг/м³ (vs US: 0-12-35.4-55.4-150.4-250.4-500.4)
+ *     PM10:  0-20-40-80-120-200-300 мкг/м³ (vs US: 0-54-154-254-354-424-604)
+ *     Основано на стандартах ЕС 2030 года и рекомендациях ВОЗ 2021
+ * 
+ * =============================================================================
+ */
 
 import aqiEUZones from "../../measurements/aqi_eu";
 
 function normalizeReading(x, pollutant) {
   if (!Number.isFinite(x)) return null;
   if (x < 0) return null;
-  if (pollutant === 'pm25') return Math.trunc(x * 10) / 10; // до 0.1 µg/m³
-  return Math.trunc(x); // pm10 до целого
+  if (pollutant === 'pm25') return Math.trunc(x * 10) / 10; // Round to 0.1 µg/m³ precision
+  return Math.trunc(x); // Round PM10 to whole numbers
 }
 
 export function aqiFromConc(conc, pollutant) {
   const c = normalizeReading(conc, pollutant);
   if (c === null) return null;
 
-  // Используем европейские брейкпоинты
+  // Map EU concentration thresholds to AQI index ranges
   const mapped = [];
-  let prevValue = -1; // чтобы первая зона стала [0..value]
+  let prevValue = -1; // Initialize to create first zone as [0..value]
   for (const z of aqiEUZones) {
     const bp = z?.[pollutant];
     if (!bp || typeof z.valueMax !== 'number') continue;
@@ -52,7 +93,7 @@ function average(array) {
 export function calculateAQIIndex(logs) {
   if (!Array.isArray(logs) || logs.length === 0) return undefined;
 
-  // 1) Минутные корзины
+  // Step 1: Temporal aggregation - Group readings into minute buckets
   const minuteBuckets = new Map(); // key: 'YYYY-MM-DD HH:MM' → { pm25: number[], pm10: number[], ts: number }
   for (let i = 0; i < logs.length; i++) {
     const l = logs[i];
@@ -74,7 +115,7 @@ export function calculateAQIIndex(logs) {
   });
   if (minuteAverages.length === 0) return undefined;
 
-  // 2) Почасовые корзины из минут
+  // Step 2: Hourly aggregation - Group minute averages into hourly buckets
   const hourBuckets = new Map(); // key: 'YYYY-MM-DD HH' → { pm25: number[], pm10: number[], ts: number }
   for (const m of minuteAverages) {
     const [datePart, hm] = m.key.split(' ');
@@ -92,12 +133,12 @@ export function calculateAQIIndex(logs) {
   });
   if (hourEntries.length === 0) return undefined;
 
-  // 3) Окно 2–24 часов, берем самые свежие до 24ч
+  // Step 3: Time window selection - Use most recent 2-24 hours of data
   hourEntries.sort((a, b) => a.ts - b.ts);
   const windowHours = hourEntries.slice(-24);
   if (windowHours.length < 2) return undefined;
 
-  // 4) Среднее по окну - ЕВРОПЕЙСКАЯ ФОРМУЛА
+  // Step 4: AQI calculation - European standard formula
   const pm25Hourly = windowHours.map(h => h.pm25).filter(Number.isFinite);
   const pm10Hourly = windowHours.map(h => h.pm10).filter(Number.isFinite);
   const pm25Avg = average(pm25Hourly);
@@ -108,10 +149,10 @@ export function calculateAQIIndex(logs) {
 
   if (aqiPM25 === null && aqiPM10 === null) return undefined;
   
-  // Европейский расчет без дополнительных поправок (как базовый EPA)
+  // European AQI formula: max(PM2.5_AQI, PM10_AQI) with EU thresholds
   const final = Math.max(aqiPM25 ?? 0, aqiPM10 ?? 0);
   
-  return Math.round(Math.min(final, 500)); // ограничиваем максимумом AQI
+  return Math.round(Math.min(final, 500)); // Cap at maximum AQI value
 }
 
 export default calculateAQIIndex;

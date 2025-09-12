@@ -222,39 +222,39 @@ const handlerHistory = async ({ start, end }) => {
   const day = String(startDate.getDate()).padStart(2, '0');
   const startDateString = `${year}-${month}-${day}`;
   
-  // Проверяем, есть ли кеш для этой даты
+  // Проверяем, есть ли кеш для этой даты (временно отключено для AQI)
   console.log(`Checking cache for date: ${startDateString}`);
-  const cachedSensors = await import('@/utils/map/marker').then(module => {
-    return module.pointsCache.get(startDateString);
-  });
+  // const cachedSensors = await import('@/utils/map/marker').then(module => {
+  //   return module.pointsCache.get(startDateString);
+  // });
   
-  if (cachedSensors) {
-    console.log(`Using cached data for ${startDateString}: ${cachedSensors.length} sensors`);
-    // Используем кешированные данные
-    mapStore.setSensors(cachedSensors);
-    
-    // Если текущая единица измерения AQI, нужно пересчитать цвета точек
-    if (mapStore.currentUnit === 'aqi') {
-      // Очищаем AQI кеш для этой даты чтобы пересчитать с текущей версией AQI
-      const { clearAQICache } = await import('@/utils/map/marker');
-      clearAQICache(startDateString);
-    }
-    
-    // Добавляем точки на карту
-    cachedSensors.forEach(sensor => {
-      const point = {
-        sensor_id: sensor.sensor_id,
-        geo: sensor.geo,
-        model: sensor.model,
-        data: sensor.data,
-        logs: sensor.logs
-      };
-      handlerNewPoint(point);
-    });
-    
-    state.isLoad = false;
-    return;
-  }
+  // if (cachedSensors) {
+  //   console.log(`Using cached data for ${startDateString}: ${cachedSensors.length} sensors`);
+  //   // Используем кешированные данные
+  //   mapStore.setSensors(cachedSensors);
+  //   
+  //   // Если текущая единица измерения AQI, нужно пересчитать цвета точек
+  //   if (mapStore.currentUnit === 'aqi') {
+  //     // Очищаем AQI кеш для этой даты чтобы пересчитать с текущей версией AQI
+  //     const { clearAQICache } = await import('@/utils/map/marker');
+  //     clearAQICache(startDateString);
+  //   }
+  //   
+  //   // Добавляем точки на карту
+  //   cachedSensors.forEach(sensor => {
+  //     const point = {
+  //       sensor_id: sensor.sensor_id,
+  //       geo: sensor.geo,
+  //       model: sensor.model,
+  //       data: sensor.data,
+  //       logs: sensor.logs
+  //     };
+  //     handlerNewPoint(point);
+  //   });
+  //   
+  //   state.isLoad = false;
+  //   return;
+  // }
   
   console.log(`No cache found for ${startDateString}, loading from API...`);
   
@@ -312,13 +312,13 @@ const handlerHistory = async ({ start, end }) => {
       // Обновляем mapStore.sensors сразу для показа счетчика
       mapStore.setSensors(initialSensors);
       
-      // Сохраняем базовые данные в кеш сразу после первого GET запроса
-      import('@/utils/map/marker').then(module => {
-        const today = new Date().toISOString().split('T')[0];
-        const permanent = startDateString !== today;
-        module.pointsCache.set(startDateString, initialSensors, permanent);
-        console.log(`Quick cache saved: ${startDateString} with ${initialSensors.length} sensors (basic data)`);
-      });
+      // Сохраняем базовые данные в кеш сразу после первого GET запроса (временно отключено для AQI)
+      // import('@/utils/map/marker').then(module => {
+      //   const today = new Date().toISOString().split('T')[0];
+      //   const permanent = startDateString !== today;
+      //   module.pointsCache.set(startDateString, initialSensors, permanent);
+      //   console.log(`Quick cache saved: ${startDateString} with ${initialSensors.length} sensors (basic data)`);
+      // });
       
       // Затем асинхронно получаем полную историю для каждого сенсора
       console.log('Starting parallel API calls for full sensor history...');
@@ -412,10 +412,10 @@ const handlerHistory = async ({ start, end }) => {
       if (sensorsWithAQI.length > 0) {
         console.log(`Updating cache with full data: ${startDateString} with ${validSensors.length} sensors (${sensorsWithAQI.length} with AQI)`);
         import('@/utils/map/marker').then(module => {
-          // Для прошедших дат - бессрочный кеш, для сегодняшнего дня - TTL 1 час
-          const today = new Date().toISOString().split('T')[0];
-          const permanent = startDateString !== today;
-          module.pointsCache.set(startDateString, validSensors, permanent);
+          // Для прошедших дат - бессрочный кеш, для сегодняшнего дня - TTL 1 час (временно отключено для AQI)
+          // const today = new Date().toISOString().split('T')[0];
+          // const permanent = startDateString !== today;
+          // module.pointsCache.set(startDateString, validSensors, permanent);
         });
       } else {
         console.log(`No AQI calculated for ${startDateString}, keeping basic cache`);
@@ -497,6 +497,11 @@ const handlerNewPoint = async (point) => {
     ...point,
     isEmpty: true, // Always start as gray
     value: null,
+  });
+  
+  // Force immediate refresh to show gray markers
+  import('@/utils/map/marker').then(module => {
+    module.refreshClusters();
   });
   
   // Then asynchronously calculate and update the color
@@ -898,6 +903,75 @@ watch(
       try { 
         mapStore.setCurrentDate(d); 
       } catch {} 
+    }
+  },
+  { immediate: true }
+);
+
+// Watch for currentDate changes and reload data
+watch(
+  () => mapStore.currentDate,
+  (newDate) => {
+    if (newDate) {
+      // Clear existing markers and show gray loading state
+      markers.clear();
+      
+      // Reload data when date changes
+      const startDate = new Date(newDate);
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 1);
+      
+      const start = Math.floor(startDate.getTime() / 1000);
+      const end = Math.floor(endDate.getTime() / 1000);
+      
+      handlerHistory({ start, end });
+    }
+  }
+);
+
+// Watch for currentUnit changes and refresh markers
+watch(
+  () => mapStore.currentUnit,
+  (newUnit) => {
+    if (newUnit) {
+      // Refresh all markers when unit changes
+      import('@/utils/map/marker').then(module => {
+        module.refreshClusters();
+      });
+    }
+  }
+);
+
+// Watch for sensors data and show gray markers immediately
+watch(
+  () => mapStore.sensors,
+  (sensors) => {
+    if (sensors && sensors.length > 0) {
+      console.log(`Showing ${sensors.length} gray markers for loading state`);
+      
+      // Clear existing markers
+      markers.clear();
+      
+      // Add all sensors as gray markers immediately
+      sensors.forEach(sensor => {
+        const point = {
+          sensor_id: sensor.sensor_id,
+          geo: sensor.geo,
+          model: sensor.model,
+          data: sensor.data,
+          logs: sensor.logs,
+          isEmpty: true, // Always start as gray
+          value: null,
+          isBookmarked: false
+        };
+        
+        markers.addPoint(point);
+      });
+      
+      // Force refresh to show gray markers
+      import('@/utils/map/marker').then(module => {
+        module.refreshClusters();
+      });
     }
   },
   { immediate: true }
