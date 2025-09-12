@@ -23,7 +23,7 @@
         <details v-if="mapStore.sensors?.length > 0" tabindex="0" class="sensors details-popup">
           <summary>
             <IconSensor class="sensors-mainicon" />
-            {{ mapStore.sensors?.length + zeroGeoSensors?.length }}
+            {{ mapStore.sensors?.length }}
           </summary>
           <div class="details-content" :class="zeroGeoSensors?.length > 0 ? 'nogeo' : null">
 

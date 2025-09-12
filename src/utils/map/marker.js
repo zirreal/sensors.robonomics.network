@@ -1391,12 +1391,6 @@ function getColorForValue(value, unit, point = null) {
         const pm25 = point.data.pm25 || point.data.pm2_5;
         const pm10 = point.data.pm10;
         
-        console.log(`Marker point data:`, {
-          sensor_id: point.sensor_id,
-          pointData: point.data,
-          pm25,
-          pm10
-        });
         
         // Calculate AQI from PM values using the selected version's logic
         let aqiValue = null;

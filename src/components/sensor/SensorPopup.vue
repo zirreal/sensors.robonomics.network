@@ -374,6 +374,11 @@ const shareLink = () => {
 
 const getHistory = () => {
   if (state.provider === "realtime") return;
+  
+  if (!sensor_id.value) {
+    console.warn('Cannot get history: sensor_id is null or undefined');
+    return;
+  }
 
   state.chartReady = false;
 
