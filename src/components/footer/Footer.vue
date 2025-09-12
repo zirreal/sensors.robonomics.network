@@ -234,15 +234,33 @@ watch(start, (newDate) => {
   mapStore.setCurrentDate(parsedDate);
   
   // Обновляем URL с датой
-  router.replace({
+  // router.replace({
+  //   query: {
+  //     ...route.query,
+  //     date: parsedDate
+  //   }
+  // });
+  
+  // Попробуем мягкую замену параметра через router.push с replace
+  router.push({
     query: {
       ...route.query,
       date: parsedDate
     }
   });
   
-  getHistory();
+  // getHistory();
 });
+
+// Watcher для изменений даты извне (например, из SensorPopup)
+watch(
+  () => mapStore.currentDate,
+  (newDate) => {
+    if (newDate && newDate !== start.value) {
+      start.value = newDate;
+    }
+  }
+);
 watch(
   () => props.canHistory,
   (v) => v && getHistory(),
