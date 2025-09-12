@@ -56,4 +56,23 @@ export function formatUnixLocale(unixSeconds, locale) {
   return fmt.format(dt);
 }
 
+// Safely parse date from input (handles different locales and formats)
+export function parseInputDate(dateString) {
+  if (!dateString) return dayISO();
+  
+  // If it's already in YYYY-MM-DD format, return as is
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return dateString;
+  }
+  
+  // Try to parse as Date and convert to ISO
+  const parsedDate = new Date(dateString);
+  if (isNaN(parsedDate.getTime())) {
+    console.warn('Invalid date string:', dateString, 'falling back to today');
+    return dayISO();
+  }
+  
+  return dayISO(parsedDate);
+}
+
 

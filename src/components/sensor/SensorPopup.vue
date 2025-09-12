@@ -200,7 +200,7 @@ import measurements from "../../measurements";
 import { getTypeProvider } from "../../utils/utils";
 import { getAddressByPos } from "../../utils/map/utils";
 import { calculateAQIIndex } from '../../utils/aqiIndex/us';
-import { dayISO, dayBoundsUnix } from '../../utils/date';
+import { dayISO, dayBoundsUnix, parseInputDate } from '../../utils/date';
 import { useMapStore } from '@/stores/map';
 
 import AQIWidget from './AQIWidget.vue';

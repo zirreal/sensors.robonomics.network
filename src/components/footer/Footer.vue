@@ -67,7 +67,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { dayISO, dayBoundsUnix } from "@/utils/date";
+import { dayISO, dayBoundsUnix, parseInputDate } from "@/utils/date";
 import { settings } from "@config";
 import Bookmarks from "@/components/Bookmarks.vue";
 import HistoryImport from "./HistoryImport.vue";
@@ -227,14 +227,17 @@ watch(type, async (val) => {
 });
 
 watch(start, (newDate) => {
+  // Безопасно парсим дату из input
+  const parsedDate = parseInputDate(newDate);
+  
   // Обновляем store и URL при изменении даты
-  mapStore.setCurrentDate(newDate);
+  mapStore.setCurrentDate(parsedDate);
   
   // Обновляем URL с датой
   router.replace({
     query: {
       ...route.query,
-      date: newDate
+      date: parsedDate
     }
   });
   

@@ -1139,6 +1139,11 @@ const pointsCache = {
   }
 };
 
+// Helper function to generate cache key for AQI
+const getCacheKey = (date) => {
+  return `aqi_cache_${date}`;
+};
+
 // AQI Cache with localStorage and TTL based on date
 const aqiCache = {
   // Get cached AQI value for specific date
