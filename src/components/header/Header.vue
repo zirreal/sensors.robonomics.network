@@ -214,9 +214,6 @@ watch(locale, (newValue) => {
   localStorage.setItem("locale", newValue);
 }, {immediate: true});
 
-watch(() => mapStore.sensors, () => {
-  console.log('mapStore.sensors changed', mapStore.sensors);
-}, {immediate: true});
 
 onMounted(() => {
 

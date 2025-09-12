@@ -201,7 +201,6 @@ const handleActivePoint = (id) => {
 let currentRequestId = null;
 
 const handlerHistory = async ({ start, end }) => {
-  console.log(`handlerHistory called with start: ${start}, end: ${end}`);
   
   // Отменяем предыдущий запрос если он еще выполняется
   currentRequestId = Math.random().toString(36);
@@ -213,7 +212,8 @@ const handlerHistory = async ({ start, end }) => {
   state.status = "history";
   unsubscribeRealtime();
 
-  handlerClose();
+  // Не закрываем попап при смене даты - оставляем его активным
+  // handlerClose();
   
   // Преобразуем timestamp в дату для кеша (используем локальную дату)
   const startDate = new Date(start * 1000);
@@ -223,7 +223,6 @@ const handlerHistory = async ({ start, end }) => {
   const startDateString = `${year}-${month}-${day}`;
   
   // Проверяем, есть ли кеш для этой даты (временно отключено для AQI)
-  console.log(`Checking cache for date: ${startDateString}`);
   // const cachedSensors = await import('@/utils/map/marker').then(module => {
   //   return module.pointsCache.get(startDateString);
   // });
@@ -256,7 +255,6 @@ const handlerHistory = async ({ start, end }) => {
   //   return;
   // }
   
-  console.log(`No cache found for ${startDateString}, loading from API...`);
   
   // Очищаем сенсоры чтобы показать 0 во время загрузки
   mapStore.clearSensors();
@@ -268,18 +266,14 @@ const handlerHistory = async ({ start, end }) => {
   
   // Сначала получаем список всех сенсоров с последними данными
   try {
-    console.log('Starting API call to getHistoryPeriod...');
     const allSensorData = await state.providerObj.getHistoryPeriod(start, end);
-    console.log('getHistoryPeriod response:', allSensorData);
     
     // Проверяем, не был ли запрос отменен
     if (currentRequestId !== requestId) {
-      console.log('Request cancelled, stopping...');
       return;
     }
     
     if (allSensorData && typeof allSensorData === 'object') {
-      console.log('Processing sensor data, sensorIds:', Object.keys(allSensorData).length);
       const sensorsFromAPI = [];
       const sensorIds = Object.keys(allSensorData);
       
@@ -305,7 +299,6 @@ const handlerHistory = async ({ start, end }) => {
       
       // Проверяем, не был ли запрос отменен
       if (currentRequestId !== requestId) {
-        console.log('Request cancelled before setting initial sensors');
         return;
       }
       
@@ -320,75 +313,100 @@ const handlerHistory = async ({ start, end }) => {
       //   console.log(`Quick cache saved: ${startDateString} with ${initialSensors.length} sensors (basic data)`);
       // });
       
-      // Затем асинхронно получаем полную историю для каждого сенсора
-      console.log('Starting parallel API calls for full sensor history...');
-      const sensorPromises = sensorIds.map(async (sensorId) => {
-        try {
-          const fullLogs = await state.providerObj.getHistoryPeriodBySensor(sensorId, start, end);
-          
-          if (fullLogs && fullLogs.length > 0) {
-            // Берем последнюю запись как основную информацию о сенсоре
-            const lastLog = fullLogs[fullLogs.length - 1];
+      // Обрабатываем данные в зависимости от выбранной единицы измерения
+      let fullSensorData;
+      
+      if (mapStore.currentUnit === 'aqi') {
+        // Для AQI нужны индивидуальные запросы для получения полной истории
+        const sensorPromises = sensorIds.map(async (sensorId) => {
+          try {
+            const fullLogs = await state.providerObj.getHistoryPeriodBySensor(sensorId, start, end);
             
-            // Рассчитываем AQI для этого сенсора
-            let aqiValue = null;
-            try {
-              // Проверяем, есть ли достаточно данных для расчета AQI
-              const hasSufficientTime = (() => {
-                if (!Array.isArray(fullLogs) || fullLogs.length < 2) return false;
-                const timestamps = fullLogs
-                  .map(log => log.timestamp)
-                  .filter(ts => Number.isFinite(ts))
-                  .sort((a, b) => a - b);
-                if (timestamps.length < 2) return false;
-                const timeSpanHours = (timestamps[timestamps.length - 1] - timestamps[0]) / 3600;
-                return timeSpanHours >= 2;
-              })();
+            if (fullLogs && fullLogs.length > 0) {
+              // Берем последнюю запись как основную информацию о сенсоре
+              const lastLog = fullLogs[fullLogs.length - 1];
               
-              if (hasSufficientTime) {
-                // Импортируем функцию расчета AQI
-                const { getAQICalculator } = await import('@/utils/map/marker');
-                const { useMapStore } = await import('@/stores/map');
-                const mapStore = useMapStore();
+              // Рассчитываем AQI для этого сенсора
+              let aqiValue = null;
+              try {
+                // Проверяем, есть ли достаточно данных для расчета AQI
+                const hasSufficientTime = (() => {
+                  if (!Array.isArray(fullLogs) || fullLogs.length < 2) return false;
+                  const timestamps = fullLogs
+                    .map(log => log.timestamp)
+                    .filter(ts => Number.isFinite(ts))
+                    .sort((a, b) => a - b);
+                  if (timestamps.length < 2) return false;
+                  const timeSpanHours = (timestamps[timestamps.length - 1] - timestamps[0]) / 3600;
+                  return timeSpanHours >= 2;
+                })();
                 
-                const calculateAQIIndex = getAQICalculator(mapStore.aqiVersion);
-                aqiValue = calculateAQIIndex(fullLogs);
+                if (hasSufficientTime) {
+                  // Импортируем функцию расчета AQI
+                  const { getAQICalculator } = await import('@/utils/map/marker');
+                  const { useMapStore } = await import('@/stores/map');
+                  const mapStore = useMapStore();
+                  
+                  const calculateAQIIndex = getAQICalculator(mapStore.aqiVersion);
+                  aqiValue = calculateAQIIndex(fullLogs);
+                  
+                  if (aqiValue !== null && aqiValue !== undefined) {
+                  }
+                } else {
+                }
+              } catch (error) {
+                console.warn(`Failed to calculate AQI for sensor ${sensorId.substring(0, 8)}:`, error);
               }
-            } catch (error) {
-              console.warn(`Failed to calculate AQI for sensor ${sensorId.substring(0, 8)}:`, error);
+              
+              return {
+                sensor_id: sensorId,
+                geo: lastLog.geo || { lat: 0, lng: 0 },
+                model: lastLog.model || 2,
+                data: {
+                  ...lastLog.data,
+                  aqi: aqiValue
+                },
+                log: fullLogs, // Полные логи для расчета AQI
+                logs: fullLogs // Дублируем для совместимости
+              };
             }
+          } catch (error) {
+            console.warn('Failed to get full history for sensor', sensorId.substring(0, 8), error.message);
+          }
+          return null;
+        });
+        
+        // Ждем завершения всех запросов для AQI
+        fullSensorData = await Promise.all(sensorPromises);
+      } else {
+        // Для не-AQI измерений используем данные из общего запроса
+        fullSensorData = sensorIds.map(sensorId => {
+          const sensorLogs = allSensorData[sensorId];
+          if (sensorLogs && sensorLogs.length > 0) {
+            // Берем последнюю запись как основную информацию о сенсоре
+            const lastLog = sensorLogs[sensorLogs.length - 1];
             
-            const sensor = {
+            return {
               sensor_id: sensorId,
               geo: lastLog.geo || { lat: 0, lng: 0 },
               model: lastLog.model || 2,
               data: {
                 ...lastLog.data,
-                aqi: aqiValue // Добавляем рассчитанный AQI в данные сенсора
+                aqi: null // AQI не нужен для не-AQI измерений
               },
-              logs: fullLogs // Используем полные логи
+              log: sensorLogs, // Полные логи
+              logs: sensorLogs // Дублируем для совместимости
             };
-            
-            return sensor;
-          } else {
-            console.log(`Sensor ${sensorId.substring(0, 8)}... has no logs`);
           }
-        } catch (error) {
-          console.warn('Failed to get full history for sensor', sensorId.substring(0, 8), error.message);
-        }
-        return null;
-      });
+          return null;
+        });
+      }
       
-      // Ждем завершения всех запросов
-      console.log('Waiting for all parallel API calls to complete...');
-      const fullSensorData = await Promise.all(sensorPromises);
       const validCount = fullSensorData.filter(Boolean).length;
       const nullCount = fullSensorData.filter(item => item === null).length;
-      console.log(`All API calls completed: ${fullSensorData.length} total, ${validCount} valid, ${nullCount} null`);
       
       // Проверяем, не был ли запрос отменен
       if (currentRequestId !== requestId) {
-        console.log('Request cancelled after getting full sensor data');
         return;
       }
       
@@ -399,8 +417,16 @@ const handlerHistory = async ({ start, end }) => {
       
       // Проверяем, не был ли запрос отменен перед добавлением точек
       if (currentRequestId !== requestId) {
-        console.log('Request cancelled before adding points to map');
         return;
+      }
+      
+      // Для не-AQI измерений красим точки сразу из загруженных данных
+      if (mapStore.currentUnit !== 'aqi') {
+        // Здесь будет логика окраски точек из загруженных данных
+        // Пока просто обновляем кластеры
+        import('@/utils/map/marker').then(module => {
+          module.refreshClusters();
+        });
       }
       
       // Проверяем, есть ли сенсоры с рассчитанным AQI
@@ -410,7 +436,6 @@ const handlerHistory = async ({ start, end }) => {
       
       // Обновляем кеш с полными данными только если есть рассчитанные AQI
       if (sensorsWithAQI.length > 0) {
-        console.log(`Updating cache with full data: ${startDateString} with ${validSensors.length} sensors (${sensorsWithAQI.length} with AQI)`);
         import('@/utils/map/marker').then(module => {
           // Для прошедших дат - бессрочный кеш, для сегодняшнего дня - TTL 1 час (временно отключено для AQI)
           // const today = new Date().toISOString().split('T')[0];
@@ -418,14 +443,12 @@ const handlerHistory = async ({ start, end }) => {
           // module.pointsCache.set(startDateString, validSensors, permanent);
         });
       } else {
-        console.log(`No AQI calculated for ${startDateString}, keeping basic cache`);
       }
       
       // Теперь добавляем точки с полными логами
       validSensors.forEach(sensor => {
         // Проверяем отмену для каждой точки
         if (currentRequestId !== requestId) {
-          console.log('Request cancelled during point processing');
           return;
         }
         
@@ -947,7 +970,6 @@ watch(
   () => mapStore.sensors,
   (sensors) => {
     if (sensors && sensors.length > 0) {
-      console.log(`Showing ${sensors.length} gray markers for loading state`);
       
       // Clear existing markers
       markers.clear();
