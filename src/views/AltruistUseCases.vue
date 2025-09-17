@@ -82,7 +82,7 @@
 
 
 <script setup>
-import { computed, getCurrentInstance } from "vue";
+import { computed, getCurrentInstance, onMounted } from "vue";
 import MetaInfo from '../components/MetaInfo.vue';
 import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";
