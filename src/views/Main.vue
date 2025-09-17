@@ -1082,8 +1082,13 @@ onMounted(async () => {
   }
 
   const instance = getCurrentInstance();
-  instance?.proxy?.$matomo && instance.proxy.$matomo.disableCookies();
-  instance?.proxy?.$matomo && instance.proxy.$matomo.trackPageView();
+  const matomo = instance?.proxy?.$matomo;
+
+  if (matomo) {
+    matomo.disableCookies();
+    matomo.trackPageView();
+  }
+
 });
 
 // Watch for sensors loading and display points when ready

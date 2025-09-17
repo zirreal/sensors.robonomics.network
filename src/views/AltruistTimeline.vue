@@ -65,10 +65,22 @@
 
 
 <script setup>
+import {getCurrentInstance, onMounted } from "vue";
+
 import MetaInfo from '../components/MetaInfo.vue';
 import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
 import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";
 
 import ogImage from '../assets/images/pages/altruist-timeline/timeline.webp';
+
+onMounted(() => {
+  const instance = getCurrentInstance();
+  const matomo = instance?.proxy?.$matomo;
+
+  if (matomo) {
+    matomo.disableCookies();
+    matomo.trackPageView();
+  }
+});
 </script>
