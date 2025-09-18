@@ -11,8 +11,9 @@ import "./assets/styles/main.css";
 window.Buffer = Buffer;
 
 const app = createApp(App).use(createHead()).use(VueMatomo, {
-  host: "https://matomo.robonomics.network/",
+  host: "https://matomo.robonomics.network",
   siteId: 5,
+  trackerFileName: "matomo",
 }); // matomo analytics
 usePlugins(app);
 
