@@ -82,7 +82,7 @@
 
 
 <script setup>
-import { computed, } from "vue";
+import { computed, getCurrentInstance, onMounted } from "vue";
 import MetaInfo from '../components/MetaInfo.vue';
 import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";
@@ -129,5 +129,15 @@ const image4 = computed(() => {
   return locale.value === "ru"
     ? image4Ru
     : image4Def
+});
+
+onMounted(() => {
+  const instance = getCurrentInstance();
+  const matomo = instance?.proxy?.$matomo;
+
+  if (matomo) {
+    matomo.disableCookies();
+    matomo.trackPageView();
+  }
 });
 </script>

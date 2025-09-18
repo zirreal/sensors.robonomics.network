@@ -58,7 +58,7 @@
 
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted, getCurrentInstance } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PageTextLayout from "../components/layouts/PageText.vue";
 import MetaInfo from '../components/MetaInfo.vue';
@@ -71,6 +71,16 @@ const currentLocale = ref(locale.value);
 
 watch(locale, (newLocale) => {
   currentLocale.value = newLocale;
+});
+
+onMounted(() => {
+  const instance = getCurrentInstance();
+  const matomo = instance?.proxy?.$matomo;
+
+  if (matomo) {
+    matomo.disableCookies();
+    matomo.trackPageView();
+  }
 });
 </script>
 
