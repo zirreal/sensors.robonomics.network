@@ -10,7 +10,6 @@ import { useRoute } from "vue-router";
 
 import { useAccountStore } from "@/stores/account";
 import { useMapStore } from "@/stores/map";
-import { aqiCache } from "./utils/map/marker";
 
 import { decryptText } from "./utils/idb";
 import config from "@/config/default/config.json";
@@ -74,15 +73,7 @@ onMounted(async () => {
 
   mapStore.setSensors(sensors);
   
-  // Enrich sensors with AQI data from localStorage
-  mapStore.sensors.forEach(sensor => {
-    if (!sensor.sensor_id) return;
-    const cachedAQI = aqiCache.getLatestBySensorId(sensor.sensor_id);
-    if (cachedAQI !== null) {
-      if (!sensor.data) sensor.data = {};
-      sensor.data.aqi = cachedAQI;
-    }
-  });
+  // AQI functionality removed - no longer enriching sensors with AQI data
   
   /* - INIT SENSORS */
   

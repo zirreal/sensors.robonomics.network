@@ -48,7 +48,6 @@ import { settings } from "@config";
 import * as providers from "../providers";
 import { instanceMap } from "../utils/map/instance";
 import * as markers from "../utils/map/marker";
-import { aqiCache } from "../utils/map/marker";
 import { getAddressByPos } from "../utils/map/utils";
 import { getTypeProvider, setTypeProvider } from "../utils/utils";
 import { useI18n } from "vue-i18n";
@@ -803,10 +802,7 @@ const getScope = async (type) => {
 const handlerClose = () => {
   mapStore.mapinactive = false;
 
-  if (state.point && state.point.sensor_id) {
-    markers.hidePath(state.point.sensor_id);
-    // Don't call handleActivePoint when closing - just hide the path
-  }
+  // Здесь был markers.hidePath(state.point.sensor_id), но в связи с тем, что он ни разу не использовался, я пока удалила
   state.point = null;
   instanceMap().setActiveArea({
     position: "absolute",

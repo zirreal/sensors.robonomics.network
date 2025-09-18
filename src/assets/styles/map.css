@@ -1,0 +1,138 @@
+.marker-cluster {
+    --size: 40px;
+}
+
+.marker-point {
+    --size: 30px;
+}
+
+.marker-cluster, .marker-point {
+    background-clip: padding-box;
+}
+
+
+.marker-cluster .icon, .marker-point .icon {
+    width: var(--size);
+    height: var(--size);
+    border-radius: calc(var(--size) / 2);
+    margin-left: 0px;
+    margin-top: 0px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-style: solid;
+    overflow: hidden;
+    transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+    will-change: transform, box-shadow, filter;
+    
+    /* Используем CSS переменную --color для фона и границы */
+    background-color: color-mix(in srgb, var(--color, #a1a1a1) 70%, transparent);
+    border-color: color-mix(in srgb, var(--color, #a1a1a1) 80%, #000);
+}
+
+.marker-cluster .icon {
+    border-width: 2px;
+}
+
+.marker-point .icon {
+    border-width: 1px;
+}
+
+.marker-point .icon img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Специфичные стили для унифицированных иконок */
+.icon.marker-cluster-circle {
+    border-width: 2px;
+}
+
+.icon.marker-cluster-msg {
+    border-width: 2px;
+    background-size: contain;
+    color: #fff;
+    padding-top: 4px;
+    font-size: 16px;
+}
+
+/* Hover эффекты для унифицированных иконок */
+.marker-point.is-hovered .icon, .marker-cluster.is-hovered .icon {
+  transform: scale(1.22);
+  box-shadow: 0 0 5px 3px rgba(211, 211, 211, 0.55);
+  filter: saturate(1.1);
+}
+
+.marker-point.is-hovered div, .marker-cluster.is-hovered div {
+  transform: scale(1.22);
+  box-shadow: 0 0 5px 3px rgba(211, 211, 211, 0.55);
+  filter: saturate(1.1);
+}
+
+/* Touch tap flash (brief visual feedback on tap) */
+.tap-highlight .icon, .tap-highlight .marker-cluster-circle, .tap-highlight .marker-point-circle, .tap-highlight .marker-icon-brand {
+  transform: scale(1.18);
+  box-shadow: 0 0 0 3px rgba(57, 57, 57, 0.45);
+}
+
+.mapcontainer.inactive .icon, .mapcontainer.inactive .marker-cluster-circle, .mapcontainer.inactive .marker-point-circle {
+  filter: grayscale(100%);
+}
+
+.icon.current-active-marker, .marker-cluster-circle.current-active-marker, .marker-point-circle.current-active-marker {
+  filter: none !important;
+}
+
+.icon.with-active-sensor, .marker-cluster-circle.with-active-sensor, .marker-point-circle.with-active-sensor {
+  filter: none !important;
+}
+
+/* Стили для span внутри иконок сообщений */
+.icon.marker-cluster-msg span[data-count-type] {
+  font-weight: bold;
+  color: #fff;
+  font-size: 16px;
+}
+
+/* Стили для иконок с изображениями */
+.icon.marker-icon-brand {
+  width: 35px !important;
+  height: 35px !important;
+  border-radius: 50%;
+}
+
+.icon.marker-icon-brand img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.icon.marker-icon-msg {
+  width: 40px;
+  height: 40px;
+}
+
+.icon.marker-icon-msg img {
+  width: 100%;
+  height: 100%;
+}
+
+.icon.sensor-bookmarked, .marker-cluster-circle.sensor-bookmarked, .marker-point-circle.sensor-bookmarked {
+  background-image: url("data:image/svg+xml,%3Csvg class='svg-inline--fa fa-bookmark' aria-hidden='true' focusable='false' data-prefix='fas' data-icon='bookmark' role='img' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 384 512' data-v-fb71281d=''%3E%3Cpath class='' fill='white' d='M0 48V487.7C0 501.1 10.9 512 24.3 512c5 0 9.9-1.5 14-4.4L192 400 345.7 507.6c4.1 2.9 9 4.4 14 4.4c13.4 0 24.3-10.9 24.3-24.3V48c0-26.5-21.5-48-48-48H48C21.5 0 0 21.5 0 48z'%3E%3C/path%3E%3C/svg%3E");
+  background-size: 10px 10px;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 2px solid #fff !important;
+}
+
+/* Popup styles */
+.popoovergeo-tipclose.svg-inline--fa path {
+  fill: var(--color-light) !important;
+}
+
+/* Spider legs should not block map dragging */
+.leaflet-overlay-pane .leaflet-spider-leg {
+  pointer-events: none !important;
+}
