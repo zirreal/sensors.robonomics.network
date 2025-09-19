@@ -315,9 +315,9 @@ export default {
         }, 50);
       });
 
-      initMarkers(toRaw(this.map), this.measuretype, (data) => {
+      initMarkers(toRaw(this.map), (data) => {
         this.$emit("clickMarker", data);
-      });
+      }, this.measuretype);
 
       if (this.provider === "realtime") {
         await initWind();

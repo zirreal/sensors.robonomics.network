@@ -259,7 +259,7 @@ const handlerHistory = async ({ start, end }) => {
   mapStore.clearSensors();
   
   // Полностью очищаем все маркеры
-  markers.clear();
+  markers.clearAllMarkers();
   state.providerObj.setStartDate(start);
   state.providerObj.setEndDate(end);
   
@@ -519,7 +519,7 @@ const handlerNewPoint = async (point) => {
     ...point,
     isEmpty: true, // Always start as gray
     value: null,
-  });
+  }, mapStore.currentUnit);
   
   // Force immediate refresh to show gray markers
   import('@/utils/map/marker').then(module => {
@@ -593,7 +593,7 @@ const handlerNewPoint = async (point) => {
       ...point,
       isEmpty: isEmpty,
       value: value,
-    });
+    }, mapStore.currentUnit);
   }, 0); // Use setTimeout to make it asynchronous
   
   // Batch cluster updates for better performance
@@ -706,7 +706,7 @@ const handlerNewPointWithType = async (point, measurementType) => {
       ...point,
       isEmpty: isEmpty,
       value: value,
-    });
+    }, mapStore.currentUnit);
   }, 0); // Use setTimeout to make it asynchronous
   
   // Batch cluster updates for better performance
@@ -820,11 +820,10 @@ const handleTypeChange = async (newType) => {
   localStorage.setItem("currentUnit", newType);
   
   // Set all markers to gray color immediately to show loading state
-  markers.setAllMarkersGray();
   
   // For AQI, don't clear markers - just update their colors
   if (newType !== 'aqi') {
-    markers.clear();
+    markers.clearAllMarkers();
   }
   
   // Use data from mapStore.sensors - no API calls needed
@@ -933,7 +932,7 @@ watch(
   (newDate) => {
     if (newDate) {
       // Clear existing markers and show gray loading state
-      markers.clear();
+      markers.clearAllMarkers();
       
       // Reload data when date changes
       const startDate = new Date(newDate);
@@ -968,7 +967,7 @@ watch(
     if (sensors && sensors.length > 0) {
       
       // Clear existing markers
-      markers.clear();
+      markers.clearAllMarkers();
       
       // Add all sensors as gray markers immediately
       sensors.forEach(sensor => {
@@ -983,7 +982,7 @@ watch(
           isBookmarked: false
         };
         
-        markers.addPoint(point);
+        markers.addPoint(point, mapStore.currentUnit);
       });
       
       // Force refresh to show gray markers
@@ -1107,8 +1106,7 @@ onMounted(async () => {
 //     if (loaded && mapStore.sensors.length > 0) {
 //       console.log(`Watcher: Processing ${mapStore.sensors.length} sensors from mapStore`);
 //       // Display all sensors as gray points initially
-//       markers.setAllMarkersGray();
-//       
+//     //       
 //       // Process each sensor
 //       mapStore.sensors.forEach(async (sensor) => {
 //         if (!sensor.sensor_id) return;

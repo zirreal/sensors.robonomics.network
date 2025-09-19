@@ -1,3 +1,4 @@
+
 <template>
   <div class="mapcontrols">
     <div class="flexline">
@@ -29,7 +30,7 @@
             <span>{{ $t("layer.wind") }}</span>
           </label>
         </section>
-        <section>
+        <section v-if="settings.SHOW_MESSAGES">
           <label class="label-line">
             <input id="messages" v-model="messages" type="checkbox" />
             <span>{{ $t("layer.messages") }}</span>

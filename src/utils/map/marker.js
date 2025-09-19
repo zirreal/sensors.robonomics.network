@@ -16,22 +16,6 @@ import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import { getMeasurementByName } from "../../measurements/tools";
 
-// Icon configuration
-const ICON_CONFIG = {
-  cluster: {
-    iconSize: new L.Point(40, 40),
-    className: "marker-cluster",
-    initColor: "#a1a1a1", // default gray color
-    initBorderColor: "#999"
-  },
-  point: {
-    iconSize: new L.Point(30, 30),
-    className: "marker-point",
-    initColor: "#a1a1a1", // default gray color
-    initBorderColor: "#999"
-  }
-};
-
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
@@ -68,9 +52,56 @@ const messagesLayers = Object.values(messageTypes).reduce((result, item) => {
   return result;
 }, {});
 
+// Icon configuration
+const ICON_CONFIG = {
+  cluster: {
+    iconSize: new L.Point(40, 40),
+    className: "marker-cluster",
+    initColor: "#a1a1a1", // default gray color
+    initBorderColor: "#999"
+  },
+  point: {
+    iconSize: new L.Point(30, 30),
+    className: "marker-point",
+    initColor: "#a1a1a1", // default gray color
+    initBorderColor: "#999",
+    initRgb: [161, 161, 161], // RGB equivalent of initColor
+    userMessageColor: "#f99981" // User message color
+  }
+};
+
+// Конфигурация моделей точек
+const POINT_MODELS = {
+  1: { 
+    name: 'unimplemented', 
+    handler: null,
+    isUserMessage: false,
+    needsScatter: false
+  },
+  2: { 
+    name: 'sensor', 
+    handler: 'addMarker',
+    isUserMessage: false,
+    needsScatter: true
+  },
+  3: { 
+    name: 'sensor', 
+    handler: 'addMarker',
+    isUserMessage: false,
+    needsScatter: true
+  },
+  4: { 
+    name: 'user_message', 
+    handler: 'addMarkerUser',
+    isUserMessage: true,
+    needsScatter: false
+  }
+};
+
 const IS_TOUCH =
   typeof window !== "undefined" &&
   ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+
 
 
 /*
@@ -80,7 +111,7 @@ const IS_TOUCH =
    - At high zoom levels clustering is disabled.
    - Spiderfy is used instead of zoom-to-bounds on click.
 */
-function createClusterGroup(iconCreateFn) {
+function createClusterGroup(iconCreateFn, unit = null) {
   return new L.MarkerClusterGroup({
     showCoverageOnHover: false,
     maxClusterRadius(zoom) {
@@ -97,7 +128,7 @@ function createClusterGroup(iconCreateFn) {
     chunkDelay: 30,
     chunkInterval: 200,
     removeOutsideVisibleBounds: true,
-    iconCreateFunction: iconCreateFn,
+    iconCreateFunction: (cluster) => iconCreateFn(cluster, unit),
   });
 }
 
@@ -303,7 +334,7 @@ function createIconHTML({ text, image, color, container = {} }) {
 }
 
 /**
- * Устанавливает защиту от рекурсии для map.panInsideBounds и map.setView
+ * Устанавливает защиту от рекурсии для map.panInsideBounds и map.setView (это нужно после того, как ввелся функционал ограничения карты для форков)
  * Предотвращает бесконечную рекурсию при вызовах этих методов в обработчиках событий
  * @param {Object} mapInstance - Экземпляр карты Leaflet
  */
@@ -356,14 +387,13 @@ export function isReadyLayers() {
 
 
 
-function createIconClusterDefault(cluster) {
+function createIconClusterDefault(cluster, unit = null) {
   try {
   const markers = cluster.getAllChildMarkers();
   const childCount = cluster.getChildCount();
   let childCountCalc = 0;
   const markersId = [];
-    const unit = localStorage.getItem("currentUnit") ?? null;
-    let winningColor = ICON_CONFIG.cluster.initColor; // default color
+  let winningColor = ICON_CONFIG.cluster.initColor; // default color
     
     
     
@@ -423,7 +453,7 @@ function createIconClusterDefault(cluster) {
   }
   
   // Use the winning zone color
-  let color = "#a1a1a1"; // default color
+  let color = ICON_CONFIG.cluster.initColor; // default color
   let colorBorder = "#999";
   let isDark = false;
   
@@ -477,7 +507,7 @@ function createIconClusterDefault(cluster) {
       }),
       className: ICON_CONFIG.cluster.className,
       iconSize: ICON_CONFIG.cluster.iconSize,
-    });
+  });
   }
 }
 
@@ -541,10 +571,10 @@ function createIconPointWind(dir, speed, color) {
     className: "",
     html: createIconHTML({
       text: `<div class="icon-arrow-container" style="transform: rotate(${dir + 90}deg);">
-        <div class="icon-arrow" style="border-color: ${color} ${color} transparent transparent;">
-          <div style="background-color: ${color};"></div>
-        </div>
-        <div class="label-arrow">${speed} m/s</div>
+      <div class="icon-arrow" style="border-color: ${color} ${color} transparent transparent;">
+        <div style="background-color: ${color};"></div>
+      </div>
+      <div class="label-arrow">${speed} m/s</div>
       </div>`
     }),
     iconSize: ICON_CONFIG.point.iconSize,
@@ -585,77 +615,222 @@ function createMarkerUser(coord, data) {
   });
 }
 
-function createMarker(point, colors) {
-  // применяем scatter для визуального разведения близких точек
-  const coord = scatterCoords([point.geo.lat, point.geo.lng], point.sensor_id);
-  let marker;
+/**
+ * Upsert маркер: создает новый или обновляет существующий
+ * @param {Object} point - Данные точки
+ * @param {Object} colors - Цвета для маркера
+ * @param {string} [sensor_id] - ID сенсора для поиска существующего маркера (опционально)
+ * @returns {Object} - { marker: Object, isNew: boolean } - Обработанный маркер и флаг новизны
+ */
+function upsertMarker(point, colors, sensor_id = null) {
+  const modelConfig = POINT_MODELS[point.model] || {};
+  
+  // Вычисляем координаты
+  const coord = modelConfig.needsScatter 
+    ? scatterCoords([point.geo.lat, point.geo.lng], point.sensor_id)
+    : [point.geo.lat, point.geo.lng];
+  
+  // Определяем тип маркера
+  let markerType;
   if (sensors[point.sensor_id] && sensors[point.sensor_id].icon) {
+    markerType = "brand";
+  } else if (point.data && point.data.windang) {
+    markerType = "arrow";
+  } else if (modelConfig.isUserMessage) {
+    markerType = "msg";
+  } else {
+    markerType = "circle";
+  }
+
+  // Ищем существующий маркер
+  const existingMarker = sensor_id ? findMarker(sensor_id) : null;
+  
+  // Если маркер существует, обновляем его
+  if (existingMarker) {
+    // Update marker data first
+    existingMarker.options.data = point;
+    existingMarker.options.typeMarker = markerType;
+    
+    // Обновляем иконку в зависимости от типа
+    if (markerType === "brand") {
+      existingMarker.setIcon(createIconPointImage(point.sensor_id));
+    } else if (markerType === "arrow" && point.data && Object.prototype.hasOwnProperty.call(point.data, "windang")) {
+      existingMarker.setIcon(createIconPointWind(point.data.windang, point.data.windspeed, colors.basic));
+    } else if (markerType === "msg") {
+      existingMarker.setIcon(createIconPointMessage(point.measurement?.type || 0));
+    } else {
+      existingMarker.setIcon(createIconPointDefault(colors, point.isBookmarked, point.sensor_id));
+    }
+    
+    // Применяем вычисленные координаты
+    existingMarker.setLatLng(new L.LatLng(coord[0], coord[1]));
+    
+    return { marker: existingMarker, isNew: false };
+  }
+  
+  // Создаем новый маркер
+  let marker;
+  if (markerType === "brand") {
     marker = createMarkerBrand(coord, point, colors);
-  } else if (point.data.windang) {
+  } else if (markerType === "arrow") {
     marker = createMarkerArrow(coord, point, colors);
-  } else if (point.model === 4) {
+  } else if (markerType === "msg") {
     marker = createMarkerUser(coord, point);
   } else {
     marker = createMarkerCircle(coord, point, colors);
   }
-  return marker;
+  
+  return { marker, isNew: true };
 }
 
-function updateMarker(marker, point, colors) {
-  // Update marker data first
-  marker.options.data = point;
+
+/**
+ * Добавляет маркер на карту (обычный или пользовательский)
+ * @param {Object} point - Данные точки
+ * @param {string} [unit] - Единица измерения
+ * @param {string} [markerType='sensor'] - Тип маркера: 'sensor' или 'userMessage'
+ */
+async function addMarker(point, unit = null, markerType = 'sensor') {
+  // пропускаем датчики с «нулевой» геопозицией
+  const tolerance = 0.001;
+  const lat = Number(point.geo.lat);
+  const lng = Number(point.geo.lng);
+  if (Math.abs(lat) < tolerance && Math.abs(lng) < tolerance) {
+    return;
+  }
+
+  // Определяем цвета в зависимости от типа маркера
+  const isUserMessage = markerType === 'userMessage';
+  const colors = {
+    basic: isUserMessage ? ICON_CONFIG.point.userMessageColor : ICON_CONFIG.point.initColor,
+    border: ICON_CONFIG.point.initBorderColor,
+    rgb: ICON_CONFIG.point.initRgb,
+  };
   
-  if (marker.options.typeMarker === "brand") {
-    marker.setIcon(createIconPointImage(point.sensor_id));
-  } else if (
-    marker.options.typeMarker === "arrow" &&
-    Object.prototype.hasOwnProperty.call(point.data, "windang")
-  ) {
-    marker.setIcon(createIconPointWind(point.data.windang, point.data.windspeed, colors.basic));
-  } else {
-    marker.setIcon(createIconPointDefault(colors, point.isBookmarked, point.sensor_id));
+  // Для обычных маркеров применяем цвет на основе значения
+  if (!isUserMessage && !point.isEmpty) {
+    const color = getColorForValue(point.value, unit, point);
+    colors.basic = color;
+    colors.border = color;
   }
-  if (point.model === 3) {
-    const coord = scatterCoords([point.geo.lat, point.geo.lng], point.sensor_id);
-    marker.setLatLng(new L.LatLng(coord[0], coord[1]));
+  
+  const { marker, isNew } = upsertMarker(point, colors, point.sensor_id);
+  
+  if (isNew) {
+    // Добавляем класс обновления для визуальной обратной связи
+    const iconElement = marker.getElement();
+    if (iconElement) {
+      iconElement.classList.add('updating');
+    }
+    
+    // Прикрепляем все события включая клик для нового маркера
+    attachMarkerEvents(marker, markerClickHandler);
+
+    // Определяем слой для добавления маркера
+    if (isUserMessage && point.measurement && messageTypes[point.measurement.type]) {
+      // Для пользовательских сообщений добавляем в соответствующий слой сообщений
+      const messageLayer = messagesLayers[messageTypes[point.measurement.type]];
+      if (messageLayer) {
+        messageLayer.addLayer(marker);
+      }
+    } else {
+      // Для обычных маркеров добавляем в основной слой
+      if (markersLayer) {
+        markersLayer.addLayer(marker);
+      }
+    }
+    
+    // Убираем класс обновления после добавления на карту
+    setTimeout(() => {
+      if (iconElement) {
+        iconElement.classList.remove('updating');
+      }
+    }, 800);
   }
+  // Для существующего маркера ничего дополнительного не нужно - он уже обновлен
 }
+
+
 
 function findMarker(sensor_id) {
-  return new Promise((resolve) => {
-    if (markersLayer) {
-      let found = false;
-      markersLayer.eachLayer((m) => {
-        if (!found && m.options.data.sensor_id === sensor_id) {
-          found = m;
-        }
-      });
-      if (found) return resolve(found);
+  if (!markersLayer) return false;
+  
+  let found = false;
+  markersLayer.eachLayer((m) => {
+    if (!found && m.options.data?.sensor_id === sensor_id) {
+      found = m;
     }
-    resolve(false);
   });
+  
+  return found || false;
 }
 
-export async function addPoint(point) {
-  queue.add(makeRequest.bind(queue, point));
-  async function makeRequest(point) {
+
+/**
+ * Очищает все маркеры с карты (основные и сообщения)
+ */
+export function clearAllMarkers() {
+  if (markersLayer) {
+    markersLayer.clearLayers();
+  }
+  for (const messagesLayer of Object.values(messagesLayers)) {
+    if (messagesLayer) {
+      messagesLayer.clearLayers();
+    }
+  }
+}
+
+
+
+export async function addPoint(point, unit = null) {
+  queue.add(makeRequest.bind(queue, point, unit));
+  async function makeRequest(point, unit) {
     try {
-      if (point.model === 1) {
-        // Handle model 1 if needed
-      } else if (point.model === 2) {
-        await addMarker(point);
-      } else if (point.model === 3) {
-        await addMarker(point);
-      } else if (point.model === 4) {
-        await addMarkerUser(point);
+      const modelConfig = POINT_MODELS[point.model];
+      
+      if (!modelConfig) {
+        console.warn(`Unknown model ${point.model} for sensor ${point.sensor_id}`);
+        return;
       }
+      
+      if (!modelConfig.handler) {
+        console.warn(`Model ${point.model} (${modelConfig.name}) not implemented for sensor ${point.sensor_id}`);
+        return;
+      }
+      
+      // Вызываем соответствующий обработчик
+      if (modelConfig.handler === 'addMarker') {
+        await addMarker(point, unit, 'sensor');
+      } else if (modelConfig.handler === 'addMarkerUser') {
+        await addMarker(point, unit, 'userMessage');
+      }
+      
     } catch (error) {
-      // Handle error silently
+      console.error(`Error processing point for sensor ${point.sensor_id}:`, error);
     }
     this.next();
   }
 }
 
+
+export function switchMessagesLayer(map, enabled = false) {
+  for (const messagesLayer of Object.values(messagesLayers)) {
+    if (messagesLayer) {
+      if (enabled) {
+        map.addLayer(messagesLayer);
+      } else {
+        map.removeLayer(messagesLayer);
+      }
+    }
+  }
+}
+
+
+export function refreshClusters() {
+  if (markersLayer) {
+    markersLayer.refreshClusters();
+  }
+}
 
 
 
@@ -670,7 +845,7 @@ export async function addPoint(point) {
 function getColorForValue(value, unit, point = null) {
   // Regular measurement handling
   if (value === null || value === undefined || isNaN(value)) {
-    return "#a1a1a1"; // Default color for no data
+    return ICON_CONFIG.point.initColor; // Default color for no data
   }
   
   const scaleParams = getMeasurementByName(unit);
@@ -684,152 +859,17 @@ function getColorForValue(value, unit, point = null) {
     }
   }
 
-  return "#a1a1a1"; // Default color
+  return ICON_CONFIG.point.initColor; // Default color
 }
 
-function markercolor(value, point = null) {
-  const unit = localStorage.getItem("currentUnit") ?? null;
-  return getColorForValue(value, unit, point);
-}
-
-async function addMarker(point) {
-  // пропускаем датчики с «нулевой» геопозицией
-  const tolerance = 0.001;
-  const lat = Number(point.geo.lat);
-  const lng = Number(point.geo.lng);
-  if (Math.abs(lat) < tolerance && Math.abs(lng) < tolerance) {
-    return;
-  }
-
-  const colors = {
-    basic: "#a1a1a1",
-    border: "#999",
-    rgb: [161, 161, 161],
-  };
-  if (!point.isEmpty) {
-    const color = markercolor(point.value, point);
-    colors.basic = color;
-    colors.border = color;
-  }
-  const marker = await findMarker(point.sensor_id);
-  if (!marker) {
-    const m = createMarker(point, colors);
-
-    // Прикрепляем все события включая клик
-    attachMarkerEvents(m, markerClickHandler);
-
-    if (markersLayer) {
-      markersLayer.addLayer(m);
-    }
-    } else {
-    // Always update existing marker, even if empty
-    updateMarker(marker, point, colors);
-  }
-}
-
-
-
-async function addMarkerUser(point) {
-  // пропускаем «нулевые» координаты
-  const tolerance = 0.001;
-  const lat = Number(point.geo.lat);
-  const lng = Number(point.geo.lng);
-  if (Math.abs(lat) < tolerance && Math.abs(lng) < tolerance) {
-    return;
-  }
-
-  const colors = {
-    basic: "#f99981",
-    border: "#999",
-    rgb: [161, 161, 161],
-  };
-  const marker = await findMarker(point.sensor_id);
-  if (!marker) {
-    const m = createMarker(point, colors);
-
-    // figure out the layer where this user marker will live
-    const layer =
-      point.measurement &&
-      messageTypes[point.measurement.type] &&
-      messagesLayers[messageTypes[point.measurement.type]]
-        ? messagesLayers[messageTypes[point.measurement.type]]
-        : null;
-
-    // Прикрепляем все события включая клик
-    attachMarkerEvents(m, markerClickHandler);
-
-    if (
-      point.measurement &&
-      messageTypes[point.measurement.type] &&
-      messagesLayers[messageTypes[point.measurement.type]]
-    ) {
-      messagesLayers[messageTypes[point.measurement.type]].addLayer(m);
-    }
-  }
-}
-
-export function clear() {
-  if (markersLayer) {
-    markersLayer.clearLayers();
-  }
-  for (const messagesLayer of Object.values(messagesLayers)) {
-    if (messagesLayer) {
-      messagesLayer.clearLayers();
-    }
-  }
-}
-
-export function switchMessagesLayer(map, enabled = false) {
-  for (const messagesLayer of Object.values(messagesLayers)) {
-    if (messagesLayer) {
-      if (enabled) {
-        map.addLayer(messagesLayer);
-      } else {
-        map.removeLayer(messagesLayer);
-      }
-    }
-  }
-}
-
-export function refreshClusters() {
-  if (markersLayer) {
-    markersLayer.refreshClusters();
-  }
-}
-
-
-// Function to set all markers to gray color (loading state)
-export function setAllMarkersGray() {
-  if (!markersLayer) return;
-  
-  const grayColors = {
-    basic: "#a1a1a1",
-    border: "#999",
-    rgb: [161, 161, 161],
-  };
-  
-  // Update all markers in the layer
-  markersLayer.eachLayer((layer) => {
-    if (layer.options.typeMarker === "brand") {
-      layer.setIcon(createIconPointImage(layer.options.data.sensor_id));
-    } else if (layer.options.typeMarker === "arrow") {
-      layer.setIcon(createIconPointWind(0, 0, grayColors.basic));
-    } else if (layer.options.typeMarker === "circle") {
-      layer.setIcon(createIconPointDefault(grayColors, false, layer.options.data.sensor_id));
-    }
-  });
-  
-  // Refresh clusters to update their colors
-  refreshClusters();
-}
 
 /**
  * Инициализирует систему маркеров на карте
  * @param {Object} mapInstance - Экземпляр карты Leaflet
- * @param {string} type - Тип маркеров
  * @param {Function} cb - Callback функция для обработки кликов по маркерам
+ * @param {string} unit - Единица измерения (pm10, pm25, temperature, etc.)
  */
-export async function init(mapInstance, type, cb) {
+export async function init(mapInstance, cb, unit = null) {
   map = mapInstance;
   
   // Загружаем иконки сообщений
@@ -845,7 +885,7 @@ export async function init(mapInstance, type, cb) {
   }
 
   // Создаем основной слой маркеров
-  markersLayer = createClusterGroup(createIconClusterDefault);
+  markersLayer = createClusterGroup(createIconClusterDefault, unit);
   map.addLayer(markersLayer);
 
   // Создаем обработчик клика для маркеров
@@ -856,7 +896,7 @@ export async function init(mapInstance, type, cb) {
   
   // Создаем слои для сообщений и сразу прикрепляем события
   for (const type of Object.values(messageTypes)) {
-    const layer = createClusterGroup((cluster) => createIconClusterMessages(cluster, type));
+    const layer = createClusterGroup((cluster) => createIconClusterMessages(cluster, type), unit);
     messagesLayers[type] = layer;
     attachClusterEvents(layer, markerClickHandler);
   }
@@ -864,10 +904,4 @@ export async function init(mapInstance, type, cb) {
   // Прикрепляем события к основному слою маркеров
   attachClusterEvents(markersLayer, markerClickHandler);
 
-  // Добавляем слои сообщений на карту если включены
-  if (settings.SHOW_MESSAGES) {
-    for (const messagesLayer of Object.values(messagesLayers)) {
-      map.addLayer(messagesLayer);
-    }
-  }
 }
