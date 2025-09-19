@@ -221,39 +221,6 @@ const handlerHistory = async ({ start, end }) => {
   const day = String(startDate.getDate()).padStart(2, '0');
   const startDateString = `${year}-${month}-${day}`;
   
-  // Проверяем, есть ли кеш для этой даты (временно отключено для AQI)
-  // const cachedSensors = await import('@/utils/map/marker').then(module => {
-  //   return module.pointsCache.get(startDateString);
-  // });
-  
-  // if (cachedSensors) {
-  //   console.log(`Using cached data for ${startDateString}: ${cachedSensors.length} sensors`);
-  //   // Используем кешированные данные
-  //   mapStore.setSensors(cachedSensors);
-  //   
-  //   // Если текущая единица измерения AQI, нужно пересчитать цвета точек
-  //   if (mapStore.currentUnit === 'aqi') {
-  //     // Очищаем AQI кеш для этой даты чтобы пересчитать с текущей версией AQI
-  //     const { clearAQICache } = await import('@/utils/map/marker');
-  //     clearAQICache(startDateString);
-  //   }
-  //   
-  //   // Добавляем точки на карту
-  //   cachedSensors.forEach(sensor => {
-  //     const point = {
-  //       sensor_id: sensor.sensor_id,
-  //       geo: sensor.geo,
-  //       model: sensor.model,
-  //       data: sensor.data,
-  //       logs: sensor.logs
-  //     };
-  //     handlerNewPoint(point);
-  //   });
-  //   
-  //   state.isLoad = false;
-  //   return;
-  // }
-  
   
   // Очищаем сенсоры чтобы показать 0 во время загрузки
   mapStore.clearSensors();
@@ -304,80 +271,9 @@ const handlerHistory = async ({ start, end }) => {
       // Обновляем mapStore.sensors сразу для показа счетчика
       mapStore.setSensors(initialSensors);
       
-      // Сохраняем базовые данные в кеш сразу после первого GET запроса (временно отключено для AQI)
-      // import('@/utils/map/marker').then(module => {
-      //   const today = new Date().toISOString().split('T')[0];
-      //   const permanent = startDateString !== today;
-      //   module.pointsCache.set(startDateString, initialSensors, permanent);
-      //   console.log(`Quick cache saved: ${startDateString} with ${initialSensors.length} sensors (basic data)`);
-      // });
-      
       // Обрабатываем данные в зависимости от выбранной единицы измерения
       let fullSensorData;
       
-      if (mapStore.currentUnit === 'aqi') {
-        // Для AQI нужны индивидуальные запросы для получения полной истории
-        const sensorPromises = sensorIds.map(async (sensorId) => {
-          try {
-            const fullLogs = await state.providerObj.getHistoryPeriodBySensor(sensorId, start, end);
-            
-            if (fullLogs && fullLogs.length > 0) {
-              // Берем последнюю запись как основную информацию о сенсоре
-              const lastLog = fullLogs[fullLogs.length - 1];
-              
-              // Рассчитываем AQI для этого сенсора
-              let aqiValue = null;
-              try {
-                // Проверяем, есть ли достаточно данных для расчета AQI
-                const hasSufficientTime = (() => {
-                  if (!Array.isArray(fullLogs) || fullLogs.length < 2) return false;
-                  const timestamps = fullLogs
-                    .map(log => log.timestamp)
-                    .filter(ts => Number.isFinite(ts))
-                    .sort((a, b) => a - b);
-                  if (timestamps.length < 2) return false;
-                  const timeSpanHours = (timestamps[timestamps.length - 1] - timestamps[0]) / 3600;
-                  return timeSpanHours >= 2;
-                })();
-                
-                if (hasSufficientTime) {
-                  // Импортируем функцию расчета AQI
-                  const { getAQICalculator } = await import('@/utils/map/marker');
-                  const { useMapStore } = await import('@/stores/map');
-                  const mapStore = useMapStore();
-                  
-                  const calculateAQIIndex = getAQICalculator(mapStore.aqiVersion);
-                  aqiValue = calculateAQIIndex(fullLogs);
-                  
-                  if (aqiValue !== null && aqiValue !== undefined) {
-                  }
-                } else {
-                }
-              } catch (error) {
-                console.warn(`Failed to calculate AQI for sensor ${sensorId.substring(0, 8)}:`, error);
-              }
-              
-              return {
-                sensor_id: sensorId,
-                geo: lastLog.geo || { lat: 0, lng: 0 },
-                model: lastLog.model || 2,
-                data: {
-                  ...lastLog.data,
-                  aqi: aqiValue
-                },
-                log: fullLogs, // Полные логи для расчета AQI
-                logs: fullLogs // Дублируем для совместимости
-              };
-            }
-          } catch (error) {
-            console.warn('Failed to get full history for sensor', sensorId.substring(0, 8), error.message);
-          }
-          return null;
-        });
-        
-        // Ждем завершения всех запросов для AQI
-        fullSensorData = await Promise.all(sensorPromises);
-      } else {
         // Для не-AQI измерений используем данные из общего запроса
         fullSensorData = sensorIds.map(sensorId => {
           const sensorLogs = allSensorData[sensorId];
@@ -399,10 +295,6 @@ const handlerHistory = async ({ start, end }) => {
           }
           return null;
         });
-      }
-      
-      const validCount = fullSensorData.filter(Boolean).length;
-      const nullCount = fullSensorData.filter(item => item === null).length;
       
       // Проверяем, не был ли запрос отменен
       if (currentRequestId !== requestId) {
@@ -419,48 +311,10 @@ const handlerHistory = async ({ start, end }) => {
         return;
       }
       
-      // Для не-AQI измерений красим точки сразу из загруженных данных
-      if (mapStore.currentUnit !== 'aqi') {
-        // Здесь будет логика окраски точек из загруженных данных
-        // Пока просто обновляем кластеры
-        import('@/utils/map/marker').then(module => {
-          module.refreshClusters();
-        });
-      }
-      
-      // Проверяем, есть ли сенсоры с рассчитанным AQI
-      const sensorsWithAQI = validSensors.filter(sensor => 
-        sensor.data && sensor.data.aqi !== null && sensor.data.aqi !== undefined
-      );
-      
-      // Обновляем кеш с полными данными только если есть рассчитанные AQI
-      if (sensorsWithAQI.length > 0) {
-        import('@/utils/map/marker').then(module => {
-          // Для прошедших дат - бессрочный кеш, для сегодняшнего дня - TTL 1 час (временно отключено для AQI)
-          // const today = new Date().toISOString().split('T')[0];
-          // const permanent = startDateString !== today;
-          // module.pointsCache.set(startDateString, validSensors, permanent);
-        });
-      } else {
-      }
-      
-      // Теперь добавляем точки с полными логами
-      validSensors.forEach(sensor => {
-        // Проверяем отмену для каждой точки
-        if (currentRequestId !== requestId) {
-          return;
-        }
-        
-        const point = {
-          sensor_id: sensor.sensor_id,
-          geo: sensor.geo,
-          model: sensor.model,
-          data: sensor.data,
-          logs: sensor.logs
-        };
-        
-        handlerNewPoint(point);
+      import('@/utils/map/marker').then(module => {
+        module.refreshClusters();
       });
+      
     }
   } catch (error) {
     console.error('Error fetching sensor history:', error);
@@ -490,13 +344,6 @@ const handlerHistory = async ({ start, end }) => {
   // Принудительно обновляем кластеры с новыми цветами после загрузки
   setTimeout(() => {
     markers.refreshClusters();
-    
-    // Если текущий тип измерения - AQI, принудительно пересчитываем все маркеры
-    if (mapStore.currentUnit === 'aqi') {
-      setTimeout(() => {
-        markers.refreshClusters();
-      }, 100);
-    }
   }, 100);
   
   state.isLoad = false;
@@ -531,18 +378,8 @@ const handlerNewPoint = async (point) => {
     // Handle value calculation based on mode and type
     let isEmpty = false;
     let value = null;
+   
     
-    if ((props.type || '').toLowerCase() === 'aqi') {
-      // For AQI, we need logs to calculate the index
-      if (point.logs && point.logs.length > 0) {
-        isEmpty = false;
-        value = null; // AQI will be calculated in getColorForValue function
-      } else {
-        isEmpty = true;
-        value = null;
-      }
-    } else {
-      // For regular measurements
       if (state.status === "history") {
         // Daily recap mode: calculate average for the day
         if (point.logs && point.logs.length > 0) {
@@ -584,8 +421,7 @@ const handlerNewPoint = async (point) => {
           value = null;
         }
       }
-    }
-
+    
     
 
     // Update point with calculated color
@@ -819,12 +655,7 @@ const handleTypeChange = async (newType) => {
   // Update localStorage
   localStorage.setItem("currentUnit", newType);
   
-  // Set all markers to gray color immediately to show loading state
-  
-  // For AQI, don't clear markers - just update their colors
-  if (newType !== 'aqi') {
-    markers.clearAllMarkers();
-  }
+  markers.clearAllMarkers();
   
   // Use data from mapStore.sensors - no API calls needed
   const sensorData = mapStore.sensors || [];
@@ -851,16 +682,6 @@ const handleTypeChange = async (newType) => {
   
   // Refresh clusters to update their colors based on new measurement type
   markers.refreshClusters();
-  
-  // For AQI, force cluster refresh multiple times to ensure colors update
-  if (newType === 'aqi') {
-    setTimeout(() => {
-      markers.refreshClusters();
-    }, 100);
-    setTimeout(() => {
-      markers.refreshClusters();
-    }, 300);
-  }
 };
 
 const handlerCloseInfo = () => {
@@ -969,26 +790,22 @@ watch(
       // Clear existing markers
       markers.clearAllMarkers();
       
-      // Add all sensors as gray markers immediately
-      sensors.forEach(sensor => {
+      // Process each sensor with existing data (same logic as handleTypeChange)
+      for (const sensor of sensors) {
+        if (!sensor.sensor_id) continue;
+        
+        // Create point with existing data
         const point = {
           sensor_id: sensor.sensor_id,
-          geo: sensor.geo,
-          model: sensor.model,
-          data: sensor.data,
-          logs: sensor.logs,
-          isEmpty: true, // Always start as gray
-          value: null,
-          isBookmarked: false
+          geo: sensor.geo || { lat: 0, lng: 0 },
+          model: 2,
+          data: sensor.data || {},
+          logs: sensor.logs || []
         };
         
-        markers.addPoint(point, mapStore.currentUnit);
-      });
-      
-      // Force refresh to show gray markers
-      import('@/utils/map/marker').then(module => {
-        module.refreshClusters();
-      });
+        // Use the same handler as handleTypeChange
+        handlerNewPointWithType(point, mapStore.currentUnit);
+      }
     }
   },
   { immediate: true }
