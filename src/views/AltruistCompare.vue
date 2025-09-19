@@ -13,7 +13,8 @@
 
 
 <script setup>
-import { getCurrentInstance, onMounted } from "vue";
+import { onMounted } from "vue";
+import { useRouter } from "vue-router";
 
 import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 import MetaInfo from '../components/MetaInfo.vue';
@@ -22,13 +23,28 @@ import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue"
 
 import ogImage from '../assets/images/pages/altruist-compare/og-altruist-compare.webp';
 
-onMounted(() => {
-  const instance = getCurrentInstance();
-  const matomo = instance?.proxy?.$matomo;
+const router = useRouter();
 
-  if (matomo) {
-    matomo.disableCookies();
-    matomo.trackPageView();
-  }
+onMounted(() => {
+  const waitForMatomo = setInterval(() => {
+    if (
+      typeof window.Matomo !== "undefined" &&
+      typeof window.Matomo.getTracker === "function"
+    ) {
+      clearInterval(waitForMatomo);
+
+      const trackPage = () => {
+        const tracker = window.Matomo.getTracker();
+        if (tracker && !tracker.isUserOptedOut()) {
+          window._paq.push(["setCustomUrl", router.currentRoute.value.fullPath]);
+          window._paq.push(["setDocumentTitle", document.title]);
+          window._paq.push(["trackPageView"]);
+        }
+      };
+
+      // Track the initial page load
+      trackPage();
+    }
+  }, 100);
 });
 </script>

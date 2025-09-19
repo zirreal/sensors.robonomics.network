@@ -30,7 +30,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, getCurrentInstance } from "vue";
+import { ref, reactive, computed, watch, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 
 import { useMapStore } from "@/stores/map";
@@ -1077,14 +1077,26 @@ onMounted(async () => {
     }).catch(() => {});
   }
 
-  const instance = getCurrentInstance();
-  const matomo = instance?.proxy?.$matomo;
+  const waitForMatomo = setInterval(() => {
+    if (
+      typeof window.Matomo !== "undefined" &&
+      typeof window.Matomo.getTracker === "function"
+    ) {
+      clearInterval(waitForMatomo);
 
-  if (matomo) {
-    matomo.disableCookies();
-    matomo.trackPageView();
-  }
+      const trackPage = () => {
+        const tracker = window.Matomo.getTracker();
+        if (tracker && !tracker.isUserOptedOut()) {
+          window._paq.push(["setCustomUrl", router.currentRoute.value.fullPath]);
+          window._paq.push(["setDocumentTitle", document.title]);
+          window._paq.push(["trackPageView"]);
+        }
+      };
 
+      // Track the initial page load
+      trackPage();
+    }
+  }, 100);
 });
 
 // Watch for sensors loading and display points when ready

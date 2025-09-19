@@ -87,7 +87,8 @@
 </template>
 
 <script setup>
-import { onMounted, getCurrentInstance } from "vue";
+import { onMounted } from "vue";
+import { useRouter } from "vue-router";
 
 import MetaInfo from "../components/MetaInfo.vue";
 import OptOutForm from "../components/matomo/OptOutForm.vue";
@@ -95,15 +96,31 @@ import PageTextLayout from "../components/layouts/PageText.vue";
 
 import ogImage from '../assets/images/pages/privacy-policy/og-privacy-policy.webp';
 
-onMounted(() => {
-  const instance = getCurrentInstance();
-  const matomo = instance?.proxy?.$matomo;
+const router = useRouter();
 
-  if (matomo) {
-    matomo.disableCookies();
-    matomo.trackPageView();
-  }
+onMounted(() => {
+  const waitForMatomo = setInterval(() => {
+    if (
+      typeof window.Matomo !== "undefined" &&
+      typeof window.Matomo.getTracker === "function"
+    ) {
+      clearInterval(waitForMatomo);
+
+      const trackPage = () => {
+        const tracker = window.Matomo.getTracker();
+        if (tracker && !tracker.isUserOptedOut()) {
+          window._paq.push(["setCustomUrl", router.currentRoute.value.fullPath]);
+          window._paq.push(["setDocumentTitle", document.title]);
+          window._paq.push(["trackPageView"]);
+        }
+      };
+
+      // Track the initial page load
+      trackPage();
+    }
+  }, 100);
 });
+
 </script>
 
 <style scoped>

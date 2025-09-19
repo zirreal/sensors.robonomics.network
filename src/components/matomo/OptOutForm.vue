@@ -4,7 +4,7 @@
     <p>{{ optChoice }}</p>
     <label class="custom-checkbox">
       <input
-        @change="check($event)"
+        @change="onToggle($event)"
         type="checkbox"
         v-model="optOut"
         name="optout"
@@ -22,36 +22,75 @@ export default {
   data() {
     return {
       optOut: false,
-      optText: "You are currently opted out. Click here to opt in",
-      optDescr:
-        "You may choose not to have a unique web analytics cookie identification number assigned to your computer to avoid the aggregation and analysis of data collected on this website.",
-      optChoice: "To make that choice, please click below to receive an opt-out cookie",
+      optText: this.$t("privacypolicy.matomolabel2"),
+      optDescr: this.$t("privacypolicy.matomotext3"),
+      optChoice: this.$t("privacypolicy.matomotext4"),
+      paqCheckInterval: null, // for waiting until Matomo loads
     };
   },
 
   methods: {
     setOptOutText() {
-      if (this.$matomo) {
-        if (this.$matomo && this.$matomo.isUserOptedOut()) {
-          this.optText = this.$t("privacypolicy.matomolabel1");
-          this.optDescr = this.$t("privacypolicy.matomotext1");
-          this.optChoice = this.$t("privacypolicy.matomotext2");
-        } else {
-          this.optText = this.$t("privacypolicy.matomolabel2");
-          this.optDescr = this.$t("privacypolicy.matomotext3");
-          this.optChoice = this.$t("privacypolicy.matomotext4");
-        }
+      if (this.optOut) {
+        this.optText = this.$t("privacypolicy.matomolabel1");
+        this.optDescr = this.$t("privacypolicy.matomotext1");
+        this.optChoice = this.$t("privacypolicy.matomotext2");
+      } else {
+        this.optText = this.$t("privacypolicy.matomolabel2");
+        this.optDescr = this.$t("privacypolicy.matomotext3");
+        this.optChoice = this.$t("privacypolicy.matomotext4");
       }
     },
 
-    check() {
-      if (this.$matomo && this.$matomo.isUserOptedOut()) {
-        this.$matomo && this.$matomo.forgetUserOptOut();
-      } else {
-        this.$matomo && this.$matomo.optUserOut();
-      }
+    onToggle(event) {
+      this.optOut = event.target.checked;
       this.setOptOutText();
+
+      if (!window._paq || typeof window._paq.push !== "function") {
+        console.warn("Matomo _paq not ready yet");
+        return;
+      }
+
+      if (this.optOut) {
+        window._paq.push(["optUserOut"]);
+        console.log("User opted out");
+      } else {
+        window._paq.push(["forgetUserOptOut"]);
+        console.log("User opted in");
+      }
     },
+
+    fetchOptOutState() {
+      // Ensure Matomo and the tracker are available
+      const matomoReady =
+        typeof window.Matomo !== "undefined" &&
+        typeof window.Matomo.getTracker === "function";
+
+      if (!matomoReady) return false; // Matomo not ready yet
+
+      const tracker = window.Matomo.getTracker();
+      if (!tracker) return false;
+
+      // Safely read the user's opt-out state
+      this.optOut = !!tracker.isUserOptedOut(); // force boolean
+      this.setOptOutText();
+
+      return true; // successfully fetched
+    },
+
+
+
+    waitForMatomo() {
+      if (this.fetchOptOutState()) return;
+
+      this.paqCheckInterval = setInterval(() => {
+        if (this.fetchOptOutState()) {
+          clearInterval(this.paqCheckInterval);
+          this.paqCheckInterval = null;
+        }
+      }, 100);
+    }
+
   },
 
   watch: {
@@ -60,11 +99,19 @@ export default {
     },
   },
 
-  async mounted() {
-    setTimeout(async () => {
-      this.optOut = (await this.$matomo) && !this.$matomo.isUserOptedOut();
-      this.setOptOutText();
-    }, 300);
+  mounted() {
+    this.setOptOutText();
+    if (window._paq && typeof window._paq.push === "function") {
+      window._paq.push(["disableCookies"]);
+    }
+
+    this.waitForMatomo(); // fetch current opt-out state once Matomo is ready
+  },
+
+  beforeUnmount() {
+    if (this.paqCheckInterval) {
+      clearInterval(this.paqCheckInterval);
+    }
   },
 };
 </script>
