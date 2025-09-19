@@ -13,6 +13,25 @@
     <link rel="mask-icon" href="/app-icon-512.png" color="#FFFFFF">
     <meta name="theme-color" content="#ffffff">
     <title>Web3 public sensors map</title>
+
+    <script>
+      // Only load Matomo if user hasn't opted out
+      if (!localStorage.getItem("matomoOptOut")) {
+        // Initialize _paq BEFORE loading matomo.js
+        window._paq = window._paq || [];
+        window._paq.push(["setTrackerUrl", "https://matomo.robonomics.network/matomo.php"]);
+        window._paq.push(["setSiteId", "5"]);
+        window._paq.push(["enableLinkTracking"]);
+
+        // Inject Matomo script
+        const g = document.createElement("script");
+        g.async = true;
+        g.defer = true;
+        g.src = "https://matomo.robonomics.network/matomo.js";
+        g.onload = () => console.log("Matomo loaded successfully", window._paq);
+        document.head.appendChild(g);
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>

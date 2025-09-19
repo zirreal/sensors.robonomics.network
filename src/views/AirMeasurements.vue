@@ -58,7 +58,8 @@
 
 
 <script setup>
-import { ref, watch, onMounted, getCurrentInstance } from 'vue';
+import { ref, watch, onMounted } from 'vue';
+import { useRouter } from "vue-router";
 import { useI18n } from 'vue-i18n';
 import PageTextLayout from "../components/layouts/PageText.vue";
 import MetaInfo from '../components/MetaInfo.vue';
@@ -73,14 +74,29 @@ watch(locale, (newLocale) => {
   currentLocale.value = newLocale;
 });
 
-onMounted(() => {
-  const instance = getCurrentInstance();
-  const matomo = instance?.proxy?.$matomo;
+const router = useRouter();
 
-  if (matomo) {
-    matomo.disableCookies();
-    matomo.trackPageView();
-  }
+onMounted(() => {
+  const waitForMatomo = setInterval(() => {
+    if (
+      typeof window.Matomo !== "undefined" &&
+      typeof window.Matomo.getTracker === "function"
+    ) {
+      clearInterval(waitForMatomo);
+
+      const trackPage = () => {
+        const tracker = window.Matomo.getTracker();
+        if (tracker && !tracker.isUserOptedOut()) {
+          window._paq.push(["setCustomUrl", router.currentRoute.value.fullPath]);
+          window._paq.push(["setDocumentTitle", document.title]);
+          window._paq.push(["trackPageView"]);
+        }
+      };
+
+      // Track the initial page load
+      trackPage();
+    }
+  }, 100);
 });
 </script>
 
