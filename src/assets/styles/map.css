@@ -81,13 +81,10 @@
   filter: grayscale(100%);
 }
 
-.icon.current-active-marker, .marker-cluster-circle.current-active-marker, .marker-point-circle.current-active-marker {
+.mapcontainer.inactive .marker-point-active .icon {
   filter: none !important;
 }
 
-.icon.with-active-sensor, .marker-cluster-circle.with-active-sensor, .marker-point-circle.with-active-sensor {
-  filter: none !important;
-}
 
 /* Стили для span внутри иконок сообщений */
 .icon.marker-cluster-msg span[data-count-type] {

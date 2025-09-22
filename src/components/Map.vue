@@ -176,11 +176,6 @@ export default {
 
     handleActivePoint() {
       if (this.$route.query.sensor) {
-        document?.querySelectorAll("[data-children]").forEach((el) => {
-          if (el.dataset.children.split(",").includes(this.$route.query.sensor))
-            el.classList.add("with-active-sensor");
-        });
-
         this.$emit("activateMarker", this.$route.query.sensor);
       }
     },
@@ -387,10 +382,6 @@ export default {
   overflow: hidden;
 }
 
-.mapcontainer.inactive {
-  /* filter: grayscale(100%); */
-  /* pointer-events: none; */
-}
 
 .popoovergeo {
   position: relative;

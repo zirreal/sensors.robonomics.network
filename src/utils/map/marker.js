@@ -8,69 +8,23 @@
  * complexity and maintainability.
  */
 
-import { settings, sensors } from "@config";
+import { sensors } from "@config";
 import Queue from "js-queue";
 import L from "leaflet";
 import "leaflet-arrowheads";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
-import { getMeasurementByName } from "../../measurements/tools";
+import * as colors from "./marker_color";
+import * as icons from "./marker_icons";
 
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-const queue = new Queue();
-let markersLayer;
-let map;
-let markerClickHandler;
-
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
-
-const messageTypes = {
-  0: "text",
-  1: "air",
-  2: "garbage",
-  3: "water",
-  4: "fire",
-  5: "forest",
-  6: "alert",
-  7: "notif",
-  8: "recycle",
-  9: "parking",
-  42: "gank",
-};
-let messageIconName = {};
-let messageIconType = {};
-const messagesLayers = Object.values(messageTypes).reduce((result, item) => {
-  result[item] = null;
-  return result;
-}, {});
-
-// Icon configuration
-const ICON_CONFIG = {
-  cluster: {
-    iconSize: new L.Point(40, 40),
-    className: "marker-cluster",
-    initColor: "#a1a1a1", // default gray color
-    initBorderColor: "#999"
-  },
-  point: {
-    iconSize: new L.Point(30, 30),
-    className: "marker-point",
-    initColor: "#a1a1a1", // default gray color
-    initBorderColor: "#999",
-    initRgb: [161, 161, 161], // RGB equivalent of initColor
-    userMessageColor: "#f99981" // User message color
-  }
+const MARKER_CLASSES = {
+  active: "marker-point-active",
+  hovered: "is-hovered",
+  hoverable: "hoverable",
+  tapHighlight: "tap-highlight",
+  updating: "updating"
 };
 
-// Конфигурация моделей точек
 const POINT_MODELS = {
   1: { 
     name: 'unimplemented', 
@@ -97,6 +51,45 @@ const POINT_MODELS = {
     needsScatter: false
   }
 };
+
+const messageTypes = {
+  0: "text",
+  1: "air",
+  2: "garbage",
+  3: "water",
+  4: "fire",
+  5: "forest",
+  6: "alert",
+  7: "notif",
+  8: "recycle",
+  9: "parking",
+  42: "gank",
+};
+
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+const queue = new Queue();
+let markersLayer;
+let map;
+let markerClickHandler;
+let activeMarker = null; // Текущий активный маркер
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
+
+let messageIconName = {};
+let messageIconType = {};
+const messagesLayers = Object.values(messageTypes).reduce((result, item) => {
+  result[item] = null;
+  return result;
+}, {});
+
 
 const IS_TOUCH =
   typeof window !== "undefined" &&
@@ -142,13 +135,13 @@ function attachMarkerEvents(marker, clickCallback) {
 
   marker.on("mouseover", () => {
     if (marker._icon) {
-      marker._icon.classList.add("is-hovered");
+      marker._icon.classList.add(MARKER_CLASSES.hovered);
     }
   });
 
   marker.on("mouseout", () => {
     if (marker._icon) {
-      marker._icon.classList.remove("is-hovered");
+      marker._icon.classList.remove(MARKER_CLASSES.hovered);
     }
   });
 
@@ -156,7 +149,7 @@ function attachMarkerEvents(marker, clickCallback) {
     if (marker._icon) {
       marker._icon.style.pointerEvents = "auto";
       marker._icon.style.zIndex = marker._icon.style.zIndex || "500000";
-      marker._icon.classList.add("hoverable");
+      marker._icon.classList.add(MARKER_CLASSES.hoverable);
     }
   });
 
@@ -164,8 +157,8 @@ function attachMarkerEvents(marker, clickCallback) {
   marker.on("click", (event) => {
     // Touch highlight для мобильных устройств
     if (IS_TOUCH && marker._icon) {
-      marker._icon.classList.add("tap-highlight");
-      setTimeout(() => marker._icon.classList.remove("tap-highlight"), 550);
+      marker._icon.classList.add(MARKER_CLASSES.tapHighlight);
+      setTimeout(() => marker._icon.classList.remove(MARKER_CLASSES.tapHighlight), 550);
     }
 
     // Устанавливаем активную область карты
@@ -299,39 +292,7 @@ function scatterCoords([latRaw, lngRaw], seed, meters = 15) {
   return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : [lat0, lng0];
 }
 
-/**
- * Создает унифицированный HTML для иконок с единой оберткой
- * @param {string|number} text - Текст для отображения (будет обернут в span)
- * @param {string} image - URL изображения (будет обернут в img)
- * @param {string} color - Цвет иконки (будет передан как CSS переменная --color)
- * @param {Object} container - Объект с параметрами контейнера
- * @param {string} container.class - CSS класс для обертки
- * @param {string} container.style - Inline стили для обертки
- * @param {Object} container.attributes - Атрибуты для обертки (data-*, id, etc.)
- * @returns {string} HTML строка
- */
-function createIconHTML({ text, image, color, container = {} }) {
-  const { class: wrapperClass = '', style: wrapperStyle = '', attributes = {} } = container;
-  
-  // Определяем содержимое
-  let content = '';
-  if (image) {
-    content = `<img src="${image}" alt="">`;
-  } else if (text !== undefined && text !== null) {
-    content = `<span>${text}</span>`;
-  }
-  
-  // Формируем атрибуты
-  const attrsString = Object.entries(attributes)
-    .map(([key, value]) => `${key}="${value}"`)
-    .join(' ');
-  
-  // Добавляем CSS переменную для цвета
-  const colorStyle = color ? `--color: ${color};` : '';
-  const finalStyle = `${colorStyle}${wrapperStyle}`;
-  
-  return `<div class="icon ${wrapperClass}" style="${finalStyle}" ${attrsString}>${content}</div>`;
-}
+// createIconHTML is now imported from marker_icons.js
 
 /**
  * Устанавливает защиту от рекурсии для map.panInsideBounds и map.setView (это нужно после того, как ввелся функционал ограничения карты для форков)
@@ -385,236 +346,6 @@ export function isReadyLayers() {
   return !!markersLayer;
 }
 
-
-
-function createIconClusterDefault(cluster, unit = null) {
-  try {
-  const markers = cluster.getAllChildMarkers();
-  const childCount = cluster.getChildCount();
-  let childCountCalc = 0;
-  const markersId = [];
-  let winningColor = ICON_CONFIG.cluster.initColor; // default color
-    
-    
-    
-    // Early return if no markers
-    if (childCount === 0 || markers.length === 0) {
-      
-      return new L.DivIcon({
-        html: createIconHTML({
-          text: childCount,
-          color: ICON_CONFIG.cluster.initColor,
-          container: {
-            class: 'marker-cluster-circle',
-            attributes: { 'data-children': '' }
-          }
-        }),
-        className: ICON_CONFIG.cluster.className,
-        iconSize: ICON_CONFIG.cluster.iconSize,
-      });
-    }
-  
-    // Regular measurement handling - count zones instead of averaging
-    const zoneCounts = new Map(); // zone color -> count
-    
-    // Sort markers by sensor_id for consistent results across zooms
-    const sortedMarkers = [...markers].sort((a, b) => {
-      const idA = a.options.data?.sensor_id || '';
-      const idB = b.options.data?.sensor_id || '';
-      return idA.localeCompare(idB);
-    });
-    
-    sortedMarkers.forEach((marker) => {
-      // Skip markers without data
-      if (marker.options.data.value === undefined || marker.options.data.value === "") {
-      return;
-    }
-
-    markersId.push(marker.options.data._id);
-
-    childCountCalc++;
-      const value = marker.options.data.value;
-
-      
-      // Get color for this marker's value using unified method
-      const markerColor = getColorForValue(value, unit, marker.options.data);
-      
-      // Count this zone
-      zoneCounts.set(markerColor, (zoneCounts.get(markerColor) || 0) + 1);
-    });
-    
-    // Find the winning zone (most common color)
-    let maxCount = 0;
-    for (const [color, count] of zoneCounts) {
-      if (count > maxCount) {
-        maxCount = count;
-        winningColor = color;
-    }
-  }
-  
-  // Use the winning zone color
-  let color = ICON_CONFIG.cluster.initColor; // default color
-  let colorBorder = "#999";
-  let isDark = false;
-  
-  if (unit && childCountCalc > 0) {
-    // Use the winning color from zone counting
-    color = winningColor;
-    
-    // Convert color to RGB for border calculation
-    const tempEl = document.createElement('div');
-    tempEl.style.color = color;
-    document.body.appendChild(tempEl);
-    const computedColor = getComputedStyle(tempEl).color;
-    document.body.removeChild(tempEl);
-    
-    if (computedColor.startsWith('rgb')) {
-      const rgb = computedColor.match(/\d+/g);
-      if (rgb && rgb.length >= 3) {
-        const r = parseInt(rgb[0]);
-        const g = parseInt(rgb[1]);
-        const b = parseInt(rgb[2]);
-        colorBorder = `rgb(${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)})`;
-        isDark = (r * 0.299 + g * 0.587 + b * 0.114) < 128;
-      }
-    }
-  }
-
-
-  return new L.DivIcon({
-    html: createIconHTML({
-      text: childCount,
-      color: color,
-      container: {
-        class: 'marker-cluster-circle',
-        attributes: { 'data-children': markersId }
-      }
-    }),
-    className: ICON_CONFIG.cluster.className,
-    iconSize: ICON_CONFIG.cluster.iconSize,
-  });
-  } catch (error) {
-    console.error(`createIconClusterDefault error: ${error.message}`, error);
-    // Return default cluster on error
-    return new L.DivIcon({
-      html: createIconHTML({
-        text: cluster.getChildCount(),
-        color: ICON_CONFIG.cluster.initColor,
-        container: {
-          class: 'marker-cluster-circle',
-          attributes: { 'data-children': '' }
-        }
-      }),
-      className: ICON_CONFIG.cluster.className,
-      iconSize: ICON_CONFIG.cluster.iconSize,
-  });
-  }
-}
-
-function createIconClusterMessages(cluster, type = "text") {
-  const childCount = cluster.getChildCount();
-  return new L.DivIcon({
-    html: createIconHTML({
-      text: childCount,
-      container: {
-        class: 'marker-cluster-msg',
-        style: `background-image: url(${messageIconName[type]});`,
-        attributes: { 'data-count-type': type }
-      }
-    }),
-    className: ICON_CONFIG.cluster.className,
-    iconSize: ICON_CONFIG.cluster.iconSize,
-  });
-}
-
-
-
-function createIconPointDefault(colors, isBookmarked, id) {
-  return new L.DivIcon({
-    html: createIconHTML({
-      color: colors.basic,
-      container: {
-        class: `marker-cluster-circle ${isBookmarked ? "sensor-bookmarked" : ""}`,
-        attributes: { 'data-id': id ?? "" }
-      }
-    }),
-    className: ICON_CONFIG.point.className,
-    iconSize: ICON_CONFIG.point.iconSize,
-  });
-}
-
-function createIconPointImage(sensor_id) {
-  return L.divIcon({
-    html: createIconHTML({
-      image: sensors[sensor_id].icon
-    }),
-    iconSize: ICON_CONFIG.point.iconSize,
-    className: ICON_CONFIG.point.className,
-  });
-}
-
-function createIconPointMessage(type = 0) {
-  return L.divIcon({
-    html: createIconHTML({
-      image: messageIconType[type],
-      container: {
-        class: 'marker-icon-msg'
-      }
-    }),
-    iconSize: ICON_CONFIG.point.iconSize,
-    className: ICON_CONFIG.point.className,
-  });
-}
-
-function createIconPointWind(dir, speed, color) {
-  return L.divIcon({
-    className: "",
-    html: createIconHTML({
-      text: `<div class="icon-arrow-container" style="transform: rotate(${dir + 90}deg);">
-      <div class="icon-arrow" style="border-color: ${color} ${color} transparent transparent;">
-        <div style="background-color: ${color};"></div>
-      </div>
-      <div class="label-arrow">${speed} m/s</div>
-      </div>`
-    }),
-    iconSize: ICON_CONFIG.point.iconSize,
-  });
-}
-
-
-
-function createMarkerBrand(coord, data, colors) {
-  return L.marker(new L.LatLng(coord[0], coord[1]), {
-    icon: createIconPointImage(data.sensor_id),
-    data: data,
-    typeMarker: "brand",
-  });
-}
-
-function createMarkerArrow(coord, data, colors) {
-  return L.marker(new L.LatLng(coord[0], coord[1]), {
-    icon: createIconPointWind(data.data.windang, data.data.windspeed, colors.basic),
-    data: data,
-    typeMarker: "arrow",
-  });
-}
-
-function createMarkerCircle(coord, data, colors) {
-  return L.marker(new L.LatLng(coord[0], coord[1]), {
-    icon: createIconPointDefault(colors, data.isBookmarked, data.sensor_id),
-    data: data,
-    typeMarker: "circle",
-  });
-}
-
-function createMarkerUser(coord, data) {
-  return L.marker(new L.LatLng(coord[0], coord[1]), {
-    icon: createIconPointMessage(data.measurement?.type || 0),
-    data: data,
-    typeMarker: "msg",
-  });
-}
-
 /**
  * Upsert маркер: создает новый или обновляет существующий
  * @param {Object} point - Данные точки
@@ -638,7 +369,7 @@ function upsertMarker(point, colors, sensor_id = null) {
     markerType = "arrow";
   } else if (modelConfig.isUserMessage) {
     markerType = "msg";
-  } else {
+      } else {
     markerType = "circle";
   }
 
@@ -653,13 +384,13 @@ function upsertMarker(point, colors, sensor_id = null) {
     
     // Обновляем иконку в зависимости от типа
     if (markerType === "brand") {
-      existingMarker.setIcon(createIconPointImage(point.sensor_id));
+      existingMarker.setIcon(icons.createIconPointImage(point.sensor_id, sensors));
     } else if (markerType === "arrow" && point.data && Object.prototype.hasOwnProperty.call(point.data, "windang")) {
-      existingMarker.setIcon(createIconPointWind(point.data.windang, point.data.windspeed, colors.basic));
+      existingMarker.setIcon(icons.createIconPointWind(point.data.windang, point.data.windspeed, colors.basic));
     } else if (markerType === "msg") {
-      existingMarker.setIcon(createIconPointMessage(point.measurement?.type || 0));
+      existingMarker.setIcon(icons.createIconPointMessage(point.measurement?.type || 0, messageIconType));
     } else {
-      existingMarker.setIcon(createIconPointDefault(colors, point.isBookmarked, point.sensor_id));
+      existingMarker.setIcon(icons.createIconPointDefault(colors, point.isBookmarked, point.sensor_id));
     }
     
     // Применяем вычисленные координаты
@@ -671,13 +402,13 @@ function upsertMarker(point, colors, sensor_id = null) {
   // Создаем новый маркер
   let marker;
   if (markerType === "brand") {
-    marker = createMarkerBrand(coord, point, colors);
+    marker = icons.createMarkerBrand(coord, point, colors, sensors);
   } else if (markerType === "arrow") {
-    marker = createMarkerArrow(coord, point, colors);
+    marker = icons.createMarkerArrow(coord, point, colors);
   } else if (markerType === "msg") {
-    marker = createMarkerUser(coord, point);
-  } else {
-    marker = createMarkerCircle(coord, point, colors);
+    marker = icons.createMarkerUser(coord, point, messageIconType);
+        } else {
+    marker = icons.createMarkerCircle(coord, point, colors);
   }
   
   return { marker, isNew: true };
@@ -701,26 +432,15 @@ async function addMarker(point, unit = null, markerType = 'sensor') {
 
   // Определяем цвета в зависимости от типа маркера
   const isUserMessage = markerType === 'userMessage';
-  const colors = {
-    basic: isUserMessage ? ICON_CONFIG.point.userMessageColor : ICON_CONFIG.point.initColor,
-    border: ICON_CONFIG.point.initBorderColor,
-    rgb: ICON_CONFIG.point.initRgb,
-  };
+  const markerColors = colors.getMarkerColors(point, unit, isUserMessage);
   
-  // Для обычных маркеров применяем цвет на основе значения
-  if (!isUserMessage && !point.isEmpty) {
-    const color = getColorForValue(point.value, unit, point);
-    colors.basic = color;
-    colors.border = color;
-  }
-  
-  const { marker, isNew } = upsertMarker(point, colors, point.sensor_id);
+  const { marker, isNew } = upsertMarker(point, markerColors, point.sensor_id);
   
   if (isNew) {
     // Добавляем класс обновления для визуальной обратной связи
     const iconElement = marker.getElement();
     if (iconElement) {
-      iconElement.classList.add('updating');
+      iconElement.classList.add(MARKER_CLASSES.updating);
     }
     
     // Прикрепляем все события включая клик для нового маркера
@@ -733,7 +453,7 @@ async function addMarker(point, unit = null, markerType = 'sensor') {
       if (messageLayer) {
         messageLayer.addLayer(marker);
       }
-    } else {
+  } else {
       // Для обычных маркеров добавляем в основной слой
       if (markersLayer) {
         markersLayer.addLayer(marker);
@@ -743,7 +463,7 @@ async function addMarker(point, unit = null, markerType = 'sensor') {
     // Убираем класс обновления после добавления на карту
     setTimeout(() => {
       if (iconElement) {
-        iconElement.classList.remove('updating');
+        iconElement.classList.remove(MARKER_CLASSES.updating);
       }
     }, 800);
   }
@@ -755,12 +475,12 @@ async function addMarker(point, unit = null, markerType = 'sensor') {
 function findMarker(sensor_id) {
   if (!markersLayer) return false;
   
-  let found = false;
-  markersLayer.eachLayer((m) => {
+      let found = false;
+      markersLayer.eachLayer((m) => {
     if (!found && m.options.data?.sensor_id === sensor_id) {
-      found = m;
-    }
-  });
+          found = m;
+        }
+      });
   
   return found || false;
 }
@@ -818,7 +538,7 @@ export function switchMessagesLayer(map, enabled = false) {
     if (messagesLayer) {
       if (enabled) {
         map.addLayer(messagesLayer);
-      } else {
+    } else {
         map.removeLayer(messagesLayer);
       }
     }
@@ -832,36 +552,53 @@ export function refreshClusters() {
   }
 }
 
-
-
-
 /**
- * Universal color calculation method for both individual markers and clusters
- * @param {number|null} value - The value to get color for
- * @param {string} unit - The measurement unit (pm10, pm25, temperature, etc.)
- * @param {Object} point - The point data
- * @returns {string} - The color for the value
+ * Устанавливает активный маркер по sensor_id
+ * @param {string} sensorId - ID сенсора
  */
-function getColorForValue(value, unit, point = null) {
-  // Regular measurement handling
-  if (value === null || value === undefined || isNaN(value)) {
-    return ICON_CONFIG.point.initColor; // Default color for no data
-  }
+export function setActiveMarker(sensorId) {
+  // Убираем активность с предыдущего маркера
+  clearActiveMarker();
   
-  const scaleParams = getMeasurementByName(unit);
-  const zones = scaleParams?.zones || [];
-  if (unit && zones.length > 0) {
-    const match = zones.find((i) => value <= i?.valueMax);
-    if (match) {
-      return match.color;
-    } else if (!zones[zones.length - 1]?.valueMax) {
-      return zones[zones.length - 1].color;
+  // Находим маркер по sensor_id
+  const marker = findMarker(sensorId);
+  if (marker) {
+    // Добавляем CSS класс для активного маркера
+    const element = marker.getElement();
+    if (element) {
+      element.classList.add(MARKER_CLASSES.active);
+      activeMarker = marker;
     }
   }
-
-  return ICON_CONFIG.point.initColor; // Default color
 }
 
+/**
+ * Убирает активность с текущего маркера
+ */
+export function clearActiveMarker() {
+  if (activeMarker) {
+    const element = activeMarker.getElement();
+    if (element) {
+      element.classList.remove(MARKER_CLASSES.active);
+    }
+    activeMarker = null;
+  }
+}
+
+/**
+ * Переключает активность маркера (если уже активен - убирает, если нет - делает активным)
+ * @param {string} sensorId - ID сенсора
+ */
+export function toggleActiveMarker(sensorId) {
+  const marker = findMarker(sensorId);
+  if (marker && activeMarker === marker) {
+    // Если маркер уже активен - убираем активность
+    clearActiveMarker();
+  } else {
+    // Иначе делаем его активным
+    setActiveMarker(sensorId);
+  }
+}
 
 /**
  * Инициализирует систему маркеров на карте
@@ -878,14 +615,14 @@ export async function init(mapInstance, cb, unit = null) {
       messageIconType[index] = (
         await import(`../../assets/images/message/msg-${messageTypes[index]}.png`)
       ).default;
-    } catch (error) {
+      } catch (error) {
       messageIconType[index] = (await import(`../../assets/images/message/msg-text.png`)).default;
     }
     messageIconName[messageTypes[index]] = messageIconType[index];
   }
 
   // Создаем основной слой маркеров
-  markersLayer = createClusterGroup(createIconClusterDefault, unit);
+  markersLayer = createClusterGroup((cluster) => icons.createIconClusterDefault(cluster, unit, colors.getClusterWinningColor, colors.getBorderColor, colors.isDarkColor), unit);
   map.addLayer(markersLayer);
 
   // Создаем обработчик клика для маркеров
@@ -896,7 +633,7 @@ export async function init(mapInstance, cb, unit = null) {
   
   // Создаем слои для сообщений и сразу прикрепляем события
   for (const type of Object.values(messageTypes)) {
-    const layer = createClusterGroup((cluster) => createIconClusterMessages(cluster, type), unit);
+    const layer = createClusterGroup((cluster) => icons.createIconClusterMessages(cluster, type, messageIconName), unit);
     messagesLayers[type] = layer;
     attachClusterEvents(layer, markerClickHandler);
   }

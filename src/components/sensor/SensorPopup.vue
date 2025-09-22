@@ -74,6 +74,7 @@
       </section>
 
       <!-- monthly-analysis block is temporarily disabled
+      TODO: getScope временно отключен, но оставлен для будущего использования
       <section class="monthly-analysis" v-if="state.chartReady" style="display: none">
         <h2>Analysis / Reports </h2>
         <div v-if="state.provider !== 'realtime'" class="flexline">
@@ -202,6 +203,7 @@ import { getAddressByPos } from "../../utils/map/utils";
 import { calculateAQIIndex } from '../../utils/aqiIndex/us';
 import { dayISO, dayBoundsUnix, parseInputDate } from '../../utils/date';
 import { useMapStore } from '@/stores/map';
+import { clearActiveMarker } from '../../utils/map/marker';
 
 import AQIWidget from './AQIWidget.vue';
 import Bookmark from "./Bookmark.vue";
@@ -220,7 +222,8 @@ const props = defineProps({
   point: Object,
   startTime: [Number, String],
 });
-const emit = defineEmits(["history", "close", 'getScope']);
+const emit = defineEmits(["history", "close"]);
+// TODO: 'getScope' временно отключен, но оставлен для будущего использования
 
 // Глобальные объекты
 const route = useRoute();
@@ -489,6 +492,7 @@ const closesensor = () => {
       },
     });
     emit("close");
+    clearActiveMarker(); // Очищаем активный маркер
     state.showAnalysisChart = false;
   } catch (error) {
     console.error('Error closing sensor:', error);
@@ -674,7 +678,7 @@ watch(
         name: route.name, // Assumes the route name remains the same
         query: {
           provider: state.provider,
-          type: props.type.toLowerCase(),
+          type: props.type || 'pm25',
           zoom: route.query.zoom || settings.MAP.zoom, // trying to keep zoom
           lat: newPoint.geo.lat,
           lng: newPoint.geo.lng,

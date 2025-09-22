@@ -21,9 +21,6 @@ const router = createRouter({
       // path: "/:provider?/:type?/:zoom?/:lat?/:lng?/:sensor?",
       name: "main",
       component: Main,
-      props: (route) => {
-        return route.query;
-      },
     },
     {
       path: "/privacy-policy/",

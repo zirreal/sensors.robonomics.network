@@ -7,19 +7,18 @@
 
   <MessagePopup v-if="isMessage" @close="handlerClose" :data="state.point.measurement" />
 
+  <!-- TODO: @getScope временно отключен, но оставлен для будущего использования -->
   <SensorPopup
     v-if="isSensor"
-    :type="props?.type?.toLowerCase()"
+    :type="mapStore.currentUnit"
     :point="state?.point"
-    @modal="handlerModal"
     @close="handlerClose"
     @history="handlerHistoryLog"
-    @getScope="getScope"
     :startTime="state?.start"
   />
 
   <Map
-    :measuretype="props.type"
+    :measuretype="route.query.type"
     :historyready="state.canHistory"
     :historyhandler="handlerHistory"
     :isLoad="state.isLoad"
@@ -30,7 +29,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from "vue";
+import { reactive, computed, watch, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 
 import { useMapStore } from "@/stores/map";
@@ -49,30 +48,97 @@ import * as providers from "../providers";
 import { instanceMap } from "../utils/map/instance";
 import * as markers from "../utils/map/marker";
 import { getAddressByPos } from "../utils/map/utils";
-import { getTypeProvider, setTypeProvider } from "../utils/utils";
+import { setTypeProvider } from "../utils/utils";
 import { useI18n } from "vue-i18n";
 
-const props = defineProps({
-  provider: {
-    type: String,
-    default: getTypeProvider(),
-  },
-  type: {
-    type: String,
-    default: "pm10",
-  },
-  date: {
-    type: String,
-    default: null,
-  },
-  sensor: String,
-});
+// Props убраны - используем route.query напрямую
 
 const mapStore = useMapStore();
 const bookmarksStore = useBookmarksStore();
 const router = useRouter();
 const route = useRoute();
 const { locale } = useI18n();
+
+/**
+ * Получает приоритетное значение по схеме: URL > store > localStorage > default
+ */
+function getPriorityValue(urlValue, storeValue, localStorageKey, defaultValue) {
+  if (urlValue !== undefined && urlValue !== null && urlValue !== '') {
+    return urlValue;
+  }
+  if (storeValue !== undefined && storeValue !== null && storeValue !== '') {
+    return storeValue;
+  }
+  if (localStorageKey) {
+    try {
+      const stored = localStorage.getItem(localStorageKey);
+      if (stored) return stored;
+    } catch (e) {
+      console.warn(`Failed to get ${localStorageKey} from localStorage:`, e);
+    }
+  }
+  return defaultValue;
+}
+
+/**
+ * Синхронизирует данные между URL, store и localStorage
+ */
+function syncData() {
+
+  const currentUnit = getPriorityValue(
+    route.query.type,
+    mapStore.currentUnit,
+    'currentUnit',
+    'pm25'
+  ).toLowerCase();
+
+  const currentDate = getPriorityValue(
+    route.query.date,
+    mapStore.currentDate,
+    null,
+    dayISO()
+  );
+
+  const mapPosition = getPriorityValue(
+    route.query.lat && route.query.lng && route.query.zoom ? {
+      lat: route.query.lat,
+      lng: route.query.lng,
+      zoom: route.query.zoom
+    } : null,
+    mapStore.mapposition,
+    'map-position',
+    mapStore.mapposition
+  );
+
+  // Обновляем store
+  mapStore.setCurrentUnit(currentUnit);
+  mapStore.setCurrentDate(currentDate);
+  
+  if (mapPosition && mapPosition !== mapStore.mapposition) {
+    mapStore.setmapposition(mapPosition.lat, mapPosition.lng, mapPosition.zoom, false);
+  }
+
+  // Синхронизируем URL если нужно
+  const urlNeedsUpdate = 
+    route.query.type !== currentUnit ||
+    route.query.date !== currentDate ||
+    route.query.lat !== mapPosition.lat ||
+    route.query.lng !== mapPosition.lng ||
+    route.query.zoom !== mapPosition.zoom;
+
+  if (urlNeedsUpdate) {
+    router.replace({
+      query: {
+        ...route.query,
+        type: currentUnit,
+        date: currentDate,
+        lat: mapPosition.lat,
+        lng: mapPosition.lng,
+        zoom: mapPosition.zoom
+      }
+    }).catch(() => {});
+  }
+}
 
 // Локальное состояние компонента
 const state = reactive({
@@ -81,26 +147,22 @@ const state = reactive({
   points: {},
   status: "online",
   canHistory: false,
-  isShowInfo: false,
   providerObj: null,
   geoLocationOptions: {
     enableHighAccuracy: true,
     timeout: 5000,
     maximumAge: 0,
   },
-  start: route.query.date || props.date || mapStore.currentDate || null,
+  start: route.query.date || mapStore.currentDate || null,
   end: null,
   isLoad: false,
   clusterUpdateScheduled: false,
 });
 
 const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
-const zoom = computed(() => mapStore.mapposition.zoom);
-const lat = computed(() => mapStore.mapposition.lat);
-const lng = computed(() => mapStore.mapposition.lng);
 
-
-// (logs cache and preload removed)
+// Синхронизируем данные сразу при инициализации
+syncData();
 
 /* + Realtime watch */
 let unwatchRealtime = null;
@@ -132,68 +194,56 @@ const isSensor = computed(() => {
 
 /**
  * Returns the start and end of the last month (rolling month)
+ * TODO: временно отключено для getScope, оставить для будущего использования
  */
 
-const getRollingMonthRange = (targetDate = new Date()) => {
-  const end = new Date(
-    targetDate.getFullYear(),
-    targetDate.getMonth(),
-    targetDate.getDate(),
-    23, 59, 59, 999
-  );
+// const getRollingMonthRange = (targetDate = new Date()) => {
+//   const end = new Date(
+//     targetDate.getFullYear(),
+//     targetDate.getMonth(),
+//     targetDate.getDate(),
+//     23, 59, 59, 999
+//   );
 
-  let start = new Date(
-    targetDate.getFullYear(),
-    targetDate.getMonth() - 1,
-    targetDate.getDate(),
-    0, 0, 0, 0
-  );
+//   let start = new Date(
+//     targetDate.getFullYear(),
+//     targetDate.getMonth() - 1,
+//     targetDate.getDate(),
+//     0, 0, 0, 0
+//   );
 
-  if (start.getMonth() === targetDate.getMonth()) {
-    start = new Date(
-      targetDate.getFullYear(),
-      targetDate.getMonth(),
-      0, 
-      0, 0, 0, 0
-    );
-  }
+//   if (start.getMonth() === targetDate.getMonth()) {
+//     start = new Date(
+//       targetDate.getFullYear(),
+//       targetDate.getMonth(),
+//       0, 
+//       0, 0, 0, 0
+//     );
+//   }
 
-  return { start, end };
-}
+//   return { start, end };
+// }
 
 
 /**
  * Returns the start and end of the last 7 days (rolling week)
  * End = today, start = 7 days ago
+ * TODO: временно отключено для getScope, оставить для будущего использования
  */
-function getRollingWeekRange(date = new Date()) {
-  const end = new Date(date);
-  end.setHours(23, 59, 59, 999);
+// function getRollingWeekRange(date = new Date()) {
+//   const end = new Date(date);
+//   end.setHours(23, 59, 59, 999);
 
-  const start = new Date(date);
-  start.setDate(start.getDate() - 7 + 1);
-  start.setHours(0, 0, 0, 0);
+//   const start = new Date(date);
+//   start.setDate(start.getDate() - 7 + 1);
+//   start.setHours(0, 0, 0, 0);
 
-  return { start, end };
-}
+//   return { start, end };
+// }
 
-const removeAllActivePoints = () => {
-  document.querySelectorAll('.current-active-marker').forEach(el => {
-    el.classList.remove('current-active-marker');
-  });
-};
-
+// Управление активными маркерами теперь в marker.js
 const handleActivePoint = (id) => {
-  const el = document.querySelector(`[data-id="${id}"]`);
-  removeAllActivePoints();
-  if(el) {
-    if(!el.classList.contains('current-active-marker')) {
-      el.classList.add('current-active-marker')
-    } else {
-      el.classList.remove('current-active-marker')
-    }
-  }
-
+  markers.toggleActiveMarker(id);
 }
 
 // Переменная для отмены текущих запросов
@@ -311,9 +361,7 @@ const handlerHistory = async ({ start, end }) => {
         return;
       }
       
-      import('@/utils/map/marker').then(module => {
-        module.refreshClusters();
-      });
+      markers.refreshClusters();
       
     }
   } catch (error) {
@@ -369,9 +417,7 @@ const handlerNewPoint = async (point) => {
   }, mapStore.currentUnit);
   
   // Force immediate refresh to show gray markers
-  import('@/utils/map/marker').then(module => {
-    module.refreshClusters();
-  });
+  markers.refreshClusters();
   
   // Then asynchronously calculate and update the color
   setTimeout(async () => {
@@ -383,7 +429,7 @@ const handlerNewPoint = async (point) => {
       if (state.status === "history") {
         // Daily recap mode: calculate average for the day
         if (point.logs && point.logs.length > 0) {
-          const measurementType = (props.type || '').toLowerCase();
+          const measurementType = (route.query.type || '').toLowerCase();
           const values = point.logs
             .map(log => log?.data?.[measurementType])
             .filter(v => v !== null && v !== undefined && !isNaN(Number(v)));
@@ -397,7 +443,7 @@ const handlerNewPoint = async (point) => {
           }
         } else {
           // Fallback to last value if no logs
-          const v = point?.data?.[(props.type || '').toLowerCase()];
+          const v = point?.data?.[(route.query.type || '').toLowerCase()];
           if (v !== null && v !== undefined && !isNaN(Number(v))) {
             value = Number(v);
             isEmpty = false;
@@ -408,7 +454,7 @@ const handlerNewPoint = async (point) => {
         }
       } else {
         // Realtime mode: use last value if not older than 20 minutes
-        const lastValue = point?.data?.[(props.type || '').toLowerCase()];
+        const lastValue = point?.data?.[(route.query.type || '').toLowerCase()];
         const timestamp = point.timestamp;
         const now = Math.floor(Date.now() / 1000);
         const twentyMinutesAgo = now - (20 * 60);
@@ -441,7 +487,7 @@ const handlerNewPoint = async (point) => {
     }, 100); // Update clusters every 100ms
   }
 
-  if (point.sensor_id === props.sensor) {
+  if (point.sensor_id === route.query.sensor) {
     await handlerClick(point);
   }
 
@@ -450,7 +496,7 @@ const handlerNewPoint = async (point) => {
   }
 
   if (
-    Object.prototype.hasOwnProperty.call(point.data, props.type.toLowerCase()) ||
+    Object.prototype.hasOwnProperty.call(point.data, (route.query.type || '').toLowerCase()) ||
     Object.prototype.hasOwnProperty.call(point.data, "message")
   ) {
     state.points[point.sensor_id] = point.data;
@@ -554,7 +600,7 @@ const handlerNewPointWithType = async (point, measurementType) => {
     }, 100); // Update clusters every 100ms
   }
 
-  if (point.sensor_id === props.sensor) {
+  if (point.sensor_id === route.query.sensor) {
     await handlerClick(point);
   }
 
@@ -591,9 +637,6 @@ const handlerClick = async (point) => {
     console.error('Error fetching sensor history:', error);
   }
   
-  document.querySelectorAll('.with-active-sensor').forEach(el => {
-    el.classList.remove('with-active-sensor');
-  });
   const address = await getAddressByPos(point.geo.lat, point.geo.lng, localeComputed.value);
   state.point = { ...point, address, log: [...log] };
   state.isLoad = false;
@@ -618,22 +661,23 @@ const handlerHistoryLog = async ({ sensor_id, start, end }) => {
 };
 
 /* Returns scope depending on type ('week' or 'month') */
-const getScope = async (type) => {
+// TODO: временно отключено, оставить для будущего использования
+// const getScope = async (type) => {
 
-  const range = type === "week"
-    ? getRollingWeekRange(new Date())
-    : getRollingMonthRange(new Date());
+//   const range = type === "week"
+//     ? getRollingWeekRange(new Date())
+//     : getRollingMonthRange(new Date());
 
-  const { start, end } = range;
+//   const { start, end } = range;
 
-  if (state.status === "history") {
-    // Use existing logs from mapStore.sensors - no API calls needed
-    const sensorData = mapStore.sensors.find(s => s.sensor_id === state.point.sensor_id);
-    if (sensorData && sensorData.logs) {
-      state.point = { ...state.point, scopeLog: [...sensorData.logs] };
-    }
-  }
-}
+//   if (state.status === "history") {
+//     // Use existing logs from mapStore.sensors - no API calls needed
+//     const sensorData = mapStore.sensors.find(s => s.sensor_id === state.point.sensor_id);
+//     if (sensorData && sensorData.logs) {
+//       state.point = { ...state.point, scopeLog: [...sensorData.logs] };
+//     }
+//   }
+// }
 
 const handlerClose = () => {
   mapStore.mapinactive = false;
@@ -684,65 +728,14 @@ const handleTypeChange = async (newType) => {
   markers.refreshClusters();
 };
 
-const handlerCloseInfo = () => {
-  state.isShowInfo = false;
-  mapStore.mapinactive = false;
-};
 
-const handlerModal = (modal) => {
-  if (modal === "info") {
-    state.isShowInfo = true;
-  }
-};
 
-// Следим за изменением типа единиц измерения и сохраняем его в localStorage
+// ===== SIMPLIFIED WATCHERS =====
+// Синхронизируем данные при изменении URL
 watch(
-  () => props.type,
-  (value) => {
-    if (value) {
-      localStorage.setItem("currentUnit", value);
-    }
-  }
-);
-
-// Следим за изменением даты и сохраняем её в store
-watch(
-  () => props.date,
-  (value) => {
-    if (value) {
-      mapStore.setCurrentDate(value);
-    }
-  }
-);
-
-// Keep currentUnit in sync with URL param `type`
-watch(
-  () => route.query.type,
-  (val) => {
-    let u = String(val || props.type || '').toLowerCase();
-    // Force AQI → PM2.5 in realtime
-    if (props.provider === 'realtime' && u === 'aqi') {
-      u = 'pm25';
-      router.replace({
-        name: route.name,
-        query: { ...route.query, type: u, date: route.query.date || mapStore.currentDate },
-      }).catch(() => {});
-    }
-    if (u) { try { mapStore.setCurrentUnit(u); } catch {} }
-  },
-  { immediate: true }
-);
-
-// Keep currentDate in sync with URL param `date`
-watch(
-  () => route.query.date,
-  (val) => {
-    const d = String(val || props.date || mapStore.currentDate || dayISO());
-    if (d) { 
-      try { 
-        mapStore.setCurrentDate(d); 
-      } catch {} 
-    }
+  () => route.query,
+  () => {
+    syncData();
   },
   { immediate: true }
 );
@@ -773,28 +766,19 @@ watch(
   () => mapStore.currentUnit,
   (newUnit) => {
     if (newUnit) {
-      // Refresh all markers when unit changes
-      import('@/utils/map/marker').then(module => {
-        module.refreshClusters();
-      });
+      markers.refreshClusters();
     }
   }
 );
 
-// Watch for sensors data and show gray markers immediately
+// Watch for sensors data and show markers
 watch(
-  () => mapStore.sensors,
-  (sensors) => {
-    if (sensors && sensors.length > 0) {
-      
-      // Clear existing markers
+  [() => mapStore.sensors, () => mapStore.currentUnit],
+  ([sensors, currentUnit]) => {
+    if (sensors && sensors.length > 0 && currentUnit) {
       markers.clearAllMarkers();
-      
-      // Process each sensor with existing data (same logic as handleTypeChange)
       for (const sensor of sensors) {
         if (!sensor.sensor_id) continue;
-        
-        // Create point with existing data
         const point = {
           sensor_id: sensor.sensor_id,
           geo: sensor.geo || { lat: 0, lng: 0 },
@@ -802,36 +786,29 @@ watch(
           data: sensor.data || {},
           logs: sensor.logs || []
         };
-        
-        // Use the same handler as handleTypeChange
-        handlerNewPointWithType(point, mapStore.currentUnit);
+        handlerNewPointWithType(point, currentUnit);
       }
     }
-  },
-  { immediate: true }
+  }
 );
 
 onMounted(async () => {
-
-  // Устанавливаем тип провайдера
-  setTypeProvider(props.provider);
-  
-  // (preload removed)
+  setTypeProvider(route.query.provider);
 
   // Инициализируем объект провайдера
-  if (props.provider === "remote") {
+  if (route.query.provider === "remote") {
     state.providerObj = new providers.Remote(settings.REMOTE_PROVIDER);
     if (!(await state.providerObj.status())) {
       router.push({
         name: route.name,
         query: {
           provider: "realtime",
-          type: props.type,
-          zoom: route.query.zoom,
-          lat: route.query.lat,
-          lng: route.query.lng,
+          type: mapStore.currentUnit,
+          zoom: mapStore.mapposition.zoom,
+          lat: mapStore.mapposition.lat,
+          lng: mapStore.mapposition.lng,
           sensor: route.query.sensor,
-          date: route.query.date || mapStore.currentDate,
+          date: mapStore.currentDate,
         },
       });
       return;
@@ -842,12 +819,12 @@ onMounted(async () => {
 
   state.providerObj.ready().then(() => {
     state.providerReady = true;
-    if (props.provider === "realtime") {
+    if (route.query.provider === "realtime") {
       subscribeRealtime();
     }
   });
 
-  if (props.provider === "remote") {
+  if (route.query.provider === "remote") {
     const iRemote = setInterval(() => {
       if (state.providerObj && state.providerObj.connection && markers.isReadyLayers()) {
         clearInterval(iRemote);
@@ -857,40 +834,25 @@ onMounted(async () => {
   }
 
   // Check if AQI is selected in realtime mode and redirect to PM2.5
-  if (props.type === 'aqi' && props.provider === 'realtime') {
+  if (mapStore.currentUnit === 'aqi' && route.query.provider === 'realtime') {
     router.push({
       name: route.name,
       query: {
-        provider: props.provider,
+        provider: route.query.provider,
         type: 'pm25',
-        zoom: route.query.zoom,
-        lat: route.query.lat,
-        lng: route.query.lng,
+        zoom: mapStore.mapposition.zoom,
+        lat: mapStore.mapposition.lat,
+        lng: mapStore.mapposition.lng,
         sensor: route.query.sensor,
-        date: route.query.date || mapStore.currentDate,
+        date: mapStore.currentDate,
       },
     });
     return;
   }
 
-  if (route.query.type || props.type) {
-    const initU = String(route.query.type || props.type).toLowerCase();
-    localStorage.setItem("currentUnit", initU);
-    try { mapStore.setCurrentUnit(initU); } catch {}
-  }
-
+  // Handle sensor parameter
   if (route.query.sensor) {
     handleActivePoint(route.query.sensor);
-  }
-
-  // Добавляем параметр date в URL если его нет
-  if (!route.query.date && (props.date || mapStore.currentDate)) {
-    router.replace({
-      query: {
-        ...route.query,
-        date: props.date || mapStore.currentDate
-      }
-    }).catch(() => {});
   }
 
   const waitForMatomo = setInterval(() => {
@@ -915,33 +877,4 @@ onMounted(async () => {
   }, 100);
 });
 
-// Watch for sensors loading and display points when ready
-// DISABLED: This watcher was overriding the correct markers created in handlerHistory
-// watch(
-//   () => mapStore.sensorsLoaded,
-//   (loaded) => {
-//     if (loaded && mapStore.sensors.length > 0) {
-//       console.log(`Watcher: Processing ${mapStore.sensors.length} sensors from mapStore`);
-//       // Display all sensors as gray points initially
-//     //       
-//       // Process each sensor
-//       mapStore.sensors.forEach(async (sensor) => {
-//         if (!sensor.sensor_id) return;
-//         
-//         console.log(`Watcher: Processing sensor ${sensor.sensor_id} with ${sensor.logs?.length || 0} logs`);
-//         
-//         const point = {
-//           sensor_id: sensor.sensor_id,
-//           geo: sensor.geo || { lat: 0, lng: 0 },
-//           model: 2,
-//           data: sensor.data || {},
-//           logs: sensor.logs || []
-//         };
-//         
-//         await handlerNewPoint(point);
-//       });
-//     }
-//   },
-//   { immediate: true }
-// );
 </script>
