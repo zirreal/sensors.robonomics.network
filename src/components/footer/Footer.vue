@@ -179,7 +179,7 @@ const availableOptions = computed(() => {
     // Ensure AQI appears first in the list
     const aqiOption = {
       value: 'aqi',
-      name: measurements.aqi?.nameshort?.[locale.value] || 'AQI',
+      name: measurements.aqi?.nameshort?.[locale.value] + ' (Beta)' || 'AQI',
     };
     // Avoid duplicates if any
     const filtered = opts.filter(o => o.value !== 'aqi');

@@ -68,8 +68,8 @@ const WINDOW_MS   = 60 * 60 * 1000;
 const MAX_VISIBLE = settings.SERIES_MAX_VISIBLE;
 
 const GROUPS = {
-  dust:    { members: ['pm10', 'pm25'], labelKey: 'Dust & Particles' },
-  noise:   { members: ['noise', 'noisemax', 'noiseavg'], labelKey: 'Noise' },
+  dust:    { members: ['pm25', 'pm10'], labelKey: 'Dust & Particles' },
+  noise:   { members: ['noisemax', 'noiseavg', 'noise'], labelKey: 'Noise' },
   climate: { members: ['temperature', 'humidity', 'dewpoint'], labelKey: 'Climate' }
 };
 const idToGroup = Object.fromEntries(Object.entries(GROUPS).flatMap(([g, { members }]) => members.map(id => [id, g])));
@@ -320,19 +320,10 @@ function onLegendClick(legendKey) {
   if (legendKey === activeLegendKey.value) return;
   let targetType;
   if (GROUPS[legendKey]) {
-    // Special case: Dust on remote with both pm25 and pm10 → prefer AQI
-    if (
-      legendKey === 'dust' &&
-      getTypeProvider() === 'remote' &&
-      presentIdsSet.value.has('pm25') &&
-      presentIdsSet.value.has('pm10')
-    ) {
-      targetType = 'aqi';
-    } else {
-      // otherwise pick first present id of the group
-      targetType = GROUPS[legendKey].members.find(m => presentIdsSet.value.has(m));
-    }
+    // For groups, take the first available member from the group
+    targetType = GROUPS[legendKey].members.find(m => presentIdsSet.value.has(m));
   } else {
+    // For single parameters, use the key directly
     targetType = legendKey;
   }
   // Update URL for deep-linking
@@ -497,25 +488,27 @@ watch(
   (idsArr) => {
     if (!idsArr || idsArr.length === 0) return;
     const ids = new Set(idsArr);
-    const provider = getTypeProvider();
-    const cur = (mapStore.currentUnit || route.query.type || '').toLowerCase();
-    const hasPM25 = ids.has('pm25');
-    const hasPM10 = ids.has('pm10');
-    const aqiAvailable = provider === 'remote' && hasPM25 && hasPM10;
-    const curAvailable = cur === 'aqi' ? aqiAvailable : ids.has(cur);
+    const cur = mapStore.currentUnit;
+    
+    // Check if current unit is available
+    const curAvailable = ids.has(cur);
     if (curAvailable) return;
+    
+    // Find first available parameter by checking groups in order
     let next = null;
-    if (cur === 'aqi') {
-      next = hasPM25 ? 'pm25' : (hasPM10 ? 'pm10' : null);
-    }
-    if (!next) {
-      // Prefer AQI instead of bare pm10 when conditions allow it
-      if (idsArr[0] === 'pm10' && aqiAvailable) {
-        next = 'aqi';
-      } else {
-        next = idsArr[0];
+    for (const [groupKey, groupInfo] of Object.entries(GROUPS)) {
+      const firstAvailable = groupInfo.members.find(member => ids.has(member));
+      if (firstAvailable) {
+        next = firstAvailable;
+        break;
       }
     }
+    
+    // If no group member found, use the first available parameter
+    if (!next) {
+      next = idsArr[0];
+    }
+    
     if (next) {
       mapStore.setCurrentUnit(next);
       router.replace({ query: { ...route.query, type: next } });
