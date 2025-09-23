@@ -611,10 +611,10 @@ export async function init(mapInstance, cb, unit = null) {
   for (const index of Object.keys(messageTypes)) {
     try {
       messageIconType[index] = (
-        await import(`../../assets/images/message/msg-${messageTypes[index]}.png`)
+        await import(`../../../assets/images/message/msg-${messageTypes[index]}.png`)
       ).default;
       } catch (error) {
-      messageIconType[index] = (await import(`../../assets/images/message/msg-text.png`)).default;
+      messageIconType[index] = (await import(`../../../assets/images/message/msg-text.png`)).default;
     }
     messageIconName[messageTypes[index]] = messageIconType[index];
   }
