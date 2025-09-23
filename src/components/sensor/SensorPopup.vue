@@ -203,7 +203,7 @@ import { getAddressByPos } from "../../utils/map/utils";
 import { calculateAQIIndex } from '../../utils/aqiIndex/us';
 import { dayISO, dayBoundsUnix, parseInputDate } from '../../utils/date';
 import { useMapStore } from '@/stores/map';
-import { clearActiveMarker } from '../../utils/map/marker';
+import { clearActiveMarker } from '../../utils/map/markers';
 
 import AQIWidget from './AQIWidget.vue';
 import Bookmark from "./Bookmark.vue";

@@ -114,7 +114,7 @@ watch(
     selectedVersion.value = newVersion;
     
     // Clear AQI cache and refresh markers
-    import('@/utils/map/marker').then(module => {
+    import('@/utils/map/markers').then(module => {
       if (module.clearAQICache) {
         module.clearAQICache(mapStore.currentDate);
       }

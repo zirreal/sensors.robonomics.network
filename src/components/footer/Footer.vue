@@ -73,7 +73,7 @@ import { settings } from "@config";
 import Bookmarks from "@/components/Bookmarks.vue";
 import HistoryImport from "./HistoryImport.vue";
 import { instanceMap } from "../../utils/map/instance";
-import { switchMessagesLayer } from "../../utils/map/marker";
+import { switchMessagesLayer } from "../../utils/map/markers";
 import { switchLayer } from "../../utils/map/wind";
 import measurements from "../../measurements";
 import { getTypeProvider } from "../../utils/utils";

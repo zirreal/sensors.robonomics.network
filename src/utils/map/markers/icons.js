@@ -4,7 +4,7 @@
  */
 
 import L from "leaflet";
-import { DEFAULT_COLORS } from "./marker_color";
+import { DEFAULT_COLORS } from "./colors";
 
 // Icon configuration
 export const ICON_CONFIG = {

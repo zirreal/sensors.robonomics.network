@@ -46,7 +46,7 @@ import MetaInfo from '../components/MetaInfo.vue';
 import { settings } from "@config";
 import * as providers from "../providers";
 import { instanceMap } from "../utils/map/instance";
-import * as markers from "../utils/map/marker";
+import * as markers from "../utils/map/markers";
 import { getAddressByPos } from "../utils/map/utils";
 import { setTypeProvider } from "../utils/utils";
 import { useI18n } from "vue-i18n";

@@ -14,8 +14,8 @@ import L from "leaflet";
 import "leaflet-arrowheads";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
-import * as colors from "./marker_color";
-import * as icons from "./marker_icons";
+import * as colors from "./colors";
+import * as icons from "./icons";
 
 const MARKER_CLASSES = {
   active: "marker-point-active",
@@ -291,8 +291,6 @@ function scatterCoords([latRaw, lngRaw], seed, meters = 15) {
   // Only return jittered coords if valid numbers
   return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : [lat0, lng0];
 }
-
-// createIconHTML is now imported from marker_icons.js
 
 /**
  * Устанавливает защиту от рекурсии для map.panInsideBounds и map.setView (это нужно после того, как ввелся функционал ограничения карты для форков)

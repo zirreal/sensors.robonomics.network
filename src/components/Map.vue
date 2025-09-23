@@ -34,7 +34,7 @@ import { settings } from "@config";
 import { toRaw } from "vue";
 import Footer from "../components/footer/Footer.vue";
 import { drawuser, init, removeMap, setTheme, setview } from "../utils/map/instance";
-import { init as initMarkers } from "../utils/map/marker";
+import { init as initMarkers } from "../utils/map/markers";
 import { init as initWind } from "../utils/map/wind";
 import { getTypeProvider } from "../utils/utils";
 

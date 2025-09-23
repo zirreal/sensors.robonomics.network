@@ -3,7 +3,7 @@
  * Centralized color logic for consistent coloring across the application
  */
 
-import { getMeasurementByName } from "../../measurements/tools";
+import { getMeasurementByName } from "../../../measurements/tools";
 
 // Default colors configuration
 export const DEFAULT_COLORS = {
