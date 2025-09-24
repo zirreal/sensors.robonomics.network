@@ -36,7 +36,7 @@ import Footer from "../components/footer/Footer.vue";
 import { drawuser, init, removeMap, setTheme, setview } from "../utils/map/instance";
 import { init as initMarkers } from "../utils/map/markers";
 import { init as initWind } from "../utils/map/wind";
-import { getTypeProvider } from "../utils/utils";
+// import { getTypeProvider } from "../utils/utils"; // deprecated
 
 import { useMapStore } from "@/stores/map";
 import { useBookmarksStore } from "@/stores/bookmarks";
@@ -73,7 +73,7 @@ export default {
       return this.mapStore.mapposition.lng;
     },
     provider() {
-      return getTypeProvider();
+      return this.mapStore.currentProvider;
     },
   },
 
@@ -98,7 +98,7 @@ export default {
       const options = {
         name: "main",
         query: {
-          provider: getTypeProvider(),
+          provider: this.mapStore.currentProvider,
           type: this.$route.query.type || "pm10",
           zoom: zoom,
           lat: lat,

@@ -48,7 +48,7 @@ import * as providers from "../providers";
 import { instanceMap } from "../utils/map/instance";
 import * as markers from "../utils/map/markers";
 import { getAddressByPos } from "../utils/map/utils";
-import { setTypeProvider } from "../utils/utils";
+import { syncMapSettings } from "../utils/utils";
 import { useI18n } from "vue-i18n";
 
 // Props убраны - используем route.query напрямую
@@ -59,86 +59,6 @@ const router = useRouter();
 const route = useRoute();
 const { locale } = useI18n();
 
-/**
- * Получает приоритетное значение по схеме: URL > store > localStorage > default
- */
-function getPriorityValue(urlValue, storeValue, localStorageKey, defaultValue) {
-  if (urlValue !== undefined && urlValue !== null && urlValue !== '') {
-    return urlValue;
-  }
-  if (storeValue !== undefined && storeValue !== null && storeValue !== '') {
-    return storeValue;
-  }
-  if (localStorageKey) {
-    try {
-      const stored = localStorage.getItem(localStorageKey);
-      if (stored) return stored;
-    } catch (e) {
-      console.warn(`Failed to get ${localStorageKey} from localStorage:`, e);
-    }
-  }
-  return defaultValue;
-}
-
-/**
- * Синхронизирует данные между URL, store и localStorage
- */
-function syncData() {
-
-  const currentUnit = getPriorityValue(
-    route.query.type,
-    mapStore.currentUnit,
-    'currentUnit',
-    'pm25'
-  ).toLowerCase();
-
-  const currentDate = getPriorityValue(
-    route.query.date,
-    mapStore.currentDate,
-    null,
-    dayISO()
-  );
-
-  const mapPosition = getPriorityValue(
-    route.query.lat && route.query.lng && route.query.zoom ? {
-      lat: route.query.lat,
-      lng: route.query.lng,
-      zoom: route.query.zoom
-    } : null,
-    mapStore.mapposition,
-    'map-position',
-    mapStore.mapposition
-  );
-
-  // Обновляем store
-  mapStore.setCurrentUnit(currentUnit);
-  mapStore.setCurrentDate(currentDate);
-  
-  if (mapPosition && mapPosition !== mapStore.mapposition) {
-    mapStore.setmapposition(mapPosition.lat, mapPosition.lng, mapPosition.zoom, false);
-  }
-
-  // Синхронизируем URL если нужно
-  const urlNeedsUpdate = 
-    route.query.type !== currentUnit ||
-    route.query.date !== currentDate ||
-    route.query.lat !== mapPosition.lat ||
-    route.query.lng !== mapPosition.lng ||
-    route.query.zoom !== mapPosition.zoom;
-
-  if (urlNeedsUpdate) {
-    router.replace({
-      query: {
-        ...route.query,
-        type: currentUnit,
-        date: currentDate,
-        lat: mapPosition.lat,
-        lng: mapPosition.lng,
-        zoom: mapPosition.zoom
-      }
-    }).catch(() => {});
-  }
-}
 
 // Локальное состояние компонента
 const state = reactive({
@@ -162,7 +82,7 @@ const state = reactive({
 const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
 
 // Синхронизируем данные сразу при инициализации
-syncData();
+syncMapSettings(route, router, mapStore);
 
 /* + Realtime watch */
 let unwatchRealtime = null;
@@ -729,13 +649,11 @@ const handleTypeChange = async (newType) => {
 };
 
 
-
-// ===== SIMPLIFIED WATCHERS =====
-// Синхронизируем данные при изменении URL
+// Синхронизируем настройки карты при изменении URL
 watch(
   () => route.query,
   () => {
-    syncData();
+    syncMapSettings(route, router, mapStore);
   },
   { immediate: true }
 );
@@ -747,6 +665,9 @@ watch(
     if (newDate) {
       // Clear existing markers and show gray loading state
       markers.clearAllMarkers();
+      
+      // Синхронизируем URL при изменении даты
+      syncMapSettings(route, router, mapStore);
       
       // Reload data when date changes
       const startDate = new Date(newDate);
@@ -767,6 +688,38 @@ watch(
   (newUnit) => {
     if (newUnit) {
       markers.refreshClusters();
+      // Синхронизируем URL при изменении unit
+      syncMapSettings(route, router, mapStore);
+    }
+  }
+);
+
+// Watch for provider changes and reinitialize
+watch(
+  () => mapStore.currentProvider,
+  async (newProvider) => {
+    if (newProvider && state.providerObj) {
+      // Отписываемся от старого провайдера
+      unsubscribeRealtime();
+      
+      // Инициализируем новый провайдер
+      if (newProvider === "remote") {
+        state.providerObj = new providers.Remote(settings.REMOTE_PROVIDER);
+        if (!(await state.providerObj.status())) {
+          mapStore.setCurrentProvider("realtime");
+          syncMapSettings(route, router, mapStore);
+          return;
+        }
+      } else {
+        state.providerObj = new providers.Libp2p(settings.LIBP2P);
+      }
+      
+      state.providerObj.ready().then(() => {
+        state.providerReady = true;
+        if (newProvider === "realtime") {
+          subscribeRealtime();
+        }
+      });
     }
   }
 );
@@ -793,24 +746,13 @@ watch(
 );
 
 onMounted(async () => {
-  setTypeProvider(route.query.provider);
-
   // Инициализируем объект провайдера
-  if (route.query.provider === "remote") {
+  if (mapStore.currentProvider === "remote") {
     state.providerObj = new providers.Remote(settings.REMOTE_PROVIDER);
     if (!(await state.providerObj.status())) {
-      router.push({
-        name: route.name,
-        query: {
-          provider: "realtime",
-          type: mapStore.currentUnit,
-          zoom: mapStore.mapposition.zoom,
-          lat: mapStore.mapposition.lat,
-          lng: mapStore.mapposition.lng,
-          sensor: route.query.sensor,
-          date: mapStore.currentDate,
-        },
-      });
+      // Если remote недоступен, переключаемся на realtime через store
+      mapStore.setCurrentProvider("realtime");
+      syncMapSettings(route, router, mapStore);
       return;
     }
   } else {
@@ -819,12 +761,12 @@ onMounted(async () => {
 
   state.providerObj.ready().then(() => {
     state.providerReady = true;
-    if (route.query.provider === "realtime") {
+    if (mapStore.currentProvider === "realtime") {
       subscribeRealtime();
     }
   });
 
-  if (route.query.provider === "remote") {
+  if (mapStore.currentProvider === "remote") {
     const iRemote = setInterval(() => {
       if (state.providerObj && state.providerObj.connection && markers.isReadyLayers()) {
         clearInterval(iRemote);
@@ -833,21 +775,10 @@ onMounted(async () => {
     }, 1000);
   }
 
-  // Check if AQI is selected in realtime mode and redirect to PM2.5
-  if (mapStore.currentUnit === 'aqi' && route.query.provider === 'realtime') {
-    router.push({
-      name: route.name,
-      query: {
-        provider: route.query.provider,
-        type: 'pm25',
-        zoom: mapStore.mapposition.zoom,
-        lat: mapStore.mapposition.lat,
-        lng: mapStore.mapposition.lng,
-        sensor: route.query.sensor,
-        date: mapStore.currentDate,
-      },
-    });
-    return;
+  // Check if AQI is selected in realtime mode and switch to PM2.5
+  if (mapStore.currentUnit === 'aqi' && mapStore.currentProvider === 'realtime') {
+    mapStore.setCurrentUnit('pm25');
+    syncMapSettings(route, router, mapStore);
   }
 
   // Handle sensor parameter

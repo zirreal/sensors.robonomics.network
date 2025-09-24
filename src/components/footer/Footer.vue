@@ -76,9 +76,10 @@ import { instanceMap } from "../../utils/map/instance";
 import { switchMessagesLayer } from "../../utils/map/markers";
 import { switchLayer } from "../../utils/map/wind";
 import measurements from "../../measurements";
-import { getTypeProvider } from "../../utils/utils";
+// import { getTypeProvider } from "../../utils/utils"; // deprecated
 import { Remote } from "../../providers";
 import ProviderType from "../ProviderType.vue";
+import { setMapSettings, getPriorityValue } from "../../utils/utils";
 
 import { useBookmarksStore } from "@/stores/bookmarks";
 import { useMapStore } from "@/stores/map";
@@ -203,25 +204,8 @@ const getHistory = () => {
 };
 
 watch(type, async (val) => {
-  // Only switch to PM2.5 if localStorage is not available
-  // If localStorage is available but AQI data is missing, let it show as gray
-  if (val === 'aqi' && !isLocalStorageAvailable()) {
-    type.value = 'pm25';
-    return;
-  }
-  
-  await router.push({
-    name: "main",
-    query: {
-      provider: getTypeProvider(),
-      type: val,
-      zoom: route.query.zoom,
-      lat: route.query.lat,
-      lng: route.query.lng,
-      sensor: route.query.sensor,
-      date: route.query.date || mapStore.currentDate,
-    },
-  });
+  // Устанавливаем новый тип и синхронизируем
+  setMapSettings(route, router, mapStore, { type: val });
   
   // Emit event to parent to trigger map redraw
   emit('typeChanged', val);
@@ -231,24 +215,8 @@ watch(start, (newDate) => {
   // Безопасно парсим дату из input
   const parsedDate = parseInputDate(newDate);
   
-  // Обновляем store и URL при изменении даты
-  mapStore.setCurrentDate(parsedDate);
-  
-  // Обновляем URL с датой
-  // router.replace({
-  //   query: {
-  //     ...route.query,
-  //     date: parsedDate
-  //   }
-  // });
-  
-  // Попробуем мягкую замену параметра через router.push с replace
-  router.push({
-    query: {
-      ...route.query,
-      date: parsedDate
-    }
-  });
+  // Устанавливаем новую дату и синхронизируем
+  setMapSettings(route, router, mapStore, { date: parsedDate });
   
   // getHistory();
 });
@@ -268,13 +236,22 @@ watch(
   { immediate: true }
 );
 
-// Следим за изменением даты в URL
+// Computed для получения актуальной даты с правильным приоритетом
+const currentDate = computed(() => {
+  return getPriorityValue(
+    route.query.date,
+    mapStore.currentDate,
+    null,
+    dayISO()
+  );
+});
+
+// Единый watcher для синхронизации даты из любого источника
 watch(
-  () => route.query.date,
+  currentDate,
   (newDate) => {
     if (newDate && newDate !== start.value) {
       start.value = newDate;
-      mapStore.setCurrentDate(newDate);
     }
   },
   { immediate: true }

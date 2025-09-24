@@ -23,7 +23,7 @@ import { useRouter } from "vue-router";
 import { useBookmarksStore } from "@/stores/bookmarks";
 import { IDBdeleteByKey, notifyDBChange } from "../utils/idb";
 import {settings, idbschemas} from "@config";
-import { getTypeProvider } from "@/utils/utils";
+// import { getTypeProvider } from "@/utils/utils"; // deprecated
 
 const schema = idbschemas?.SensorsDBBookmarks || {};
 const DB_NAME = schema.dbname || "SensorsDBBookmarks";
@@ -55,7 +55,7 @@ function getlink(bookmark) {
   return router.resolve({
     name: "main",
     query: {
-      provider: getTypeProvider(),
+      provider: "remote", // Default provider for bookmarks
       type: settings.MAP.measure,
       zoom: 18,
       lat: g.lat,

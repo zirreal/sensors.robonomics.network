@@ -198,12 +198,13 @@ import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { settings, sensors } from "@config";
 import measurements from "../../measurements";
-import { getTypeProvider } from "../../utils/utils";
+// import { getTypeProvider } from "../../utils/utils"; // deprecated
 import { getAddressByPos } from "../../utils/map/utils";
 import { calculateAQIIndex } from '../../utils/aqiIndex/us';
 import { dayISO, dayBoundsUnix, parseInputDate } from '../../utils/date';
 import { useMapStore } from '@/stores/map';
 import { clearActiveMarker } from '../../utils/map/markers';
+import { setMapSettings } from '../../utils/utils';
 
 import AQIWidget from './AQIWidget.vue';
 import Bookmark from "./Bookmark.vue";
@@ -239,7 +240,7 @@ const state = reactive({
   isShowPath: false,
   start: dayISO(),
   maxDate: dayISO(),
-  provider: getTypeProvider(route.query),
+  provider: mapStore.currentProvider,
   rttime: null,
   rtdata: [],
   sharedDefault: false,
@@ -600,13 +601,8 @@ watch(
 watch(
   () => state.start,
   (newDate) => {
-    // Синхронизируем с глобальным store
-    mapStore.setCurrentDate(newDate);
-    
-    // Обновляем URL без перезагрузки компонента
-    const newQuery = { ...route.query, date: newDate };
-    const newUrl = `${window.location.pathname}?${new URLSearchParams(newQuery).toString()}`;
-    window.history.replaceState({}, '', newUrl);
+    // Устанавливаем новую дату и синхронизируем
+    setMapSettings(route, router, mapStore, { date: newDate });
     
     getHistory();
   }

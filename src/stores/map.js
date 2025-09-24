@@ -15,6 +15,7 @@ export const useMapStore = defineStore('map', {
     currentUnit: (localStorage.getItem('currentUnit') || settings?.MAP?.measure || 'pm25').toLowerCase(),
     currentDate: dayISO(), // current selected date
     aqiVersion: (localStorage.getItem('aqiVersion') || 'us'), // AQI calculation version: 'us', 'eu'
+    currentProvider: (localStorage.getItem('provider_type') || settings?.DEFAULT_TYPE_PROVIDER || 'remote'), // current data provider
   }),
   actions: {
     setmapposition(lat, lng, zoom, save = true) {
@@ -48,6 +49,13 @@ export const useMapStore = defineStore('map', {
       if (['us', 'eu'].includes(v)) {
         this.aqiVersion = v;
         try { localStorage.setItem('aqiVersion', v); } catch {}
+      }
+    },
+    setCurrentProvider(provider) {
+      const p = String(provider || 'remote');
+      if (['realtime', 'remote'].includes(p)) {
+        this.currentProvider = p;
+        try { localStorage.setItem('provider_type', p); } catch {}
       }
     }
   },

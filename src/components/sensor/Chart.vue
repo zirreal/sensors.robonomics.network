@@ -27,8 +27,9 @@ import stockInit from 'highcharts/modules/stock';
 import { Chart } from 'highcharts-vue';
 import unitsettings from '../../measurements';
 import { settings } from '@config';
-import { getTypeProvider } from '../../utils/utils';
+// import { getTypeProvider } from '../../utils/utils'; // deprecated
 import { useMapStore } from '@/stores/map';
+import { setMapSettings } from '../../utils/utils';
 
 stockInit(Highcharts);
 
@@ -129,7 +130,7 @@ const activeLegendKey = computed(() => {
   return visibleLegend.value[0]?.key || null;
 });
 
-const isRealtime  = computed(() => getTypeProvider() === 'realtime');
+const isRealtime  = computed(() => mapStore.currentProvider === 'realtime');
 const chartSeries = ref([]);
 
 /**
@@ -326,11 +327,8 @@ function onLegendClick(legendKey) {
     // For single parameters, use the key directly
     targetType = legendKey;
   }
-  // Update URL for deep-linking
-  router.replace({ query: { ...route.query, type: targetType } });
-  // Also synchronize reactive unit with the map store.
-  // While popup is open, Map.vue will ignore this and not repaint.
-  mapStore.setCurrentUnit(targetType);
+  // Update URL and store for deep-linking
+  setMapSettings(route, router, mapStore, { type: targetType });
 }
 
 // auto-priority watcher removed per request
@@ -433,7 +431,7 @@ watch(
         let fallbackType = GROUPS[fallbackKey]
           ? GROUPS[fallbackKey].members.find(m => presentIdsSet.value.has(m))
           : fallbackKey;
-        router.replace({ query: { ...route.query, type: fallbackType } });
+        setMapSettings(route, router, mapStore, { type: fallbackType });
       }
     }
 
@@ -510,8 +508,7 @@ watch(
     }
     
     if (next) {
-      mapStore.setCurrentUnit(next);
-      router.replace({ query: { ...route.query, type: next } });
+      setMapSettings(route, router, mapStore, { type: next });
     }
   },
   { immediate: true }

@@ -55,7 +55,7 @@
 import { ref, onMounted } from "vue";
 import { useAccountStore } from "@/stores/account";
 import config from "@/config/default/config.json";
-import { getTypeProvider } from "@/utils/utils";
+// import { getTypeProvider } from "@/utils/utils"; // deprecated
 
 const accountStore = useAccountStore();
 const accounts = ref([]);
@@ -88,7 +88,7 @@ function getSensorLink(sensor) {
   return {
     name: "main",
     query: {
-      provider: getTypeProvider(),
+      provider: "remote", // Default provider for login redirect
       type: config.MAP.measure,
       zoom: config.MAP.zoom,
       lat: config.MAP.position.lat,
