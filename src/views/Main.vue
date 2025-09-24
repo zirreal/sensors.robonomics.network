@@ -35,7 +35,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useMapStore } from "@/stores/map";
 import { useBookmarksStore } from "@/stores/bookmarks";
 
-import { dayISO } from "@/utils/date";
+import { dayISO, dayBoundsUnix } from "@/utils/date";
 
 import Header from "../components/header/Header.vue";
 import Map from "../components/Map.vue";
@@ -412,7 +412,7 @@ const handlerNewPoint = async (point) => {
   }
 
   if (state.point && state.point.sensor_id === point.sensor_id) {
-    state.point.log = [...state.point.log, { data: point.data, timestamp: point.timestamp }];
+    state.point.logs = [...state.point.logs, { data: point.data, timestamp: point.timestamp }];
   }
 
   if (
@@ -525,7 +525,7 @@ const handlerNewPointWithType = async (point, measurementType) => {
   }
 
   if (state.point && state.point.sensor_id === point.sensor_id) {
-    state.point.log = [...state.point.log, { data: point.data, timestamp: point.timestamp }];
+    state.point.logs = [...state.point.logs, { data: point.data, timestamp: point.timestamp }];
   }
 
   if (
@@ -540,43 +540,44 @@ const handlerClick = async (point) => {
   state.isLoad = true;
   state.point = [];
   
-  // Get logs from API
+  // Get logs from API for current date
   let log = [];
   try {
+    // Always use current date range to get data for specific date
+    const startTimestamp = dayBoundsUnix(mapStore.currentDate).start;
+    const endTimestamp = dayBoundsUnix(mapStore.currentDate).end;
+    
+    log = await state.providerObj.getHistoryPeriodBySensor(
+      point.sensor_id,
+      startTimestamp,
+      endTimestamp
+    );
+    
     if (state.status === "history") {
-      log = await state.providerObj.getHistoryPeriodBySensor(
-        point.sensor_id,
-        state.start,
-        state.end
-      );
       mapStore.mapinactive = true;
-    } else {
-      log = await state.providerObj.getHistoryBySensor(point.sensor_id);
     }
   } catch (error) {
     console.error('Error fetching sensor history:', error);
   }
   
   const address = await getAddressByPos(point.geo.lat, point.geo.lng, localeComputed.value);
-  state.point = { ...point, address, log: [...log] };
+  state.point = { ...point, address, logs: [...log] };
   state.isLoad = false;
 
   handleActivePoint(point.sensor_id)
 };
 
 const handlerHistoryLog = async ({ sensor_id, start, end }) => {
-  if (state.status === "history") {
-    // Get fresh logs from API for the new date range
-    let log = [];
-    try {
-      log = await state.providerObj.getHistoryPeriodBySensor(sensor_id, start, end);
-    } catch (error) {
-      // Silently handle error - log will remain empty
-    }
-    
-    if (state.point && state.point.sensor_id === sensor_id) {
-      state.point = { ...state.point, log: [...log] };
-    }
+  // Get fresh logs from API for the new date range
+  let log = [];
+  try {
+    log = await state.providerObj.getHistoryPeriodBySensor(sensor_id, start, end);
+  } catch (error) {
+    // Silently handle error - log will remain empty
+  }
+  
+  if (state.point && state.point.sensor_id === sensor_id) {
+    state.point = { ...state.point, logs: [...log] };
   }
 };
 

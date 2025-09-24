@@ -29,6 +29,7 @@ export default {
   "sensorpopup.infosensordonated": "Спонсирован",
   "sensorpopup.sharedefault": "Поделиться",
   "sensorpopup.sharelink": "Скопировать ссылку на датчик",
+  "sensor.no_data_message": "Нет данных за эту дату",
   "bookmarks.listtitle": "Сохраненные датчики",
   "bookmarks.listempty": "Здесь вы можете сохранить датчики для быстрого просмотра",
   "links.measurement": "Руководство по измеренным показателям",

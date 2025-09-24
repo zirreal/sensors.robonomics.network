@@ -29,6 +29,7 @@ export default {
   "sensorpopup.infosensordonated": "Donated by",
   "sensorpopup.sharedefault": "Share this sensor",
   "sensorpopup.sharelink": "Copy the link of sensor",
+  "sensor.no_data_message": "No data available for this date",
   "bookmarks.listtitle": "Your bookmarked sensors",
   "bookmarks.listempty": "Save any sensor from the map here for quicker access",
   "links.measurement": "Measurements guide",

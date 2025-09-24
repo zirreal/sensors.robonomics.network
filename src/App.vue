@@ -13,7 +13,8 @@ import { useMapStore } from "@/stores/map";
 
 import { decryptText } from "./utils/idb";
 import config from "@/config/default/config.json";
-import { getSensorsForLastDay } from "./utils/utils";
+import { getSensorsForLastDay, getSensorsForPeriod } from "./utils/utils";
+import { dayISO, dayBoundsUnix } from "./utils/date";
 
 const route = useRoute();
 const mapStore = useMapStore();
@@ -58,11 +59,20 @@ function inBBox(lat, lng, b) {
   затем для каждого обновляем devices из сети (getUserSensors) и
   сохраняем обратно через addAccount.
 */
-onMounted(async () => {
-
-  /* + INIT SENSORS */
-  const all = await getSensorsForLastDay();
+// Функция для загрузки сенсоров для конкретной даты
+const loadSensorsForDate = async (date) => {
   const box = getConfigBBox();
+  
+  // Если дата сегодняшняя, используем getSensorsForLastDay
+  // Иначе загружаем данные для конкретной даты
+  let all;
+  if (date === dayISO()) {
+    all = await getSensorsForLastDay();
+  } else {
+    const startTimestamp = dayBoundsUnix(date).start;
+    const endTimestamp = dayBoundsUnix(date).end;
+    all = await getSensorsForPeriod(startTimestamp, endTimestamp);
+  }
 
   const sensors = (Array.isArray(all) ? all : []).filter(s => {
     if (!box) return true;
@@ -72,6 +82,13 @@ onMounted(async () => {
   });
 
   mapStore.setSensors(sensors);
+};
+
+onMounted(async () => {
+
+  /* + INIT SENSORS */
+  // Загружаем сенсоры для текущей выбранной даты
+  await loadSensorsForDate(mapStore.currentDate);
   
   // AQI functionality removed - no longer enriching sensors with AQI data
   
@@ -97,6 +114,16 @@ onMounted(async () => {
   }
   /* - INIT ACCOUNT */
 });
+
+// Watcher для изменения даты - перезагружаем сенсоры
+watch(
+  () => mapStore.currentDate,
+  async (newDate) => {
+    if (newDate) {
+      await loadSensorsForDate(newDate);
+    }
+  }
+);
 </script>
 
 <style>

@@ -41,8 +41,9 @@
       </section>
 
       <section>
-        <Chart v-show="state.chartReady" :log="log" :unit="measurements[props.type]?.unit" />
-        <div v-show="!state.chartReady" class="chart-skeleton"></div>
+        <Chart v-show="!state.chartLoading && !hasNoData" :log="log" :unit="measurements[mapStore.currentUnit]?.unit" />
+        <div v-show="state.chartLoading" class="chart-skeleton"></div>
+        <div v-show="!state.chartLoading && hasNoData">{{ t('sensor.no_data_message') }}</div>
       </section>
 
       <section class="flexline space-between">
@@ -75,7 +76,7 @@
 
       <!-- monthly-analysis block is temporarily disabled
       TODO: getScope временно отключен, но оставлен для будущего использования
-      <section class="monthly-analysis" v-if="state.chartReady" style="display: none">
+      <section class="monthly-analysis" v-if="!state.chartLoading" style="display: none">
         <h2>Analysis / Reports </h2>
         <div v-if="state.provider !== 'realtime'" class="flexline">
           <template v-if="state.monthLogLoading"><Loader /></template>
@@ -83,7 +84,7 @@
           <button v-if="!state.monthLogLoading" @click="getScope('month')" class="button" :disabled="state.analysisType === 'month'"> {{ state.analysisType === 'month' && state.chartScopeReady ? 'Monthly report ready' : 'Generate monthly report' }}</button>
         </div>
         <div class="chart-wrapper" v-if="state.showAnalysisChart">
-          <AnalysisChart v-show="state.chartScopeReady" :log="scopeLog" :unit="measurements[props.type]?.unit" :currentScope="state.analysisType" />
+          <AnalysisChart v-show="state.chartScopeReady" :log="scopeLog" :unit="measurements[mapStore.currentUnit]?.unit" :currentScope="state.analysisType" />
           <div v-show="!state.chartScopeReady" class="chart-skeleton"></div>
           <div v-if="state.monthLogLoading" class="monthly-scope-warning">
            <font-awesome-icon icon="fa-solid fa-circle-exclamation" />
@@ -204,7 +205,7 @@ import { calculateAQIIndex } from '../../utils/aqiIndex/us';
 import { dayISO, dayBoundsUnix, parseInputDate } from '../../utils/date';
 import { useMapStore } from '@/stores/map';
 import { clearActiveMarker } from '../../utils/map/markers';
-import { setMapSettings } from '../../utils/utils';
+import { setMapSettings, getPriorityValue } from '../../utils/utils';
 
 import AQIWidget from './AQIWidget.vue';
 import Bookmark from "./Bookmark.vue";
@@ -219,9 +220,7 @@ import Icon from "./Icon.vue";
 
 
 const props = defineProps({
-  type: String,
   point: Object,
-  startTime: [Number, String],
 });
 const emit = defineEmits(["history", "close"]);
 // TODO: 'getScope' временно отключен, но оставлен для будущего использования
@@ -245,7 +244,7 @@ const state = reactive({
   rtdata: [],
   sharedDefault: false,
   sharedLink: false,
-  chartReady: false,
+  chartLoading: true,
   // chartScopeReady: false,
   // monthLogLoading: false,
   // showAnalysisChart: false,
@@ -281,10 +280,19 @@ const geo = computed(() => {
 
 const donated_by = computed(() => props.point?.donated_by || null);
 
-// Гарантируем, что log всегда массив
-const log = computed(() => (Array.isArray(props.point?.log) ? props.point.log : []));
+// Гарантируем, что logs всегда массив
+const log = computed(() => (Array.isArray(props.point?.logs) ? props.point.logs : []));
 // const scopeLog = computed(() => (Array.isArray(props.point?.scopeLog) ? props.point.scopeLog : []));
 const model = computed(() => props.point?.model || null);
+
+// Проверяем, что данные пришли, но пустые
+const hasNoData = computed(() => {
+  // Показываем "No data available" только если:
+  // 1. Не загружаемся (chartLoading = false)
+  // 2. И logs пустой
+  // 3. И logs был изменен (то есть данные загружались)
+  return !state.chartLoading && log.value.length === 0 && props.point?.logs !== undefined;
+});
 
 const addressformatted = computed(() => {
   let parts = [];
@@ -385,7 +393,7 @@ const getHistory = () => {
     return;
   }
 
-  state.chartReady = false;
+  state.chartLoading = true;
 
   emit("history", {
     sensor_id: sensor_id.value,
@@ -592,7 +600,8 @@ function getMapLink(lat, lon, label = "Sensor") {
 
 
 onMounted(() => {
-  state.start = props.startTime ? dayISO(Number(props.startTime)) : mapStore.currentDate || dayISO();
+  // Используем единый метод синхронизации настроек карты
+  state.start = getPriorityValue(route.query.date, mapStore.currentDate, dayISO());
   updatert();
 });
 
@@ -624,8 +633,10 @@ watch(
 watch(
   () => mapStore.currentDate,
   (newDate) => {
+    console.log('SensorPopup: mapStore.currentDate changed to:', newDate, 'current state.start:', state.start);
     if (newDate && newDate !== state.start) {
       state.start = newDate;
+      console.log('SensorPopup: updated state.start to:', state.start);
     }
   }
 );
@@ -636,7 +647,7 @@ watch(
   (newProvider) => {
     if (newProvider && newProvider !== state.provider) {
       state.provider = newProvider;
-      state.chartReady = false;
+      state.chartLoading = true;
       
       if (newProvider === "realtime") {
         // Для realtime провайдера обновляем данные
@@ -651,16 +662,18 @@ watch(
 
 
 watch(() => log.value, (arr) => {
-    if (!Array.isArray(arr) || arr.length === 0) return;
+    if (!Array.isArray(arr)) return;
+    
+    // Данные загружены, убираем loading (независимо от того, есть данные или нет)
+    state.chartLoading = false;
+    state.monthLogLoading = false;
+    
+    // Если массив пустой, больше ничего не делаем
+    if (arr.length === 0) return;
 
     // enrich & update realtime view
     enrichLogsWithDewPoint(log.value);
     updatert();
-
-    if (!state.chartReady) {
-      state.chartReady = true;
-      state.monthLogLoading = false;
-    }
 
     // update units list for scales
     const nextUnits = buildUnitsList(arr);
@@ -705,7 +718,7 @@ watch(
         name: route.name, // Assumes the route name remains the same
         query: {
           provider: state.provider,
-          type: props.type || 'pm25',
+          type: mapStore.currentUnit,
           zoom: route.query.zoom || settings.MAP.zoom, // trying to keep zoom
           lat: newPoint.geo.lat,
           lng: newPoint.geo.lng,
@@ -971,4 +984,5 @@ watch(
 .sensor-title span {
   font-size: inherit;
 }
+
 </style>
