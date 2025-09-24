@@ -40,6 +40,9 @@ const changeDataMode = async () => {
   // Устанавливаем настройки и синхронизируем
   setMapSettings(route, router, mapStore, settings);
   
-  window.location.reload();
+  // Даем время на обновление store, затем перезагружаем
+  setTimeout(() => {
+    window.location.reload();
+  }, 100);
 };
 </script>

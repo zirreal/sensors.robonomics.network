@@ -77,12 +77,12 @@ const state = reactive({
   end: null,
   isLoad: false,
   clusterUpdateScheduled: false,
+  isSyncing: false, // Флаг для предотвращения циклических вызовов syncMapSettings
 });
 
 const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
 
-// Синхронизируем данные сразу при инициализации
-syncMapSettings(route, router, mapStore);
+// Синхронизация данных происходит в watcher'е route.query с immediate: true
 
 /* + Realtime watch */
 let unwatchRealtime = null;
@@ -652,35 +652,47 @@ const handleTypeChange = async (newType) => {
 // Синхронизируем настройки карты при изменении URL
 watch(
   () => route.query,
-  () => {
-    syncMapSettings(route, router, mapStore);
+  (newQuery, oldQuery) => {
+    // Проверяем, что query действительно изменился
+    if (JSON.stringify(newQuery) !== JSON.stringify(oldQuery)) {
+      if (!state.isSyncing) {
+        state.isSyncing = true;
+        syncMapSettings(route, router, mapStore);
+        state.isSyncing = false;
+      }
+    }
   },
   { immediate: true }
 );
 
 // Watch for currentDate changes and reload data
-watch(
-  () => mapStore.currentDate,
-  (newDate) => {
-    if (newDate) {
-      // Clear existing markers and show gray loading state
-      markers.clearAllMarkers();
-      
-      // Синхронизируем URL при изменении даты
-      syncMapSettings(route, router, mapStore);
-      
-      // Reload data when date changes
-      const startDate = new Date(newDate);
-      const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + 1);
-      
-      const start = Math.floor(startDate.getTime() / 1000);
-      const end = Math.floor(endDate.getTime() / 1000);
-      
-      handlerHistory({ start, end });
-    }
-  }
-);
+// Временно отключено для отладки
+// watch(
+//   () => mapStore.currentDate,
+//   (newDate) => {
+//     if (newDate) {
+//       // Clear existing markers and show gray loading state
+//       markers.clearAllMarkers();
+//       
+//       // Синхронизируем URL при изменении даты
+//       if (!state.isSyncing) {
+//         state.isSyncing = true;
+//         syncMapSettings(route, router, mapStore);
+//         state.isSyncing = false;
+//       }
+//       
+//       // Reload data when date changes
+//       const startDate = new Date(newDate);
+//       const endDate = new Date(startDate);
+//       endDate.setDate(endDate.getDate() + 1);
+//       
+//       const start = Math.floor(startDate.getTime() / 1000);
+//       const end = Math.floor(endDate.getTime() / 1000);
+//       
+//       handlerHistory({ start, end });
+//     }
+//   }
+// );
 
 // Watch for currentUnit changes and refresh markers
 watch(
@@ -688,8 +700,7 @@ watch(
   (newUnit) => {
     if (newUnit) {
       markers.refreshClusters();
-      // Синхронизируем URL при изменении unit
-      syncMapSettings(route, router, mapStore);
+      // URL синхронизируется автоматически через route.query watcher
     }
   }
 );
@@ -698,16 +709,18 @@ watch(
 watch(
   () => mapStore.currentProvider,
   async (newProvider) => {
-    if (newProvider && state.providerObj) {
-      // Отписываемся от старого провайдера
-      unsubscribeRealtime();
+    if (newProvider) {
+      // Отписываемся от старого провайдера, если он есть
+      if (state.providerObj) {
+        unsubscribeRealtime();
+      }
       
       // Инициализируем новый провайдер
       if (newProvider === "remote") {
         state.providerObj = new providers.Remote(settings.REMOTE_PROVIDER);
         if (!(await state.providerObj.status())) {
           mapStore.setCurrentProvider("realtime");
-          syncMapSettings(route, router, mapStore);
+          // URL синхронизируется автоматически через route.query watcher
           return;
         }
       } else {
@@ -721,7 +734,8 @@ watch(
         }
       });
     }
-  }
+  },
+  { immediate: true }
 );
 
 // Watch for sensors data and show markers
@@ -746,26 +760,8 @@ watch(
 );
 
 onMounted(async () => {
-  // Инициализируем объект провайдера
-  if (mapStore.currentProvider === "remote") {
-    state.providerObj = new providers.Remote(settings.REMOTE_PROVIDER);
-    if (!(await state.providerObj.status())) {
-      // Если remote недоступен, переключаемся на realtime через store
-      mapStore.setCurrentProvider("realtime");
-      syncMapSettings(route, router, mapStore);
-      return;
-    }
-  } else {
-    state.providerObj = new providers.Libp2p(settings.LIBP2P);
-  }
-
-  state.providerObj.ready().then(() => {
-    state.providerReady = true;
-    if (mapStore.currentProvider === "realtime") {
-      subscribeRealtime();
-    }
-  });
-
+  // Инициализация провайдера происходит в watcher'е с immediate: true
+  
   if (mapStore.currentProvider === "remote") {
     const iRemote = setInterval(() => {
       if (state.providerObj && state.providerObj.connection && markers.isReadyLayers()) {
@@ -778,7 +774,7 @@ onMounted(async () => {
   // Check if AQI is selected in realtime mode and switch to PM2.5
   if (mapStore.currentUnit === 'aqi' && mapStore.currentProvider === 'realtime') {
     mapStore.setCurrentUnit('pm25');
-    syncMapSettings(route, router, mapStore);
+    // URL синхронизируется автоматически через route.query watcher
   }
 
   // Handle sensor parameter

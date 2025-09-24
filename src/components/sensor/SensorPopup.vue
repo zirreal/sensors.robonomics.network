@@ -253,7 +253,8 @@ const state = reactive({
   lastCoords: { lat: null, lon: null },
   address: "",
   addressLoading: true,
-  addressReqId: 0
+  addressReqId: 0,
+  lastRequestedCoords: null // Защита от повторных запросов
 });
 
 
@@ -544,6 +545,14 @@ async function requestAddressForGeo(newGeo) {
     state.addressLoading = false;
     return;
   }
+  
+  // Проверяем, не идет ли уже запрос для этих координат
+  const coordKey = `${newGeo.lat},${newGeo.lng}`;
+  if (state.lastRequestedCoords === coordKey) {
+    return; // Уже запрашиваем для этих координат
+  }
+  state.lastRequestedCoords = coordKey;
+  
   state.addressLoading = true;
   state.address = {};
   const currentReq = ++state.addressReqId;
@@ -560,7 +569,10 @@ async function requestAddressForGeo(newGeo) {
     console.error("Reverse geocoding error:", err);
     setAddressUnrecognised(newGeo.lat, newGeo.lng);
   } finally {
-    if (state.addressReqId === currentReq) state.addressLoading = false;
+    if (state.addressReqId === currentReq) {
+      state.addressLoading = false;
+      state.lastRequestedCoords = null; // Сбрасываем после завершения
+    }
   }
 }
 
@@ -614,6 +626,25 @@ watch(
   (newDate) => {
     if (newDate && newDate !== state.start) {
       state.start = newDate;
+    }
+  }
+);
+
+// Watcher для изменений провайдера извне
+watch(
+  () => mapStore.currentProvider,
+  (newProvider) => {
+    if (newProvider && newProvider !== state.provider) {
+      state.provider = newProvider;
+      state.chartReady = false;
+      
+      if (newProvider === "realtime") {
+        // Для realtime провайдера обновляем данные
+        updatert();
+      } else if (newProvider === "remote") {
+        // Для remote провайдера загружаем историю
+        getHistory();
+      }
     }
   }
 );
@@ -684,7 +715,7 @@ watch(
       });
     }
   },
-  { immediate: true, deep: true }
+  { deep: true }
 );
 
 // EN: Change the address text if geo is changed
@@ -698,10 +729,14 @@ watch(
     ) {
       state.lastCoords.lat = newGeo?.lat || null;
       state.lastCoords.lon = newGeo?.lng || null;
-      await requestAddressForGeo(newGeo);
+      
+      // Добавляем задержку, чтобы избежать множественных запросов
+      setTimeout(() => {
+        requestAddressForGeo(newGeo);
+      }, 100);
     }
   },
-  { immediate: true, deep: true });
+  { deep: true });
 
 </script>
 
