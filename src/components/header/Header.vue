@@ -1,33 +1,19 @@
 <template>
   <header :class="`route-${route.name || route.path.replaceAll('/', '-')}`">
-    <!-- <div class="header-banner flexline align-center">
-      <a href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight?utm_source=sensors.social&utm_medium=header-banner" target="_blank">
-        <span><b>{{ daysLeft }} {{$t('days left')}}</b> <b>{{$t('Up to -42%')}}</b></span>
-        <span>{{ $t('Air quality monitor on') }}</span>
-        <img class="header-banner-svg" alt="Indiegogo" src="../../assets/images/indiegogo.svg"/>
-      </a>
-    </div> -->
-
-    <!-- <div class="header-banner flexline align-center">
-      <a href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight?utm_source=sensors.social&utm_medium=header-banner" target="_blank">
-        <img alt="" src="../../assets/images/altruist-device/Altruist-bundle-yellow.webp" />
-        <span><b>Support token from €8 >></b></span>
-      </a>
-    </div> -->
 
     <div class="header-content flexline space-between">
       <div class="flexline align-start">
         <router-link to="/" class="appicon">
           <img :alt="settings.TITLE" src="../../../public/app-icon-512.png" />
         </router-link>
-        <details v-if="mapStore.sensors?.length > 0" tabindex="0" class="sensors details-popup">
-          <summary>
+        <!-- Если есть zeroGeoSensors - показываем details с полным содержимым -->
+        <details v-if="mapStore.sensors?.length > 0 && zeroGeoSensors?.length > 0" tabindex="0" class="sensors-counter details-popup">
+          <summary class="sensors-counter">
             <IconSensor class="sensors-mainicon" />
             {{ mapStore.sensors?.length }}
           </summary>
-          <div class="details-content" :class="zeroGeoSensors?.length > 0 ? 'nogeo' : null">
-
-            <section v-if="zeroGeoSensors?.length > 0">
+          <div class="details-content nogeo">
+            <section>
               <h4>{{zeroGeoSensors?.length}} sensors without geolocation</h4>
               <ul class="sensors-list">
                 <li v-for="sensor in zeroGeoSensors" :key="sensor.id">
@@ -37,17 +23,17 @@
                 </li>
               </ul>
             </section>
-
-            <AltruistPromo utmMedium="header_popup" />
           </div>
         </details>
+        
+        <!-- Если zeroGeoSensors пуст - показываем только div.sensors-counter -->
+        <div v-else-if="mapStore.sensors?.length > 0" class="sensors-counter">
+          <IconSensor class="sensors-mainicon" />
+          {{ mapStore.sensors?.length }}
+        </div>
       </div>
 
       <div class="flexline">
-        <a class="promobutton" href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight?utm_source=sensors.social&utm_medium=header-button" target="_blank">
-          <img alt="" src="../../assets/images/altruist-device/Altruist-bundle-pink.webp" />
-          <span>Support <span class="hidemobiles">from {{ supportPriceText }}</span></span>
-        </a>
 
         <select v-model="locale">
           <option v-for="lang in locales" :key="lang.code" :value="lang.code">
@@ -107,7 +93,6 @@ import { useRoute, useRouter } from "vue-router";
 import { useMapStore } from "@/stores/map";
 
 import IconSensor from "../icons/Sensor.vue";
-import AltruistPromo from "../devices/altruist/AltruistPromo.vue";
 import ReleaseInfo from "../ReleaseInfo.vue";
 import Login from "./Login.vue";
 
@@ -174,40 +159,6 @@ const formatSensorId = (id) => {
 };
 
 
-/* + Token support price */
-const euroCountries = [
-  "AT","BE","CY","EE","FI","FR","DE","GR","IE","IT","LV","LT",
-  "LU","MT","NL","PT","SK","SI","ES"
-];
-
-const supportPrice = ref({ value: 8, currency: "EUR" });
-
-const supportPriceText = computed(() => {
-  return supportPrice.value.currency === "EUR"
-    ? `€${supportPrice.value.value}`
-    : `$${supportPrice.value.value}`;
-});
-
-async function getCountryCodeByIP() {
-  try {
-    const res = await fetch("https://ipapi.co/json/");
-    const data = await res.json();
-    return data?.country || null;
-  } catch {
-    return null;
-  }
-}
-
-async function updateSupportPrice() {
-  const country = await getCountryCodeByIP();
-  if (country && euroCountries.includes(country)) {
-    supportPrice.value = { value: 8, currency: "EUR" };
-  } else {
-    supportPrice.value = { value: 9, currency: "USD" };
-  }
-}
-
-/* - Token support price */
 
 watch(locale, (newValue) => {
   i18nLocale.value = newValue;
@@ -232,8 +183,6 @@ onMounted(() => {
 
   // Update for Indiegogo timer hourly
   // timer = setInterval(() => { now.value = new Date() }, 1000 * 60 * 60);
-
-  updateSupportPrice();
 });
 
 </script>
@@ -295,7 +244,7 @@ onMounted(() => {
 
 /* + sensors list */
 
-.sensors summary {
+.sensors-counter {
   display: flex;
   align-items: center;
   gap: 3px;
@@ -323,96 +272,13 @@ onMounted(() => {
 }
 /* - sensors list */
 
-/* + banner */
-.header-banner {
-  /* background-color: var(--color-orange); */
-
-  background-color: var(--color-blue);
-
-  /* background-color: #ed006f; */
-
-  /* background-color: #eaeaea;
-  box-shadow: inset #8e8e8e 0 0 40px; */
-  color: #fff;
-  /* padding-top: var(--gap); */
-  /* padding-bottom: var(--gap); */
-}
-
-.header-banner b {
-  font-weight: 900;
-  /* background-color: rgb(255, 234, 0); */
-  background-color: #fff;
-  padding: 2px 6px;
-  border-radius: 4px;
-  color: #000;
-  margin-right: 15px;
-  font-size: 18px;
-  box-shadow: 4px 4px 0 #222;
-}
-
-.promobutton {
-  /* background-color: var(--color-blue); */
-  background-color: rgb(255, 234, 0);
-  /* box-shadow: 4px 4px 0 #222; */
-  border: var(--app-borderwidth) solid var(--app-bordercolor);
-  padding: 4px 12px;
-  border-radius: 4px;
-  color: #000;
-  font-weight: bold;
-  display: flex;
-  gap: var(--gap);
-  text-decoration: none;
-  align-items: center;
-}
-
-.promobutton img {
-  display: block;
-  max-width: 30px;
-}
-
 @media screen and (max-width: 600px) {
   .hidemobiles {
     display: none;
   }
 }
 
-.header-banner a {
-  width: 100%;
-  padding: calc(var(--gap) /2) var(--gap);
-  color: currentColor;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  gap: var(--gap);
-}
 
-.header-banner img {
-  display: inline-block;
-  max-width: 100px;
-}
-
-.header-banner-svg {
-  max-height: 12px;
-  padding: 0 5px;
-}
-/* - banner */
-
-
-  @media screen and (max-width: 500px) {
-
-    .header-banner {
-      padding-top: calc(var(--gap) * 2);
-      padding-bottom: calc(var(--gap) * 2);
-    }
-
-    .header-banner a {
-      flex-direction: column;
-      text-align: center;
-      gap: var(--gap);
-    }
-  }
 
   @media screen and (width > 900px) {
     .nogeo {
@@ -423,9 +289,6 @@ onMounted(() => {
       gap: calc(var(--gap) * 2);
     }
 
-    .buySensor {
-      margin-top: 0 !important;
-    }
   }
 
 </style>

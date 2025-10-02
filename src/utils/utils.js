@@ -1,5 +1,22 @@
-import { settings } from "@config";
+// import { settings } from "@config";
 import { dayISO } from "@/utils/date";
+
+/**
+ * Universal fetch method for JSON data
+ * @param {string} url - URL to fetch
+ * @param {object} options - Fetch options (optional)
+ * @returns {Promise<object>} Parsed JSON data
+ */
+export async function fetchJson(url, options = {}) {
+  const defaultOptions = { 
+    credentials: "omit", 
+    cache: "no-cache" 
+  };
+  const res = await fetch(url, { ...defaultOptions, ...options });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 
 
 /*
@@ -52,50 +69,6 @@ export function getTypeProvider(routeParams) {
   }
 }
 */
-
-/**
- * Fetches sensor data for the given period.
- * @param {number|string} start – start timestamp in seconds
- * @param {number|string} end – end timestamp in seconds
- * @returns {Promise<Array>} – flat array of sensor items
- */
-export async function getSensorsForPeriod(start, end) {
-  const from = String(start).trim();
-  const to = String(end).trim();
-  const url = `https://roseman.airalab.org/api/sensor/last/${from}/${to}`;
-
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`getSensorsForPeriod: HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (!data?.result || typeof data.result !== 'object') return [];
-
-    // Преобразуем в массив: [{ sensorId, ...data }, ...]
-    return Object.entries(data.result).flatMap(([sensorId, entries]) =>
-      entries.map(entry => ({ sensorId, ...entry }))
-    );
-
-  } catch (error) {
-    console.error('getSensorsForPeriod:', error);
-    return [];
-  }
-}
-
-
-/**
- * Fetches sensor data for the last 24 hours (from now - 86400 seconds).
- * @returns {Promise<object>} – parsed JSON response
- */
-export async function getSensorsForLastDay() {
-  const end = Math.floor(Date.now() / 1000);
-  const start = end - 86400;
-  return getSensorsForPeriod(start, end);
-}
-
 
 
 export function mergeDeep(target, source) {

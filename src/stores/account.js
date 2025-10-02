@@ -94,6 +94,8 @@ export const useAccountStore = defineStore("account", {
 
       const promise = (async () => {
         try {
+
+          console.log('account.js');
           const response = await fetch(
             `https://roseman.airalab.org/api/sensor/sensors/${key}`
           );

@@ -5,37 +5,30 @@
   />
   <Header />
 
-  <MessagePopup v-if="isMessage" @close="handlerClose" :data="state.point.measurement" />
+  <MessagePopup 
+    v-if="isMessage"
+    :data="state.point.measurement"
+    @close="handlerClose" />
 
-  <!-- TODO: @getScope временно отключен, но оставлен для будущего использования -->
   <SensorPopup
     v-if="isSensor"
-    :type="mapStore.currentUnit"
     :point="state?.point"
     @close="handlerClose"
-    @history="handlerHistoryLog"
-    :startTime="state?.start"
   />
 
   <Map
-    :measuretype="route.query.type"
-    :historyready="state.canHistory"
-    :historyhandler="handlerHistory"
-    :isLoad="state.isLoad"
-    @clickMarker="handlerClick"
-    @activateMarker="handleActivePoint"
-    @typeChanged="handleTypeChange"
+    @clickMarker="updateSensorPopup"
   />
 </template>
 
 <script setup>
-import { reactive, computed, watch, onMounted } from "vue";
+import { reactive, computed, watch, onMounted, nextTick } from "vue";
 import { useRouter, useRoute } from "vue-router";
 
 import { useMapStore } from "@/stores/map";
 import { useBookmarksStore } from "@/stores/bookmarks";
 
-import { dayISO, dayBoundsUnix } from "@/utils/date";
+import { dayBoundsUnix } from "@/utils/date";
 
 import Header from "../components/header/Header.vue";
 import Map from "../components/Map.vue";
@@ -45,13 +38,17 @@ import MetaInfo from '../components/MetaInfo.vue';
 
 import { settings } from "@config";
 import * as providers from "../providers";
-import { instanceMap } from "../utils/map/instance";
 import * as markers from "../utils/map/markers";
-import { getAddressByPos } from "../utils/map/utils";
+import { clearActiveMarker } from "../utils/map/markers";
+import { moveMap } from "../utils/map/instance";
+import { getAddress } from "../utils/map/markers/requests";
 import { syncMapSettings } from "../utils/utils";
 import { useI18n } from "vue-i18n";
+import { getSensors, getSensorData, getMaxData } from "../utils/map/markers/requests";
 
-// Props убраны - используем route.query напрямую
+const COORDINATE_TOLERANCE = 0.001; // Минимальное значение координат - маркеры с координатами меньше этого значения считаются невалидными
+const DEFAULT_SENSOR_MODEL = 2; // ID модели сенсора по умолчанию, если модель не указана
+const RETRY_TIMEOUT = 300; // Задержка в миллисекундах для повторных попыток загрузки данных (geo, sensors, popup)
 
 const mapStore = useMapStore();
 const bookmarksStore = useBookmarksStore();
@@ -59,37 +56,157 @@ const router = useRouter();
 const route = useRoute();
 const { locale } = useI18n();
 
+const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
+
+const isMessage = computed(() => {
+  return state.point?.model === 3;
+});
+
+const isSensor = computed(() => {
+  // return state.point?.model === 2 || !!route.query.sensor;
+  return !!route.query.sensor;
+});
+
+/**
+ * Проверяет, открыт ли попап для указанного сенсора
+ * @param {string} sensorId - ID сенсора для проверки
+ * @returns {boolean} true если попап открыт для этого сенсора
+ */
+const isSensorOpen = (sensorId) => {
+  return state.point && state.point.sensor_id === sensorId;
+};
 
 // Локальное состояние компонента
 const state = reactive({
-  providerReady: false,
   point: null,
-  points: {},
-  status: "online",
-  canHistory: false,
   providerObj: null,
-  geoLocationOptions: {
-    enableHighAccuracy: true,
-    timeout: 5000,
-    maximumAge: 0,
-  },
-  start: route.query.date || mapStore.currentDate || null,
-  end: null,
-  isLoad: false,
-  clusterUpdateScheduled: false,
   isSyncing: false, // Флаг для предотвращения циклических вызовов syncMapSettings
+  isUpdatingPopup: false, // Флаг для предотвращения повторных вызовов updateSensorPopup
 });
 
-const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
+/**
+ * Рассчитывает точку росы по температуре и влажности
+ * @param {number} temperature - Температура в градусах Цельсия
+ * @param {number} humidity - Влажность в процентах (0-100)
+ * @returns {number|null} Точка росы в градусах Цельсия или null при неверных данных
+ */
+const calculateDewPoint = (temperature, humidity) => {
+  if (typeof temperature !== 'number' || typeof humidity !== 'number' || humidity <= 0 || humidity > 100) {
+    return null;
+  }
 
-// Синхронизация данных происходит в watcher'е route.query с immediate: true
+  const a = 17.27;
+  const b = 237.7;
+  const gamma = (a * temperature) / (b + temperature) + Math.log(humidity / 100);
+  const dewPoint = (b * gamma) / (a - gamma);
+
+  return parseFloat(dewPoint.toFixed(2));
+};
+
+/**
+ * Обогащает данные сенсора точкой росы, если доступны температура и влажность
+ * @param {Object} data - Объект с данными сенсора
+ * @returns {Object} Обогащенные данные с точкой росы (если возможно)
+ */
+const enrichWithDewPoint = (data) => {
+  if (data && typeof data.temperature === 'number' && typeof data.humidity === 'number') {
+    const dew = calculateDewPoint(data.temperature, data.humidity);
+    if (dew !== null) {
+      return { ...data, dewpoint: dew };
+    }
+  }
+  return data;
+};
+
+/**
+ * Обогащает массив логов данными о точке росы
+ * @param {Array} logArr - Массив логов сенсора
+ */
+const enrichLogsWithDewPoint = (logArr) => {
+  if (!Array.isArray(logArr)) return;
+  
+  logArr.forEach(entry => {
+    if (entry?.data) {
+      entry.data = enrichWithDewPoint(entry.data);
+    }
+  });
+};
+
+/**
+ * Обновляет данные сенсора в ad
+ * @param {string} sensorId - ID сенсора
+ * @param {Object} data - Данные для обновления
+ * @param {Object} [data.geo] - Координаты {lat, lng}
+ * @param {number} [data.model] - Модель сенсора
+ * @param {Object} [data.maxdata] - Максимальные данные
+ * @param {Object} [data.data] - Текущие данные
+ * @param {Array} [data.logs] - Логи сенсора
+ */
+const setSensorData = (sensorId, data) => {
+  if (!sensorId || !data) return;
+  
+  // existingSensors: Создаем копию массива для обеспечения реактивности Vue
+  // Если мы мутируем существующий массив (mapStore.sensors), Vue не увидит изменения
+  // и watcher на mapStore.sensors не сработает. Создание нового массива гарантирует
+  // что mapStore.setSensors() получит новую ссылку и реактивность сработает корректно
+  const existingSensors = [...(mapStore.sensors || [])];
+  const sensorIndex = existingSensors.findIndex(s => s.sensor_id === sensorId);
+  
+  if (sensorIndex >= 0) {
+    // Обновляем существующий сенсор - мержим данные вместо замены
+    const existingSensor = existingSensors[sensorIndex];
+    const updatedSensor = {
+      ...existingSensor,
+      geo: data.geo || existingSensor.geo,
+      model: data.model || existingSensor.model,
+      maxdata: { ...existingSensor.maxdata, ...(data.maxdata || {}) },
+      data: { ...existingSensor.data, ...(data.data || {}) }, // Мержим данные!
+      logs: data.logs || existingSensor.logs
+    };
+    
+    // Создаем унифицированную точку с мерженными данными
+    const sensorData = createUnifiedPoint(updatedSensor, { calculateValue: false });
+    existingSensors[sensorIndex] = sensorData;
+  } else {
+    // Добавляем новый сенсор
+    const sensorData = createUnifiedPoint({
+      sensor_id: sensorId,
+      geo: data.geo || { lat: 0, lng: 0 },
+      maxdata: data.maxdata || {},
+      data: data.data || {},
+      logs: data.logs || []
+    });
+    existingSensors.push(sensorData);
+  }
+  
+  mapStore.setSensors(existingSensors);
+};
 
 /* + Realtime watch */
 let unwatchRealtime = null;
 
 function subscribeRealtime() {
   if (state.providerObj && !unwatchRealtime) {
-    unwatchRealtime = state.providerObj.watch(handlerNewPoint);
+      unwatchRealtime = state.providerObj.watch(async (point) => {
+        
+      // Обогащаем текущие данные точкой росы
+      point.data = enrichWithDewPoint(point.data);
+        
+      // Обновляем данные для realtime
+      setSensorData(point.sensor_id, {
+        geo: point.geo,
+        model: point.model,
+        data: point.data
+      });
+
+      // Обновляем маркер
+      updateMarker(point);
+      
+      // Если попап открыт для этого сенсора, обновляем его
+      if (isSensorOpen(point.sensor_id)) {
+        updateSensorPopup(point);
+      }
+    });
   }
 }
 
@@ -101,620 +218,409 @@ function unsubscribeRealtime() {
 }
 /* - Realtime watch */
 
-const isMessage = computed(() => {
-  return state.point && state.point.measurement && state.point.measurement.message;
-});
-
-// Отображаем попап сенсора только когда в состоянии есть выбранная точка
-// (URL с sensor оставляем как есть; это не влияет на видимость попапа)
-const isSensor = computed(() => {
-  return !!(state.point && !(state.point.measurement && state.point.measurement.message));
-});
 
 
 /**
- * Returns the start and end of the last month (rolling month)
- * TODO: временно отключено для getScope, оставить для будущего использования
+ * Обновляет логи сенсора для открытого попапа
+ * @param {string} sensorId - ID сенсора для обновления логов
+ * @throws {Error} При ошибке загрузки логов устанавливает пустой массив
  */
+const updateSensorLogs = async (sensorId) => {
+  if (!isSensorOpen(sensorId)) return;
+  
+  try {
+    const { start, end } = dayBoundsUnix(mapStore.currentDate);
+    
+    let logArray = [];
+    
+    // Загружаем логи через API
+    logArray = await getSensorData(
+      sensorId,
+      start,
+      end,
+      mapStore.currentProvider,
+      state.providerObj
+    );
+    
+    // Обогащаем логи данными о точке росы
+    enrichLogsWithDewPoint(logArray);
+    
+    // Обновляем только логи
+    state.point = { ...state.point, logs: [...logArray] };
 
-// const getRollingMonthRange = (targetDate = new Date()) => {
-//   const end = new Date(
-//     targetDate.getFullYear(),
-//     targetDate.getMonth(),
-//     targetDate.getDate(),
-//     23, 59, 59, 999
-//   );
-
-//   let start = new Date(
-//     targetDate.getFullYear(),
-//     targetDate.getMonth() - 1,
-//     targetDate.getDate(),
-//     0, 0, 0, 0
-//   );
-
-//   if (start.getMonth() === targetDate.getMonth()) {
-//     start = new Date(
-//       targetDate.getFullYear(),
-//       targetDate.getMonth(),
-//       0, 
-//       0, 0, 0, 0
-//     );
-//   }
-
-//   return { start, end };
-// }
-
+    // Сохраняем логи
+    setSensorData(sensorId, {
+      logs: logArray
+    });
+  } catch (error) {
+    console.error('Error updating sensor logs:', error);
+    // При ошибке устанавливаем пустые логи
+    state.point = { ...state.point, logs: [] };
+  }
+};
 
 /**
- * Returns the start and end of the last 7 days (rolling week)
- * End = today, start = 7 days ago
- * TODO: временно отключено для getScope, оставить для будущего использования
+ * Открывает попап сенсора с данными и адресом
+ * @param {Object} point - Данные сенсора
+ * @param {string} point.sensor_id - ID сенсора
+ * @param {Object} [point.geo] - Координаты {lat, lng}
+ * @param {number} [point.model] - Модель сенсора
+ * @param {Object} [point.maxdata] - Максимальные данные
+ * @param {Object} [point.data] - Текущие данные
+ * @throws {Error} При ошибке сбрасывает состояние попапа
  */
-// function getRollingWeekRange(date = new Date()) {
-//   const end = new Date(date);
-//   end.setHours(23, 59, 59, 999);
+const updateSensorPopup = async (point) => {
+  // Защита от повторных вызовов
+  if (state.isUpdatingPopup) {
+    return;
+  }
+  
+  // Проверяем, что есть geo данные
+  if (!point.geo || !point.geo.lat || !point.geo.lng) {
+    setTimeout(() => updateSensorPopup(point), RETRY_TIMEOUT);
+    return;
+  }
+  
+  state.isUpdatingPopup = true;
+  
+  try {
+    // Если попап уже открыт для того же сенсора, обновляем только логи
+    if (isSensorOpen(point.sensor_id)) {
+      await updateSensorLogs(point.sensor_id);
+    } else {
+      
+    mapStore.mapinactive = true;
+  
+    // Обновляем URL с параметром sensor и координатами сенсора
+    if (route.query.sensor !== point.sensor_id) {
+      const currentQuery = { ...route.query };
+      currentQuery.sensor = point.sensor_id;
+      currentQuery.lat = point.geo.lat;
+      currentQuery.lng = point.geo.lng;
+      currentQuery.zoom = 16;
+      router.replace({ query: currentQuery });
+    }
+  
+    // Получаем данные сенсора из mapStore.sensors или используем переданные данные
+    const foundSensor = mapStore.sensors.find(s => s.sensor_id === point.sensor_id);
+    
+    // Получаем адрес
+    const address = await getAddress(point.geo.lat, point.geo.lng, localeComputed.value);
+  
+    // Открываем попап с базовыми данными
+    state.point = createUnifiedPoint({
+      ...point,
+      geo: point.geo,
+      maxdata: point.maxdata || foundSensor?.maxdata || {},
+      data: point.data || foundSensor?.data || {},
+      address: address
+    });
+  
+    // Синхронизируем базовые данные с mapStore.sensors
+    setSensorData(point.sensor_id, {
+      geo: point.geo,
+      model: state.point.model,
+      maxdata: state.point.maxdata,
+      data: state.point.data
+    });
+    
+    // Загружаем логи асинхронно
+    await updateSensorLogs(point.sensor_id);
 
-//   const start = new Date(date);
-//   start.setDate(start.getDate() - 7 + 1);
-//   start.setHours(0, 0, 0, 0);
+    // Устанавливаем активный маркер
+    markers.setActiveMarker(point.sensor_id);
 
-//   return { start, end };
-// }
+    // Центрируем карту на сенсоре с учетом попапа
+    moveMap(point.geo, 18, { popup: true, setZoom: true });
+  }
+  } catch (error) {
+    console.error('Error updating sensor popup:', error);
+    // Сбрасываем состояние при ошибке
+    state.point = null;
+    mapStore.mapinactive = false;
+  } finally {
+    state.isUpdatingPopup = false;
+  }
+};
 
-// Управление активными маркерами теперь в marker.js
-const handleActivePoint = (id) => {
-  markers.toggleActiveMarker(id);
-}
-
-// Переменная для отмены текущих запросов
+// Переменная для предотвращения race conditions при загрузке сенсоров
+// Когда пользователь быстро меняет дату, старые запросы могут завершиться после новых
+// currentRequestId позволяет отменить обработку результатов устаревших запросов
 let currentRequestId = null;
 
-const handlerHistory = async ({ start, end }) => {
+/**
+ * Загружает список сенсоров для текущей даты и провайдера
+ * @async
+ * @throws {Error} При ошибке загрузки логирует ошибку в консоль
+ */
+/**
+ * Обновляет maxdata для существующих сенсоров при смене currentUnit
+ */
+const updateMaxData = async () => {
+  // Проверяем, что это remote режим и есть сенсоры
+  if (mapStore.currentProvider !== 'remote' || mapStore.sensors.length === 0) {
+    return;
+  }
   
+  const { start, end } = dayBoundsUnix(mapStore.currentDate);
+  
+  try {
+    const updatedSensors = await getMaxData(start, end, mapStore.currentUnit, mapStore);
+    
+    // Обновляем сенсоры
+    mapStore.setSensors(updatedSensors);
+    
+    // Обновляем маркеры после обновления maxdata
+    updateMarkers(false);
+  } catch (error) {
+    console.error('Error updating maxdata:', error);
+  }
+};
+
+const loadSensors = async () => {
+  // Получаем start и end для текущей даты
+  const { start, end } = dayBoundsUnix(mapStore.currentDate);
+
   // Отменяем предыдущий запрос если он еще выполняется
   currentRequestId = Math.random().toString(36);
   const requestId = currentRequestId;
-  
-  state.isLoad = true;
-  state.start = start;
-  state.end = end;
-  state.status = "history";
-  unsubscribeRealtime();
 
-  // Не закрываем попап при смене даты - оставляем его активным
-  // handlerClose();
+  // Отписываемся от realtime провайдера
+  unsubscribeRealtime();
   
-  // Преобразуем timestamp в дату для кеша (используем локальную дату)
-  const startDate = new Date(start * 1000);
-  const year = startDate.getFullYear();
-  const month = String(startDate.getMonth() + 1).padStart(2, '0');
-  const day = String(startDate.getDate()).padStart(2, '0');
-  const startDateString = `${year}-${month}-${day}`;
-  
-  
-  // Очищаем сенсоры чтобы показать 0 во время загрузки
+  // Очищаем список сенсоров в приложении
   mapStore.clearSensors();
   
-  // Полностью очищаем все маркеры
-  markers.clearAllMarkers();
-  state.providerObj.setStartDate(start);
-  state.providerObj.setEndDate(end);
-  
-  // Сначала получаем список всех сенсоров с последними данными
+  // Получаем список сенсоров для обоих режимов
   try {
-    const allSensorData = await state.providerObj.getHistoryPeriod(start, end);
+    // Получаем базовые данные сенсоров (координаты, адреса)
+    const sensors = await getSensors(start, end, mapStore.currentProvider);
     
     // Проверяем, не был ли запрос отменен
     if (currentRequestId !== requestId) {
       return;
     }
     
-    if (allSensorData && typeof allSensorData === 'object') {
-      const sensorsFromAPI = [];
-      const sensorIds = Object.keys(allSensorData);
-      
-      
-      // Сначала обновляем mapStore.sensors для показа счетчика и селекта единиц измерения
-      const initialSensors = sensorIds.map(sensorId => {
-        const lastData = allSensorData[sensorId];
-        if (lastData && lastData.length > 0) {
-          const lastLog = lastData[lastData.length - 1];
-          return {
-            sensor_id: sensorId,
-            geo: lastLog.geo || { lat: 0, lng: 0 },
-            model: lastLog.model || 2,
-            data: {
-              ...lastLog.data,
-              aqi: null // AQI будет рассчитан позже при получении полных логов
-            },
-            logs: [] // Пока пустые логи
-          };
-        }
-        return null;
-      }).filter(Boolean);
-      
-      // Проверяем, не был ли запрос отменен
-      if (currentRequestId !== requestId) {
-        return;
-      }
-      
-      // Обновляем mapStore.sensors сразу для показа счетчика
-      mapStore.setSensors(initialSensors);
-      
-      // Обрабатываем данные в зависимости от выбранной единицы измерения
-      let fullSensorData;
-      
-        // Для не-AQI измерений используем данные из общего запроса
-        fullSensorData = sensorIds.map(sensorId => {
-          const sensorLogs = allSensorData[sensorId];
-          if (sensorLogs && sensorLogs.length > 0) {
-            // Берем последнюю запись как основную информацию о сенсоре
-            const lastLog = sensorLogs[sensorLogs.length - 1];
-            
-            return {
-              sensor_id: sensorId,
-              geo: lastLog.geo || { lat: 0, lng: 0 },
-              model: lastLog.model || 2,
-              data: {
-                ...lastLog.data,
-                aqi: null // AQI не нужен для не-AQI измерений
-              },
-              log: sensorLogs, // Полные логи
-              logs: sensorLogs // Дублируем для совместимости
-            };
-          }
-          return null;
-        });
-      
-      // Проверяем, не был ли запрос отменен
-      if (currentRequestId !== requestId) {
-        return;
-      }
-      
-      const validSensors = fullSensorData.filter(Boolean);
-      
-      // Обновляем mapStore.sensors с полными данными
-      mapStore.setSensors(validSensors);
-      
-      // Проверяем, не был ли запрос отменен перед добавлением точек
-      if (currentRequestId !== requestId) {
-        return;
-      }
-      
-      markers.refreshClusters();
-      
-    }
-  } catch (error) {
-    console.error('Error fetching sensor history:', error);
-    
-    // Fallback: очищаем сенсоры если запрос не удался
-    mapStore.clearSensors();
-  }
-  
-  // Load messages if needed (this might still make API calls, but it's for messages, not sensor data)
-  try {
-    const messages = await state.providerObj.messagesForPeriod(start, end);
-    const messagePromises = Object.values(messages).map(async (message) => {
-      try {
-        // Only process messages that have logs for AQI calculation
-        if (message.logs && message.logs.length > 0) {
-          await handlerNewPoint(message);
-        }
-      } catch (error) {
-        console.warn(`Failed to process message:`, error);
-      }
-    });
-    await Promise.all(messagePromises);
-  } catch (error) {
-    console.warn('Failed to load messages:', error);
-  }
-  
-  // Принудительно обновляем кластеры с новыми цветами после загрузки
-  setTimeout(() => {
-    markers.refreshClusters();
-  }, 100);
-  
-  state.isLoad = false;
-};
-
-const handlerNewPoint = async (point) => {
-
-  if (!point.model || !markers.isReadyLayers()) return;
-
-  point.data = point.data
-    ? Object.fromEntries(Object.entries(point.data).map(([k, v]) => [k.toLowerCase(), v]))
-    : {};
-
-
-  point.isBookmarked = bookmarksStore.idbBookmarks?.some(bookmark => bookmark.id === point.sensor_id) || false;
-
-
-  // First, add point as gray (loading state)
-  markers.addPoint({
-    ...point,
-    isEmpty: true, // Always start as gray
-    value: null,
-  }, mapStore.currentUnit);
-  
-  // Force immediate refresh to show gray markers
-  markers.refreshClusters();
-  
-  // Then asynchronously calculate and update the color
-  setTimeout(async () => {
-    // Handle value calculation based on mode and type
-    let isEmpty = false;
-    let value = null;
-   
-    
-      if (state.status === "history") {
-        // Daily recap mode: calculate average for the day
-        if (point.logs && point.logs.length > 0) {
-          const measurementType = (route.query.type || '').toLowerCase();
-          const values = point.logs
-            .map(log => log?.data?.[measurementType])
-            .filter(v => v !== null && v !== undefined && !isNaN(Number(v)));
-          
-          if (values.length > 0) {
-            value = values.reduce((sum, v) => sum + Number(v), 0) / values.length;
-            isEmpty = false;
-          } else {
-            isEmpty = true;
-            value = null;
-          }
-        } else {
-          // Fallback to last value if no logs
-          const v = point?.data?.[(route.query.type || '').toLowerCase()];
-          if (v !== null && v !== undefined && !isNaN(Number(v))) {
-            value = Number(v);
-            isEmpty = false;
-          } else {
-            value = null;
-            isEmpty = true;
-          }
-        }
-      } else {
-        // Realtime mode: use last value if not older than 20 minutes
-        const lastValue = point?.data?.[(route.query.type || '').toLowerCase()];
-        const timestamp = point.timestamp;
-        const now = Math.floor(Date.now() / 1000);
-        const twentyMinutesAgo = now - (20 * 60);
-        
-        if (lastValue !== null && lastValue !== undefined && !isNaN(Number(lastValue)) && timestamp && timestamp > twentyMinutesAgo) {
-          value = Number(lastValue);
-          isEmpty = false;
-        } else {
-          isEmpty = true;
-          value = null;
-        }
-      }
-    
-    
-
-    // Update point with calculated color
-    markers.addPoint({
-      ...point,
-      isEmpty: isEmpty,
-      value: value,
-    }, mapStore.currentUnit);
-  }, 0); // Use setTimeout to make it asynchronous
-  
-  // Batch cluster updates for better performance
-  if (!state.clusterUpdateScheduled) {
-    state.clusterUpdateScheduled = true;
-    setTimeout(() => {
-      markers.refreshClusters();
-      state.clusterUpdateScheduled = false;
-    }, 100); // Update clusters every 100ms
-  }
-
-  if (point.sensor_id === route.query.sensor) {
-    await handlerClick(point);
-  }
-
-  if (state.point && state.point.sensor_id === point.sensor_id) {
-    state.point.logs = [...state.point.logs, { data: point.data, timestamp: point.timestamp }];
-  }
-
-  if (
-    Object.prototype.hasOwnProperty.call(point.data, (route.query.type || '').toLowerCase()) ||
-    Object.prototype.hasOwnProperty.call(point.data, "message")
-  ) {
-    state.points[point.sensor_id] = point.data;
-  }
-};
-
-const handlerNewPointWithType = async (point, measurementType) => {
-
-  if (!point.model || !markers.isReadyLayers()) return;
-
-  point.data = point.data
-    ? Object.fromEntries(Object.entries(point.data).map(([k, v]) => [k.toLowerCase(), v]))
-    : {};
-
-
-  point.isBookmarked = bookmarksStore.idbBookmarks?.some(bookmark => bookmark.id === point.sensor_id) || false;
-
-  // First, add point as gray (loading state)
-  markers.addPoint({
-    ...point,
-    isEmpty: true, // Always start as gray
-    value: null,
-  });
-  
-  // Then asynchronously calculate and update the color
-  setTimeout(async () => {
-    // Handle value calculation based on mode and type
-    let isEmpty = false;
-    let value = null;
-    const typeKey = (measurementType || '').toLowerCase();
-    
-    if (typeKey === 'aqi') {
-      // For AQI, we need logs to calculate the index
-      if (point.logs && point.logs.length > 0) {
-        isEmpty = false;
-        value = null; // AQI will be calculated in getColorForValue function
-      } else {
-        isEmpty = true;
-        value = null;
-      }
-    } else {
-      // For regular measurements
-      if (state.status === "history") {
-        // Daily recap mode: calculate average for the day
-        if (point.logs && point.logs.length > 0) {
-          const values = point.logs
-            .map(log => log?.data?.[typeKey])
-            .filter(v => v !== null && v !== undefined && !isNaN(Number(v)));
-          
-          if (values.length > 0) {
-            value = values.reduce((sum, v) => sum + Number(v), 0) / values.length;
-            isEmpty = false;
-          } else {
-            isEmpty = true;
-            value = null;
-          }
-        } else {
-          // Fallback to last value if no logs
-          const v = point?.data?.[typeKey];
-          if (v !== null && v !== undefined && !isNaN(Number(v))) {
-            value = Number(v);
-            isEmpty = false;
-          } else {
-            value = null;
-            isEmpty = true;
-          }
-        }
-      } else {
-        // Realtime mode: use last value if not older than 20 minutes
-        const lastValue = point?.data?.[typeKey];
-        const timestamp = point.timestamp;
-        const now = Math.floor(Date.now() / 1000);
-        const twentyMinutesAgo = now - (20 * 60);
-        
-        if (lastValue !== null && lastValue !== undefined && !isNaN(Number(lastValue)) && timestamp && timestamp > twentyMinutesAgo) {
-          value = Number(lastValue);
-          isEmpty = false;
-        } else {
-          isEmpty = true;
-          value = null;
-        }
-      }
-    }
-
-    
-
-    // Update point with calculated color
-    markers.addPoint({
-      ...point,
-      isEmpty: isEmpty,
-      value: value,
-    }, mapStore.currentUnit);
-  }, 0); // Use setTimeout to make it asynchronous
-  
-  // Batch cluster updates for better performance
-  if (!state.clusterUpdateScheduled) {
-    state.clusterUpdateScheduled = true;
-    setTimeout(() => {
-      markers.refreshClusters();
-      state.clusterUpdateScheduled = false;
-    }, 100); // Update clusters every 100ms
-  }
-
-  if (point.sensor_id === route.query.sensor) {
-    await handlerClick(point);
-  }
-
-  if (state.point && state.point.sensor_id === point.sensor_id) {
-    state.point.logs = [...state.point.logs, { data: point.data, timestamp: point.timestamp }];
-  }
-
-  if (
-    Object.prototype.hasOwnProperty.call(point.data, measurementType.toLowerCase()) ||
-    Object.prototype.hasOwnProperty.call(point.data, "message")
-  ) {
-    state.points[point.sensor_id] = point.data;
-  }
-};
-
-const handlerClick = async (point) => {
-  state.isLoad = true;
-  state.point = [];
-  
-  // Get logs from API for current date
-  let log = [];
-  try {
-    // Always use current date range to get data for specific date
-    const startTimestamp = dayBoundsUnix(mapStore.currentDate).start;
-    const endTimestamp = dayBoundsUnix(mapStore.currentDate).end;
-    
-    log = await state.providerObj.getHistoryPeriodBySensor(
-      point.sensor_id,
-      startTimestamp,
-      endTimestamp
-    );
-    
-    if (state.status === "history") {
-      mapStore.mapinactive = true;
+    // Обновляем список сенсоров в приложении
+    if (sensors && Array.isArray(sensors)) {
+      mapStore.setSensors(sensors);
     }
   } catch (error) {
     console.error('Error fetching sensor history:', error);
   }
-  
-  const address = await getAddressByPos(point.geo.lat, point.geo.lng, localeComputed.value);
-  state.point = { ...point, address, logs: [...log] };
-  state.isLoad = false;
-
-  handleActivePoint(point.sensor_id)
 };
 
-const handlerHistoryLog = async ({ sensor_id, start, end }) => {
-  // Get fresh logs from API for the new date range
-  let log = [];
+/**
+ * Создает унифицированный объект point для сенсора
+ * @param {Object} basePoint - Базовые данные сенсора
+ * @param {Object} options - Дополнительные опции
+ * @param {boolean} [options.calculateValue] - Вычислять ли значение и isEmpty
+ * @returns {Object} Унифицированный объект point
+ */
+const createUnifiedPoint = (basePoint, options = {}) => {
+  const { calculateValue = false } = options;
+  
+  const point = {
+    sensor_id: basePoint.sensor_id,
+    geo: basePoint.geo,
+    model: basePoint.model || DEFAULT_SENSOR_MODEL,
+    maxdata: basePoint.maxdata || {},
+    data: basePoint.data || {},
+    address: basePoint.address || null,
+    isBookmarked: basePoint.isBookmarked || false,
+    logs: basePoint.logs || []
+  };
+  
+    // Вычисляем значение и isEmpty только если нужно
+    if (calculateValue) {
+      const { value, isEmpty } = calculateMarkerValue(point);
+      point.value = value;
+      point.isEmpty = isEmpty;
+    }
+  
+  return point;
+};
+
+/**
+ * Вычисляет значение и статус пустоты для маркера на основе провайдера и единицы измерения
+ * @param {Object} point - Данные сенсора
+ * @param {Object} [point.maxdata] - Максимальные данные (для remote провайдера)
+ * @param {Object} [point.data] - Текущие данные (для realtime провайдера)
+ * @param {number} [point.timestamp] - Временная метка (для realtime провайдера)
+ * @returns {Object} Объект с полями {value: number|null, isEmpty: boolean}
+ */
+const calculateMarkerValue = (point) => {
+  const currentUnit = mapStore.currentUnit;
+  
+  if (mapStore.currentProvider === "remote") {
+    // Remote режим: используем maxdata
+    const value = point?.maxdata?.[currentUnit];
+    
+    
+    if (value !== null && value !== undefined && !isNaN(Number(value)) && Number(value) > 0) {
+      return { value: Number(value), isEmpty: false };
+    }
+  } else {
+    // Realtime режим: используем последнее значение
+    const lastValue = point?.data?.[currentUnit];
+    
+    if (lastValue !== null && lastValue !== undefined && !isNaN(Number(lastValue))) {
+      return { value: Number(lastValue), isEmpty: false };
+    }
+  }
+  
+  return { value: null, isEmpty: true };
+};
+
+/**
+ * Обновляет один маркер на карте с правильным цветом и данными
+ * @param {Object} point - Данные сенсора для маркера
+ * @param {string} point.sensor_id - ID сенсора
+ * @param {Object} point.geo - Координаты {lat, lng}
+ * @param {number} point.model - Модель сенсора
+ * @param {Object} point.data - Данные сенсора
+ * @param {Object} point.maxdata - Максимальные данные
+ * @throws {Error} При ошибке логирует ошибку и пропускает маркер
+ */
+const updateMarker = (point) => {
+  if (!point.model || !markers.isReadyLayers()) return;
+
   try {
-    log = await state.providerObj.getHistoryPeriodBySensor(sensor_id, start, end);
+    // Нормализуем данные
+    point.data = point.data
+      ? Object.fromEntries(Object.entries(point.data).map(([k, v]) => [k.toLowerCase(), v]))
+      : {};
+
+    // Устанавливаем закладку
+    point.isBookmarked = bookmarksStore.idbBookmarks?.some(bookmark => bookmark.id === point.sensor_id) || false;
+
+    // Обновляем маркер с правильным цветом
+    const unifiedPoint = createUnifiedPoint(point, { calculateValue: true });
+    markers.upsertPoint(unifiedPoint, mapStore.currentUnit);
   } catch (error) {
-    // Silently handle error - log will remain empty
-  }
-  
-  if (state.point && state.point.sensor_id === sensor_id) {
-    state.point = { ...state.point, logs: [...log] };
+    console.error('Error updating marker:', error, point);
   }
 };
 
-/* Returns scope depending on type ('week' or 'month') */
-// TODO: временно отключено, оставить для будущего использования
-// const getScope = async (type) => {
-
-//   const range = type === "week"
-//     ? getRollingWeekRange(new Date())
-//     : getRollingMonthRange(new Date());
-
-//   const { start, end } = range;
-
-//   if (state.status === "history") {
-//     // Use existing logs from mapStore.sensors - no API calls needed
-//     const sensorData = mapStore.sensors.find(s => s.sensor_id === state.point.sensor_id);
-//     if (sensorData && sensorData.logs) {
-//       state.point = { ...state.point, scopeLog: [...sensorData.logs] };
-//     }
-//   }
-// }
 
 const handlerClose = () => {
   mapStore.mapinactive = false;
-
-  // Здесь был markers.hidePath(state.point.sensor_id), но в связи с тем, что он ни разу не использовался, я пока удалила
-  state.point = null;
-  instanceMap().setActiveArea({
-    position: "absolute",
-    top: "0px",
-    left: "0px",
-    right: "0px",
-    height: "100%",
-  });
+  
+  // Сначала отписываемся от realtime
   unsubscribeRealtime();
-  // Don't repaint markers when closing - they should stay as they are
-};
-
-const handleTypeChange = async (newType) => {
-  // Update localStorage
-  localStorage.setItem("currentUnit", newType);
   
-  markers.clearAllMarkers();
+  // Затем очищаем состояние попапа
+  state.point = null;
   
-  // Use data from mapStore.sensors - no API calls needed
-  const sensorData = mapStore.sensors || [];
+  // Очищаем активный маркер (также сбрасывает активную область карты)
+  clearActiveMarker();
   
-  // Only process if sensors are loaded
-  if (mapStore.sensorsLoaded && sensorData.length > 0) {
-    // Process each sensor with existing data
-    for (const sensor of sensorData) {
-      if (!sensor.sensor_id) continue;
-      
-      // Create point with existing data
-      const point = {
-        sensor_id: sensor.sensor_id,
-        geo: sensor.geo || { lat: 0, lng: 0 },
-        model: 2,
-        data: sensor.data || {},
-        logs: sensor.logs || []
-      };
-      
-      // Update point with new type
-      await handlerNewPointWithType(point, newType);
-    }
-  }
+  // Убираем sensor из URL при закрытии попапа
+  const currentQuery = { ...route.query };
+  delete currentQuery.sensor;
+  router.replace({ query: currentQuery });
   
-  // Refresh clusters to update their colors based on new measurement type
   markers.refreshClusters();
 };
 
 
-// Синхронизируем настройки карты при изменении URL
-watch(
-  () => route.query,
-  (newQuery, oldQuery) => {
-    // Проверяем, что query действительно изменился
-    if (JSON.stringify(newQuery) !== JSON.stringify(oldQuery)) {
-      if (!state.isSyncing) {
-        state.isSyncing = true;
-        syncMapSettings(route, router, mapStore);
-        state.isSyncing = false;
-      }
-    }
-  },
-  { immediate: true }
-);
 
-// Watch for currentDate changes and reload data
-// Временно отключено для отладки
-// watch(
-//   () => mapStore.currentDate,
-//   (newDate) => {
-//     if (newDate) {
-//       // Clear existing markers and show gray loading state
-//       markers.clearAllMarkers();
-//       
-//       // Синхронизируем URL при изменении даты
-//       if (!state.isSyncing) {
-//         state.isSyncing = true;
-//         syncMapSettings(route, router, mapStore);
-//         state.isSyncing = false;
-//       }
-//       
-//       // Reload data when date changes
-//       const startDate = new Date(newDate);
-//       const endDate = new Date(startDate);
-//       endDate.setDate(endDate.getDate() + 1);
-//       
-//       const start = Math.floor(startDate.getTime() / 1000);
-//       const end = Math.floor(endDate.getTime() / 1000);
-//       
-//       handlerHistory({ start, end });
-//     }
-//   }
-// );
+let lastUpdateKey = '';
 
-// Watch for currentUnit changes and refresh markers
-watch(
-  () => mapStore.currentUnit,
-  (newUnit) => {
-    if (newUnit) {
-      markers.refreshClusters();
-      // URL синхронизируется автоматически через route.query watcher
-    }
+/**
+ * Обновляет все маркеры на карте на основе данных из mapStore.sensors
+ * Очищает старые маркеры, создает новые с правильными цветами и обновляет кластеры
+ * @param {boolean} clear - Очищать ли все маркеры перед обновлением (по умолчанию true)
+ * @throws {Error} При ошибке логирует ошибку в консоль
+ */
+const updateMarkers = (clear = true) => {
+  const sensors = mapStore.sensors;
+  const currentUnit = mapStore.currentUnit;
+  const currentDate = mapStore.currentDate;
+
+  // Создаем ключ для предотвращения дублирующихся запросов
+  const updateKey = `${currentDate}-${currentUnit}-${sensors.length}`;
+  if (updateKey === lastUpdateKey) {
+    return;
   }
-);
+  lastUpdateKey = updateKey;
 
-// Watch for provider changes and reinitialize
+  try {
+    // Очищаем все маркеры перед обновлением только если нужно
+    if (clear) {
+      markers.clearAllMarkers();
+    }
+    
+    let markersCreated = 0;
+    let markersSkipped = 0;
+    
+    // Используем данные из mapStore.sensors (уже содержат координаты и данные)
+    for (const sensor of sensors) {
+      if (!sensor.sensor_id) continue;
+      
+      // Проверяем координаты перед созданием маркера
+      const lat = Number(sensor.geo.lat);
+      const lng = Number(sensor.geo.lng);
+      if (Math.abs(lat) < COORDINATE_TOLERANCE && Math.abs(lng) < COORDINATE_TOLERANCE) {
+        markersSkipped++;
+        continue;
+      }
+      
+      // Создаем маркер с правильным цветом
+      const point = createUnifiedPoint(sensor, { calculateValue: true });
+        
+      // Используем updateMarker для единообразной логики
+      updateMarker(point);
+      markersCreated++;
+    }
+    
+    // Обновляем кластеры после добавления всех маркеров
+    markers.refreshClusters();
+    
+  } catch (error) {
+    console.error('Error updating markers:', error);
+  }
+};
+
+/**
+ * Обрабатывает сенсор из URL после загрузки данных
+ * @param {Object} query - объект route.query
+ */
+const processSensorFromQuery = (query) => {
+  // Ищем сенсор в mapStore.sensors для получения правильных координат
+  const foundSensor = mapStore.sensors.find(s => s.sensor_id === query.sensor);
+  
+  let geo;
+  if (foundSensor && foundSensor.geo) {
+    geo = foundSensor.geo;
+  } else {
+    // Fallback на координаты из URL
+    geo = {
+      lat: parseFloat(query.lat) || 0,
+      lng: parseFloat(query.lng) || 0
+    };
+  }
+  
+  const point = createUnifiedPoint({
+    sensor_id: query.sensor,
+    geo: geo,
+    model: foundSensor?.model || DEFAULT_SENSOR_MODEL,
+    maxdata: foundSensor?.maxdata || {},
+    data: foundSensor?.data || {},
+    logs: foundSensor?.logs || []
+  });
+  
+  updateSensorPopup(point);
+};
+
+
+/* ТУТ ИНИЦИАЛИЗАЦИЯ ПРОВАЙДЕРА */
 watch(
   () => mapStore.currentProvider,
   async (newProvider) => {
     if (newProvider) {
       // Отписываемся от старого провайдера, если он есть
-      if (state.providerObj) {
-        unsubscribeRealtime();
-      }
+      unsubscribeRealtime();
       
       // Инициализируем новый провайдер
       if (newProvider === "remote") {
@@ -724,64 +630,132 @@ watch(
           // URL синхронизируется автоматически через route.query watcher
           return;
         }
-      } else {
+        
+        // Инициализация для remote провайдера
+        const iRemote = setInterval(() => {
+          if (state.providerObj && markers.isReadyLayers()) {
+            clearInterval(iRemote);
+            // Если есть активный сенсор в URL, обновляем попап после инициализации провайдера
+            if (route.query.sensor) {
+              updateSensorPopup({ sensor_id: route.query.sensor });
+            }
+          }
+        }, 1000);
+        
+      } else if (newProvider === "realtime") {
         state.providerObj = new providers.Libp2p(settings.LIBP2P);
+        state.providerObj.ready().then(() => {
+          subscribeRealtime();
+        });
       }
       
-      state.providerObj.ready().then(() => {
-        state.providerReady = true;
-        if (newProvider === "realtime") {
-          subscribeRealtime();
-        }
-      });
+      // Check if AQI is selected in realtime mode and switch to PM2.5
+      if (mapStore.currentUnit === 'aqi' && newProvider === 'realtime') {
+        mapStore.setCurrentUnit('pm25');
+        // URL синхронизируется автоматически через route.query watcher
+      }
+      
     }
   },
   { immediate: true }
 );
 
-// Watch for sensors data and show markers
+
+/**
+ * Центральный watcher для обработки изменений URL параметров
+ * 
+ * Отслеживает изменения в route.query и выполняет следующие действия:
+ * 
+ * 1. Синхронизация настроек карты (provider, type, date, zoom, lat, lng)
+ *    - Обновляет mapStore с текущими значениями из URL
+ *    - Предотвращает циклические вызовы через флаг isSyncing
+ * 
+ * 2. Перезагрузка данных сенсоров при изменении даты
+ *    - Вызывает loadSensors() для получения новых данных с сервера
+ * 
+ * 3. Обновление маркеров при изменении type, date или provider
+ *    - Очищает все маркеры с карты
+ *    - Перерисовывает маркеры с новым типом измерения
+ *    - Обновляет цвета кластеров
+ * 
+ * 4. Обновление попапа сенсора при изменении:
+ *    - sensor: открытие попапа для нового сенсора
+ *    - provider: переключение между remote/realtime режимами
+ *    - date: обновление данных для текущего сенсора
+ *    - Ищет данные сенсора в mapStore.sensors или использует fallback из URL
+ */
 watch(
-  [() => mapStore.sensors, () => mapStore.currentUnit],
-  ([sensors, currentUnit]) => {
-    if (sensors && sensors.length > 0 && currentUnit) {
-      markers.clearAllMarkers();
-      for (const sensor of sensors) {
-        if (!sensor.sensor_id) continue;
-        const point = {
-          sensor_id: sensor.sensor_id,
-          geo: sensor.geo || { lat: 0, lng: 0 },
-          model: 2,
-          data: sensor.data || {},
-          logs: sensor.logs || []
-        };
-        handlerNewPointWithType(point, currentUnit);
+  () => route.query,
+  (newQuery, oldQuery) => {
+    // Синхронизируем настройки карты
+    if (!state.isSyncing) {
+      const queryChanged = JSON.stringify(newQuery) !== JSON.stringify(oldQuery);
+      
+      if (queryChanged) {
+        state.isSyncing = true;
+        syncMapSettings(route, router, mapStore);
+        state.isSyncing = false;
       }
     }
-  }
+    
+    // Определяем, что изменилось
+    const sensorChanged = newQuery.sensor !== (oldQuery?.sensor);
+    const providerChanged = newQuery.provider !== (oldQuery?.provider);
+    const dateChanged = newQuery.date !== (oldQuery?.date);
+    const typeChanged = newQuery.type !== (oldQuery?.type);
+    
+    
+    // Перезагружаем данные сенсоров при изменении даты, провайдера или при первом заходе с сенсором
+    if ((dateChanged && newQuery.date) || providerChanged || (sensorChanged && !mapStore.sensors.length)) {
+      loadSensors().then(async () => {
+        // После загрузки сенсоров обновляем попап, если есть сенсор в URL
+        if (newQuery.sensor) {
+          processSensorFromQuery(newQuery);
+        }
+
+        if(mapStore.currentProvider === 'remote') {
+          // Для realtime маркеры обновляются по мере прихода данных
+          await updateMaxData();
+          updateMarkers();
+        }
+      });
+    }
+    
+    // Обновляем maxdata и маркеры при изменении type (без date и provider, так как они обрабатываются через loadSensors)
+    if (typeChanged) {
+      if (mapStore.currentProvider === 'remote') {
+        // Для remote обновляем maxdata и маркеры
+        updateMaxData().then(() => {
+          updateMarkers(false);
+        });
+      } else {
+        // Для realtime просто обновляем цвета маркеров (данные уже приходят по мере поступления)
+        updateMarkers(false);
+      }
+    }
+    
+    // Обновляем попап сенсора при изменении sensor, provider или date (только если сенсоры уже загружены)
+    if ((sensorChanged || providerChanged || dateChanged) && newQuery.sensor && mapStore.sensors.length > 0) {
+      processSensorFromQuery(newQuery);
+    }
+  },
+  { immediate: true }
 );
 
+// это не удаляем, почти всегда нужно для отладки
+// watch(
+//   () => mapStore.sensors,
+//   () => {
+//     console.log('mapStore.sensors changed', mapStore.sensors);
+//   }
+// );
+
+
 onMounted(async () => {
-  // Инициализация провайдера происходит в watcher'е с immediate: true
-  
-  if (mapStore.currentProvider === "remote") {
-    const iRemote = setInterval(() => {
-      if (state.providerObj && state.providerObj.connection && markers.isReadyLayers()) {
-        clearInterval(iRemote);
-        state.canHistory = true;
-      }
-    }, 1000);
-  }
-
-  // Check if AQI is selected in realtime mode and switch to PM2.5
-  if (mapStore.currentUnit === 'aqi' && mapStore.currentProvider === 'realtime') {
-    mapStore.setCurrentUnit('pm25');
-    // URL синхронизируется автоматически через route.query watcher
-  }
-
-  // Handle sensor parameter
-  if (route.query.sensor) {
-    handleActivePoint(route.query.sensor);
-  }
+  // Вся логика инициализации перенесена в соответствующие watcher'ы:
+  // - Инициализация провайдера: watcher для currentProvider
+  // - Инициализация сенсоров: watcher для route.query и currentDate
+  // - Обработка sensor параметра: watcher для currentProvider
 
   const waitForMatomo = setInterval(() => {
     if (

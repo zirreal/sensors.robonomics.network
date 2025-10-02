@@ -1,3 +1,42 @@
+v*.*.*
+
+Major refactoring: UI/UX improvements, code cleanup, and performance optimizations
+
+**UI/UX Improvements:**
+- Feat: Added automatic cleanup of outdated localStorage entries (aqi_cache_*, revgeo_addr_*)
+- Remove: Removed "Support" button from header
+- Remove: Removed "Where to get Altruist Indoor & Outdoor Sensor" promotional content from header and sensor popup
+- Refactor: Improved sensors display logic in header - show details only when zeroGeoSensors exist
+
+**Core Refactoring:**
+- Refactor: Centralized marker update logic in Main.vue, removed code duplication
+- Refactor: Made SensorPopup.vue a pure UI component, removed data fetching and complex state management
+- Refactor: Optimized watcher logic to prevent circular dependencies and unnecessary updates
+
+**Map and Markers:**
+- Refactor: Improved marker coloring logic
+- Refactor: Enhanced updating markers
+- Refactor: Fixed active marker state preservation during icon updates
+- Refactor: Unified map movement functions (`setview` → `moveMap`)
+- Refactor: Improved map centering logic when sensor's popup opened
+
+**Data Management:**
+- Refactor: Made requests.js file for enreached get requests logic
+- Refactor: Improved data fetching logic to reduce get requests
+- Fix: replaced a request for max data (markers coloring in emote mode) with proper one
+
+**Chart Optimizations:**
+- Refactor: Centralized graph update logic in Chart.vue into single `updateChart` function
+- Refactor: Simplified `buildSeriesArray` function with better readability
+- Refactor: Removed unused Highcharts components (download symbol will be added when new functionality will be added)
+- Refactor: Optimized computed properties and watchers in Chart.vue
+
+**Code Cleanup:**
+- Cleanup: Removed unused CSS styles
+- Cleanup: Removed unused functions and variables related to support pricing (AltruistPromo)
+- Cleanup: Removed unused imports (AltruistPromo, fetchJson)
+- Cleanup: Added JSDoc comments to key functions
+
 v3.0.0
 Crucial changes that might affect forks: configuration refactoring
 

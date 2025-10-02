@@ -1,4 +1,5 @@
 import { settings } from "@config";
+import { fetchJson } from "@/utils/utils";
 import L from "leaflet";
 import "leaflet-velocity";
 import "leaflet-velocity/dist/leaflet-velocity.css";
@@ -8,9 +9,7 @@ export const immediate = false;
 let windLayer;
 
 export async function init() {
-  const res = await fetch(settings.WIND_PROVIDER);
-  if (!res.ok) throw new Error('Failed to load wind data');
-  const data = await res.json();
+  const data = await fetchJson(settings.WIND_PROVIDER);
   windLayer = L.velocityLayer({
     displayValues: false,
     data,

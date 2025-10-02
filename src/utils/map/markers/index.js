@@ -155,37 +155,9 @@ function attachMarkerEvents(marker, clickCallback) {
 
   // Обработка клика
   marker.on("click", (event) => {
-    // Touch highlight для мобильных устройств
-    if (IS_TOUCH && marker._icon) {
-      marker._icon.classList.add(MARKER_CLASSES.tapHighlight);
-      setTimeout(() => marker._icon.classList.remove(MARKER_CLASSES.tapHighlight), 550);
-    }
-
-    // Устанавливаем активную область карты
-    if (
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-    ) {
-      map.setActiveArea({
-        position: "absolute",
-        top: "90px",
-        left: "0px",
-        right: "0px",
-        height: "20%",
-      });
-    } else {
-      map.setActiveArea({
-        position: "absolute",
-        top: "0px",
-        left: "0px",
-        right: "50%",
-        height: "100%",
-      });
-    }
-
-    map.panTo(event.latlng);
-
-    
     if (clickCallback) {
+      // Остальные действия (центрирование карты, покраска маркера, установка активной области)
+      // выполняются через clickCallback → updateSensorPopup → setActiveMarker → applyActiveMarker
       clickCallback(event.target.options.data);
     }
   });
@@ -318,22 +290,22 @@ function setupRecursionProtection(mapInstance) {
     }
   };
   
-  const originalSetView = mapInstance.setView;
-  mapInstance.setView = function(center, zoom, options) {
-    if (isSettingView) {
-      console.warn('Prevented recursive setView call');
-      return this;
-    }
-    isSettingView = true;
-    try {
-      const result = originalSetView.call(this, center, zoom, options);
-      return result;
-    } finally {
-      setTimeout(() => {
-        isSettingView = false;
-      }, 50); // Оптимизированная задержка
-    }
-  };
+  // const originalSetView = mapInstance.setView;
+  // mapInstance.setView = function(center, zoom, options) {
+  //   if (isSettingView) {
+  //     console.warn('Prevented recursive setView call');
+  //     return this;
+  //   }
+  //   isSettingView = true;
+  //   try {
+  //     const result = originalSetView.call(this, center, zoom, options);
+  //     return result;
+  //   } finally {
+  //     setTimeout(() => {
+  //       isSettingView = false;
+  //     }, 50); // Оптимизированная задержка
+  //   }
+  // };
 }
 
 /**
@@ -376,6 +348,9 @@ function upsertMarker(point, colors, sensor_id = null) {
   
   // Если маркер существует, обновляем его
   if (existingMarker) {
+    // Проверяем, был ли маркер активным
+    const wasActive = existingMarker.getElement()?.classList.contains(MARKER_CLASSES.active);
+    
     // Update marker data first
     existingMarker.options.data = point;
     existingMarker.options.typeMarker = markerType;
@@ -393,6 +368,14 @@ function upsertMarker(point, colors, sensor_id = null) {
     
     // Применяем вычисленные координаты
     existingMarker.setLatLng(new L.LatLng(coord[0], coord[1]));
+    
+    // Восстанавливаем активный класс если маркер был активным
+    if (wasActive) {
+      const element = existingMarker.getElement();
+      if (element) {
+        element.classList.add(MARKER_CLASSES.active);
+      }
+    }
     
     return { marker: existingMarker, isNew: false };
   }
@@ -420,10 +403,12 @@ function upsertMarker(point, colors, sensor_id = null) {
  * @param {string} [markerType='sensor'] - Тип маркера: 'sensor' или 'userMessage'
  */
 async function addMarker(point, unit = null, markerType = 'sensor') {
+
   // пропускаем датчики с «нулевой» геопозицией
   const tolerance = 0.001;
   const lat = Number(point.geo.lat);
   const lng = Number(point.geo.lng);
+  
   if (Math.abs(lat) < tolerance && Math.abs(lng) < tolerance) {
     return;
   }
@@ -431,7 +416,7 @@ async function addMarker(point, unit = null, markerType = 'sensor') {
   // Определяем цвета в зависимости от типа маркера
   const isUserMessage = markerType === 'userMessage';
   const markerColors = colors.getMarkerColors(point, unit, isUserMessage);
-  
+
   const { marker, isNew } = upsertMarker(point, markerColors, point.sensor_id);
   
   if (isNew) {
@@ -473,15 +458,32 @@ async function addMarker(point, unit = null, markerType = 'sensor') {
 function findMarker(sensor_id) {
   if (!markersLayer) return false;
   
-      let found = false;
-      markersLayer.eachLayer((m) => {
-    if (!found && m.options.data?.sensor_id === sensor_id) {
-          found = m;
-        }
-      });
+  let found = false;
   
-  return found || false;
+  // Ищем в основном слое маркеров
+  markersLayer.eachLayer((m) => {
+    if (!found && m.options.data?.sensor_id === sensor_id) {
+      found = m;
+    }
+  });
+  
+  // Если не найдено, ищем в слоях сообщений
+  if (!found) {
+    for (const messagesLayer of Object.values(messagesLayers)) {
+      if (messagesLayer) {
+        messagesLayer.eachLayer((m) => {
+          if (!found && m.options.data?.sensor_id === sensor_id) {
+            found = m;
+          }
+        });
+      }
+      if (found) break;
+    }
+  }
+
+  return found;
 }
+
 
 
 /**
@@ -500,7 +502,8 @@ export function clearAllMarkers() {
 
 
 
-export async function addPoint(point, unit = null) {
+export function upsertPoint(point, unit = null) {
+
   queue.add(makeRequest.bind(queue, point, unit));
   async function makeRequest(point, unit) {
     try {
@@ -555,18 +558,77 @@ export function refreshClusters() {
  * @param {string} sensorId - ID сенсора
  */
 export function setActiveMarker(sensorId) {
+
+  if (!sensorId) return;
+  
+  // Проверяем, что markersLayer инициализирован
+  if (!markersLayer) {
+    console.warn('setActiveMarker: markersLayer is not initialized');
+    return;
+  }
+  
+  // Сначала пытаемся найти маркер сразу
+  const marker = findMarker(sensorId);
+  
+  if (marker) {
+    // Маркер найден, применяем активный класс
+    applyActiveMarker(marker);
+    return;
+  }
+  
+  // Маркер не найден, подписываемся на добавление слоев
+  
+  const onLayerAdd = (e) => {
+    const addedMarker = e.layer;
+    
+    if (addedMarker.options.data?.sensor_id === sensorId) {
+      // Нашли нужный маркер, отписываемся и применяем активный класс
+      markersLayer.off('layeradd', onLayerAdd);
+      applyActiveMarker(addedMarker);
+    }
+  };
+  
+  markersLayer.on('layeradd', onLayerAdd);
+}
+
+// Функция для применения активного класса к маркеру
+function applyActiveMarker(marker) {
+  // Если маркер уже активен, ничего не делаем
+  // if (activeMarker && activeMarker === marker) {
+  //   return;
+  // }
+  
   // Убираем активность с предыдущего маркера
   clearActiveMarker();
   
-  // Находим маркер по sensor_id
-  const marker = findMarker(sensorId);
-  if (marker) {
-    // Добавляем CSS класс для активного маркера
+  // Touch highlight для мобильных устройств (как при клике)
+  if (IS_TOUCH && marker._icon) {
+    marker._icon.classList.add(MARKER_CLASSES.tapHighlight);
+    setTimeout(() => marker._icon.classList.remove(MARKER_CLASSES.tapHighlight), 550);
+  }
+  
+  // Функция для применения активного класса
+  const applyActiveClass = () => {
     const element = marker.getElement();
+    
     if (element) {
       element.classList.add(MARKER_CLASSES.active);
       activeMarker = marker;
+    } else {
+      console.log('Element still not ready for marker:', marker);
     }
+  };
+  
+  // Применяем активный класс к маркеру
+  applyActiveClass();
+  
+  // Проверяем, готов ли маркер к работе
+  if (marker._icon && marker._icon.parentNode) {
+    // Маркер уже готов
+    applyActiveClass();
+  } else {
+    // Ждем события 'add' от Leaflet
+    marker.once('add', applyActiveClass);
   }
 }
 
@@ -576,27 +638,26 @@ export function setActiveMarker(sensorId) {
 export function clearActiveMarker() {
   if (activeMarker) {
     const element = activeMarker.getElement();
+    
     if (element) {
       element.classList.remove(MARKER_CLASSES.active);
     }
     activeMarker = null;
   }
-}
-
-/**
- * Переключает активность маркера (если уже активен - убирает, если нет - делает активным)
- * @param {string} sensorId - ID сенсора
- */
-export function toggleActiveMarker(sensorId) {
-  const marker = findMarker(sensorId);
-  if (marker && activeMarker === marker) {
-    // Если маркер уже активен - убираем активность
-    clearActiveMarker();
-  } else {
-    // Иначе делаем его активным
-    setActiveMarker(sensorId);
+  
+  // Сбрасываем активную область карты
+  if (map) {
+    map.setActiveArea({
+      position: "absolute",
+      top: "0px",
+      left: "0px",
+      right: "0px",
+      height: "100%",
+    });
   }
 }
+
+
 
 /**
  * Инициализирует систему маркеров на карте

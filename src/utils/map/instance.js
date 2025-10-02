@@ -151,12 +151,54 @@ export function setTheme(theme) {
   }
 }
 
-// Set view and clamp to bounds
-export function setview(position, zoom) {
+/**
+ * Универсальная функция для перемещения карты с поддержкой попапов
+ * @param {Array|Object} position - Координаты [lat, lng] или {lat, lng}
+ * @param {number} zoom - Уровень зума
+ * @param {Object} options - Дополнительные опции
+ * @param {boolean} options.popup - Учитывать попап при позиционировании
+ * @param {boolean} options.animate - Анимировать перемещение
+ * @param {boolean} options.setZoom - Устанавливать зум
+ */
+export function moveMap(position, zoom, options = {}) {
   const map = instanceMap();
   if (!map) return;
+  
+  const { popup = false, animate = true, setZoom = true } = options;
+  
+  // Нормализуем координаты
+  const coords = Array.isArray(position) ? position : [position.lat, position.lng];
   const z = typeof zoom === "number" ? Math.max(zoom, map.getMinZoom()) : map.getZoom();
-  map.setView(position, z);
+  
+  // Обработка попапа
+  if (popup) {
+    const MIN_VISIBLE_MAP_WIDTH = 100;
+    const popupElement = document.querySelector('.popup-js.active');
+    
+    if (popupElement) {
+      const popupRect = popupElement.getBoundingClientRect();
+      const visibleMapWidth = window.innerWidth - popupRect.width;
+
+      if (visibleMapWidth > MIN_VISIBLE_MAP_WIDTH) {
+        map.setActiveArea({
+          position: "absolute",
+          top: "0px",
+          left: "0px",
+          right: `${popupRect.width}px`,
+          height: "100%",
+        });
+      }
+    }
+  }
+  
+  // Перемещаем карту
+  if (setZoom) {
+    map.setView(coords, z, { animate });
+  } else {
+    map.panTo(coords, { animate });
+  }
+  
+  // Применяем ограничения границ
   if (mode === "island") {
     if (map.getZoom() === map.getMinZoom()) {
       map.fitBounds(boundsLimit, { animate: false, padding: [0, 0] });
@@ -168,6 +210,7 @@ export function setview(position, zoom) {
     clampInside(WORLD_BOUNDS);
   }
 }
+
 
 // Draw user marker with zoom-based radius
 export function drawuser(position, zoom) {

@@ -9,15 +9,11 @@ import { onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 
 import { useAccountStore } from "@/stores/account";
-import { useMapStore } from "@/stores/map";
 
-import { decryptText } from "./utils/idb";
 import config from "@/config/default/config.json";
-import { getSensorsForLastDay, getSensorsForPeriod } from "./utils/utils";
-import { dayISO, dayBoundsUnix } from "./utils/date";
+// import { getSensorsMapList } from "./utils/map/markers/requests"; // Убран - теперь используется только в Main.vue
 
 const route = useRoute();
-const mapStore = useMapStore();
 
 /*
   Класс для /main
@@ -30,71 +26,46 @@ function updateAppClass() {
 }
 watch(() => route.name, updateAppClass, { immediate: true });
 
-/* + SENSORS HELPERS */
-/* Для получения сенсоров только в пределах максимальной видимости карты (по настройкам) */
-function getConfigBBox() {
-  const p = config?.MAP?.position;
-  const d = config?.MAP?.boundsDelta;
-  if (!p || !d || d.lat === "" || d.lng === "") return null;
-
-  const lat = Number(p.lat);
-  const lng = Number(p.lng);
-  const dLat = Number(d.lat);
-  const dLng = Number(d.lng);
-  if (![lat, lng, dLat, dLng].every(Number.isFinite)) return null;
-
-  return { south: lat - dLat, west: lng - dLng, north: lat + dLat, east: lng + dLng };
+/**
+ * Очищает устаревшие данные из localStorage
+ * Удаляет ключи, начинающиеся с 'aqi_cache_' и 'revgeo_addr_'
+ */
+function cleanupOldLocalStorage() {
+  try {
+    const keysToRemove = [];
+    
+    // Проходим по всем ключам в localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('aqi_cache') || key.startsWith('revgeo_addr_'))) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    // Удаляем найденные ключи
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    if (keysToRemove.length > 0) {
+      console.log(`Cleaned up ${keysToRemove.length} old localStorage entries:`, keysToRemove);
+    }
+  } catch (error) {
+    console.warn('Failed to cleanup localStorage:', error);
+  }
 }
 
-function inBBox(lat, lng, b) {
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
-  const okLat = lat >= Math.min(b.south, b.north) && lat <= Math.max(b.south, b.north);
-  const okLng = b.west <= b.east ? (lng >= b.west && lng <= b.east) : (lng >= b.west || lng <= b.east);
-  return okLat && okLng;
-}
-/* - SENSORS HELPERS */
+onMounted(async () => {
 
-/*
+  // Очищаем устаревшие данные из localStorage
+  cleanupOldLocalStorage();
+  
+  /* + INIT ACCOUNT */
+  /*
   При маунте: загружаем аккаунты из IndexedDB через стор,
   затем для каждого обновляем devices из сети (getUserSensors) и
   сохраняем обратно через addAccount.
 */
-// Функция для загрузки сенсоров для конкретной даты
-const loadSensorsForDate = async (date) => {
-  const box = getConfigBBox();
-  
-  // Если дата сегодняшняя, используем getSensorsForLastDay
-  // Иначе загружаем данные для конкретной даты
-  let all;
-  if (date === dayISO()) {
-    all = await getSensorsForLastDay();
-  } else {
-    const startTimestamp = dayBoundsUnix(date).start;
-    const endTimestamp = dayBoundsUnix(date).end;
-    all = await getSensorsForPeriod(startTimestamp, endTimestamp);
-  }
-
-  const sensors = (Array.isArray(all) ? all : []).filter(s => {
-    if (!box) return true;
-    const lat = Number(s.geo?.lat);
-    const lng = Number(s.geo?.lng);
-    return inBBox(lat, lng, box);
-  });
-
-  mapStore.setSensors(sensors);
-};
-
-onMounted(async () => {
-
-  /* + INIT SENSORS */
-  // Загружаем сенсоры для текущей выбранной даты
-  await loadSensorsForDate(mapStore.currentDate);
-  
-  // AQI functionality removed - no longer enriching sensors with AQI data
-  
-  /* - INIT SENSORS */
-  
-  /* + INIT ACCOUNT */
   if(config.SERVICES.accounts) {
     const accountStore = useAccountStore();
     const accounts = await accountStore.getAccounts();
@@ -115,15 +86,9 @@ onMounted(async () => {
   /* - INIT ACCOUNT */
 });
 
-// Watcher для изменения даты - перезагружаем сенсоры
-watch(
-  () => mapStore.currentDate,
-  async (newDate) => {
-    if (newDate) {
-      await loadSensorsForDate(newDate);
-    }
-  }
-);
+// Watcher для изменения даты убран - теперь данные загружаются только через Main.vue handlerHistory
+// Это предотвращает дублирующиеся запросы к API
+
 </script>
 
 <style>

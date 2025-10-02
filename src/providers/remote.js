@@ -1,63 +1,30 @@
 import { settings } from "@config";
-import io from "socket.io-client";
+import { fetchJson } from "@/utils/utils";
 
-async function getJSON(path) {
-  const url = `${settings.REMOTE_PROVIDER}api/sensor${path}`;
-  const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-  return res.json();
-}
 
 class Provider {
   constructor(url) {
-    this.isReady = false;
     this.url = url.replace(/\/$/, "");
-    this.connection = false;
     this.start = null;
     this.end = null;
-    this.socket = io(url);
-    this.socket.on("connect_error", (e) => {
-      console.log("connect error", e);
-      this.connection = false;
-    });
-    this.socket.on("error", function (error) {
-      console.warn(error);
-    });
-    this.init().then(() => {
-      this.isReady = true;
-    });
   }
 
   async status() {
     try {
-      const res = await fetch(`${settings.REMOTE_PROVIDER}api/sensor/cities`, { cache: 'no-store' });
-      if (res.ok) {
-        return true;
-      }
+      const res = await fetch(`${settings.REMOTE_PROVIDER}api/sensor/cities`, { 
+        method: 'HEAD',
+        cache: 'no-store' 
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return true;
     } catch (error) {
-      console.log(error.message);
+      return false;
     }
-    return false;
   }
 
-  init() {
-    return new Promise((resolve) => {
-      this.socket.on("connect", () => {
-        this.connection = true;
-        resolve();
-      });
-    });
-  }
 
   ready() {
-    return new Promise((resolve) => {
-      const t = setInterval(() => {
-        if (this.isReady) {
-          resolve();
-          clearInterval(t);
-        }
-      }, 100);
-    });
+    return Promise.resolve(); // Remote provider is always ready
   }
 
   setStartDate(start) {
@@ -70,7 +37,7 @@ class Provider {
 
   async lastValuesForPeriod(start, end, type) {
     try {
-      const result = await getJSON(`/last/${start}/${end}/${type}`);
+      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/last/${start}/${end}/${type}`, { cache: 'no-store' });
       return result?.result || {};
     } catch {
       return {};
@@ -79,7 +46,7 @@ class Provider {
 
   async maxValuesForPeriod(start, end, type) {
     try {
-      const result = await getJSON(`/max/${start}/${end}/${type}`);
+      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/v2/sensor/maxdata/${type}/${start}/${end}`, { cache: 'no-store' });
       return result?.result || {};
     } catch {
       return {};
@@ -88,7 +55,7 @@ class Provider {
 
   async messagesForPeriod(start, end) {
     try {
-      const result = await getJSON(`/messages/${start}/${end}`);
+      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/messages/${start}/${end}`, { cache: 'no-store' });
       return result?.result || {};
     } catch {
       return {};
@@ -97,7 +64,7 @@ class Provider {
 
   async getHistoryBySensor(sensor) {
     try {
-      const result = await getJSON(`/${sensor}`);
+      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/${sensor}`, { cache: 'no-store' });
       return result?.result || [];
     } catch {
       return [];
@@ -106,7 +73,7 @@ class Provider {
 
   async getHistoryPeriodBySensor(sensor, start, end) {
     try {
-      const result = await getJSON(`/${sensor}/${start}/${end}`);
+      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/${sensor}/${start}/${end}`, { cache: 'no-store' });
       return result?.result || [];
     } catch {
       return [];
@@ -115,7 +82,7 @@ class Provider {
 
   async getHistoryPeriod(start, end) {
     try {
-      const result = await getJSON(`/last/${start}/${end}`);
+      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/last/${start}/${end}`, { cache: 'no-store' });
       return result?.result || {};
     } catch {
       return {};
@@ -124,7 +91,7 @@ class Provider {
 
   static async getMeasurements(start, end) {
     try {
-      const result = await getJSON(`/measurements/${start}/${end}`);
+      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/measurements/${start}/${end}`, { cache: 'no-store' });
       return result?.result || [];
     } catch {
       return [];
@@ -132,10 +99,10 @@ class Provider {
   }
 
   watch(cb) {
+    // Remote provider doesn't use real-time updates via socket
+    // Data is fetched via HTTP requests instead
     if (cb) {
-      this.socket.on("update", (result) => {
-        cb(result);
-      });
+      console.warn("watch() method not supported for remote provider");
     }
   }
 }

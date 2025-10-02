@@ -87,10 +87,7 @@ import { useMapStore } from "@/stores/map";
 // props и emits
 const props = defineProps({
   currentProvider: { type: String, required: true },
-  canHistory: { type: Boolean, default: false },
-  measuretype: { type: String, required: true },
 });
-const emit = defineEmits(["history", "typeChanged"]);
 
 // инстансы
 const mapStore = useMapStore();
@@ -106,8 +103,8 @@ const realtime = ref(props.currentProvider === "realtime");
 const wind = ref(false);
 const messages = ref(settings.SHOW_MESSAGES);
 
-// выбор измерения (safeguard if prop is missing briefly)
-const type = ref((props.measuretype || 'pm10').toLowerCase());
+// выбор измерения
+const type = ref(mapStore.currentUnit);
 const availableUnits = ref(["pm10"]);
 const locale = computed(() => {
   return i18nLocale.value || localStorage.getItem("locale") || "en";
@@ -174,7 +171,6 @@ const availableOptions = computed(() => {
   // 3. localStorage is available
   if (availableUnits.value.includes('pm25') && 
       availableUnits.value.includes('pm10') && 
-      props.canHistory && 
       !realtime.value &&
       isLocalStorageAvailable()) {
     // Ensure AQI appears first in the list
@@ -198,18 +194,21 @@ const bookmarksCount = computed(() => {
   return (bookmarksStore.idbBookmarks || []).length;
 });
 
-const getHistory = () => {
-  if (realtime.value) return;
-  emit("history", { start: startTimestamp.value, end: endTimestamp.value });
-};
 
 watch(type, async (val) => {
   // Устанавливаем новый тип и синхронизируем
   setMapSettings(route, router, mapStore, { type: val });
-  
-  // Emit event to parent to trigger map redraw
-  emit('typeChanged', val);
 });
+
+// Синхронизируем локальное состояние с mapStore.currentUnit
+watch(
+  () => mapStore.currentUnit,
+  (newUnit) => {
+    if (newUnit && newUnit !== type.value) {
+      type.value = newUnit;
+    }
+  }
+);
 
 watch(start, (newDate) => {
   // Безопасно парсим дату из input
@@ -217,8 +216,6 @@ watch(start, (newDate) => {
   
   // Устанавливаем новую дату и синхронизируем
   setMapSettings(route, router, mapStore, { date: parsedDate });
-  
-  // getHistory();
 });
 
 // Watcher для изменений даты извне (например, из SensorPopup)
@@ -230,11 +227,8 @@ watch(
     }
   }
 );
-watch(
-  () => props.canHistory,
-  (v) => v && getHistory(),
-  { immediate: true }
-);
+// Watcher для canHistory убран - инициализация теперь происходит в Main.vue
+// Это предотвращает дублирующиеся вызовы handlerHistory
 
 // Computed для получения актуальной даты с правильным приоритетом
 const currentDate = computed(() => {
@@ -276,8 +270,8 @@ onMounted(async () => {
     const tail = arr.filter((v) => !toMove.includes(v));
     availableUnits.value = [...head, ...tail];
     
-    // Respect external unit (store/prop) as the single source of truth
-    const preferred = (mapStore.currentUnit || props.measuretype || type.value || settings.MAP?.measure || 'pm10').toLowerCase();
+    // Respect external unit (store) as the single source of truth
+    const preferred = mapStore.currentUnit;
     if (preferred === 'aqi' && !isLocalStorageAvailable()) {
       type.value = 'pm25';
     } else {
@@ -290,10 +284,9 @@ onMounted(async () => {
 
 // Keep local select in sync with prop only (no mapStore influence)
 watch(
-  () => props.measuretype,
+  () => mapStore.currentUnit,
   (v) => {
-    const val = (v || 'pm10').toLowerCase();
-    if (val !== type.value) type.value = val;
+    if (v !== type.value) type.value = v;
   },
   { immediate: true }
 );
