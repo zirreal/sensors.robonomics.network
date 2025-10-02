@@ -6,18 +6,18 @@
         <router-link to="/" class="appicon">
           <img :alt="settings.TITLE" src="../../../public/app-icon-512.png" />
         </router-link>
-        <!-- Если есть zeroGeoSensors - показываем details с полным содержимым -->
-        <details v-if="mapStore.sensors?.length > 0 && zeroGeoSensors?.length > 0" tabindex="0" class="sensors-counter details-popup">
+        <!-- Если есть sensorsNoLocation - показываем details с полным содержимым -->
+        <details v-if="mapStore.sensors?.length > 0 && mapStore.sensorsNoLocation?.length > 0" tabindex="0" class="sensors details-popup">
           <summary class="sensors-counter">
             <IconSensor class="sensors-mainicon" />
-            {{ mapStore.sensors?.length }}
+            {{ mapStore.sensors?.length + mapStore.sensorsNoLocation?.length }}
           </summary>
           <div class="details-content nogeo">
             <section>
-              <h4>{{zeroGeoSensors?.length}} sensors without geolocation</h4>
+              <h4>{{mapStore.sensorsNoLocation?.length}} sensors without geolocation</h4>
               <ul class="sensors-list">
-                <li v-for="sensor in zeroGeoSensors" :key="sensor.id">
-                  <a :href="getSensorLink(sensor)" @click.prevent="showsensor(sensor)">
+                <li v-for="sensor in mapStore.sensorsNoLocation" :key="sensor.id">
+                  <a :href="getSensorLink(sensor)">
                     <b>{{ formatSensorId(sensor.sensor_id) }}</b>
                   </a>
                 </li>
@@ -26,7 +26,7 @@
           </div>
         </details>
         
-        <!-- Если zeroGeoSensors пуст - показываем только div.sensors-counter -->
+        <!-- Если sensorsNoLocation пуст - показываем только div.sensors-counter -->
         <div v-else-if="mapStore.sensors?.length > 0" class="sensors-counter">
           <IconSensor class="sensors-mainicon" />
           {{ mapStore.sensors?.length }}
@@ -104,49 +104,22 @@ const locale = ref(localStorage.getItem("locale") || i18nLocale.value || "en");
 const locales = languages || ["en"];
 const mapStore = useMapStore();
 
-const zeroGeoSensors = computed(() => {
-  const tolerance = 0.001; // допуск для сравнения
-  return mapStore.sensors.filter(sensor => {
-    const lat = Number(sensor.geo.lat);
-    const lng = Number(sensor.geo.lng);
-    return Math.abs(lat) < tolerance && Math.abs(lng) < tolerance;
-  });
-});
 
-// end of Indiegogo
-// const deadline = new Date('2025-09-11');
-// const now = ref(new Date());
-// let timer;
 
-// const daysLeft = computed(() => {
-//   const diff = deadline - now.value;
-//   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-//   return Math.max(0, days);
-// });
 
 // Make a link for sensor. E.g. origin/#/provider/pm10/20/lat/lng/sensor_id
 const getSensorLink = (sensor) => {
-  const provider = localStorage.getItem("provider_type") || "remote";
-  const measureType = (localStorage.getItem("currentUnit") || "pm10").toLowerCase();
   return router.resolve({
     name: "main",
     query: {
-      provider: provider,
-      type: measureType,
+      provider: mapStore.currentProvider,
+      type: mapStore.currentUnit,
       zoom: settings.MAP.zoom,
       lat: sensor.geo.lat,
       lng: sensor.geo.lng,
       sensor: sensor.sensor_id,
     },
   }).href;
-};
-
-const showsensor = (sensor) => {
-  /* 
-    I'm really sorry for that, but current routing system is very complicated and it seems 
-    very hard to impelement proper router mechanism here, so I just reload - positivecrash */
-  window.location.href = getSensorLink(sensor);
-  location.reload();
 };
 
 // Функция форматирования sensor_id: первые 6 символов, троеточие, последние 6
@@ -285,7 +258,7 @@ onMounted(() => {
       display: grid;
       grid-template-columns: 350px 1fr;
       max-width: calc(100vw - var(--gap) * 2) !important;
-      min-width: min(800px, calc(100vw - (var(--gap) * 2))) !important;
+      /* min-width: min(800px, calc(100vw - (var(--gap) * 2))) !important; */
       gap: calc(var(--gap) * 2);
     }
 

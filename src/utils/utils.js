@@ -230,3 +230,19 @@ export function syncMapSettings(route, router, mapStore) {
     }).catch(() => {});
   }
 }
+
+/**
+ * Проверяет, являются ли координаты валидными (не нулевыми)
+ * @param {Object} geo - Объект с координатами {lat, lng}
+ * @returns {boolean} true если координаты валидны, false если нулевые или отсутствуют
+ */
+export function hasValidCoordinates(geo) {
+  if (!geo || !geo.lat || !geo.lng) {
+    return false;
+  }
+  
+  const lat = Number(geo.lat);
+  const lng = Number(geo.lng);
+  
+  return Math.abs(lat) > 0.001 && Math.abs(lng) > 0.001;
+}

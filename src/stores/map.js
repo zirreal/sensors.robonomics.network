@@ -11,6 +11,7 @@ export const useMapStore = defineStore('map', {
     },
     mapinactive: false,
     sensors: [], // all uploaded sensors (getting via broadcast messages)
+    sensorsNoLocation: [], // sensors without geolocation (zero coordinates)
     sensorsLoaded: false, // flag to indicate if sensors are loaded
     currentUnit: (localStorage.getItem('currentUnit') || settings?.MAP?.measure || 'pm25').toLowerCase(),
     currentDate: dayISO(), // current selected date
@@ -31,8 +32,12 @@ export const useMapStore = defineStore('map', {
       this.sensors = sensorsArr;
       this.sensorsLoaded = true;
     },
+    setSensorsNoLocation(sensorsArr) {
+      this.sensorsNoLocation = sensorsArr;
+    },
     clearSensors() {
       this.sensors = [];
+      this.sensorsNoLocation = [];
       this.sensorsLoaded = false;
     },
     setCurrentUnit(unit) {

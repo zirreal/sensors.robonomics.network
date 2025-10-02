@@ -1,6 +1,7 @@
 import Provider from "@/providers/remote";
 import Libp2pProvider from "@/providers/libp2p";
 import { getConfigBounds, filterByBounds } from "../utils";
+import { hasValidCoordinates } from "../../utils";
 import { settings } from "@config";
 
 const remote = new Provider(settings.REMOTE_PROVIDER);
@@ -59,20 +60,22 @@ export async function getMaxData(start, end, unit, mapStore) {
  * @param {number} start - начальный timestamp
  * @param {number} end - конечный timestamp
  * @param {string} provider - тип провайдера ('remote' или 'realtime')
- * @returns {Array} массив сенсоров с координатами и данными для карты
+ * @returns {Object} объект с sensors (с валидными координатами) и sensorsNoLocation (с нулевыми координатами)
  */
 export async function getSensors(start, end, provider = 'remote') {
   if (provider === 'realtime') {
     // Для realtime провайдера сенсоры приходят через WebSocket
     // и обрабатываются в Main.vue через handlerNewPoint
-    // Здесь возвращаем пустой массив, так как данные уже есть в mapStore.sensors
-    return [];
+    // Здесь возвращаем пустые массивы, так как данные уже есть в mapStore.sensors
+    return { sensors: [], sensorsNoLocation: [] };
   } else {
-    // Для remote получаем базовые данные сенсоров с pm10 (всегда есть)
+    // Для remote получаем базовые данные сенсоров
     const historyData = await remote.getHistoryPeriod(start, end);
     
     // Обрабатываем данные прямо здесь
     const sensors = [];
+    const sensorsNoLocation = [];
+    
     for (const [sensorId, sensorDataArray] of Object.entries(historyData)) {
       if (!sensorId || !Array.isArray(sensorDataArray) || sensorDataArray.length === 0) continue;
       
@@ -83,21 +86,30 @@ export async function getSensors(start, end, provider = 'remote') {
       // Проверяем валидность координат
       const lat = parseFloat(sensorData.geo.lat);
       const lng = parseFloat(sensorData.geo.lng);
-      if (Math.abs(lat) < 0.001 && Math.abs(lng) < 0.001) continue;
       
-      sensors.push({
+      const sensorInfo = {
         sensor_id: sensorId,
         model: sensorData.model || 2,
         geo: { lat, lng },
         address: sensorData.address || null,
         donated_by: sensorData.donated_by || null,
         timestamp: sensorData.timestamp || null
-      });
+      };
+      
+      if (!hasValidCoordinates({ lat, lng })) {
+        // Сенсоры с нулевыми координатами
+        sensorsNoLocation.push(sensorInfo);
+      } else {
+        // Сенсоры с валидными координатами
+        sensors.push(sensorInfo);
+      }
     }
     
     const bounds = getConfigBounds(settings);
-    const result = filterByBounds(sensors, bounds);
-    return result;
+    return {
+      sensors: filterByBounds(sensors, bounds),
+      sensorsNoLocation: filterByBounds(sensorsNoLocation, bounds)
+    };
   }
 }
 

@@ -42,7 +42,7 @@ import * as markers from "../utils/map/markers";
 import { clearActiveMarker } from "../utils/map/markers";
 import { moveMap } from "../utils/map/instance";
 import { getAddress } from "../utils/map/markers/requests";
-import { syncMapSettings } from "../utils/utils";
+import { syncMapSettings, hasValidCoordinates } from "../utils/utils";
 import { useI18n } from "vue-i18n";
 import { getSensors, getSensorData, getMaxData } from "../utils/map/markers/requests";
 
@@ -275,11 +275,13 @@ const updateSensorPopup = async (point) => {
     return;
   }
   
-  // Проверяем, что есть geo данные
-  if (!point.geo || !point.geo.lat || !point.geo.lng) {
-    setTimeout(() => updateSensorPopup(point), RETRY_TIMEOUT);
-    return;
+  // Если geo нет, устанавливаем нулевые координаты
+  if (!point.geo) {
+    point.geo = { lat: 0, lng: 0 };
   }
+  
+  // Определяем зум в зависимости от типа сенсора
+  const zoom = hasValidCoordinates(point.geo) ? 18 : 3;
   
   state.isUpdatingPopup = true;
   
@@ -295,17 +297,29 @@ const updateSensorPopup = async (point) => {
     if (route.query.sensor !== point.sensor_id) {
       const currentQuery = { ...route.query };
       currentQuery.sensor = point.sensor_id;
-      currentQuery.lat = point.geo.lat;
-      currentQuery.lng = point.geo.lng;
-      currentQuery.zoom = 16;
+      
+      // Если есть валидные координаты, обновляем их в URL
+      if (hasValidCoordinates(point.geo)) {
+        currentQuery.lat = point.geo.lat;
+        currentQuery.lng = point.geo.lng;
+      }
+      
+      // Устанавливаем зум в зависимости от того есть ли координаты
+      currentQuery.zoom = zoom;
+      
       router.replace({ query: currentQuery });
     }
   
     // Получаем данные сенсора из mapStore.sensors или используем переданные данные
     const foundSensor = mapStore.sensors.find(s => s.sensor_id === point.sensor_id);
     
-    // Получаем адрес
-    const address = await getAddress(point.geo.lat, point.geo.lng, localeComputed.value);
+    // Получаем адрес - для сенсоров с нулевыми координатами используем sensor_id
+    let address;
+    if (hasValidCoordinates(point.geo)) {
+      address = await getAddress(point.geo.lat, point.geo.lng, localeComputed.value);
+    } else {
+      address = `Sensor ID: ${point.sensor_id}`;
+    }
   
     // Открываем попап с базовыми данными
     state.point = createUnifiedPoint({
@@ -331,7 +345,7 @@ const updateSensorPopup = async (point) => {
     markers.setActiveMarker(point.sensor_id);
 
     // Центрируем карту на сенсоре с учетом попапа
-    moveMap(point.geo, 18, { popup: true, setZoom: true });
+    moveMap(point.geo, zoom, { popup: true, setZoom: true });
   }
   } catch (error) {
     console.error('Error updating sensor popup:', error);
@@ -394,7 +408,7 @@ const loadSensors = async () => {
   // Получаем список сенсоров для обоих режимов
   try {
     // Получаем базовые данные сенсоров (координаты, адреса)
-    const sensors = await getSensors(start, end, mapStore.currentProvider);
+    const { sensors, sensorsNoLocation } = await getSensors(start, end, mapStore.currentProvider);
     
     // Проверяем, не был ли запрос отменен
     if (currentRequestId !== requestId) {
@@ -405,10 +419,15 @@ const loadSensors = async () => {
     if (sensors && Array.isArray(sensors)) {
       mapStore.setSensors(sensors);
     }
+    if (sensorsNoLocation && Array.isArray(sensorsNoLocation)) {
+      mapStore.setSensorsNoLocation(sensorsNoLocation);
+    }
   } catch (error) {
     console.error('Error fetching sensor history:', error);
   }
 };
+
+
 
 /**
  * Создает унифицированный объект point для сенсора
