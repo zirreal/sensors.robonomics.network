@@ -22,13 +22,14 @@
     "theme": {
       "light": "carto-light",
       "dark": "carto-dark",
+      "satellite": "esri-imagery",
       "invertForDark": false
     }
   },
   "SERVICES": {
-    "accounts": true
+    "accounts": true,
+    "messages": true
   },
-  "SHOW_MESSAGES": true,
   "DEFAULT_TYPE_PROVIDER": "remote",
   "VALID_DATA_PROVIDERS": {
     "realtime": "Realtime",

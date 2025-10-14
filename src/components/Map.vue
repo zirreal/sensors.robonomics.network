@@ -1,52 +1,61 @@
 <template>
-  <div :class="{ inactive: mapStore.mapinactive }" class="mapcontainer" id="map"></div>
+  <div :class="{ inactive: mapState.mapinactive.value }" class="mapcontainer" id="map"></div>
   <Footer
-    :currentProvider="provider"
-  >
-    <button
-      class="popovercontrol popoovergeo"
-      v-if="geoavailable"
-      @click.prevent="resetgeo"
-      :area-label="$t('showlocation')"
-      :title="geoisloading ? $t('locationloading') : $t('showlocation')"
-    >
-      <font-awesome-icon icon="fa-solid fa-location-arrow" :fade="geoisloading" />
-
-      <div class="popoovergeo-tip" v-if="geomsg !== ''" :class="geomsgopened ? 'opened' : 'closed'">
-        {{ geomsg }}
-        <font-awesome-icon
-          icon="fa-solid fa-xmark"
-          class="popoovergeo-tipclose"
-          @click.stop="geomsg = ''"
-        />
-      </div>
-    </button>
-  </Footer>
+    :geoavailable="geoavailable"
+    :geoisloading="geoisloading"
+    :mapRef="mapRef"
+    @center-on-user="resetgeo"
+    @clickMessage="handleMessageClick"
+    ref="footerRef"
+  />
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { settings } from "@config";
 import { toRaw } from "vue";
 import Footer from "../components/footer/Footer.vue";
-import { drawuser, init, removeMap, setTheme, moveMap } from "../utils/map/instance";
-import { init as initMarkers } from "../utils/map/markers";
-import { init as initWind } from "../utils/map/wind";
-import { setMapSettings } from "@/utils/utils";
-import { useMapStore } from "@/stores/map";
-import { useBookmarksStore } from "@/stores/bookmarks";
+import { drawuser, init, removeMap, setTheme, moveMap, initMapContext } from "../utils/map/map";
+import { init as initSensors } from "../utils/map/sensors";
+import { init as initMessages } from "../utils/map/messages";
+import { destroyWindLayer } from "../utils/map/wind";
+import { useMap } from "@/composables/useMap";
+import { useBookmarks } from "@/composables/useBookmarks";
 
 // Props and emits
-const emit = defineEmits(["clickMarker"]);
+const props = defineProps({
+  mapRef: {
+    type: Object,
+    default: null
+  }
+});
+
+const emit = defineEmits(["clickMarker", "clickMessage"]);
+
+// Ref для Footer компонента
+const footerRef = ref(null);
+const mapRef = ref(null);
+
+// Функция для показа тултипа в Footer
+const showGeoTip = (message) => {
+  if (footerRef.value && footerRef.value.opengeotip) {
+    footerRef.value.opengeotip(message);
+  }
+};
+
+// Обработчик клика на маркер сообщения из Footer
+const handleMessageClick = (messageData) => {
+  emit("clickMessage", messageData);
+};
 
 // Composables
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
-const mapStore = useMapStore();
-const bookmarksStore = useBookmarksStore();
+const mapState = useMap();
+const { idbBookmarkGet } = useBookmarks();
 
 // Reactive state
 const userposition = ref(null);
@@ -57,7 +66,17 @@ const geomsgopened = ref(false);
 const geomsgopenedtime = ref(5000); // 5 seconds
 const geomsgopenedtimer = ref(null);
 const map = ref(null);
-const currentTheme = ref(window?.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+
+// Определяем тему с учетом сохраненного выбора пользователя
+const getInitialTheme = () => {
+  const savedMapTheme = localStorage.getItem('mapTheme');
+  if (savedMapTheme === 'satellite' && settings?.MAP?.theme?.satellite) {
+    return settings.MAP.theme.satellite;
+  }
+  return window?.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+};
+
+const currentTheme = ref(getInitialTheme());
 
 // Computed properties
 const theme = computed(() => currentTheme.value);
@@ -66,6 +85,12 @@ const theme = computed(() => currentTheme.value);
 const themelistener = ({ matches, media }) => {
   if (!matches) {
     // Not matching anymore = not interesting
+    return;
+  }
+
+  // Не меняем тему если пользователь выбрал спутник
+  const savedMapTheme = localStorage.getItem('mapTheme');
+  if (savedMapTheme === 'satellite' && settings?.MAP?.theme?.satellite) {
     return;
   }
 
@@ -78,22 +103,12 @@ const themelistener = ({ matches, media }) => {
   setTheme(theme.value);
 };
 
-// Обновляет позицию карты и синхронизирует с URL
-const relocatemap = (lat, lng, zoom, type = "default") => {
-
-  if (router.currentRoute.value.name === "main") {
-    // Используем setMapSettings для обновления позиции карты
-    setMapSettings(route, router, mapStore, {
-      lat: parseFloat(lat),
-      lng: parseFloat(lng),
-      zoom: parseInt(zoom)
-    });
-    
-           if (type === "reload") {
-             moveMap([lat, lng], zoom);
-           }
-  }
+// Функция для обновления темы из внешних компонентов
+const updateTheme = (newTheme) => {
+  currentTheme.value = newTheme;
+  setTheme(newTheme);
 };
+
 
 // Закрывает tooltip с сообщением о геолокации
 const closegeotip = () => {
@@ -120,7 +135,7 @@ const getlocalmappos = () => {
   });
 
   const { lat, lng, zoom } = JSON.parse(lastsettings);
-  mapStore.setmapposition(lat, lng, zoom, hasStoredPosition);
+  mapState.setMapSettings(route, router, { lat, lng, zoom });
 };
 
 // Проверяет, есть ли координаты в URL
@@ -133,17 +148,16 @@ const setPosFromURI = () => {
   const lat = route.query.lat || settings.MAP.position.lat;
   const lng = route.query.lng || settings.MAP.position.lng;
   const zoom = route.query.zoom || settings.MAP.zoom;
-  mapStore.setmapposition(lat, lng, zoom, true);
+  mapState.setMapSettings(route, router, { lat, lng, zoom });
 };
 
 // Устанавливает позицию карты по умолчанию из настроек
 const setPosDefault = () => {
-  mapStore.setmapposition(
-    settings.MAP.position.lat,
-    settings.MAP.position.lng,
-    settings.MAP.zoom,
-    true
-  );
+  mapState.setMapSettings(route, router, {
+    lat: settings.MAP.position.lat,
+    lng: settings.MAP.position.lng,
+    zoom: settings.MAP.zoom
+  });
 };
 
 
@@ -167,10 +181,14 @@ const getUserGeolocation = () => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         userposition.value = [position.coords.latitude, position.coords.longitude];
-        mapStore.setmapposition(userposition.value[0], userposition.value[1], 20);
+        mapState.setMapSettings(route, router, {
+          lat: userposition.value[0],
+          lng: userposition.value[1],
+          zoom: 20
+        });
 
         if (userposition.value && map.value) {
-          drawuser(userposition.value, mapStore.mapposition.zoom);
+          drawuser(userposition.value, mapState.mapposition.value.zoom);
         }
 
         resolve(t("geolocationisdetermined"));
@@ -213,51 +231,77 @@ const resetgeo = async () => {
 
   try {
     const message = await setgeo(true);
-    relocatemap(mapStore.mapposition.lat, mapStore.mapposition.lng, mapStore.mapposition.zoom, "reload");
-    opengeotip(message);
+    mapState.setMapSettings(route, router, {
+      lat: mapState.mapposition.value.lat,
+      lng: mapState.mapposition.value.lng,
+      zoom: mapState.mapposition.value.zoom
+    });
+    moveMap([mapState.mapposition.value.lat, mapState.mapposition.value.lng], mapState.mapposition.value.zoom);
+    showGeoTip(message);
   } catch (error) {
-    opengeotip(error);
+    showGeoTip(error);
   } finally {
     geoisloading.value = false;
   }
 };
 
 // Обновляет позицию карты при изменении зума или перемещении
-const updateMapPosition = (e) => {
+const onMapMove = (e) => {
   const newLat = e.target.getCenter().lat.toFixed(4);
   const newLng = e.target.getCenter().lng.toFixed(4);
   const newZoom = e.target.getZoom();
-  relocatemap(newLat, newLng, newZoom);
+  
+  const settings = {
+    lat: parseFloat(newLat),
+    lng: parseFloat(newLng),
+    zoom: parseInt(newZoom)
+  };
+  
+  mapState.setMapSettings(route, router, settings);
 };
 
 // Настраивает обработчики событий карты (зум, перемещение)
 const setupMapEventHandlers = () => {
-  map.value.on("zoomend", updateMapPosition);
+  map.value.on("zoomend", onMapMove);
   map.value.on("moveend", (e) => {
-    // setTimeout for mobiles (when swiping up app, it causes unpleasant map moving before closing app)
-    setTimeout(() => updateMapPosition(e), 50);
+    setTimeout(() => onMapMove(e), 50);
   });
 };
 
 // Инициализирует компоненты карты: маркеры, ветер, закладки
 const initializeMapComponents = async () => {
-  initMarkers(toRaw(map.value), (data) => {
+  // Инициализируем контекст карты перед инициализацией сенсоров
+  initMapContext(toRaw(map.value), (data) => {
     emit("clickMarker", data);
-  }, mapStore.currentUnit);
+  }, mapState.currentUnit.value);
+  
+  initSensors((data) => {
+    emit("clickMarker", data);
+  }, mapState.currentUnit.value);
 
-  if (mapStore.currentProvider === "realtime") {
-    await initWind();
+  // Инициализируем слой сообщений
+  initMessages((data) => {
+    emit("clickMessage", data);
+  });
+
+  if (mapState.currentProvider.value === "realtime") {
+    // await initWindLayer();
   }
 
-  await bookmarksStore.idbBookmarkGet();
+  await idbBookmarkGet();
 };
 
 // Загружает и инициализирует карту со всеми компонентами
 const loadMap = async () => {
   geoisloading.value = false;
 
-  map.value = init([mapStore.mapposition.lat, mapStore.mapposition.lng], mapStore.mapposition.zoom, theme.value);
-  relocatemap(mapStore.mapposition.lat, mapStore.mapposition.lng, mapStore.mapposition.zoom, "reload");
+  map.value = init([mapState.mapposition.value.lat, mapState.mapposition.value.lng], mapState.mapposition.value.zoom, theme.value);
+  mapState.setMapSettings(route, router, {
+    lat: mapState.mapposition.value.lat,
+    lng: mapState.mapposition.value.lng,
+    zoom: mapState.mapposition.value.zoom
+  });
+  moveMap([mapState.mapposition.value.lat, mapState.mapposition.value.lng], mapState.mapposition.value.zoom);
 
   setupMapEventHandlers();
   await initializeMapComponents();
@@ -289,9 +333,9 @@ const setupThemeListeners = () => {
 const initializeMapWithGeolocation = async () => {
   try {
     const message = await setgeo();
-    opengeotip(message);
+    showGeoTip(message);
   } catch (error) {
-    opengeotip(error + `, ${t("geolocationdefaultsetup")}`);
+    showGeoTip(error + `, ${t("geolocationdefaultsetup")}`);
   }
   
   await loadMap();
@@ -300,10 +344,22 @@ const initializeMapWithGeolocation = async () => {
 onMounted(async () => {
   setupThemeListeners();
   await initializeMapWithGeolocation();
+  
+  // Устанавливаем глобальную ссылку на функцию updateTheme
+  window.mapUpdateTheme = updateTheme;
 });
 
 onUnmounted(() => {
+  // Очищаем ресурсы ветра перед удалением карты
+  destroyWindLayer();
   removeMap();
+  // Очищаем глобальную ссылку
+  window.mapUpdateTheme = null;
+});
+
+// Экспортируем функцию для обновления темы
+defineExpose({
+  updateTheme
 });
 </script>
 
@@ -318,60 +374,5 @@ onUnmounted(() => {
   width: 100%;
   height: 100svh;
   overflow: hidden;
-}
-
-
-.popoovergeo {
-  position: relative;
-}
-
-.popoovergeo-tip {
-  --gettime: v-bind("geomsgopenedtime");
-  --openedtime: calc(var(--gettime) / 1000 * 1s);
-  position: absolute;
-  padding: 5px 25px 5px 10px;
-  background-color: color-mix(in srgb, var(--color-dark) 70%, transparent);
-  color: var(--color-light);
-  backdrop-filter: blur(5px);
-  font-weight: bold;
-  border-radius: 2px;
-  bottom: calc(var(--app-inputheight) + 10px);
-  width: 220px;
-  right: -10px;
-  font-size: 0.9em;
-}
-
-/* .popoovergeo-tip.opened {
-  animation: fadeOut 0.3s linear var(--openedtime) forwards;
-} */
-
-.popoovergeo-tip:before {
-  content: "";
-  height: 2px;
-  width: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  background-color: var(--color-light);
-  animation: rolldownLeft var(--openedtime) linear 0s forwards;
-  transform-origin: 0 50%;
-}
-
-.popoovergeo-tip:after {
-  content: "";
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 10px solid color-mix(in srgb, var(--color-dark) 70%, transparent);
-  position: absolute;
-  bottom: -10px;
-  right: 15px;
-}
-
-.popoovergeo-tipclose {
-  position: absolute;
-  top: 5px;
-  right: 5px;
 }
 </style>

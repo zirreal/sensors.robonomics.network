@@ -5,15 +5,15 @@
 
 <script setup>
 import { computed } from "vue";
-import { sensors } from "@config";
+import { pinned_sensors } from "@config";
 
 const props = defineProps({
   sensorID: String,
 });
 
 const icon = computed(() => {
-  if (!props.sensorID || !sensors[props.sensorID]) return "";
-  return sensors[props.sensorID].icon;
+  if (!props.sensorID || !pinned_sensors[props.sensorID]) return "";
+  return pinned_sensors[props.sensorID].icon;
 });
 </script>
 

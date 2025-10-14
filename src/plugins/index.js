@@ -1,4 +1,3 @@
-import { createPinia } from "pinia";
 import polkadot from "robonomics-interface-vue";
 import VueClipboard from "vue3-clipboard";
 import router from "../router";
@@ -8,7 +7,6 @@ import { useI18n } from "./i18n";
 import { useNotification } from "./notification";
 
 export function usePlugins(app) {
-  app.use(createPinia());
   app.use(router);
   app.use(VueClipboard, {
     autoSetContainer: true,

@@ -6,14 +6,15 @@
 <script setup>
 import { RouterView } from "vue-router";
 import { onMounted, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
-import { useAccountStore } from "@/stores/account";
+// import { useAccounts } from "@/composables/useAccounts"; // TODO: раскомментировать когда будет нужно
 
 import config from "@/config/default/config.json";
 // import { getSensorsMapList } from "./utils/map/markers/requests"; // Убран - теперь используется только в Main.vue
 
 const route = useRoute();
+const router = useRouter();
 
 /*
   Класс для /main
@@ -60,14 +61,38 @@ onMounted(async () => {
   // Очищаем устаревшие данные из localStorage
   cleanupOldLocalStorage();
   
+  // Инициализация Matomo
+  const waitForMatomo = setInterval(() => {
+    if (
+      typeof window.Matomo !== "undefined" &&
+      typeof window.Matomo.getTracker === "function"
+    ) {
+      clearInterval(waitForMatomo);
+
+      const trackPage = () => {
+        const tracker = window.Matomo.getTracker();
+        if (tracker && !tracker.isUserOptedOut()) {
+          window._paq.push(["setCustomUrl", router.currentRoute.value.fullPath]);
+          window._paq.push(["setDocumentTitle", document.title]);
+          window._paq.push(["trackPageView"]);
+        }
+      };
+
+      // Track the initial page load
+      trackPage();
+    }
+  }, 100);
+  
   /* + INIT ACCOUNT */
   /*
   При маунте: загружаем аккаунты из IndexedDB через стор,
   затем для каждого обновляем devices из сети (getUserSensors) и
   сохраняем обратно через addAccount.
 */
+  // TODO: раскомментировать когда будет нужно
+  /*
   if(config.SERVICES.accounts) {
-    const accountStore = useAccountStore();
+    const accountStore = useAccounts();
     const accounts = await accountStore.getAccounts();
 
     if (accounts && accounts.length > 0) {
@@ -83,6 +108,7 @@ onMounted(async () => {
       }
     }
   }
+  */
   /* - INIT ACCOUNT */
 });
 

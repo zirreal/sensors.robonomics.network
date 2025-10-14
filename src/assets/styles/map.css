@@ -1,127 +1,90 @@
-.marker-cluster {
+.sensor-cluster {
     --size: 40px;
 }
 
-.marker-point {
+.sensor-point {
     --size: 30px;
 }
 
-.marker-cluster, .marker-point {
+.sensor-icon {
+  align-items: center;
+  border-radius: calc(var(--size) / 2);
+  border-style: solid;
+  border-width: 2px;
+  color: var(--color-light);
+  display: flex;
+  font-weight: bold;
+  height: var(--size);
+  justify-content: center;
+  margin-left: 0px;
+  margin-top: 0px;
+  transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+  width: var(--size);
+  will-change: transform, box-shadow, filter;
+  
+  /* Используем CSS переменную --color для фона и границы */
+  background-color: color-mix(in srgb, var(--color, #a1a1a1) 70%, transparent);
+  border-color: color-mix(in srgb, var(--color, #a1a1a1) 80%, #000);
+}
+
+.sensor-cluster, .sensor-point {
     background-clip: padding-box;
 }
 
-
-.marker-cluster .icon, .marker-point .icon {
-    width: var(--size);
-    height: var(--size);
-    border-radius: calc(var(--size) / 2);
-    margin-left: 0px;
-    margin-top: 0px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-style: solid;
-    overflow: hidden;
-    transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
-    will-change: transform, box-shadow, filter;
-    
-    /* Используем CSS переменную --color для фона и границы */
-    background-color: color-mix(in srgb, var(--color, #a1a1a1) 70%, transparent);
-    border-color: color-mix(in srgb, var(--color, #a1a1a1) 80%, #000);
-}
-
-.marker-cluster .icon {
-    border-width: 2px;
-}
-
-.marker-point .icon {
+.sensor-point .sensor-icon {
     border-width: 1px;
 }
 
-.marker-point .icon img {
-    display: block;
-    width: 100%;
-    height: 100%;
+.sensor-point .sensor-icon-image {
+  overflow: hidden;
+  border-radius: calc(var(--size) / 2);
 }
 
-/* Специфичные стили для унифицированных иконок */
-.icon.marker-cluster-circle {
-    border-width: 2px;
-}
-
-.icon.marker-cluster-msg {
-    border-width: 2px;
-    background-size: contain;
-    color: #fff;
-    padding-top: 4px;
-    font-size: 16px;
+.sensor-point .sensor-icon-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /* Hover эффекты для унифицированных иконок */
-.marker-point.is-hovered .icon, .marker-cluster.is-hovered .icon {
-  transform: scale(1.22);
-  box-shadow: 0 0 5px 3px rgba(211, 211, 211, 0.55);
-  filter: saturate(1.1);
-}
-
-.marker-point.is-hovered div, .marker-cluster.is-hovered div {
+.is-hovered .sensor-icon {
   transform: scale(1.22);
   box-shadow: 0 0 5px 3px rgba(211, 211, 211, 0.55);
   filter: saturate(1.1);
 }
 
 /* Touch tap flash (brief visual feedback on tap) */
-.tap-highlight .icon, .tap-highlight .marker-cluster-circle, .tap-highlight .marker-point-circle, .tap-highlight .marker-icon-brand {
+.tap-highlight .sensor-icon {
   transform: scale(1.18);
   box-shadow: 0 0 0 3px rgba(57, 57, 57, 0.45);
 }
 
-.mapcontainer.inactive .icon, .mapcontainer.inactive .marker-cluster-circle, .mapcontainer.inactive .marker-point-circle {
+.mapcontainer.inactive .icon, .mapcontainer.inactive .sensor-icon, .mapcontainer.inactive .sensor-icon {
   filter: grayscale(100%);
 }
 
-.mapcontainer.inactive .marker-point-active .icon {
+.mapcontainer.inactive .is-active .sensor-icon {
   filter: none !important;
 }
 
-
-/* Стили для span внутри иконок сообщений */
-.icon.marker-cluster-msg span[data-count-type] {
-  font-weight: bold;
-  color: #fff;
-  font-size: 16px;
+.sensor-point .sensor-bookmarked {
+  position: relative;
+  border: 2px solid var(--color-blue);
 }
 
-/* Стили для иконок с изображениями */
-.icon.marker-icon-brand {
-  width: 35px !important;
-  height: 35px !important;
-  border-radius: 50%;
-}
-
-.icon.marker-icon-brand img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-}
-
-.icon.marker-icon-msg {
-  width: 40px;
-  height: 40px;
-}
-
-.icon.marker-icon-msg img {
-  width: 100%;
-  height: 100%;
-}
-
-.icon.sensor-bookmarked, .marker-cluster-circle.sensor-bookmarked, .marker-point-circle.sensor-bookmarked {
+.sensor-point .sensor-bookmarked::after {
   background-image: url("data:image/svg+xml,%3Csvg class='svg-inline--fa fa-bookmark' aria-hidden='true' focusable='false' data-prefix='fas' data-icon='bookmark' role='img' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 384 512' data-v-fb71281d=''%3E%3Cpath class='' fill='white' d='M0 48V487.7C0 501.1 10.9 512 24.3 512c5 0 9.9-1.5 14-4.4L192 400 345.7 507.6c4.1 2.9 9 4.4 14 4.4c13.4 0 24.3-10.9 24.3-24.3V48c0-26.5-21.5-48-48-48H48C21.5 0 0 21.5 0 48z'%3E%3C/path%3E%3C/svg%3E");
-  background-size: 10px 10px;
+  background-size: 40%;
   background-position: center;
   background-repeat: no-repeat;
-  border: 2px solid #fff !important;
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--color-blue);
 }
 
 /* Popup styles */
@@ -132,4 +95,93 @@
 /* Spider legs should not block map dragging */
 .leaflet-overlay-pane .leaflet-spider-leg {
   pointer-events: none !important;
+}
+
+/* Message icons styles - аналогично сенсорам */
+.msg-icon {
+  --size: 35px;
+  align-items: center;
+  border-radius: calc(var(--size) / 2);
+  border-style: solid;
+  border-width: 2px;
+  color: var(--color-light);
+  display: flex;
+  font-weight: bold;
+  height: var(--size);
+  justify-content: center;
+  margin-left: 0px;
+  width: var(--size);
+  background-color: var(--color-blue);
+  border-color: var(--color-blue);
+}
+
+.msg-cluster {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.msg-point {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.msg-point .msg-icon {
+  border-width: 1px;
+}
+
+/* Стили для кластеров сообщений */
+.msg-cluster-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.msg-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  border: 1px solid white;
+}
+
+.msg-icon svg {
+  color: white;
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+/* Hover эффекты для сообщений (аналогично сенсорам) */
+.is-hovered .msg-icon {
+  transform: scale(1.22);
+  box-shadow: 0 0 5px 3px rgba(211, 211, 211, 0.55);
+  filter: saturate(1.1);
+}
+
+/* Touch tap flash (brief visual feedback on tap) */
+.tap-highlight .msg-icon {
+  transform: scale(1.18);
+  box-shadow: 0 0 0 3px rgba(57, 57, 57, 0.45);
+}
+
+.mapcontainer.inactive .msg-icon {
+  filter: grayscale(100%);
+}
+
+.mapcontainer.inactive .is-active .msg-icon {
+  filter: none !important;
 }

@@ -9,7 +9,6 @@
 
     <section class="pagetext-highlight">
       <p>{{ $t('Monitoring the environment involves plenty of pitfalls, making the job far harder than it looks at first glance. Our team—the creators of Altruist and the open-source project sensors.social—has spent seven years studying and working in this field, and we hope our experience will pleasantly surprise you and give you a practical tool for adapting to the conditions in which you and your loved ones live. Below we explain which main user groups Altruist is designed for…') }}</p>
-      <AltruistPromo utmMedium="altruist-use-cases" />
     </section>
 
     <section>
@@ -85,7 +84,6 @@
 import { computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import MetaInfo from '../components/MetaInfo.vue';
-import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
 

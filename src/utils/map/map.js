@@ -10,6 +10,9 @@ let usermarker;
 let boundsLimit; // null → global mode
 let mode = "world"; // "world" | "island"
 
+// Global map context for markers
+let mapContext = null;
+
 const WORLD_BOUNDS = L.latLngBounds([-85, -180], [85, 180]);
 
 // Normalize theme options: object or function(noWrap) => object
@@ -36,6 +39,7 @@ function layerFromThemeKey(themeKey, noWrap, invert = false) {
 
 let layerMapLight;
 let layerMapDark;
+let layerMapSatellite;
 
 // Numeric helpers
 function n(v, def) {
@@ -85,6 +89,9 @@ export function init(position, zoom, theme = "light") {
   // Soft fallback to OSM if nothing resolved
   if (!layerMapLight) layerMapLight = layerFromThemeKey("osm", noWrap);
   if (!layerMapDark) layerMapDark = layerFromThemeKey("osm", noWrap);
+  
+  // Create satellite layer
+  layerMapSatellite = layerFromThemeKey("esri-imagery", noWrap);
 
   map = L.map("map", {
     maxBounds: mode === "island" ? boundsLimit : WORLD_BOUNDS,
@@ -139,15 +146,22 @@ export function init(position, zoom, theme = "light") {
   return map;
 }
 
-// Switch map theme (light/dark)
+// Switch map theme (light/dark/satellite)
 export function setTheme(theme) {
   const map = instanceMap();
-  if (theme === "light") {
-    if (layerMapDark && map.hasLayer(layerMapDark)) map.removeLayer(layerMapDark);
-    if (layerMapLight && !map.hasLayer(layerMapLight)) map.addLayer(layerMapLight);
-  } else {
-    if (layerMapLight && map.hasLayer(layerMapLight)) map.removeLayer(layerMapLight);
-    if (layerMapDark && !map.hasLayer(layerMapDark)) map.addLayer(layerMapDark);
+  
+  // Remove all existing layers
+  if (layerMapLight && map.hasLayer(layerMapLight)) map.removeLayer(layerMapLight);
+  if (layerMapDark && map.hasLayer(layerMapDark)) map.removeLayer(layerMapDark);
+  if (layerMapSatellite && map.hasLayer(layerMapSatellite)) map.removeLayer(layerMapSatellite);
+  
+  // Add the selected layer
+  if (theme === "light" && layerMapLight) {
+    map.addLayer(layerMapLight);
+  } else if (theme === "dark" && layerMapDark) {
+    map.addLayer(layerMapDark);
+  } else if (theme === settings?.MAP?.theme?.satellite && layerMapSatellite) {
+    map.addLayer(layerMapSatellite);
   }
 }
 
@@ -170,32 +184,43 @@ export function moveMap(position, zoom, options = {}) {
   const coords = Array.isArray(position) ? position : [position.lat, position.lng];
   const z = typeof zoom === "number" ? Math.max(zoom, map.getMinZoom()) : map.getZoom();
   
-  // Обработка попапа
+  // Обработка попапа - сначала устанавливаем активную область
   if (popup) {
     const MIN_VISIBLE_MAP_WIDTH = 100;
-    const popupElement = document.querySelector('.popup-js.active');
     
-    if (popupElement) {
-      const popupRect = popupElement.getBoundingClientRect();
-      const visibleMapWidth = window.innerWidth - popupRect.width;
+    // Используем setTimeout для ожидания рендеринга попапа
+    setTimeout(() => {
+      const popupElement = document.querySelector('.popup-js.active');
+        
+      if (popupElement) {
+        const popupRect = popupElement.getBoundingClientRect();
+        const visibleMapWidth = window.innerWidth - popupRect.width;
 
-      if (visibleMapWidth > MIN_VISIBLE_MAP_WIDTH) {
-        map.setActiveArea({
-          position: "absolute",
-          top: "0px",
-          left: "0px",
-          right: `${popupRect.width}px`,
-          height: "100%",
-        });
+        if (visibleMapWidth > MIN_VISIBLE_MAP_WIDTH) {
+          map.setActiveArea({
+            position: "absolute",
+            top: "0px",
+            left: "0px",
+            right: `${popupRect.width}px`,
+            height: "100%",
+          });
+        }
       }
-    }
-  }
-  
-  // Перемещаем карту
-  if (setZoom) {
-    map.setView(coords, z, { animate });
+      
+      // Перемещаем карту ПОСЛЕ установки активной области
+      if (setZoom) {
+        map.setView(coords, z, { animate });
+      } else {
+        map.panTo(coords, { animate });
+      }
+    }, 50); // Небольшая задержка для рендеринга
   } else {
-    map.panTo(coords, { animate });
+    // Если попапа нет, сразу перемещаем карту
+    if (setZoom) {
+      map.setView(coords, z, { animate });
+    } else {
+      map.panTo(coords, { animate });
+    }
   }
   
   // Применяем ограничения границ
@@ -251,21 +276,27 @@ function getBoundsFromConfigOrNull() {
 // Apply bounds and minZoom for island mode
 function applyIslandBounds(isResize = false) {
   const map = instanceMap();
-  if (!boundsLimit) return;
+  if (!boundsLimit || map._applyingBounds) return;
 
-  map.setMaxBounds(boundsLimit);
-  const minZ = map.getBoundsZoom(boundsLimit, true);
-  map.setMinZoom(minZ);
+  map._applyingBounds = true;
+  
+  try {
+    map.setMaxBounds(boundsLimit);
+    const minZ = map.getBoundsZoom(boundsLimit, true);
+    map.setMinZoom(minZ);
 
-  if (!boundsLimit.contains(map.getBounds())) {
-    map.fitBounds(boundsLimit, { animate: false });
+    if (!boundsLimit.contains(map.getBounds())) {
+      map.fitBounds(boundsLimit, { animate: false });
+    }
+    if (!boundsLimit.contains(map.getCenter())) {
+      map.panInsideBounds(boundsLimit, { animate: false });
+    }
+    if (!isResize && map.getZoom() < minZ) map.setZoom(minZ);
+
+    applyPanLock();
+  } finally {
+    map._applyingBounds = false;
   }
-  if (!boundsLimit.contains(map.getCenter())) {
-    map.panInsideBounds(boundsLimit, { animate: false });
-  }
-  if (!isResize && map.getZoom() < minZ) map.setZoom(minZ);
-
-  applyPanLock();
 }
 
 // Apply world bounds and minZoom
@@ -291,12 +322,19 @@ function applyWorldBounds(isResize = false) {
 
 // Ensure map center/bounds are inside given limits
 function clampInside(limits) {
-  if (!map || !limits) return;
-  if (!limits.contains(map.getCenter())) {
-    map.panInsideBounds(limits, { animate: false });
-  }
-  if (!limits.contains(map.getBounds())) {
-    map.fitBounds(limits, { animate: false });
+  if (!map || !limits || map._clamping) return;
+  
+  map._clamping = true;
+  
+  try {
+    if (!limits.contains(map.getCenter())) {
+      map.panInsideBounds(limits, { animate: false });
+    }
+    if (!limits.contains(map.getBounds())) {
+      map.fitBounds(limits, { animate: false });
+    }
+  } finally {
+    map._clamping = false;
   }
 }
 
@@ -310,4 +348,108 @@ function applyPanLock() {
   } else {
     if (!map.dragging.enabled()) map.dragging.enable();
   }
+}
+
+/**
+ * Initializes the map context with shared state
+ * @param {Object} mapInstance - Leaflet map instance
+ * @param {Function} cb - Callback for marker clicks
+ * @param {string} unit - Current unit (pm10, pm25, etc.)
+ * @returns {Object} The initialized context
+ */
+export function initMapContext(mapInstance, cb, unit = null) {
+  mapContext = {
+    map: mapInstance,
+    markersLayer: null,
+    messagesLayers: {},
+    windLayer: null,
+    markerClickHandler: (data) => cb(data),
+    activeMarker: null,
+    unit: unit
+  };
+  
+  return mapContext;
+}
+
+/**
+ * Gets the current map context
+ * @returns {Object} The map context
+ * @throws {Error} If context is not initialized
+ */
+export function getMapContext() {
+  if (!mapContext) {
+    throw new Error('Map context not initialized. Call initMapContext first.');
+  }
+  return mapContext;
+}
+
+// Функции для работы с границами карты
+export function getMapBounds(mapInstance) {
+  if (!mapInstance) return null;
+  
+  const bounds = mapInstance.getBounds();
+  return {
+    north: bounds.getNorth(),
+    south: bounds.getSouth(),
+    east: bounds.getEast(),
+    west: bounds.getWest()
+  };
+}
+
+export function isPointInBounds(lat, lng, bounds) {
+  if (!bounds) return true; // Если границы не определены, показываем все точки
+  
+  return lat >= bounds.south && 
+         lat <= bounds.north && 
+         lng >= bounds.west && 
+         lng <= bounds.east;
+}
+
+export function isPointInMapBounds(lat, lng, mapInstance) {
+  const bounds = getMapBounds(mapInstance);
+  return isPointInBounds(lat, lng, bounds);
+}
+
+/**
+ * Создает границы карты на основе центра и boundsDelta из конфига
+ * @param {Object} config - объект конфига с MAP.position и MAP.boundsDelta
+ * @returns {Object|null} границы карты или null если boundsDelta пустые
+ */
+export function getConfigBounds(config) {
+  const boundsDelta = config?.MAP?.boundsDelta;
+  
+  // Если boundsDelta пустые, возвращаем null (нет границ)
+  if (!boundsDelta?.lat || !boundsDelta?.lng) {
+    return null;
+  }
+
+  // Создаем границы на основе центра карты и boundsDelta
+  const centerLat = Number(config?.MAP?.position?.lat || 0);
+  const centerLng = Number(config?.MAP?.position?.lng || 0);
+  const deltaLat = Number(boundsDelta.lat);
+  const deltaLng = Number(boundsDelta.lng);
+
+  return {
+    north: centerLat + deltaLat / 2,
+    south: centerLat - deltaLat / 2,
+    east: centerLng + deltaLng / 2,
+    west: centerLng - deltaLng / 2
+  };
+}
+
+/**
+ * Фильтрует массив объектов по границам карты
+ * @param {Array} items - массив объектов с полем geo
+ * @param {Object} bounds - границы карты
+ * @returns {Array} отфильтрованный массив
+ */
+export function filterByBounds(items, bounds) {
+  if (!bounds) return items;
+  
+  return items.filter(item => {
+    if (!item?.geo) return false;
+    const lat = Number(item.geo.lat);
+    const lng = Number(item.geo.lng);
+    return isPointInBounds(lat, lng, bounds);
+  });
 }

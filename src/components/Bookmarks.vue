@@ -19,8 +19,8 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
-import { useBookmarksStore } from "@/stores/bookmarks";
+import { useRouter, useRoute } from "vue-router";
+import { useBookmarks } from "@/composables/useBookmarks";
 import { IDBdeleteByKey, notifyDBChange } from "../utils/idb";
 import {settings, idbschemas} from "@config";
 // import { getTypeProvider } from "@/utils/utils"; // deprecated
@@ -30,8 +30,9 @@ const DB_NAME = schema.dbname || "SensorsDBBookmarks";
 const STORE = Object.keys(schema.stores || { bookmarks: {} })[0] || "bookmarks";
 
 const router = useRouter();
-const bookmarksStore = useBookmarksStore();
-const bookmarks = computed(() => bookmarksStore.idbBookmarks);
+const route = useRoute();
+const { idbBookmarks, idbBookmarkGet, watchBookmarks } = useBookmarks();
+const bookmarks = computed(() => idbBookmarks.value);
 
 function safeGeo(geo) {
   try { return typeof geo === "string" ? JSON.parse(geo) : geo; } catch { return null; }
@@ -52,15 +53,12 @@ function getlink(bookmark) {
   const g = safeGeo(bookmark.geo);
   if (!g) return "#";
 
+  // Берем все параметры из текущего URL и меняем только sensor
   return router.resolve({
     name: "main",
     query: {
-      provider: "remote", // Default provider for bookmarks
-      type: settings.MAP.measure,
-      zoom: 18,
-      lat: g.lat,
-      lng: g.lng,
-      sensor: bookmark.link,
+      ...route.query, // Все текущие параметры URL
+      sensor: bookmark.link, // Меняем только sensor
     },
   }).href;
 }
@@ -75,8 +73,8 @@ function showsensor(bookmark) {
 let stopWatch = null;
 
 onMounted(async () => {
-  await bookmarksStore.idbBookmarkGet();
-  stopWatch = bookmarksStore.watchBookmarks();
+  await idbBookmarkGet();
+  stopWatch = watchBookmarks();
 });
 
 onUnmounted(() => {

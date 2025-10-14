@@ -3,7 +3,7 @@
 
   <PageTextLayout>
     <h3>Login for Altruist holder</h3>
-    {{accountStore.accounts}}
+    <!-- {{accountStore.accounts}} TODO: раскомментировать когда будет нужно -->
     <form @submit="handleLogin">
       <input
         type="password"
@@ -51,7 +51,7 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { useAccountStore } from "@/stores/account";
+// import { useAccounts } from "@/composables/useAccounts"; // TODO: раскомментировать когда будет нужно
 import { mnemonicValidate, encodeAddress } from "@polkadot/util-crypto";
 import { Keyring } from "@polkadot/keyring";
 
@@ -59,7 +59,7 @@ import MetaInfo from "../components/MetaInfo.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
 import ogImage from "../assets/images/pages/login/og-login.webp";
 
-const accountStore = useAccountStore();
+// const accountStore = useAccounts(); // TODO: раскомментировать когда будет нужно
 
 const passPhrase = ref("");
 const keepSigned = ref(false);
@@ -134,6 +134,8 @@ async function handleLogin(e) {
 
   const { address, type } = accountData;
 
+  // TODO: раскомментировать когда будет нужно
+  /*
   if (keepSigned.value) {
     await accountStore.addAccount(
       { phrase, address, type, devices: [], ts: Date.now() },
@@ -146,6 +148,7 @@ async function handleLogin(e) {
       { persist: false }
     );
   }
+  */
 
   lastAddress.value = address;
   passPhrase.value = "";

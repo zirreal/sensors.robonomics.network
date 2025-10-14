@@ -53,13 +53,15 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { useAccountStore } from "@/stores/account";
+// import { useAccounts } from "@/composables/useAccounts"; // TODO: раскомментировать когда будет нужно
 import config from "@/config/default/config.json";
 // import { getTypeProvider } from "@/utils/utils"; // deprecated
 
-const accountStore = useAccountStore();
+// const accountStore = useAccounts(); // TODO: раскомментировать когда будет нужно
 const accounts = ref([]);
 
+// TODO: раскомментировать когда будет нужно
+/*
 // Загружаем все аккаунты из БД/стора и подгружаем сенсоры
 async function loadAccounts() {
   const stored = await accountStore.getAccounts();
@@ -82,6 +84,7 @@ async function deleteAccount(acc) {
   await accountStore.removeAccounts(acc.address);
   await loadAccounts();
 }
+*/
 
 // Сформировать ссылку на сенсор
 function getSensorLink(sensor) {
@@ -104,7 +107,7 @@ function reloadOnClick() {
   }, 50);
 }
 
-onMounted(loadAccounts);
+// onMounted(loadAccounts); // TODO: раскомментировать когда будет нужно
 </script>
 
 <style scoped>

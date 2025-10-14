@@ -16,7 +16,6 @@
 import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 
-import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 import MetaInfo from '../components/MetaInfo.vue';
 import PageTextLayout from "../components/layouts/PageText.vue";
 import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";

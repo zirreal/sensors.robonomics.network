@@ -66,7 +66,7 @@ Follow these steps to deploy your own instance of **sensors.social** on GitHub P
      ```sh
      cp -r src/config/template src/config/my-map
      ```  
-   - Edit the files inside `src/config/my-map/` (`config.json`, `agents.json`, `sensors.js`, etc).  
+   - Edit the files inside `src/config/my-map/` (`config.json`, `agents.json`, `pinned_sensors.js`, etc).  
      Any files missing in `my-map` will be loaded automatically from `src/config/default/`.  
    - Set the environment variable in GitHub:  
      ```
@@ -268,7 +268,7 @@ Specify a list of libp2p identifiers from which data can be received via pubsub 
 
 ### Sensors configuration
 
-File: `src/config/<env>/sensors.js`  
+File: `src/config/<env>/pinned_sensors.js`  
 You can set an icon and a website link for a specific sensor:
 
 ```json
@@ -280,7 +280,7 @@ You can set an icon and a website link for a specific sensor:
 }
 ```
 
-**Example**: [sensors.js](https://github.com/airalab/sensors.social/blob/master/src/config/default/sensors.js)
+**Example**: [pinned_sensors.js](https://github.com/airalab/sensors.social/blob/master/src/config/default/pinned_sensors.js)
 
 
 ---

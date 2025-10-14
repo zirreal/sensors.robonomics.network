@@ -1,14 +1,19 @@
-v*.*.*
+v4.0.0
 
 Major refactoring: UI/UX improvements, code cleanup, and performance optimizations
 
 **UI/UX Improvements:**
 - Feat: Added automatic cleanup of outdated localStorage entries (aqi_cache_*, revgeo_addr_*)
+- Feat: Added satellite map theme
+- Feat: Redesigned bottom control panel with improved UX
+- Feat: Restored messages layer functionality
 - Remove: Removed "Support" button from header
 - Remove: Removed "Where to get Altruist Indoor & Outdoor Sensor" promotional content from header and sensor popup
 - Refactor: Improved sensors display logic in header - show details only when zeroGeoSensors exist
 
 **Core Refactoring:**
+- Refactor: Migrated from Pinia store to Vue 3 composables (useMap, useSensors, useMessages, useBookmarks, useAccounts)
+- Refactor: Removed Pinia dependency from the project
 - Refactor: Centralized marker update logic in Main.vue, removed code duplication
 - Refactor: Made SensorPopup.vue a pure UI component, removed data fetching and complex state management
 - Refactor: Optimized watcher logic to prevent circular dependencies and unnecessary updates

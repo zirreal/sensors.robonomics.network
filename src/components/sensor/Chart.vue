@@ -27,8 +27,7 @@ import stockInit from 'highcharts/modules/stock';
 import { Chart } from 'highcharts-vue';
 import unitsettings from '../../measurements';
 import { settings } from '@config';
-import { useMapStore } from '@/stores/map';
-import { setMapSettings } from '@/utils/utils';
+import { useMap } from '@/composables/useMap';
 
 stockInit(Highcharts);
 
@@ -40,7 +39,7 @@ const props = defineProps({
 const route  = useRoute();
 const router = useRouter();
 const { t: tr, locale } = useI18n();
-const mapStore = useMapStore();
+const mapState = useMap();
 
 const chartRef = ref(null);
 
@@ -103,16 +102,16 @@ const visibleLegend = computed(() => {
 
 // Определяет активный ключ легенды на основе текущего типа единицы измерения
 const activeLegendKey = computed(() => {
-  const currentGroup = GROUPS_LOOKUP[mapStore.currentUnit];
+  const currentGroup = GROUPS_LOOKUP[mapState.currentUnit.value];
   if (currentGroup && visibleLegend.value.some(x => x.key === currentGroup)) return currentGroup;
   
-  const isSingle = !currentGroup && UNITS_FOUND.value.has(mapStore.currentUnit);
-  if (isSingle && visibleLegend.value.some(x => x.key === mapStore.currentUnit)) return mapStore.currentUnit;
+  const isSingle = !currentGroup && UNITS_FOUND.value.has(mapState.currentUnit.value);
+  if (isSingle && visibleLegend.value.some(x => x.key === mapState.currentUnit.value)) return mapState.currentUnit.value;
   
   return visibleLegend.value[0]?.key || null;
 });
 
-const isRealtime  = computed(() => mapStore.currentProvider === 'realtime');
+const isRealtime  = computed(() => mapState.currentProvider.value === 'realtime');
 
 // Получаем экземпляр Highcharts для работы с графиком
 const chart = computed(() => chartRef.value?.chart);
@@ -196,7 +195,7 @@ const chartOptions = computed(() => ({
 /**
  * Обновление графика с поддержкой realtime и remote режимов
  * 
- * Realtime режим (определяется по mapStore.currentProvider):
+ * Realtime режим (определяется по mapState.currentProvider.value):
  * - Инкрементальное обновление: добавляет только новые точки данных
  * - Сохраняет состояние видимости серий
  * - Автоматически обновляет временную шкалу
@@ -345,7 +344,7 @@ function buildSeriesArray(log, legendKey) {
             unit: paramSettings.unit || '',
             name: paramGroup ? tr(GROUPS[paramGroup].labelKey) : shortName,
             fullLabel: paramSettings.namelong?.[locale.value] || shortName,
-            data: [],
+              data: [],
             zones: HIGHCHARTS_COLOR_ZONES[paramId] || [],
             dataGrouping: { enabled: true, units: [["minute", [5]]] }
           };
@@ -361,7 +360,7 @@ function buildSeriesArray(log, legendKey) {
             seriesConfig.showInLegend = isMainSeries;
             seriesConfig.linkedTo = isMainSeries ? undefined : mainSeriesId;
             seriesConfig.dashStyle = isMainSeries || paramId === 'dewpoint' ? 'Solid' : 'ShortDot';
-          } else {
+        } else {
             // Для одиночных параметров
             seriesConfig.showInLegend = true;
           }
@@ -398,11 +397,11 @@ function buildSeriesArray(log, legendKey) {
       dataGrouping: isRealtime.value
         ? { enabled: false }
         : {
-            enabled: true,
+              enabled: true,
             units: dataPoints.length > settings.SERIES_MAX_VISIBLE 
               ? { enabled: true, approximation: 'high', units: [['minute', [5]]] } 
               : series.dataGrouping
-          }
+            }
     };
   });
   
@@ -470,8 +469,8 @@ function onLegendClick(legendKey) {
     // For single parameters, use the key directly
     targetType = legendKey;
   }
-  // Update URL and store for deep-linking
-  setMapSettings(route, router, mapStore, { type: targetType });
+  // Update URL and composable for deep-linking
+  mapState.setMapSettings(route, router, { type: targetType });
 }
 
 
@@ -533,7 +532,7 @@ watch(
   (idsArr) => {
     if (!idsArr || idsArr.length === 0) return;
     const ids = new Set(idsArr);
-    const cur = mapStore.currentUnit;
+    const cur = mapState.currentUnit.value;
     
     // Если есть данные и график еще не отрисован, принудительно обновляем
     if (props.log.length > 0 && chartRef.value && !isUpdatingChart.value) {
@@ -560,7 +559,7 @@ watch(
     }
     
     if (next) {
-      setMapSettings(route, router, mapStore, { type: next });
+      mapState.setMapSettings(route, router, { type: next });
     }
   },
   { immediate: true }

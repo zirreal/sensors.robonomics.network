@@ -5,7 +5,7 @@
   - Выход: округлённый AQI (число) или undefined, если данных < 2 часов
 */
 
-import aqiMeasurement from "../measurements/aqi";
+import aqiMeasurement from "../../../measurements/aqi";
 
 function normalizeReading(x, pollutant) {
   if (!Number.isFinite(x)) return null;

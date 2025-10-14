@@ -37,7 +37,7 @@ export default {
       }
     },
     {
-      valueMax: 25,
+      valueMax: 27,
       color: "var(--measure-green)",
       label: {
         en: "Warm",

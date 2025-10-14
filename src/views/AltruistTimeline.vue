@@ -16,7 +16,6 @@
 
     <section>
         <p>{{$t('Altruist is a two-module air quality sensor that will be useful for residents of large cities, home automation enthusiasts, and those who want to create their own local environmental monitoring community anywhere in the world. Altruist has many advantages in its class of devices, which we’ll discuss separately, but in this publication, we want to tell the story leading up to the launch of this consumer product — a unique and fascinating story!')}}</p>
-        <AltruistPromo utmMedium="altruist-timeline" />
     </section>
 
     <section>
@@ -69,7 +68,6 @@ import {onMounted } from "vue";
 import { useRouter } from "vue-router";
 
 import MetaInfo from '../components/MetaInfo.vue';
-import AltruistPromo from "../components/devices/altruist/AltruistPromo.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
 import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";
 

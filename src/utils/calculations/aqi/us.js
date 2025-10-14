@@ -1,15 +1,15 @@
 /*
  * =============================================================================
- * AQI CALCULATOR - EUROPEAN STANDARD (EU/WHO)
+ * AQI CALCULATOR - US EPA STANDARD
  * =============================================================================
  * 
- * EN: Air Quality Index calculation based on European Union standards and WHO guidelines.
+ * EN: Air Quality Index calculation based on US Environmental Protection Agency standards.
  *     Implements the 4-step aggregation algorithm: minutes → hours → time window → AQI.
- *     Uses stricter thresholds compared to US EPA standards for better health protection.
+ *     Uses official EPA breakpoints and formulas for PM2.5 and PM10 pollutants.
  * 
- * RU: Расчет индекса качества воздуха по стандартам Европейского союза и ВОЗ.
+ * RU: Расчет индекса качества воздуха по стандартам Агентства по охране окружающей среды США.
  *     Реализует 4-этапный алгоритм агрегации: минуты → часы → временное окно → AQI.
- *     Использует более строгие пороги по сравнению со стандартами EPA США.
+ *     Использует официальные пороговые значения и формулы EPA для PM2.5 и PM10.
  * 
  * =============================================================================
  * INPUT / ВХОДНЫЕ ДАННЫЕ
@@ -38,21 +38,21 @@
  *     - undefined при недостаточных данных или неверном вводе
  * 
  * =============================================================================
- * EUROPEAN THRESHOLDS (2024-2030) / ЕВРОПЕЙСКИЕ ПОРОГИ (2024-2030)
+ * US EPA THRESHOLDS / ПОРОГОВЫЕ ЗНАЧЕНИЯ EPA США
  * =============================================================================
  * 
- * EN: PM2.5: 0-10-25-50-75-100-150 µg/m³ (vs US: 0-12-35.4-55.4-150.4-250.4-500.4)
- *     PM10:  0-20-40-80-120-200-300 µg/m³ (vs US: 0-54-154-254-354-424-604)
- *     Based on EU 2030 standards and WHO 2021 recommendations
+ * EN: PM2.5: 0-12-35.4-55.4-150.4-250.4-500.4 µg/m³
+ *     PM10:  0-54-154-254-354-424-604 µg/m³
+ *     Based on US EPA Air Quality Index Technical Assistance Document
  * 
- * RU: PM2.5: 0-10-25-50-75-100-150 мкг/м³ (vs US: 0-12-35.4-55.4-150.4-250.4-500.4)
- *     PM10:  0-20-40-80-120-200-300 мкг/м³ (vs US: 0-54-154-254-354-424-604)
- *     Основано на стандартах ЕС 2030 года и рекомендациях ВОЗ 2021
+ * RU: PM2.5: 0-12-35.4-55.4-150.4-250.4-500.4 мкг/м³
+ *     PM10:  0-54-154-254-354-424-604 мкг/м³
+ *     Основано на техническом документе EPA по индексу качества воздуха
  * 
  * =============================================================================
  */
 
-import aqiEUZones from "../../measurements/aqi_eu";
+import aqiMeasurement from "../../../measurements/aqi";
 
 function normalizeReading(x, pollutant) {
   if (!Number.isFinite(x)) return null;
@@ -65,10 +65,12 @@ export function aqiFromConc(conc, pollutant) {
   const c = normalizeReading(conc, pollutant);
   if (c === null) return null;
 
-  // Map EU concentration thresholds to AQI index ranges
+  // Extract breakpoints from measurement zones configuration
+  const sourceZones = Array.isArray(aqiMeasurement?.zones) ? aqiMeasurement.zones : [];
+  // Create index ranges from zone values: I_lo=prev.valueMax+1 (or 0), I_hi=current.valueMax
   const mapped = [];
   let prevValue = -1; // Initialize to create first zone as [0..value]
-  for (const z of aqiEUZones) {
+  for (const z of sourceZones) {
     const bp = z?.[pollutant];
     if (!bp || typeof z.valueMax !== 'number') continue;
     const I_lo = prevValue < 0 ? 0 : prevValue + 1;
@@ -138,7 +140,7 @@ export function calculateAQIIndex(logs) {
   const windowHours = hourEntries.slice(-24);
   if (windowHours.length < 2) return undefined;
 
-  // Step 4: AQI calculation - European standard formula
+  // Step 4: AQI calculation - US EPA standard formula
   const pm25Hourly = windowHours.map(h => h.pm25).filter(Number.isFinite);
   const pm10Hourly = windowHours.map(h => h.pm10).filter(Number.isFinite);
   const pm25Avg = average(pm25Hourly);
@@ -149,7 +151,7 @@ export function calculateAQIIndex(logs) {
 
   if (aqiPM25 === null && aqiPM10 === null) return undefined;
   
-  // European AQI formula: max(PM2.5_AQI, PM10_AQI) with EU thresholds
+  // US EPA AQI formula: max(PM2.5_AQI, PM10_AQI) with US thresholds
   const final = Math.max(aqiPM25 ?? 0, aqiPM10 ?? 0);
   
   return Math.round(Math.min(final, 500)); // Cap at maximum AQI value

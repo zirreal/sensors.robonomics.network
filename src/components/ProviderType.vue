@@ -14,20 +14,18 @@
 import { ref, computed } from 'vue';
 import { useRoute, useRouter } from "vue-router";
 import { settings } from '@config';
-// import { getTypeProvider, setTypeProvider } from '@/utils/utils'; // deprecated
-import { useMapStore } from '@/stores/map';
+import { useMap } from '@/composables/useMap';
 import { dayISO } from '@/utils/date';
-import { setMapSettings } from '@/utils/utils';
 
 const router = useRouter();
 const route = useRoute();
-const mapStore = useMapStore();
+const mapState = useMap();
 
 // List of all available providers
 const options = computed(() => Object.entries(settings.VALID_DATA_PROVIDERS));
 
-// Current provider (key) - используем store
-const dataMode = ref(mapStore.currentProvider);
+// Current provider (key) - используем composable
+const dataMode = ref(mapState.currentProvider.value);
 
 const changeDataMode = async () => {
   const settings = { provider: dataMode.value };
@@ -38,7 +36,7 @@ const changeDataMode = async () => {
   }
   
   // Устанавливаем настройки и синхронизируем
-  setMapSettings(route, router, mapStore, settings);
+  mapState.setMapSettings(route, router, settings);
   
   // Даем время на обновление store, затем перезагружаем
   setTimeout(() => {

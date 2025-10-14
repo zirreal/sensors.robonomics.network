@@ -7,16 +7,16 @@
           <img :alt="settings.TITLE" src="../../../public/app-icon-512.png" />
         </router-link>
         <!-- Если есть sensorsNoLocation - показываем details с полным содержимым -->
-        <details v-if="mapStore.sensors?.length > 0 && mapStore.sensorsNoLocation?.length > 0" tabindex="0" class="sensors details-popup">
+        <details v-if="sensorsList?.length > 0 && sensorsNoLocation?.length > 0" tabindex="0" class="sensors details-popup">
           <summary class="sensors-counter">
             <IconSensor class="sensors-mainicon" />
-            {{ mapStore.sensors?.length + mapStore.sensorsNoLocation?.length }}
+            {{ sensorsList?.length + sensorsNoLocation?.length }}
           </summary>
           <div class="details-content nogeo">
             <section>
-              <h4>{{mapStore.sensorsNoLocation?.length}} sensors without geolocation</h4>
+              <h4>{{sensorsNoLocation?.length}} sensors without geolocation</h4>
               <ul class="sensors-list">
-                <li v-for="sensor in mapStore.sensorsNoLocation" :key="sensor.id">
+                <li v-for="sensor in sensorsNoLocation" :key="sensor.id">
                   <a :href="getSensorLink(sensor)">
                     <b>{{ formatSensorId(sensor.sensor_id) }}</b>
                   </a>
@@ -27,9 +27,9 @@
         </details>
         
         <!-- Если sensorsNoLocation пуст - показываем только div.sensors-counter -->
-        <div v-else-if="mapStore.sensors?.length > 0" class="sensors-counter">
+        <div v-else-if="sensorsList?.length > 0" class="sensors-counter">
           <IconSensor class="sensors-mainicon" />
-          {{ mapStore.sensors?.length }}
+          {{ sensorsList?.length }}
         </div>
       </div>
 
@@ -75,6 +75,24 @@
           <font-awesome-icon icon="fa-solid fa-bars" />
         </button>
 
+        <!-- Закладки -->
+        <div id="bookmarks" class="popover-top-right popover" popover>
+          <h3>{{ $t("bookmarks.listtitle") }}</h3>
+          <div class="bookmarks-content">
+            <Bookmarks />
+          </div>
+        </div>
+        <button
+          class="popovercontrol bookmarksbutton"
+          :class="{ active: bookmarksCount > 0 }"
+          popovertarget="bookmarks"
+        >
+          <font-awesome-icon 
+            :icon="bookmarksCount > 0 ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'" 
+          />
+          <b v-if="bookmarksCount > 0">{{ bookmarksCount }}</b>
+        </button>
+
         <!-- <Login v-if="settings.SERVICES.accounts" /> -->
         
         <!-- <a class="button button-promo" href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight?utm_source=sensors.social&utm_medium=header-button" target="_blank">Altruist on Indiegogo</a> -->
@@ -84,17 +102,20 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, reactive } from "vue";
 import { languages } from "@/translate";
 import { settings } from "@config";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 
-import { useMapStore } from "@/stores/map";
+import { useMap } from "@/composables/useMap";
+import { useBookmarks } from "@/composables/useBookmarks";
+import { useSensors } from "@/composables/useSensors";
 
 import IconSensor from "../icons/Sensor.vue";
 import ReleaseInfo from "../ReleaseInfo.vue";
 import Login from "./Login.vue";
+import Bookmarks from "@/components/Bookmarks.vue";
 
 const { locale: i18nLocale } = useI18n();
 const router = useRouter();
@@ -102,7 +123,15 @@ const route = useRoute();
 
 const locale = ref(localStorage.getItem("locale") || i18nLocale.value || "en");
 const locales = languages || ["en"];
-const mapStore = useMapStore();
+const mapState = useMap();
+const { idbBookmarks } = useBookmarks();
+const localeComputed = computed(() => locale.value || "en");
+const sensorsData = reactive(useSensors(localeComputed));
+const sensorsList = computed(() => sensorsData.sensors);
+const sensorsNoLocation = computed(() => sensorsData.sensorsNoLocation);
+
+// Количество закладок
+const bookmarksCount = computed(() => idbBookmarks.value?.length || 0);
 
 
 
@@ -112,8 +141,8 @@ const getSensorLink = (sensor) => {
   return router.resolve({
     name: "main",
     query: {
-      provider: mapStore.currentProvider,
-      type: mapStore.currentUnit,
+      provider: mapState.currentProvider.value,
+      type: mapState.currentUnit.value,
       zoom: settings.MAP.zoom,
       lat: sensor.geo.lat,
       lng: sensor.geo.lng,
@@ -244,6 +273,95 @@ onMounted(() => {
   margin: 0;
 }
 /* - sensors list */
+
+/* - bookmarks button */
+.bookmarksbutton {
+  position: relative;
+}
+
+.bookmarksbutton b {
+  font-size: 75%;
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: var(--color-orange);
+  border-radius: 50%;
+  color: var(--color-light);
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: pulse 2s infinite;
+}
+
+.bookmarksbutton.active {
+  color: var(--color-orange);
+}
+
+.bookmarksbutton.active:hover {
+  color: var(--color-orange-dark, #e67e22);
+}
+
+/* - bookmarks popup */
+#bookmarks {
+  padding: 0;
+  min-width: 320px;
+  max-width: 400px;
+  max-height: 500px;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#bookmarks h3 {
+  margin: 0 0 16px 0;
+  padding: 16px 16px 0 16px;
+  font-size: 1.2em;
+  font-weight: 600;
+  color: var(--color-text);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 12px;
+}
+
+#bookmarks .bookmarks-content {
+  padding: 0 16px 16px 16px;
+}
+
+/* Стили для элементов внутри закладок */
+#bookmarks .bookmarks-content > * {
+  margin-bottom: 8px;
+}
+
+#bookmarks .bookmarks-content > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Анимация для счетчика */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Адаптивность для мобильных */
+@media screen and (max-width: 600px) {
+  #bookmarks {
+    min-width: 280px;
+    max-width: calc(100vw - 32px);
+    margin: 0 16px;
+  }
+}
+/* - bookmarks button */
 
 @media screen and (max-width: 600px) {
   .hidemobiles {

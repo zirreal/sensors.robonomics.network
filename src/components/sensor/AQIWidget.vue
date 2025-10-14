@@ -26,9 +26,9 @@
 <script setup>
 import { computed, ref, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useMapStore } from '@/stores/map';
-import { calculateAQIIndex as calculateAQIIndexUS } from '../../utils/aqiIndex/us';
-import { calculateAQIIndex as calculateAQIIndexEU } from '../../utils/aqiIndex/eu';
+import { useMap } from '@/composables/useMap';
+import { calculateAQIIndex as calculateAQIIndexUS } from '../../utils/calculations/aqi/us';
+import { calculateAQIIndex as calculateAQIIndexEU } from '../../utils/calculations/aqi/eu';
 import aqiUSZones from '../../measurements/aqi_us';
 import aqiEUZones from '../../measurements/aqi_eu';
 
@@ -37,9 +37,9 @@ const props = defineProps({
 });
 
 const { locale } = useI18n();
-const mapStore = useMapStore();
+const mapState = useMap();
 const localeComputed = computed(() => localStorage.getItem('locale') || locale.value || 'en');
-const selectedVersion = ref(mapStore.aqiVersion);
+const selectedVersion = ref(mapState.aqiVersion.value);
 
 // AQI version selector function
 const getAQICalculator = (version = 'us') => {
@@ -62,7 +62,7 @@ const getAQIZones = (version = 'us') => {
 };
 
 const aqiValue = computed(() => {
-  const calculateAQIIndex = getAQICalculator(mapStore.aqiVersion);
+  const calculateAQIIndex = getAQICalculator(mapState.aqiVersion.value);
   const v = calculateAQIIndex(props.logs);
   
   
@@ -71,7 +71,7 @@ const aqiValue = computed(() => {
 
 const aqiTitle = computed(() => {
   // Показываем разные названия в зависимости от выбранной версии AQI
-  if (mapStore.aqiVersion === 'eu') {
+  if (mapState.aqiVersion.value === 'eu') {
     return 'AQI (EU)';
   } else {
     return 'AQI (US EPA)';
@@ -80,7 +80,7 @@ const aqiTitle = computed(() => {
 
 const matchedZone = computed(() => {
   if (aqiValue.value === null) return null;
-  const zones = getAQIZones(mapStore.aqiVersion);
+  const zones = getAQIZones(mapState.aqiVersion.value);
   return zones.find(z => typeof z.valueMax === 'number' && aqiValue.value <= z.valueMax) || null;
 });
 
@@ -97,18 +97,18 @@ const aqiStyle = computed(() => {
 });
 
 const handleVersionChange = () => {
-  mapStore.setAQIVersion(selectedVersion.value);
+  mapState.setAQIVersion(selectedVersion.value);
   // Watcher will handle cache clearing and marker refresh
 };
 
 onMounted(() => {
   // Watch for external changes to aqiVersion
-  selectedVersion.value = mapStore.aqiVersion;
+  selectedVersion.value = mapState.aqiVersion.value;
 });
 
-// Watch for changes in aqiVersion from store and update markers
+// Watch for changes in aqiVersion from composable and update markers
 watch(
-  () => mapStore.aqiVersion,
+  () => mapState.aqiVersion.value,
   (newVersion) => {
     // Update local selected version
     selectedVersion.value = newVersion;
@@ -116,7 +116,7 @@ watch(
     // Clear AQI cache and refresh markers
     import('@/utils/map/markers').then(module => {
       if (module.clearAQICache) {
-        module.clearAQICache(mapStore.currentDate);
+        module.clearAQICache(mapState.currentDate.value);
       }
       
       if (module.refreshClusters) {

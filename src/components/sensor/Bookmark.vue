@@ -23,7 +23,6 @@
 </template>
 
 <script>
-import { useBookmarksStore } from "@/stores/bookmarks";
 import {
   IDBgettable,
   IDBworkflow,
@@ -44,7 +43,6 @@ export default {
       bookmarks: [],
       bookmarkid: null,
       bookmarkname: "",
-      bookmarksStore: useBookmarksStore(),
     };
   },
 

@@ -1,0 +1,207 @@
+import { MARKER_CLASSES } from '../markers';
+import { getMapContext } from '../map';
+import * as utils from '../markers';
+import { findMarker as findMarkerGeneral } from '../markers';
+import * as icons from './icons';
+import * as colors from './colors';
+
+// Функция для получения контекста (вызывается внутри функций)
+
+/**
+ * Проверяет, готов ли слой маркеров для работы
+ * @returns {boolean} true если слой инициализирован
+ */
+export function isReadyLayer() {
+  const ctx = getMapContext();
+  return !!ctx.markersLayer;
+}
+
+/**
+ * Upsert маркер: создает новый или обновляет существующий
+ * @param {Object} point - Данные точки
+ * @param {Object} colors - Цвета для маркера
+ * @param {string} [sensor_id] - ID сенсора для поиска существующего маркера (опционально)
+ * @returns {Object} - { marker: Object, isNew: boolean } - Обработанный маркер и флаг новизны
+ */
+function upsertMarker(point, colors, sensor_id = null) {
+  // Вычисляем координаты (сенсоры всегда используют scatter)
+  const coord = utils.scatterCoords([point.geo.lat, point.geo.lng], point.sensor_id);
+  
+  // Определяем тип маркера (только для сенсоров: image или circle)
+  const markerType = point.iconLocal ? "image" : "circle";
+
+  // Ищем существующий маркер
+  const existingMarker = sensor_id ? findMarker(sensor_id) : null;
+  
+  // Если маркер существует, обновляем его
+  if (existingMarker) {
+    // Проверяем, был ли маркер активным
+    const wasActive = existingMarker.getElement()?.classList.contains(MARKER_CLASSES.active);
+    
+    // Update marker data first
+    existingMarker.options.data = point;
+    
+    // Обновляем иконку
+    existingMarker.setIcon(icons.createIconPoint({
+      image: point.iconLocal,
+      colors: colors,
+      isBookmarked: point.isBookmarked,
+      id: point.sensor_id
+    }));
+    
+    // Применяем вычисленные координаты
+    existingMarker.setLatLng(new L.LatLng(coord[0], coord[1]));
+    
+    // Восстанавливаем активный класс если маркер был активным
+    if (wasActive) {
+      const element = existingMarker.getElement();
+      if (element) {
+        element.classList.add(MARKER_CLASSES.active);
+      }
+    }
+    
+    return { marker: existingMarker, isNew: false };
+  }
+  
+  // Создаем новый маркер
+  const marker = icons.createMarker(
+    coord, 
+    point, 
+    colors, 
+    point.iconLocal, // image (null для circle маркеров)
+    markerType
+  );
+  
+  return { marker, isNew: true };
+}
+
+
+/**
+ * Добавляет маркер сенсора на карту
+ * @param {Object} point - Данные точки
+ * @param {string} [unit] - Единица измерения
+ */
+async function addMarker(point, unit = null) {
+
+  // пропускаем датчики с «нулевой» геопозицией
+  const tolerance = 0.001;
+  const lat = Number(point.geo.lat);
+  const lng = Number(point.geo.lng);
+  
+  if (Math.abs(lat) < tolerance && Math.abs(lng) < tolerance) {
+    return;
+  }
+
+  // Определяем цвета для сенсора
+  const markerColors = colors.getMarkerColors(point, unit, false);
+
+  const { marker, isNew } = upsertMarker(point, markerColors, point.sensor_id);
+  
+  if (isNew) {
+    // Добавляем класс обновления для визуальной обратной связи
+    const iconElement = marker.getElement();
+    if (iconElement) {
+      iconElement.classList.add(MARKER_CLASSES.updating);
+    }
+    
+    // Прикрепляем все события включая клик для нового маркера
+    const ctx = getMapContext();
+    utils.attachMarkerEvents(marker, ctx.markerClickHandler);
+
+    // Добавляем маркер в основной слой сенсоров
+    if (ctx.markersLayer) {
+      ctx.markersLayer.addLayer(marker);
+    }
+    
+    // Убираем класс обновления после добавления на карту
+    setTimeout(() => {
+      if (iconElement) {
+        iconElement.classList.remove(MARKER_CLASSES.updating);
+      }
+    }, 800);
+  }
+  // Для существующего маркера ничего дополнительного не нужно - он уже обновлен
+}
+
+
+
+// Функция findMarker теперь экспортируется из markers.js
+// Оставляем только для обратной совместимости
+export function findMarker(sensor_id) {
+  // Используем общую функцию из markers.js
+  return findMarkerGeneral(sensor_id, 'sensor');
+}
+
+
+
+/**
+ * Очищает все маркеры сенсоров с карты
+ */
+export function clearAllMarkers() {
+  const ctx = getMapContext();
+  if (ctx.markersLayer) {
+    ctx.markersLayer.clearLayers();
+  }
+}
+
+
+
+export function upsertPoint(point, unit = null) {
+  try {
+    // Сенсоры всегда используют addMarker
+    addMarker(point, unit);
+  } catch (error) {
+    console.error(`Error processing point for sensor ${point.sensor_id}:`, error);
+  }
+}
+
+
+export function switchMessagesLayer(map, enabled = false) {
+  for (const messagesLayer of Object.values(messagesLayers)) {
+    if (messagesLayer) {
+      if (enabled) {
+        map.addLayer(messagesLayer);
+    } else {
+        map.removeLayer(messagesLayer);
+      }
+    }
+  }
+}
+
+
+export function refreshClusters() {
+  const ctx = getMapContext();
+  if (ctx.markersLayer) {
+    ctx.markersLayer.refreshClusters();
+  }
+}
+
+
+// Функция для применения активного класса к маркеру
+
+
+
+
+/**
+ * Инициализирует систему маркеров на карте
+ * @param {Function} cb - Callback функция для обработки кликов по маркерам
+ * @param {string} unit - Единица измерения (pm10, pm25, temperature, etc.)
+ */
+export async function init(cb, unit = null) {
+  const ctx = getMapContext();
+
+  // Создаем основной слой маркеров
+  ctx.markersLayer = utils.createClusterGroup((cluster) => icons.createIconCluster(cluster, unit, colors.getClusterWinningColor, colors.getBorderColor, colors.isDarkColor), unit);
+  ctx.map.addLayer(ctx.markersLayer);
+
+  // Создаем обработчик клика для маркеров
+  ctx.markerClickHandler = (data) => cb(data);
+
+  // Устанавливаем защиту от рекурсии
+  utils.setupRecursionProtection(ctx.map);
+  
+
+  // Прикрепляем события к основному слою маркеров
+  utils.attachClusterEvents(ctx.markersLayer, ctx.markerClickHandler);
+
+}

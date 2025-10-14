@@ -55,10 +55,10 @@ class Provider {
 
   async messagesForPeriod(start, end) {
     try {
-      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/messages/${start}/${end}`, { cache: 'no-store' });
-      return result?.result || {};
+      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/v2/sensor/messages/${start}/${end}`, { cache: 'no-store' });
+      return result?.result || [];
     } catch {
-      return {};
+      return [];
     }
   }
 
@@ -80,12 +80,12 @@ class Provider {
     }
   }
 
-  async getHistoryPeriod(start, end) {
+  async getSensorsForPeriod(start, end) {
     try {
-      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/last/${start}/${end}`, { cache: 'no-store' });
-      return result?.result || {};
+      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/v2/sensor/list/${start}/${end}`, { cache: 'no-store' });
+      return result?.result || [];
     } catch {
-      return {};
+      return [];
     }
   }
 

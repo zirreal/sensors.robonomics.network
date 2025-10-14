@@ -167,11 +167,10 @@
 import { reactive, computed, ref, watch, onMounted, getCurrentInstance, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { settings, sensors } from "@config";
+import { settings, pinned_sensors } from "@config";
 import measurements from "../../measurements";
 import { dayISO } from '../../utils/date';
-import { useMapStore } from '@/stores/map';
-import { getPriorityValue } from '../../utils/utils';
+import { useMap } from '@/composables/useMap';
 
 import AQIWidget from './AQIWidget.vue';
 import Bookmark from "./Bookmark.vue";
@@ -193,12 +192,12 @@ const { t, locale } = useI18n();
 const { proxy } = getCurrentInstance();
 const filters = proxy.$filters;
 const globalWindow = window;
-const mapStore = useMapStore();
+const mapState = useMap();
 
 // Локальное состояние только для UI компонента
 const state = reactive({
   maxDate: dayISO(),
-  provider: mapStore.currentProvider,
+  provider: mapState.currentProvider.value,
   sharedDefault: false,
   sharedLink: false
 });
@@ -211,9 +210,9 @@ const realtimeScope = reactive({
 
 // Выбранная пользователем дата для v-model (синхронизируется с store)
 const pickedDate = computed({
-  get: () => mapStore.currentDate,
+  get: () => mapState.currentDate.value,
   set: (value) => {
-    mapStore.setCurrentDate(value);
+    mapState.setCurrentDate(value);
   }
 });
 
@@ -264,7 +263,7 @@ const scales = computed(() => {
 
 
 const metaUserLink = computed(() => {
-  return sensors[sensor_id.value] ? sensors[sensor_id.value].link : "";
+  return pinned_sensors[sensor_id.value] ? pinned_sensors[sensor_id.value].link : "";
 });
 
 
@@ -424,7 +423,7 @@ onMounted(() => {
 
 // Watcher для изменений даты (из UI или внешних источников)
 watch(
-  () => mapStore.currentDate,
+  () => mapState.currentDate.value,
   (newDate) => {
     if (newDate) {
       // Очищаем логи при смене даты
@@ -439,7 +438,7 @@ watch(
 
 // Watcher для изменений провайдера извне
 watch(
-  () => mapStore.currentProvider,
+  () => mapState.currentProvider.value,
   (newProvider) => {
     if (newProvider && newProvider !== state.provider) {
       state.provider = newProvider;

@@ -13,6 +13,7 @@
   "dependencies": {
     "@chainsafe/libp2p-noise": "^13.0.1",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-regular-svg-icons": "^7.1.0",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/vue-fontawesome": "^3.0.1",
     "@kyvg/vue3-notification": "^2.9.1",
@@ -44,7 +45,6 @@
     "leaflet.tilelayer.colorfilter": "^1.2.5",
     "libp2p": "^0.46.11",
     "openai": "^5.11.0",
-    "pinia": "^2.0.23",
     "puppeteer": "^24.15.0",
     "robonomics-interface": "^0.4.0",
     "robonomics-interface-vue": "^0.1.2",
