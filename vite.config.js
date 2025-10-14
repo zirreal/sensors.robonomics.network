@@ -32,11 +32,29 @@ export default defineConfig(() => {
     },
     build: {
       target: ["es2020"],
+      rollupOptions: {
+        external: (id) => {
+          // Externalize problematic internal imports
+          if (id.startsWith('#')) {
+            return true;
+          }
+          // Externalize libp2p and related modules
+          if (id.includes('libp2p') || id.includes('@multiformats') || id.includes('uint8arrays')) {
+            return true;
+          }
+          return false;
+        }
+      }
     },
     optimizeDeps: {
       esbuildOptions: {
         target: ["es2020"],
       },
+      include: [
+        'uint8arrays',
+        '@multiformats/multiaddr',
+        '@multiformats/mafmt'
+      ]
     },
   };
 });
