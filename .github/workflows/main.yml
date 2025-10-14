@@ -38,22 +38,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "yarn"
-          cache-dependency-path: yarn.lock
+          cache: "npm"
+          cache-dependency-path: package-lock.json
 
       - name: Install system deps
         run: sudo apt-get update && sudo apt-get install -y build-essential python3
 
-      - name: Print Node and Yarn versions
+      - name: Print Node and npm versions
         run: |
           node -v
-          yarn -v
+          npm -v
 
       - name: Install dependencies
-        run: yarn install
+        run: npm install
 
       - name: Build project
-        run: yarn build
+        run: npm run build
         env:
           VITE_CONFIG_ENV: ${{ vars.VITE_CONFIG_ENV }}
 
