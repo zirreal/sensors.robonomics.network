@@ -1,10 +1,3 @@
-v4.0.1
-
-**Build Fixes:**
-- Fix: Resolved build issues with libp2p dependencies by externalizing problematic modules
-
----
-
 v4.0.0
 
 Major refactoring: UI/UX improvements, code cleanup, and performance optimizations
