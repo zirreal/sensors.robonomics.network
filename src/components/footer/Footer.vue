@@ -219,6 +219,9 @@ const availableOptions = computed(() => {
     opts = [aqiOption, ...filtered];
   }
   
+  // Remove "Noise" from available options
+  opts = opts.filter(opt => opt.value !== 'noise');
+  
   return opts;
 });
 

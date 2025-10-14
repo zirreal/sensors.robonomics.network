@@ -1,3 +1,7 @@
+v4.0.1-v4.0.2
+Switch from yarn to npm, remove Pinia dependency, fix build issues
+
+
 v4.0.0
 
 Major refactoring: UI/UX improvements, code cleanup, and performance optimizations

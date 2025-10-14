@@ -29,23 +29,23 @@ If you plan to contribute or customize the project extensively, consider forking
 
 2️⃣ **Install Dependencies**
 
-Ensure **Node.js** and **Yarn** are installed:
+Ensure **Node.js** and **npm** are installed:
 
 ```sh
  node -v  # Should be >= 16
- yarn -v  # Should be installed
+ npm -v  # Should be installed
 ```
 
 Then install the required dependencies:
 
 ```sh
- yarn install
+ npm install
 ```
 
 3️⃣ **Start the Server Locally for Development**
 
 ```sh
- yarn dev
+ npm run dev
 ```
 
 ---
@@ -396,7 +396,7 @@ You can automatically translate interface strings using OpenAI's API. To enable 
    Use the following command to generate or update translation files:
 
    ```bash
-   yarn autotranslate
+   npm run autotranslate
    ```
 
    Once complete, your translations will be available in the appropriate language files in `src/translate`.
