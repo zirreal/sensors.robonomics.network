@@ -5,7 +5,6 @@ import airtempmin from "./airtempmin";
 import aqi from "./aqi";
 import co from "./co";
 import co2 from "./co2";
-import dewpoint from "./dewpoint";
 import gc from "./gc";
 import humidity from "./humidity";
 import nh3 from "./nh3";
@@ -34,7 +33,6 @@ export default {
   aqi,
   co,
   co2,
-  dewpoint,
   gc,
   humidity,
   nh3,

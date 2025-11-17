@@ -25,7 +25,7 @@
           <HistoryImport />
         </section>
       </div>
-       <button class="popovercontrol" popovertarget="mapsettings">
+       <button class="popovercontrol button-round-outline" popovertarget="mapsettings">
          <font-awesome-icon icon="fa-solid fa-download" />
        </button>
     </div>
@@ -662,5 +662,17 @@ defineExpose({
 input[type="date"][disabled] {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+@media screen and (width < 820px) {
+  .mapcontrols-geo {
+    margin-top: calc(var(--gap) * 3);
+    padding: calc(var(--gap) * 1) calc(var(--gap) * 3);
+    gap: calc(var(--gap) * 3);
+  }
+
+  .mapcontrols-geo button {
+    font-size: 1.4em;
+  }
 }
 </style>

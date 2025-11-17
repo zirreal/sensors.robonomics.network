@@ -35,6 +35,13 @@ const locale = computed(() => {
   return i18nLocale.value || localStorage.getItem('locale') || 'en'
 })
 
+const getAbsoluteImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith('http')) return imagePath;
+  const baseUrl = settings?.SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+  return `${baseUrl}${imagePath}`;
+};
+
 const meta = computed(() => [
   ogdata.description && { name: 'description', content: ogdata.description },
 
@@ -42,14 +49,14 @@ const meta = computed(() => [
   ogdata.site_name && { property: 'og:site_name', content: ogdata.site_name },
   ogdata.title && { property: 'og:title', content: ogdata.title },
   ogdata.description && { property: 'og:description', content: ogdata.description },
-  ogdata.image && { property: 'og:image', content: ogdata.image },
+  ogdata.image && { property: 'og:image', content: getAbsoluteImageUrl(ogdata.image) },
   ogdata.image && ogdata.image_width && { property: 'og:image:width', content: ogdata.image_width },
   ogdata.image && ogdata.image_height && { property: 'og:image:height', content: ogdata.image_height },
   { property: 'og:url', content: fullUrl.value },
 
   { name: 'twitter:card', content: 'summary_large_image' },
   ogdata.title && { name: 'twitter:title', content: ogdata.title },
-  ogdata.image && { name: 'twitter:image', content: ogdata.image },
+  ogdata.image && { name: 'twitter:image', content: getAbsoluteImageUrl(ogdata.image) },
   ogdata.description && { name: 'twitter:description', content: ogdata.description },
   ogdata.twitter && { name: 'twitter:site', content: ogdata.twitter },
   ogdata.twitter && { name: 'twitter:creator', content: ogdata.twitter }

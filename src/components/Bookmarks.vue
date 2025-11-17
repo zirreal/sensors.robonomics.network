@@ -1,14 +1,14 @@
 <template>
-  <template v-if="!bookmarks || bookmarks.length < 1">
+  <template v-if="!schema">
+    <!-- База данных не настроена -->
+  </template>
+  <template v-else-if="!bookmarks || bookmarks.length < 1">
     {{ $t("bookmarks.listempty") }}
   </template>
   <div class="bookmarkslist" v-else>
     <section v-for="bookmark in bookmarks" :key="bookmark.id" class="flexline">
       <a :href="getlink(bookmark)" @click.prevent="showsensor(bookmark)">
-        <b v-if="bookmark?.customName" class="name">{{ bookmark.customName }}</b>
-        <b v-if="bookmark?.geo" :class="bookmark.customName ? 'addresssm' : 'adresslg'">
-          {{ safeGeo(bookmark.geo)?.lat }}, {{ safeGeo(bookmark.geo)?.lng }}
-        </b>
+        <b v-if="bookmark?.name" class="name">{{ bookmark.name }}</b>
       </a>
       <button title="Remove this sensor" @click.prevent="deletebookmark(bookmark.id)">
         <font-awesome-icon icon="fa-solid fa-xmark" />
@@ -25,18 +25,15 @@ import { IDBdeleteByKey, notifyDBChange } from "../utils/idb";
 import {settings, idbschemas} from "@config";
 // import { getTypeProvider } from "@/utils/utils"; // deprecated
 
-const schema = idbschemas?.SensorsDBBookmarks || {};
-const DB_NAME = schema.dbname || "SensorsDBBookmarks";
-const STORE = Object.keys(schema.stores || { bookmarks: {} })[0] || "bookmarks";
+const schema = idbschemas?.Sensors;
+const DB_NAME = schema?.dbname;
+const STORE = Object.keys(schema?.stores || {}).find(key => key === "bookmarks") || null;
 
 const router = useRouter();
 const route = useRoute();
 const { idbBookmarks, idbBookmarkGet, watchBookmarks } = useBookmarks();
 const bookmarks = computed(() => idbBookmarks.value);
 
-function safeGeo(geo) {
-  try { return typeof geo === "string" ? JSON.parse(geo) : geo; } catch { return null; }
-}
 
 async function deletebookmark(id) {
   await IDBdeleteByKey(DB_NAME, STORE, id);
@@ -49,16 +46,14 @@ async function deletebookmark(id) {
 }
 
 function getlink(bookmark) {
-  if (!bookmark?.link) return "#";
-  const g = safeGeo(bookmark.geo);
-  if (!g) return "#";
+  if (!bookmark?.id) return "#";
 
   // Берем все параметры из текущего URL и меняем только sensor
   return router.resolve({
     name: "main",
     query: {
       ...route.query, // Все текущие параметры URL
-      sensor: bookmark.link, // Меняем только sensor
+      sensor: bookmark.id, // Используем id вместо link
     },
   }).href;
 }

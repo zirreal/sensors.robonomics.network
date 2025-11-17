@@ -17,10 +17,10 @@ body {
   color: var(--app-textcolor);
 }
 
-body * {
+/* body * {
   font-size: var(--font-size);
   line-height: 1.5;
-}
+} */
 
 a {
   color: var(--app-buttoncolor);
@@ -56,6 +56,16 @@ h2 {
 h3 {
   font-size: calc(var(--font-size) * 1.5);
   margin-bottom: calc(var(--gap) * 1.5);
+}
+
+h4 {
+  font-size: calc(var(--font-size) * 1.4);
+  margin-bottom: calc(var(--gap) * 1.5);
+}
+
+h5 {
+  font-size: calc(var(--font-size) * 1.1);
+  margin-bottom: calc(var(--gap) * 0.8);
 }
 
 @media (width < 800px) {
@@ -169,8 +179,20 @@ input[type=submit]:not([disabled]),
   cursor: pointer;
 }
 
+select:disabled,
+input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .button-green {
   --app-buttoncolor: var(--color-green);
+}
+
+.button-red {
+  --app-buttoncolor: var(--color-red);
+  --app-buttoncolor-hover: #cc0000; /* Более темный красный для hover */
+  --app-buttoncolor-active: #990000; /* Еще более темный для active */
 }
 
 .button > *:not(:last-child) {
@@ -183,6 +205,38 @@ input[type=submit]:not([disabled]),
  border-color: var(--color-light-gray);
  opacity: 0.5;
 }
+
+.button-round-outline, .button-round-outline:hover {
+  align-items: center;
+  background-color: var(--app-inputbg);
+  border-radius: 50%;
+  border: var(--app-borderwidth) solid var(--app-bordercolor);
+  cursor: pointer;
+  display: flex;
+  height: var(--app-inputheight);
+  justify-content: center;
+  user-select: none;
+  width: var(--app-inputheight);
+  color: var(--app-inputtextcolor);
+  font-size: var(--font-size);
+  transition: all 0.2s linear;
+}
+
+.button-round-outline .svg-inline--fa path {
+  fill: var(--app-inputtextcolor);
+}
+
+.button-round-outline:hover {
+  /* background-color: var(--app-inputtextcolor);
+  border-color: var(--app-inputtextcolor);
+  color: var(--app-inputbg); */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+/* .button-round-outline:hover .svg-inline--fa path {
+  fill: var(--app-inputbg);
+} */
 
 label {
   font-weight: 700;
@@ -219,25 +273,6 @@ label {
 
 :popover-open::backdrop {
   backdrop-filter: grayscale(1);
-}
-
-.popovercontrol {
-  align-items: center;
-  background-color: var(--app-inputbg);
-  border-radius: 50%;
-  border: var(--app-borderwidth) solid var(--app-bordercolor);
-  cursor: pointer;
-  display: flex;
-  height: var(--app-inputheight);
-  justify-content: center;
-  user-select: none;
-  width: var(--app-inputheight);
-  color: var(--app-inputtextcolor);
-  font-size: var(--font-size);
-}
-
-.popovercontrol .svg-inline--fa path {
-  fill: var(--app-inputtextcolor);
 }
 
 @supports not selector(:popover-open) {

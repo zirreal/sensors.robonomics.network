@@ -12,8 +12,12 @@ import * as colors from './colors';
  * @returns {boolean} true если слой инициализирован
  */
 export function isReadyLayer() {
-  const ctx = getMapContext();
-  return !!ctx.markersLayer;
+  try {
+    const ctx = getMapContext();
+    return !!ctx.markersLayer;
+  } catch (error) {
+    return false;
+  }
 }
 
 /**

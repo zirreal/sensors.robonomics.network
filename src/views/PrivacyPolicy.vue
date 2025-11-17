@@ -1,7 +1,7 @@
 <template>
   <MetaInfo
     pageTitle= "Sensors.social Privacy Policy"
-    :pageImage = "ogImage"
+    pageImage="/og-privacy-policy.webp"
   />
   <PageTextLayout>
     <h1>{{ $t("privacypolicy.title") }}</h1>
@@ -93,8 +93,6 @@ import { useRouter } from "vue-router";
 import MetaInfo from "../components/MetaInfo.vue";
 import OptOutForm from "../components/matomo/OptOutForm.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
-
-import ogImage from '../assets/images/pages/privacy-policy/og-privacy-policy.webp';
 
 const router = useRouter();
 

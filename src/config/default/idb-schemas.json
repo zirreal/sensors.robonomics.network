@@ -6,6 +6,14 @@
       "Accounts": { "keyPath": "address", "autoIncrement": false }
     }
   },
+  "Sensors": {
+    "dbname": "Sensors",
+    "dbversion": 1,
+    "stores": {
+      "sensorData": { "keyPath": "id", "autoIncrement": false },
+      "bookmarks": { "keyPath": "id", "autoIncrement": true }
+    }
+  },
   "SensorsDBBookmarks": {
     "dbname": "SensorsDBBookmarks",
     "dbversion": 6,

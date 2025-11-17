@@ -27,10 +27,10 @@
 import { computed, ref, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMap } from '@/composables/useMap';
-import { calculateAQIIndex as calculateAQIIndexUS } from '../../utils/calculations/aqi/us';
-import { calculateAQIIndex as calculateAQIIndexEU } from '../../utils/calculations/aqi/eu';
-import aqiUSZones from '../../measurements/aqi_us';
-import aqiEUZones from '../../measurements/aqi_eu';
+import { calculateAQIIndex as calculateAQIIndexUS } from '../../../utils/calculations/aqi/us';
+import { calculateAQIIndex as calculateAQIIndexEU } from '../../../utils/calculations/aqi/eu';
+import aqiUSZones from '../../../measurements/aqi_us';
+import aqiEUZones from '../../../measurements/aqi_eu';
 
 const props = defineProps({
   logs: { type: Array, default: () => [] }

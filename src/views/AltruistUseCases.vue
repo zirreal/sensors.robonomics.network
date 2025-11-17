@@ -2,7 +2,7 @@
   <MetaInfo
     :pageTitle="$t('Who Altruist Was Created For - Sensors use cases')"
     :pageDescription="$t('Monitoring the environment involves plenty of pitfalls, making the job far harder than it looks at first glance. Our team—the creators of Altruist and the open-source project sensors.social—has spent seven years studying and working in this field, and we hope our experience will pleasantly surprise you and give you a practical tool for adapting to the conditions in which you and your loved ones live. Below we explain which main user groups Altruist is designed for…')"
-    :pageImage="ogImage"
+    pageImage="/og-altruist-use-cases-all.webp"
   />
   <PageTextLayout>
     <h1>{{ $t('Who Altruist Was Created For') }}</h1>
@@ -103,8 +103,6 @@ const { locale: i18nLocale } = useI18n();
 const locale = computed(() => {
   return i18nLocale.value || localStorage.getItem("locale") || "en";
 });
-
-import ogImage from '../assets/images/pages/altruist-use-cases/altruist-use-cases-all.webp';
 
 const image1 = computed(() => {
   return locale.value === "ru"

@@ -2,7 +2,7 @@
   <MetaInfo
     :pageTitle= "$t('Air quality measurements information')"
     :pageDescription="$t('Sensors.social Air Quality Map — an interactive tool for viewing, analyzing, and comparing real-time air quality data from sensors. Get up-to-date information on air conditions in your area.')"
-    :pageImage = "ogImage"
+    pageImage="/og-air-measurements.webp"
   />
   <PageTextLayout>
     <h1>{{ $t("measures.title") }}</h1>
@@ -64,8 +64,6 @@ import { useI18n } from 'vue-i18n';
 import PageTextLayout from "../components/layouts/PageText.vue";
 import MetaInfo from '../components/MetaInfo.vue';
 import measurements from '../measurements';
-
-import ogImage from '../assets/images/pages/air-measurements/og-air-measurements.webp';
 
 const { locale } = useI18n();
 const currentLocale = ref(locale.value);

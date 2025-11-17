@@ -9,7 +9,7 @@ import {
 import { idbschemas } from "@config";
 
 const schema = idbschemas?.Altruist || {};
-const DB_NAME = schema.dbname || "Altruist";
+const DB_NAME = schema.dbname;
 const STORE = Object.keys(schema.stores || { Accounts: {} })[0] || "Accounts";
 
 // Small in-memory cache for getUserSensors to prevent request storms.

@@ -1,7 +1,8 @@
 import Provider from "@/providers/remote";
 import Libp2pProvider from "@/providers/libp2p";
 import { getConfigBounds, filterByBounds } from "../map";
-import { hasValidCoordinates } from "../../utils";
+import { hasValidCoordinates, fetchJson } from "../../utils";
+import { dayISO, dayBoundsUnix } from "../../date";
 import { settings } from "@config";
 
 // Глобальные константы провайдеров
@@ -10,6 +11,9 @@ const LIBP2P_PROVIDER = new Libp2pProvider(settings.LIBP2P);
 
 // Глобальный объект провайдера
 let providerObj = null;
+
+// Импортируем утилиты для работы с IndexedDB
+import { IDBworkflow, IDBgettable, IDBdeleteByKey, IDBcleartable, notifyDBChange } from '../../idb.js';
 
 
 /**
@@ -96,6 +100,7 @@ export async function getSensors(start, end, provider = 'remote') {
         geo: { lat, lng },
         address: sensorData.address || null,
         donated_by: sensorData.donated_by || null,
+        owner: sensorData.owner || null,
         timestamp: sensorData.timestamp || null
       };
       
@@ -113,6 +118,34 @@ export async function getSensors(start, end, provider = 'remote') {
       sensors: filterByBounds(sensors, bounds),
       sensorsNoLocation: filterByBounds(sensorsNoLocation, bounds)
     };
+  }
+}
+
+/**
+ * Получает owner для конкретного сенсора через короткий запрос
+ * @param {string} sensorId - ID сенсора
+ * @returns {string|null} owner сенсора или null
+ */
+export async function getSensorOwner(sensorId) {
+  if (!sensorId) return null;
+  
+  try {
+    // Используем короткий промежуток времени - последний час
+    const end = Date.now();
+    const start = end - 3600000; // 1 час назад
+    
+    // Делаем прямой запрос, чтобы получить полный объект ответа с sensor.owner
+    const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/${sensorId}/${start}/${end}`, { cache: 'no-store' });
+    
+    // API возвращает структуру: { result: [], sensor: { owner: "..." } }
+    if (result && result.sensor && result.sensor.owner) {
+      return result.sensor.owner;
+    }
+    
+    return null;
+  } catch (error) {
+    console.warn('Failed to load sensor owner:', error);
+    return null;
   }
 }
 
@@ -140,8 +173,13 @@ export async function getMessages(start, end) {
  * @param {string} provider - тип провайдера ('remote' или 'realtime')
  * @returns {Array} массив данных сенсора
  */
-export async function getSensorData(sensorId, startTimestamp, endTimestamp, provider = 'remote', onRealtimePoint = null) {
+export async function getSensorData(sensorId, startTimestamp, endTimestamp, provider = 'remote', onRealtimePoint = null, signal = null) {
   try {
+    // Проверяем, не был ли запрос отменен
+    if (signal && signal.aborted) {
+      return null; // null = запрос не выполнен (отменен)
+    }
+    
     if (provider === 'realtime' && providerObj) {
       // Для realtime провайдера подписываемся на данные
       if (onRealtimePoint) {
@@ -152,15 +190,21 @@ export async function getSensorData(sensorId, startTimestamp, endTimestamp, prov
       } else {
         // Если callback не передан, получаем исторические данные
         const historyData = await providerObj.getHistoryBySensor(sensorId);
-        return historyData || [];
+        // Если данных нет, возвращаем [] (загружено, но пусто), если null/undefined - null (не загружено)
+        return Array.isArray(historyData) ? historyData : null;
       }
     } else {
       const historyData = await REMOTE_PROVIDER.getHistoryPeriodBySensor(sensorId, startTimestamp, endTimestamp);
-      return historyData || [];
+      // Если данных нет, возвращаем [] (загружено, но пусто), если null/undefined - null (не загружено)
+      return Array.isArray(historyData) ? historyData : null;
     }
   } catch (error) {
+    // Если запрос был отменен, не логируем ошибку
+    if (signal && signal.aborted) {
+      return null; // null = запрос не выполнен (отменен)
+    }
     console.error('Error fetching sensor history:', error);
-    return [];
+    return null; // null = запрос не выполнен (ошибка)
   }
 }
 
@@ -242,6 +286,456 @@ export function subscribeRealtime(onRealtimePoint) {
 export function unsubscribeRealtime(unwatch) {
   if (unwatch) {
     unwatch();
+  }
+}
+
+// ==================== INDEXEDDB CACHE FUNCTIONS ====================
+
+/**
+ * Получает данные из кэша для указанных дней
+ * @param {string} sensorId - ID сенсора
+ * @param {Array<string>} dates - массив дат в формате YYYY-MM-DD
+ * @returns {Promise<Object>} объект с данными по дням и адресом
+ */
+async function getCachedData(sensorId, dates) {
+  try {
+    const now = Date.now();
+    const TTL = 24 * 60 * 60 * 1000; // 24 часа
+    const cachedData = { data: {}, address: null };
+    
+    // Получаем данные сенсора из кэша
+    const sensorKey = sensorId;
+    
+    return new Promise((resolve) => {
+      IDBworkflow('Sensors', 'sensorData', 'readonly', (store) => {
+        const request = store.get(sensorKey);
+        
+        request.onsuccess = () => {
+          const sensorData = request.result;
+          
+          if (sensorData && (now - sensorData.lastUpdated) < TTL) {
+            // Фильтруем нужные даты из кэшированных данных
+            for (const date of dates) {
+              if (sensorData.data && sensorData.data[date]) {
+                cachedData.data[date] = sensorData.data[date];
+              }
+            }
+            
+            // Сохраняем адрес из кэша
+            cachedData.address = sensorData.address || null;
+          }
+          
+          resolve(cachedData);
+        };
+        
+        request.onerror = () => {
+          resolve(cachedData);
+        };
+      });
+    });
+  } catch (error) {
+    console.error('Error getting cached data:', error);
+    return { data: {}, address: null };
+  }
+}
+
+/**
+ * Сохраняет данные в кэш
+ * @param {string} sensorId - ID сенсора
+ * @param {Object} dataByDate - объект с данными по дням
+ * @param {string|null} address - адрес сенсора (опционально)
+ */
+async function saveToCache(sensorId, dataByDate, address = null) {
+  try {
+    const sensorKey = sensorId;
+    const now = Date.now();
+    
+    // Получаем существующие данные сенсора
+    const existingData = await new Promise((resolve) => {
+      IDBworkflow('Sensors', 'sensorData', 'readonly', (store) => {
+        const request = store.get(sensorKey);
+        
+        request.onsuccess = () => {
+          resolve(request.result || { data: {}, address: null });
+        };
+        
+        request.onerror = () => {
+          resolve({ data: {}, address: null });
+        };
+      });
+    });
+    
+    // Объединяем существующие данные с новыми
+    const updatedData = {
+      ...existingData.data,
+      ...dataByDate
+    };
+    
+    // Сохраняем адрес (новый или существующий)
+    const finalAddress = address || existingData.address;
+    
+    // Создаем или обновляем запись сенсора
+    const cacheEntry = {
+      id: sensorKey,
+      data: updatedData,
+      address: finalAddress,
+      lastUpdated: now,
+      ttl: 24 * 60 * 60 * 1000 // 24 часа
+    };
+    
+    IDBworkflow('Sensors', 'sensorData', 'readwrite', (store) => {
+      store.put(cacheEntry);
+    });
+    
+    // Уведомляем об изменениях в кэше
+    notifyDBChange('Sensors', 'sensorData');
+  } catch (error) {
+    console.error('Error saving to cache:', error);
+  }
+}
+
+/**
+ * Получает список дней между двумя датами
+ * @param {string} startDate - начальная дата в формате YYYY-MM-DD
+ * @param {string} endDate - конечная дата в формате YYYY-MM-DD
+ * @returns {Array<string>} массив дат
+ */
+function getDaysBetween(startDate, endDate) {
+  const days = [];
+  const [sy, sm, sd] = String(startDate).split('-').map(Number);
+  const [ey, em, ed] = String(endDate).split('-').map(Number);
+
+  const start = new Date(sy, sm - 1, sd, 0, 0, 0, 0);
+  const end = new Date(ey, em - 1, ed, 0, 0, 0, 0);
+
+  for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+    days.push(dayISO(dt));
+  }
+
+  return days;
+}
+
+/**
+ * Очищает устаревшие данные из кэша
+ * @param {number} maxAge - максимальный возраст данных в миллисекундах (по умолчанию 7 дней)
+ */
+export async function clearExpiredCache(maxAge = 7 * 24 * 60 * 60 * 1000) {
+  try {
+    const allCachedData = await IDBgettable('Sensors', 'sensorData');
+    const now = Date.now();
+    
+    for (const entry of allCachedData) {
+      if ((now - entry.lastUpdated) > maxAge) {
+        await IDBdeleteByKey('Sensors', 'sensorData', entry.id);
+      }
+    }
+    
+    notifyDBChange('Sensors', 'sensorData');
+  } catch (error) {
+    console.error('Error clearing expired cache:', error);
+  }
+}
+
+/**
+ * Очищает весь кэш сенсоров
+ */
+export async function clearAllCache() {
+  try {
+    IDBcleartable('Sensors', 'sensorData');
+    notifyDBChange('Sensors', 'sensorData');
+  } catch (error) {
+    console.error('Error clearing all cache:', error);
+  }
+}
+
+/**
+ * Получает кэшированный адрес сенсора
+ * @param {string} sensorId - ID сенсора
+ * @returns {Promise<string|null>} адрес сенсора или null
+ */
+export async function getCachedAddress(sensorId) {
+  try {
+    const sensorKey = sensorId;
+    
+    return new Promise((resolve) => {
+      IDBworkflow('Sensors', 'sensorData', 'readonly', (store) => {
+        const request = store.get(sensorKey);
+        
+        request.onsuccess = () => {
+          const sensorData = request.result;
+          if (sensorData && sensorData.address) {
+            resolve(sensorData.address);
+          } else {
+            resolve(null);
+          }
+        };
+        
+        request.onerror = () => {
+          resolve(null);
+        };
+      });
+    });
+  } catch (error) {
+    console.error('Error getting cached address:', error);
+    return null;
+  }
+}
+
+/**
+ * Сохраняет адрес сенсора в кэш
+ * @param {string} sensorId - ID сенсора
+ * @param {string} address - адрес сенсора
+ */
+export async function saveAddressToCache(sensorId, address) {
+  try {
+    const sensorKey = sensorId;
+    
+    // Получаем существующие данные сенсора
+    const existingData = await new Promise((resolve) => {
+      IDBworkflow('Sensors', 'sensorData', 'readonly', (store) => {
+        const request = store.get(sensorKey);
+        
+        request.onsuccess = () => {
+          resolve(request.result || { data: {}, address: null });
+        };
+        
+        request.onerror = () => {
+          resolve({ data: {}, address: null });
+        };
+      });
+    });
+    
+    // Обновляем только адрес, сохраняя существующие данные
+    const cacheEntry = {
+      id: sensorKey,
+      data: existingData.data || {},
+      address: address,
+      lastUpdated: Date.now(),
+      ttl: 24 * 60 * 60 * 1000 // 24 часа
+    };
+    
+    IDBworkflow('Sensors', 'sensorData', 'readwrite', (store) => {
+      store.put(cacheEntry);
+    });
+    
+    // Уведомляем об изменениях в кэше
+    notifyDBChange('Sensors', 'sensorData');
+  } catch (error) {
+    console.error('Error saving address to cache:', error);
+  }
+}
+
+
+/**
+ * Получает статистику кэша
+ * @returns {Promise<Object>} объект со статистикой
+ */
+export async function getCacheStats() {
+  try {
+    const allCachedData = await IDBgettable('Sensors', 'sensorData');
+    const now = Date.now();
+    const TTL = 24 * 60 * 60 * 1000; // 24 часа
+    
+    const stats = {
+      totalSensors: allCachedData.length,
+      validSensors: 0,
+      expiredSensors: 0,
+      totalDays: 0,
+      totalDataPoints: 0,
+      oldestEntry: null,
+      newestEntry: null,
+      sensors: []
+    };
+    
+    for (const entry of allCachedData) {
+      const sensorInfo = {
+        sensorId: entry.id, // Теперь ID сенсора хранится в поле id
+        days: Object.keys(entry.data || {}).length,
+        dataPoints: 0,
+        lastUpdated: entry.lastUpdated,
+        isExpired: (now - entry.lastUpdated) >= TTL
+      };
+      
+      // Подсчитываем общее количество точек данных
+      for (const dayData of Object.values(entry.data || {})) {
+        sensorInfo.dataPoints += dayData.length;
+      }
+      
+      stats.totalDays += sensorInfo.days;
+      stats.totalDataPoints += sensorInfo.dataPoints;
+      
+      if (sensorInfo.isExpired) {
+        stats.expiredSensors++;
+      } else {
+        stats.validSensors++;
+      }
+      
+      if (!stats.oldestEntry || entry.lastUpdated < stats.oldestEntry) {
+        stats.oldestEntry = entry.lastUpdated;
+      }
+      
+      if (!stats.newestEntry || entry.lastUpdated > stats.newestEntry) {
+        stats.newestEntry = entry.lastUpdated;
+      }
+      
+      stats.sensors.push(sensorInfo);
+    }
+    
+    return stats;
+  } catch (error) {
+    console.error('Error getting cache stats:', error);
+    return null;
+  }
+}
+
+/**
+ * Получает данные сенсора с кэшированием по дням
+ * @param {string} sensorId - ID сенсора
+ * @param {number} startTimestamp - начальный timestamp
+ * @param {number} endTimestamp - конечный timestamp
+ * @param {string} provider - тип провайдера
+ * @param {Function} onRealtimePoint - callback для realtime данных
+ * @param {AbortSignal} signal - сигнал для отмены запроса
+ * @returns {Promise<Array>} массив данных сенсора
+ */
+export async function getSensorDataWithCache(
+  sensorId,
+  startTimestamp,
+  endTimestamp,
+  provider = 'remote',
+  onRealtimePoint = null,
+  signal = null,
+  progressCallback = null
+) {
+  // Для realtime провайдера используем обычную логику
+  if (provider === 'realtime') {
+    return getSensorData(sensorId, startTimestamp, endTimestamp, provider, onRealtimePoint, signal);
+  }
+  
+  try {
+    // Конвертируем timestamps в даты
+    const startDate = dayISO(startTimestamp);
+    const endDate = dayISO(endTimestamp);
+    
+    // Получаем список нужных дней
+    const neededDays = getDaysBetween(startDate, endDate);
+    
+    // Проверяем что есть в кэше (включая адрес)
+    const cachedResult = await getCachedData(sensorId, neededDays);
+    const cachedData = cachedResult.data;
+    const cachedAddress = cachedResult.address;
+    
+    // Определяем текущий день
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Определяем какие дни нужно загрузить
+    // Для текущего дня всегда загружаем данные принудительно (чтобы получать актуальные данные)
+    const missingDays = neededDays.filter(day => !cachedData[day] || day === today);
+
+    const totalDays = neededDays.length;
+    const cachedDays = totalDays - missingDays.length;
+
+    const emitProgress = (payload) => {
+      if (typeof progressCallback === 'function') {
+        try {
+          progressCallback({
+            totalDays,
+            cachedDays,
+            ...payload
+          });
+        } catch (error) {
+          console.warn('Progress callback failed:', error);
+        }
+      }
+    };
+
+    if (totalDays > 0) {
+      if (missingDays.length === 0) {
+        emitProgress({ status: 'done', loadedDays: totalDays, missingDays: 0, totalDays, cachedDays });
+      } else {
+        emitProgress({ status: 'init', loadedDays: cachedDays, missingDays: missingDays.length, totalDays, cachedDays });
+      }
+    }
+    
+    let newData = {};
+    
+    // Загружаем недостающие дни или текущий день (для обновления данных)
+    if (missingDays.length > 0) {
+      let loadedDays = cachedDays;
+      for (const day of missingDays) {
+        const { start: dayStart, end: defaultDayEnd } = dayBoundsUnix(day);
+        // Для текущего дня используем текущее время как end, для прошедших дней - конец дня
+        const dayEnd = day === today 
+          ? Math.floor(Date.now() / 1000)
+          : defaultDayEnd;
+        
+        const dayData = await getSensorData(sensorId, dayStart, dayEnd, provider, null, signal);
+        // Сохраняем только если это массив (успешно загружено, даже пустое)
+        // null означает что запрос не выполнен - не сохраняем в newData
+        if (Array.isArray(dayData)) {
+          newData[day] = dayData;
+          loadedDays += 1;
+          emitProgress({
+            status: 'progress',
+            loadedDays,
+            missingDays: Math.max(totalDays - loadedDays, 0),
+            totalDays,
+            cachedDays
+          });
+        }
+      }
+      // Сохраняем только успешно загруженные данные (массивы)
+      if (Object.keys(newData).length > 0) {
+        await saveToCache(sensorId, newData, cachedAddress);
+      }
+    }
+    
+    // Объединяем данные из кэша и новые данные
+    // Для текущего дня приоритет у новых данных (чтобы получить актуальные данные)
+    const allData = {};
+    for (const day of neededDays) {
+      if (day === today && newData[day]) {
+        allData[day] = newData[day];
+      } else if (newData[day]) {
+        allData[day] = newData[day];
+      } else if (cachedData[day] !== undefined && cachedData[day] !== null) {
+        if (day === today && missingDays.length > 0) {
+          continue; // Не используем кэш для текущего дня если делали запрос
+        }
+        allData[day] = cachedData[day];
+      }
+    }
+    
+    // Объединяем все данные в один массив и сортируем по времени
+    const result = [];
+    for (const dayData of Object.values(allData)) {
+      if (Array.isArray(dayData)) {
+        result.push(...dayData);
+      }
+    }
+    
+    // Если result пустой и мы делали запрос, но не получили данных - возвращаем null
+    // Если result пустой, но данные были в кэше (пустые массивы) - возвращаем []
+    // Если result не пустой - возвращаем отсортированный массив
+    if (result.length === 0 && missingDays.length > 0 && Object.keys(newData).length === 0) {
+      // Запрос был сделан, но не вернул данных - возвращаем null (не загружено)
+      emitProgress({ status: 'error', loadedDays: cachedDays, missingDays: missingDays.length, totalDays, cachedDays });
+      return null;
+    }
+    
+    // Добавляем адрес к результату для использования в компонентах
+    result._cachedAddress = cachedAddress;
+    emitProgress({ status: 'done', loadedDays: totalDays, missingDays: 0, totalDays, cachedDays });
+
+    return result.sort((a, b) => a.timestamp - b.timestamp);
+    
+  } catch (error) {
+    console.error('Error in getSensorDataWithCache:', error);
+    if (typeof progressCallback === 'function') {
+      progressCallback({ status: 'error', totalDays: 0, cachedDays: 0, loadedDays: 0, missingDays: 0 });
+    }
+    // Fallback к обычной загрузке
+    return getSensorData(sensorId, startTimestamp, endTimestamp, provider, onRealtimePoint, signal);
   }
 }
 

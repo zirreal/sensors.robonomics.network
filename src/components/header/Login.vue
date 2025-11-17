@@ -45,7 +45,7 @@
         </div>
       </div>
     </div>
-    <button class="popovercontrol" popovertarget="accounts">
+    <button class="popovercontrol button-round-outline" popovertarget="accounts">
       <font-awesome-icon icon="fa-solid fa-user" />
     </button>
   </template>

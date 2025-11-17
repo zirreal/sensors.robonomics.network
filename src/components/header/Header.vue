@@ -35,13 +35,8 @@
 
       <div class="flexline">
 
-        <select v-model="locale">
-          <option v-for="lang in locales" :key="lang.code" :value="lang.code">
-            {{ lang.title }}
-          </option>
-        </select>
-
         <div id="about" class="popover popover-top-right" popover>
+
           <h3>{{ $t("header.title") }}</h3>
           <p>
             {{ $t("header.text1") }}
@@ -69,9 +64,17 @@
           </section>
 
           <ReleaseInfo />
+
+          <div class="locale-select-container">
+            <select v-model="locale">
+              <option v-for="lang in locales" :key="lang.code" :value="lang.code">
+                {{ lang.title }}
+              </option>
+            </select>
+          </div>
         </div>
 
-        <button class="popovercontrol" popovertarget="about">
+        <button class="popovercontrol button-round-outline" popovertarget="about">
           <font-awesome-icon icon="fa-solid fa-bars" />
         </button>
 
@@ -83,7 +86,7 @@
           </div>
         </div>
         <button
-          class="popovercontrol bookmarksbutton"
+          class="popovercontrol button-round-outline bookmarksbutton"
           :class="{ active: bookmarksCount > 0 }"
           popovertarget="bookmarks"
         >
@@ -93,9 +96,7 @@
           <b v-if="bookmarksCount > 0">{{ bookmarksCount }}</b>
         </button>
 
-        <!-- <Login v-if="settings.SERVICES.accounts" /> -->
-        
-        <!-- <a class="button button-promo" href="https://www.indiegogo.com/projects/altruist-air-quality-bundle-urban-insight?utm_source=sensors.social&utm_medium=header-button" target="_blank">Altruist on Indiegogo</a> -->
+        <Login v-if="settings.SERVICES.accounts" />
       </div>
     </div>
   </header>
@@ -371,15 +372,20 @@ onMounted(() => {
 
 
 
-  @media screen and (width > 900px) {
-    .nogeo {
-      display: grid;
-      grid-template-columns: 350px 1fr;
-      max-width: calc(100vw - var(--gap) * 2) !important;
-      /* min-width: min(800px, calc(100vw - (var(--gap) * 2))) !important; */
-      gap: calc(var(--gap) * 2);
-    }
-
+@media screen and (width > 900px) {
+  .nogeo {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    max-width: calc(100vw - var(--gap) * 2) !important;
+    /* min-width: min(800px, calc(100vw - (var(--gap) * 2))) !important; */
+    gap: calc(var(--gap) * 2);
   }
+
+}
+
+.locale-select-container {
+  text-align: center;
+  margin-top: var(--gap);
+}
 
 </style>

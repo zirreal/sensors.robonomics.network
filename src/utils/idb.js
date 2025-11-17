@@ -131,7 +131,6 @@ export function IDBcleartable(dbname, dbtable) {
         const request = store.clear();
 
         request.onsuccess = () => {
-            console.log(`DB ${dbtable} cleared`);
             const bc = new BroadcastChannel('idb_changed');
             bc.postMessage(dbtable);
             bc.close();
@@ -139,7 +138,7 @@ export function IDBcleartable(dbname, dbtable) {
         };
 
         request.onerror = (err) => {
-            console.log(`Error to empty Object Store: ${err}`);
+            console.error(`Error to empty Object Store: ${err}`);
             return false;
         };
     });
@@ -247,4 +246,71 @@ export function watchDBChange(dbname, dbtable, callback) {
 export function hasIndexedDB() {
     const IDB = window.indexedDB || window.webkitIndexedDB;
     return !!IDB;
+}
+
+/*
+    migrateDB()
+    Общий механизм миграции данных между базами данных.
+    @param {Object} migrationConfig - конфигурация миграции
+    @param {string} migrationConfig.fromDB - исходная база данных
+    @param {string} migrationConfig.fromStore - исходная таблица
+    @param {string} migrationConfig.toDB - целевая база данных
+    @param {string} migrationConfig.toStore - целевая таблица
+    @param {Function} migrationConfig.transform - функция преобразования данных (опционально)
+    @param {boolean} migrationConfig.clearSource - очищать исходную таблицу после миграции (по умолчанию true)
+    @returns {Promise<boolean>} true если миграция прошла успешно
+*/
+export async function migrateDB(migrationConfig) {
+    const {
+        fromDB,
+        fromStore,
+        toDB,
+        toStore,
+        transform = (data) => data, // По умолчанию данные не изменяются
+        clearSource = true
+    } = migrationConfig;
+
+    try {
+        // Проверяем, существует ли исходная база данных
+        let sourceData = [];
+        try {
+            sourceData = await IDBgettable(fromDB, fromStore);
+            if (!sourceData || sourceData.length === 0) {
+                return true;
+            }
+        } catch (error) {
+            return true; // Не считаем это ошибкой
+        }
+
+        if (!sourceData || sourceData.length === 0) {
+            return true;
+        }
+
+        // Мигрируем данные
+        for (const record of sourceData) {
+            const transformedRecord = transform(record);
+            
+            IDBworkflow(toDB, toStore, 'readwrite', (store) => {
+                store.put(transformedRecord);
+            });
+        }
+
+        // Очищаем исходную таблицу если требуется
+        if (clearSource) {
+            try {
+                await IDBcleartable(fromDB, fromStore);
+            } catch (error) {
+                console.warn(`Could not clear source table ${fromDB}.${fromStore}:`, error);
+            }
+        }
+
+        // Уведомляем об изменениях в целевой базе
+        notifyDBChange(toDB, toStore);
+
+        return true;
+
+    } catch (error) {
+        console.error('Migration failed:', error);
+        return false;
+    }
 }

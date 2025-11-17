@@ -36,6 +36,7 @@ const currentUnit = ref(getCurrentUnitValue());
 const currentDate = ref(dayISO());
 const aqiVersion = ref(localStorage.getItem('aqiVersion') || 'us');
 const currentProvider = ref(localStorage.getItem('provider_type') || settings?.DEFAULT_TYPE_PROVIDER || 'remote');
+const timelineMode = ref('day');
 
 export function useMap() {
   const setmapposition = (lat, lng, zoom, save = true) => {
@@ -78,6 +79,13 @@ export function useMap() {
       try {
         localStorage.setItem('provider_type', p);
       } catch {}
+    }
+  };
+
+  const setTimelineMode = (mode) => {
+    const m = String(mode || 'day');
+    if (['day', 'week', 'month', 'realtime'].includes(m)) {
+      timelineMode.value = m;
     }
   };
 
@@ -236,6 +244,7 @@ export function useMap() {
     currentDate,
     aqiVersion,
     currentProvider,
+    timelineMode,
     
     // Actions
     setmapposition,
@@ -243,6 +252,7 @@ export function useMap() {
     setCurrentDate,
     setAQIVersion,
     setCurrentProvider,
+    setTimelineMode,
     setMapSettings,
     syncMapSettings,
   };

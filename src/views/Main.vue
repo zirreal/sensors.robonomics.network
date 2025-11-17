@@ -1,7 +1,8 @@
 <template>
   <MetaInfo
-    :pageTitle= "settings.TITLE"
-    :pageDescription = "settings.DESC"
+    :pageTitle="settings.TITLE"
+    :pageDescription="settings.DESC"
+    pageImage="/og-default.webp"
   />
   <Header />
 
@@ -43,7 +44,6 @@ import MetaInfo from '../components/MetaInfo.vue';
 import { settings } from "@config";
 import { unsubscribeRealtime, initProvider } from "../utils/map/sensors/requests";
 import { hasValidCoordinates } from "../utils/utils";
-import { enrichWithDewPoint } from "../utils/calculations/dew_point";
 import { useSensors } from "../composables/useSensors";
 import { useMessages } from "../composables/useMessages";
 
@@ -97,7 +97,6 @@ let unwatchRealtime = null;
 const onRealtimePoint = async (point) => {
 
   // Обогащаем текущие данные точкой росы
-  point.data = enrichWithDewPoint(point.data);
     
   // Обновляем данные для realtime
   sensorsUI.setSensorData(point.sensor_id, {
@@ -163,6 +162,25 @@ watch(
   { immediate: true }
 );
 
+// Watcher для изменений timelineMode - перезагружаем данные при смене периода
+watch(
+  () => mapState.timelineMode.value,
+  async (newMode, oldMode) => {
+    if (newMode !== oldMode && mapState.currentProvider.value === 'remote' && route.query.sensor) {
+      // Отписываемся от realtime провайдера перед загрузкой новых данных
+      if (unwatchRealtime) {
+        unsubscribeRealtime(unwatchRealtime);
+        unwatchRealtime = null;
+      }
+      
+      // При смене периода очищаем логи и загружаем заново
+      sensorsUI.clearSensorLogs(route.query.sensor);
+      // Обновляем логи открытого сенсора
+      await sensorsUI.updateSensorLogs(route.query.sensor);
+    }
+  }
+);
+
 
 /**
  * Центральный watcher для обработки изменений URL параметров
@@ -207,6 +225,12 @@ watch(
     const providerChanged = newQuery.provider !== (oldQuery?.provider);
     const dateChanged = newQuery.date !== (oldQuery?.date);
     const typeChanged = newQuery.type !== (oldQuery?.type);
+    
+    // Сбрасываем timeline режим при смене сенсора (если был week или month)
+    // Но не сбрасываем для realtime провайдера
+    if (sensorChanged && mapState.currentProvider.value !== 'realtime' && mapState.timelineMode.value && (mapState.timelineMode.value === 'week' || mapState.timelineMode.value === 'month')) {
+      mapState.setTimelineMode('day');
+    }
 
 
     // Обновляем maxdata и маркеры при изменении type (без date и provider, так как они обрабатываются через loadSensors)
@@ -240,9 +264,12 @@ watch(
         if (newQuery.sensor) {
           // Ищем полные данные сенсора в sensorsUI.sensors
           const fullSensorData = sensorsUI.sensors.find(s => s.sensor_id === newQuery.sensor);
+          // Сохраняем адрес из текущего sensorPoint, если он есть
+          const existingAddress = sensorsUI.sensorPoint?.address;
           const point = sensorsUI.formatPointForSensor(fullSensorData || {
             sensor_id: newQuery.sensor,
-            geo: { lat: parseFloat(newQuery.lat), lng: parseFloat(newQuery.lng) }
+            geo: { lat: parseFloat(newQuery.lat), lng: parseFloat(newQuery.lng) },
+            address: existingAddress || null
           });
           sensorsUI.updateSensorPopup(point);
         }
@@ -251,12 +278,16 @@ watch(
     }
     
     // Обновляем попап сенсора при изменении sensor или при первом заходе с сенсором
-    if (newQuery.sensor && sensorsUI.sensors.length > 0 && (sensorChanged || !oldQuery)) {
+    // Но не обновляем при переключении провайдера
+    if (newQuery.sensor && sensorsUI.sensors.length > 0 && (sensorChanged || !oldQuery) && !providerChanged) {
       // Ищем полные данные сенсора в sensorsUI.sensors
       const fullSensorData = sensorsUI.sensors.find(s => s.sensor_id === newQuery.sensor);
+      // Сохраняем адрес из текущего sensorPoint, если он есть
+      const existingAddress = sensorsUI.sensorPoint?.address;
       const point = sensorsUI.formatPointForSensor(fullSensorData || {
         sensor_id: newQuery.sensor,
-        geo: { lat: parseFloat(newQuery.lat), lng: parseFloat(newQuery.lng) }
+        geo: { lat: parseFloat(newQuery.lat), lng: parseFloat(newQuery.lng) },
+        address: existingAddress || null
       });
       sensorsUI.updateSensorPopup(point);
     }

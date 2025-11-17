@@ -24,9 +24,64 @@ export function dayISO(input) {
 
 export function dayBoundsUnix(isoDate) {
   const [y, m, d] = String(isoDate).split('-').map(Number);
-  const start = Math.floor(new Date(y, m - 1, d, 0, 0, 0, 0).getTime() / 1000);
-  const end = Math.floor(new Date(y, m - 1, d, 23, 59, 59, 999).getTime() / 1000);
+  
+  // Используем локальное время для правильных границ дня
+  // Highcharts использует useUTC: false, поэтому timestamp'ы должны быть в локальном времени
+  const startDate = new Date(y, m - 1, d, 0, 0, 0, 0);
+  const endDate = new Date(y, m - 1, d, 23, 59, 59, 999);
+  
+  const start = Math.floor(startDate.getTime() / 1000);
+  const end = Math.floor(endDate.getTime() / 1000);
+  
   return { start, end };
+}
+
+/**
+ * Получает границы периода в зависимости от выбранного режима
+ * @param {string} isoDate - дата в формате ISO (YYYY-MM-DD)
+ * @param {string} mode - режим: 'day', 'week', 'month'
+ * @returns {Object} объект с start и end в unix timestamp
+ */
+export function getPeriodBounds(isoDate, mode = 'day') {
+  const [y, m, d] = String(isoDate).split('-').map(Number);
+  const today = dayISO();
+  
+  let endDate;
+  let startDate;
+  
+  // Если это текущий день, показываем до текущего момента
+  if (isoDate === today && mode === 'day') {
+    endDate = new Date(); // текущий момент
+  } else {
+    endDate = new Date(y, m - 1, d, 23, 59, 59, 999);
+  }
+  
+  switch (mode) {
+    case 'week':
+      // Неделя: 7 дней назад от конечной даты
+      startDate = new Date(endDate);
+      startDate.setDate(endDate.getDate() - 6);
+      startDate.setHours(0, 0, 0, 0);
+      break;
+      
+    case 'month':
+      // Месяц: 30 дней назад от конечной даты
+      startDate = new Date(endDate);
+      startDate.setDate(endDate.getDate() - 29);
+      startDate.setHours(0, 0, 0, 0);
+      break;
+      
+    case 'day':
+    default:
+      // День: только выбранная дата
+      startDate = new Date(y, m - 1, d, 0, 0, 0, 0);
+      break;
+  }
+  
+  return {
+    start: Math.floor(startDate.getTime() / 1000),
+    end: Math.floor(endDate.getTime() / 1000)
+  };
 }
 
 export function addDaysISO(isoDate, deltaDays) {

@@ -1,5 +1,5 @@
 <template>
-  <MetaInfo pageTitle="Login" :pageImage="ogImage" />
+  <MetaInfo pageTitle="Login" pageImage="/og-login.webp" />
 
   <PageTextLayout>
     <h3>Login for Altruist holder</h3>
@@ -57,7 +57,6 @@ import { Keyring } from "@polkadot/keyring";
 
 import MetaInfo from "../components/MetaInfo.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
-import ogImage from "../assets/images/pages/login/og-login.webp";
 
 // const accountStore = useAccounts(); // TODO: раскомментировать когда будет нужно
 

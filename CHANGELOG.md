@@ -1,3 +1,27 @@
+v4.0.3
+
+Added sensor type display (DYI, Urban, Insight), improved date and time selection UX in sensor popup, added ability to view week and month data in sensor analytics.
+
+**Bug Fixes:**
+- Fix: improve error handling in IndexedDB operations
+
+**Performance Improvements:**
+- Perf: improve IndexedDB caching for week/month timeline periods
+
+**UI/UX Improvements:**
+- Feat: add progress bar for week/month data loading in sensor analytics
+- Feat: add Advanced sensor link sharing
+
+**Refactoring:**
+- Refactor: reorganize sensor components structure (move to tabs/widgets/controls folders)
+- Refactor: extract Accordion component to reusable controls component
+- Refactor: improve component organization and reduce prop drilling
+
+**Infrastructure:**
+- Chore: add release-it configuration for automated version management
+- Chore: update version synchronization between package.json and git tags
+- Docs: add RELEASE.md with release workflow documentation
+
 v4.0.1-v4.0.2
 Switch from yarn to npm, remove Pinia dependency, fix build issues
 

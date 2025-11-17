@@ -81,7 +81,7 @@ import { reactive, computed, getCurrentInstance } from "vue";
 import { useI18n } from "vue-i18n";
 import { settings } from "@config";
 
-import Copy from "../sensor/Copy.vue";
+import Copy from "../controls/Copy.vue";
 import ReleaseInfo from "../ReleaseInfo.vue";
 
 const props = defineProps({

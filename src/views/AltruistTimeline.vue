@@ -2,7 +2,7 @@
   <MetaInfo
     :pageTitle="$t('7 Years of Altruism - Altruist Timeline')"
     :pageDescription="$t('At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”.')"
-    :pageImage="ogImage"
+    pageImage="/og-timeline.webp"
   />
   <PageTextLayout>
     <h1>{{ $t('7 Years of Altruism') }}</h1>
@@ -70,8 +70,6 @@ import { useRouter } from "vue-router";
 import MetaInfo from '../components/MetaInfo.vue';
 import PageTextLayout from "../components/layouts/PageText.vue";
 import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";
-
-import ogImage from '../assets/images/pages/altruist-timeline/timeline.webp';
 
 const router = useRouter();
 
