@@ -1,8 +1,10 @@
 export default {
   "header.title": "Web3 public sensors map",
-  "header.text1": "Welcome to the decentralized opensource sensors map which operates with the sole intent of serving",
+  "header.text1":
+    "Welcome to the decentralized opensource sensors map which operates with the sole intent of serving",
   "header.link1": "the free will of individuals",
-  "header.text2": ", without any beneficiaries. It offers two distinct layers of decentralization at your choise: peer-to-peer connectivity for direct access to sensor data, and the federative concept for accumulating sensor data and displaying measurement history. Click",
+  "header.text2":
+    ", without any beneficiaries. It offers two distinct layers of decentralization at your choise: peer-to-peer connectivity for direct access to sensor data, and the federative concept for accumulating sensor data and displaying measurement history. Click",
   "header.link2": "here",
   "header.text3": "for further technical details.",
   "measures.title": "Air quality measurements information",
@@ -18,8 +20,10 @@ export default {
   "history.title": "Import data",
   "history.button": "Download csv file",
   "history.download": "history.download",
-  "notice_with_fz": "The specified data is not legally significant information for general use and special information in accordance with the federal law of July 19, 1998 no 113-fz «On the hydrometeorological service»",
-  "notice_without_fz": "This information holds no legal validity and is intended solely for personal use.",
+  notice_with_fz:
+    "The specified data is not legally significant information for general use and special information in accordance with the federal law of July 19, 1998 no 113-fz «On the hydrometeorological service»",
+  notice_without_fz:
+    "This information holds no legal validity and is intended solely for personal use.",
   "sensorpopup.infotitle": "Advanced information",
   "sensorpopup.bookmarkplaceholder": "A name for sensor",
   "sensorpopup.bookmarkbutton": "Add to Bookmarks",
@@ -50,17 +54,18 @@ export default {
   "scales.title": "Units of measurement",
   "scales.upto": "up to",
   "scales.above": "above",
-  "showlocation": "Show my location",
-  "locationloading": "Trying to get your location",
-  "geolocationdefault": "Geolocation is set default data",
-  "geolocationfromparams": "Geolocation is set from url params",
-  "geolocationlocal": "Geolocation is set from local data",
-  "geolocationisdetermined": "Geolocation is determined",
-  "geolocationerror": "Geolocation is not established [code -",
-  "geolocationnotavailable": "Geolocation is not available",
-  "geolocationdefaultsetup": "setting up default position...",
+  showlocation: "Show my location",
+  locationloading: "Trying to get your location",
+  geolocationdefault: "Geolocation is set default data",
+  geolocationfromparams: "Geolocation is set from url params",
+  geolocationlocal: "Geolocation is set from local data",
+  geolocationisdetermined: "Geolocation is determined",
+  geolocationerror: "Geolocation is not established [code -",
+  geolocationnotavailable: "Geolocation is not available",
+  geolocationdefaultsetup: "setting up default position...",
   "privacypolicy.title": "Privacy Policy",
-  "privacypolicy.description": "This Policy describes the information we collect from you, how we use that information and our legal basis for doing so. It also covers whether and how that information may be shared and your rights and choices regarding the information you provide to us.",
+  "privacypolicy.description":
+    "This Policy describes the information we collect from you, how we use that information and our legal basis for doing so. It also covers whether and how that information may be shared and your rights and choices regarding the information you provide to us.",
   "privacypolicy.subtitle1": "Where are those annoying cookie consent pop-ups?",
   "privacypolicy.text1": "We don't need cookie consent is needed because:",
   "privacypolicy.listitem1": "Tracking cookies are not used",
@@ -68,104 +73,167 @@ export default {
   "privacypolicy.listitem3": "Visitors aren’t tracked across websites",
   "privacypolicy.listitem4": "A user cannot be tracked across days within the same website",
   "privacypolicy.subtitle2": "What We Collect and Receive",
-  "privacypolicy.text2": "In order for us to provide you the best possible experience on our websites, we need to collect and process certain information. Depending on your use of the Services, that may include:",
+  "privacypolicy.text2":
+    "In order for us to provide you the best possible experience on our websites, we need to collect and process certain information. Depending on your use of the Services, that may include:",
   "privacypolicy.listitem5bold": "Contact us via email",
-  "privacypolicy.listitem5": "— for example, when you submit our forms, send us questions or comments, or report a problem, we will collect your name, email address, message, etc. We use this data solely in connection with answering the queries we receive.",
+  "privacypolicy.listitem5":
+    "— for example, when you submit our forms, send us questions or comments, or report a problem, we will collect your name, email address, message, etc. We use this data solely in connection with answering the queries we receive.",
   "privacypolicy.listitem6bold": "Usage data",
-  "privacypolicy.listitem6text1": "— when you visit our website, we will store: the URL from which you visited us from, web pages of our website you visit, the date and duration of your visit, your anonymized IP address, the device specifications (device type, operating system, screen resolution, language, country you are located in, and web browser type) you used during your visit, and",
+  "privacypolicy.listitem6text1":
+    "— when you visit our website, we will store: the URL from which you visited us from, web pages of our website you visit, the date and duration of your visit, your anonymized IP address, the device specifications (device type, operating system, screen resolution, language, country you are located in, and web browser type) you used during your visit, and",
   "privacypolicy.listitem6link1": "other",
-  "privacypolicy.listitem6text2": "non-personal data. We process this usage data only on our server, not passing it to third-parties with",
+  "privacypolicy.listitem6text2":
+    "non-personal data. We process this usage data only on our server, not passing it to third-parties with",
   "privacypolicy.listitem6link2": "Matomo",
-  "privacypolicy.listitem6text3": " web analytics platform that gives us 100% data ownership. This analytics helps us to improve user experience with our website and to recognize and stop any misuse.",
+  "privacypolicy.listitem6text3":
+    " web analytics platform that gives us 100% data ownership. This analytics helps us to improve user experience with our website and to recognize and stop any misuse.",
   "privacypolicy.listitem7bold": "Non-personalized cookies",
-  "privacypolicy.listitem7": "— we use non-tracking cookies (small data files transferred onto computers or devices by sites) for record-keeping purposes and to enhance functionality on our website. You may deactivate or restrict the transmission of these cookies by changing the settings of your web browser or by opt-out on this page in the form below. Cookies that are already stored may be deleted at any time.",
+  "privacypolicy.listitem7":
+    "— we use non-tracking cookies (small data files transferred onto computers or devices by sites) for record-keeping purposes and to enhance functionality on our website. You may deactivate or restrict the transmission of these cookies by changing the settings of your web browser or by opt-out on this page in the form below. Cookies that are already stored may be deleted at any time.",
   "privacypolicy.subtitle3": "Your Rights",
-  "privacypolicy.text3": "You have the right to be informed of Personal Data processed by Matomo, a right to rectification/correction, erasure and restriction of processing. You also have the right to ask from us a structured, common and machine-readable format of Personal Data you provided to us.",
-  "privacypolicy.text4": "We can only identify you via your email address and we can only adhere to your request and provide information if we have Personal Data about you through you having made contact with us directly and/or you using our site and/or service. We cannot provide, rectify or delete any data that we store on behalf of our users or customers.",
-  "privacypolicy.text5": "To exercise any of the rights mentioned in this Privacy Policy and/or in the event of questions or comments relating to the use of Personal Data you may contact us.",
-  "privacypolicy.text6": "In addition, you have the right to lodge a complaint with the data protection authority in your jurisdiction.",
+  "privacypolicy.text3":
+    "You have the right to be informed of Personal Data processed by Matomo, a right to rectification/correction, erasure and restriction of processing. You also have the right to ask from us a structured, common and machine-readable format of Personal Data you provided to us.",
+  "privacypolicy.text4":
+    "We can only identify you via your email address and we can only adhere to your request and provide information if we have Personal Data about you through you having made contact with us directly and/or you using our site and/or service. We cannot provide, rectify or delete any data that we store on behalf of our users or customers.",
+  "privacypolicy.text5":
+    "To exercise any of the rights mentioned in this Privacy Policy and/or in the event of questions or comments relating to the use of Personal Data you may contact us.",
+  "privacypolicy.text6":
+    "In addition, you have the right to lodge a complaint with the data protection authority in your jurisdiction.",
   "privacypolicy.subtitle4": "Retention of data",
-  "privacypolicy.text7": "We will retain your information as long as necessary to provide you with the services or as otherwise set forth in this Policy. We will also retain and use this information as necessary for the purposes set out in this Policy and to the extent necessary to comply with our legal obligations, resolve disputes, enforce our agreements and protect Robonomics Cloud legal rights.",
-  "privacypolicy.text8": "We also collect and maintain aggregated, anonymized or pseudonymized information which we may retain indefinitely to protect the safety and security of our Site, improve our Services or comply with legal obligations.",
+  "privacypolicy.text7":
+    "We will retain your information as long as necessary to provide you with the services or as otherwise set forth in this Policy. We will also retain and use this information as necessary for the purposes set out in this Policy and to the extent necessary to comply with our legal obligations, resolve disputes, enforce our agreements and protect Robonomics Cloud legal rights.",
+  "privacypolicy.text8":
+    "We also collect and maintain aggregated, anonymized or pseudonymized information which we may retain indefinitely to protect the safety and security of our Site, improve our Services or comply with legal obligations.",
   "privacypolicy.matomooptout": "Opt-out of website tracking",
-  "privacypolicy.matomodescription": "You can opt out of being tracked by our Matomo Analytics instance below:",
+  "privacypolicy.matomodescription":
+    "You can opt out of being tracked by our Matomo Analytics instance below:",
   "privacypolicy.matomolabel1": "You are currently opted out. Click here to opt in.",
-  "privacypolicy.matomotext1": "Opt-out complete; your visits to this website will not be recorded by the Web Analytics tool. Note that if you clear your cookies, delete the opt-out cookie, or if you change computers or Web browsers, you will need to perform the opt-out procedure again.",
+  "privacypolicy.matomotext1":
+    "Opt-out complete; your visits to this website will not be recorded by the Web Analytics tool. Note that if you clear your cookies, delete the opt-out cookie, or if you change computers or Web browsers, you will need to perform the opt-out procedure again.",
   "privacypolicy.matomotext2": "Please click below to opt in:",
   "privacypolicy.matomolabel2": "You are currently opted in. Click here to opt out.",
-  "privacypolicy.matomotext3": "You may choose not to have a unique web analytics cookie identification number assigned to your computer to avoid the aggregation and analysis of data collected on this website.",
-  "privacypolicy.matomotext4": "To make that choice, please click below to receive an opt-out cookie",
+  "privacypolicy.matomotext3":
+    "You may choose not to have a unique web analytics cookie identification number assigned to your computer to avoid the aggregation and analysis of data collected on this website.",
+  "privacypolicy.matomotext4":
+    "To make that choice, please click below to receive an opt-out cookie",
   "Dust & Particles": "Dust & Particles",
-  "Noise": "Noise",
+  Noise: "Noise",
   "Who Altruist Was Created For": "Who Altruist Was Created For",
-  "Monitoring the environment involves plenty of pitfalls, making the job far harder than it looks at first glance. Our team—the creators of Altruist and the open-source project sensors.social—has spent seven years studying and working in this field, and we hope our experience will pleasantly surprise you and give you a practical tool for adapting to the conditions in which you and your loved ones live. Below we explain which main user groups Altruist is designed for…": "Monitoring the environment involves plenty of pitfalls, making the job far harder than it looks at first glance. Our team—the creators of Altruist and the open-source project sensors.social—has spent seven years studying and working in this field, and we hope our experience will pleasantly surprise you and give you a practical tool for adapting to the conditions in which you and your loved ones live. Below we explain which main user groups Altruist is designed for…",
+  "Monitoring the environment involves plenty of pitfalls, making the job far harder than it looks at first glance. Our team—the creators of Altruist and the open-source project sensors.social—has spent seven years studying and working in this field, and we hope our experience will pleasantly surprise you and give you a practical tool for adapting to the conditions in which you and your loved ones live. Below we explain which main user groups Altruist is designed for…":
+    "Monitoring the environment involves plenty of pitfalls, making the job far harder than it looks at first glance. Our team—the creators of Altruist and the open-source project sensors.social—has spent seven years studying and working in this field, and we hope our experience will pleasantly surprise you and give you a practical tool for adapting to the conditions in which you and your loved ones live. Below we explain which main user groups Altruist is designed for…",
   "YYYY-MM-DD": "YYYY-MM-DD",
   "DD.MM.YYYY HH:mm:ss": "DD.MM.YYYY HH:mm:ss",
-  "Who Altruist Was Created For - Sensors use cases": "Who Altruist Was Created For - Sensors use cases",
-  "You live in a big city or an ecologically challenged region": "You live in a big city or an ecologically challenged region",
-  "Think of it as a little adventure: getting to know your city better. The top-priority reason to buy a home air-quality station is to gain solid knowledge of what is happening indoors and outside throughout the year so you can adapt accordingly.": "Think of it as a little adventure: getting to know your city better. The top-priority reason to buy a home air-quality station is to gain solid knowledge of what is happening indoors and outside throughout the year so you can adapt accordingly.",
-  "There’s always something to worry about, but it’s best not to let the extremes—“nothing is happening” vs. “everything is definitely bad”—take root. After seven years working with citizen air-quality monitoring around the world, we can assure you that personal, quantitative monitoring shows the real situation right where you live. After a year with Altruist you will see, in clear graphs with insights from the developers, how air quality varies by time of day, season, the operation of waste-incineration plants, industrial sites, power stations, seasonal fires, dust storms… and you’ll form an objective view of what is happening right outside your window—and adapt to it.": "There’s always something to worry about, but it’s best not to let the extremes—“nothing is happening” vs. “everything is definitely bad”—take root. After seven years working with citizen air-quality monitoring around the world, we can assure you that personal, quantitative monitoring shows the real situation right where you live. After a year with Altruist you will see, in clear graphs with insights from the developers, how air quality varies by time of day, season, the operation of waste-incineration plants, industrial sites, power stations, seasonal fires, dust storms… and you’ll form an objective view of what is happening right outside your window—and adapt to it.",
+  "Who Altruist Was Created For - Sensors use cases":
+    "Who Altruist Was Created For - Sensors use cases",
+  "You live in a big city or an ecologically challenged region":
+    "You live in a big city or an ecologically challenged region",
+  "Think of it as a little adventure: getting to know your city better. The top-priority reason to buy a home air-quality station is to gain solid knowledge of what is happening indoors and outside throughout the year so you can adapt accordingly.":
+    "Think of it as a little adventure: getting to know your city better. The top-priority reason to buy a home air-quality station is to gain solid knowledge of what is happening indoors and outside throughout the year so you can adapt accordingly.",
+  "There’s always something to worry about, but it’s best not to let the extremes—“nothing is happening” vs. “everything is definitely bad”—take root. After seven years working with citizen air-quality monitoring around the world, we can assure you that personal, quantitative monitoring shows the real situation right where you live. After a year with Altruist you will see, in clear graphs with insights from the developers, how air quality varies by time of day, season, the operation of waste-incineration plants, industrial sites, power stations, seasonal fires, dust storms… and you’ll form an objective view of what is happening right outside your window—and adapt to it.":
+    "There’s always something to worry about, but it’s best not to let the extremes—“nothing is happening” vs. “everything is definitely bad”—take root. After seven years working with citizen air-quality monitoring around the world, we can assure you that personal, quantitative monitoring shows the real situation right where you live. After a year with Altruist you will see, in clear graphs with insights from the developers, how air quality varies by time of day, season, the operation of waste-incineration plants, industrial sites, power stations, seasonal fires, dust storms… and you’ll form an objective view of what is happening right outside your window—and adapt to it.",
   "Altruist features for urban conditions": "Altruist features for urban conditions",
   "Street-grade particle sensor": "Street-grade particle sensor",
-  "tough enough to hang outside yet still fine indoors. If you mount Altruist Urban outside your window it won’t “choke” after the first sand truck rumbles past.": "tough enough to hang outside yet still fine indoors. If you mount Altruist Urban outside your window it won’t “choke” after the first sand truck rumbles past.",
+  "tough enough to hang outside yet still fine indoors. If you mount Altruist Urban outside your window it won’t “choke” after the first sand truck rumbles past.":
+    "tough enough to hang outside yet still fine indoors. If you mount Altruist Urban outside your window it won’t “choke” after the first sand truck rumbles past.",
   "Outdoor noise measurement": "Outdoor noise measurement",
-  "Altruist is currently the only product in its class that adds a city-grade noise sensor, covering another important urban factor.": "Altruist is currently the only product in its class that adds a city-grade noise sensor, covering another important urban factor.",
-  "You or your loved ones have allergies or bronchial asthma": "You or your loved ones have allergies or bronchial asthma",
-  "Some of Altruist’s developers suffer from house-dust allergy; one of us spent childhood in hospital every few weeks with asthma attacks. Life is harder for such people, so it is especially important to help them control indoor air quality.": "Some of Altruist’s developers suffer from house-dust allergy; one of us spent childhood in hospital every few weeks with asthma attacks. Life is harder for such people, so it is especially important to help them control indoor air quality.",
-  "How Altruist helps allergy and asthma sufferers": "How Altruist helps allergy and asthma sufferers",
+  "Altruist is currently the only product in its class that adds a city-grade noise sensor, covering another important urban factor.":
+    "Altruist is currently the only product in its class that adds a city-grade noise sensor, covering another important urban factor.",
+  "You or your loved ones have allergies or bronchial asthma":
+    "You or your loved ones have allergies or bronchial asthma",
+  "Some of Altruist’s developers suffer from house-dust allergy; one of us spent childhood in hospital every few weeks with asthma attacks. Life is harder for such people, so it is especially important to help them control indoor air quality.":
+    "Some of Altruist’s developers suffer from house-dust allergy; one of us spent childhood in hospital every few weeks with asthma attacks. Life is harder for such people, so it is especially important to help them control indoor air quality.",
+  "How Altruist helps allergy and asthma sufferers":
+    "How Altruist helps allergy and asthma sufferers",
   "Room profiling": "Room profiling",
-  "for particulate matter and humidity: in the first week you will get 24-hour snapshots with highlighted insights—graphs that let you compare rooms instead of staring at bare numbers.": "for particulate matter and humidity: in the first week you will get 24-hour snapshots with highlighted insights—graphs that let you compare rooms instead of staring at bare numbers.",
+  "for particulate matter and humidity: in the first week you will get 24-hour snapshots with highlighted insights—graphs that let you compare rooms instead of staring at bare numbers.":
+    "for particulate matter and humidity: in the first week you will get 24-hour snapshots with highlighted insights—graphs that let you compare rooms instead of staring at bare numbers.",
   "Ventilation hints": "Ventilation hints",
-  "an Altruist on the balcony or even on a windowsill will warn you when outdoor air is bad so you can close the windows, turn on the purifier and postpone walks until traffic or a dust storm subsides.": "an Altruist on the balcony or even on a windowsill will warn you when outdoor air is bad so you can close the windows, turn on the purifier and postpone walks until traffic or a dust storm subsides.",
+  "an Altruist on the balcony or even on a windowsill will warn you when outdoor air is bad so you can close the windows, turn on the purifier and postpone walks until traffic or a dust storm subsides.":
+    "an Altruist on the balcony or even on a windowsill will warn you when outdoor air is bad so you can close the windows, turn on the purifier and postpone walks until traffic or a dust storm subsides.",
   "Children’s rooms": "Children’s rooms",
-  "place a unit there to spot dust problems early and reduce the risk of developing dust allergy.": "place a unit there to spot dust problems early and reduce the risk of developing dust allergy.",
+  "place a unit there to spot dust problems early and reduce the risk of developing dust allergy.":
+    "place a unit there to spot dust problems early and reduce the risk of developing dust allergy.",
   "You are building a smart home": "You are building a smart home",
-  "Most of our team are engineers who automate their homes. We provide an official integration in Home Assistant Store so you can add Altruist to your local smart-home setup in two clicks, plus ready-made automation blueprints that need no coding.": "Most of our team are engineers who automate their homes. We provide an official integration in Home Assistant Store so you can add Altruist to your local smart-home setup in two clicks, plus ready-made automation blueprints that need no coding.",
-  "How Altruist is useful for a DIY smart-home engineer": "How Altruist is useful for a DIY smart-home engineer",
+  "Most of our team are engineers who automate their homes. We provide an official integration in Home Assistant Store so you can add Altruist to your local smart-home setup in two clicks, plus ready-made automation blueprints that need no coding.":
+    "Most of our team are engineers who automate their homes. We provide an official integration in Home Assistant Store so you can add Altruist to your local smart-home setup in two clicks, plus ready-made automation blueprints that need no coding.",
+  "How Altruist is useful for a DIY smart-home engineer":
+    "How Altruist is useful for a DIY smart-home engineer",
   "RGB lamp indicator": "RGB lamp indicator",
-  "link any parameter to a smart bulb so your room quietly signals changes (no need to turn the whole living-room red just because Grandpa lights his pipe on the balcony).": "link any parameter to a smart bulb so your room quietly signals changes (no need to turn the whole living-room red just because Grandpa lights his pipe on the balcony).",
+  "link any parameter to a smart bulb so your room quietly signals changes (no need to turn the whole living-room red just because Grandpa lights his pipe on the balcony).":
+    "link any parameter to a smart bulb so your room quietly signals changes (no need to turn the whole living-room red just because Grandpa lights his pipe on the balcony).",
   "Air-purifier trigger": "Air-purifier trigger",
-  "start a purifier inside whenever the outdoor unit detects smoke or dust.": "start a purifier inside whenever the outdoor unit detects smoke or dust.",
+  "start a purifier inside whenever the outdoor unit detects smoke or dust.":
+    "start a purifier inside whenever the outdoor unit detects smoke or dust.",
   "Air-conditioner control": "Air-conditioner control",
-  "react automatically to rising outdoor humidity or temperature at dawn.": "react automatically to rising outdoor humidity or temperature at dawn.",
-  "You like to support community initiatives independent of governments and corporations": "You like to support community initiatives independent of governments and corporations",
-  "Become a data source and join other Altruists to build a citizen network monitoring environmental issues in your region. The developers have open-sourced the entire sensors.social backend so local communities can launch an independent sensor map.": "Become a data source and join other Altruists to build a citizen network monitoring environmental issues in your region. The developers have open-sourced the entire sensors.social backend so local communities can launch an independent sensor map.",
+  "react automatically to rising outdoor humidity or temperature at dawn.":
+    "react automatically to rising outdoor humidity or temperature at dawn.",
+  "You like to support community initiatives independent of governments and corporations":
+    "You like to support community initiatives independent of governments and corporations",
+  "Become a data source and join other Altruists to build a citizen network monitoring environmental issues in your region. The developers have open-sourced the entire sensors.social backend so local communities can launch an independent sensor map.":
+    "Become a data source and join other Altruists to build a citizen network monitoring environmental issues in your region. The developers have open-sourced the entire sensors.social backend so local communities can launch an independent sensor map.",
   "How Altruist helps independent monitoring": "How Altruist helps independent monitoring",
   "Trusted hardware": "Trusted hardware",
-  "open-source and field-tested by thousands of users, easy to recommend to neighbours.": "open-source and field-tested by thousands of users, easy to recommend to neighbours.",
+  "open-source and field-tested by thousands of users, easy to recommend to neighbours.":
+    "open-source and field-tested by thousands of users, easy to recommend to neighbours.",
   "Your own map in one day": "Your own map in one day",
-  "clone the GitHub repo, deploy on any domain and run a fully independent service that even the Altruist developers can’t interfere with.": "clone the GitHub repo, deploy on any domain and run a fully independent service that even the Altruist developers can’t interfere with.",
-  "The most fascinating lesson from seven years of experiments is the sheer diversity of motives, methods and analysis styles in environmental monitoring—from health concerns to activism, from outdated test tubes to high-end sampling stations, from smiley-faces to daily graphs. It all makes the task far more complex than it first appears, but we hope our team’s perspective embodied in Altruist and sensors.social will delight you and give you a useful tool for adapting to your environment.": "The most fascinating lesson from seven years of experiments is the sheer diversity of motives, methods and analysis styles in environmental monitoring—from health concerns to activism, from outdated test tubes to high-end sampling stations, from smiley-faces to daily graphs. It all makes the task far more complex than it first appears, but we hope our team’s perspective embodied in Altruist and sensors.social will delight you and give you a useful tool for adapting to your environment.",
+  "clone the GitHub repo, deploy on any domain and run a fully independent service that even the Altruist developers can’t interfere with.":
+    "clone the GitHub repo, deploy on any domain and run a fully independent service that even the Altruist developers can’t interfere with.",
+  "The most fascinating lesson from seven years of experiments is the sheer diversity of motives, methods and analysis styles in environmental monitoring—from health concerns to activism, from outdated test tubes to high-end sampling stations, from smiley-faces to daily graphs. It all makes the task far more complex than it first appears, but we hope our team’s perspective embodied in Altruist and sensors.social will delight you and give you a useful tool for adapting to your environment.":
+    "The most fascinating lesson from seven years of experiments is the sheer diversity of motives, methods and analysis styles in environmental monitoring—from health concerns to activism, from outdated test tubes to high-end sampling stations, from smiley-faces to daily graphs. It all makes the task far more complex than it first appears, but we hope our team’s perspective embodied in Altruist and sensors.social will delight you and give you a useful tool for adapting to your environment.",
   "Air quality measurements information": "Air quality measurements information",
-  "Sensors.social Air Quality Map — an interactive tool for viewing, analyzing, and comparing real-time air quality data from sensors. Get up-to-date information on air conditions in your area.": "Sensors.social Air Quality Map — an interactive tool for viewing, analyzing, and comparing real-time air quality data from sensors. Get up-to-date information on air conditions in your area.",
-  "Compare table for Altruist with other air quality sensors": "Compare table for Altruist with other air quality sensors",
-  "Explore the advantages and special features of each sensor and choose the one that best suits your needs!": "Explore the advantages and special features of each sensor and choose the one that best suits your needs!",
+  "Sensors.social Air Quality Map — an interactive tool for viewing, analyzing, and comparing real-time air quality data from sensors. Get up-to-date information on air conditions in your area.":
+    "Sensors.social Air Quality Map — an interactive tool for viewing, analyzing, and comparing real-time air quality data from sensors. Get up-to-date information on air conditions in your area.",
+  "Compare table for Altruist with other air quality sensors":
+    "Compare table for Altruist with other air quality sensors",
+  "Explore the advantages and special features of each sensor and choose the one that best suits your needs!":
+    "Explore the advantages and special features of each sensor and choose the one that best suits your needs!",
   "7 Years of Altruism - Altruist Timeline": "7 Years of Altruism - Altruist Timeline",
-  "At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”.": "At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”.",
+  "At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”.":
+    "At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”.",
   "7 Years of Altruism": "7 Years of Altruism",
-  "Altruist is a two-module air quality sensor that will be useful for residents of large cities, home automation enthusiasts, and those who want to create their own local environmental monitoring community anywhere in the world. Altruist has many advantages in its class of devices, which we’ll discuss separately, but in this publication, we want to tell the story leading up to the launch of this consumer product — a unique and fascinating story!": "Altruist is a two-module air quality sensor that will be useful for residents of large cities, home automation enthusiasts, and those who want to create their own local environmental monitoring community anywhere in the world. Altruist has many advantages in its class of devices, which we’ll discuss separately, but in this publication, we want to tell the story leading up to the launch of this consumer product — a unique and fascinating story!",
-  "Year 2017: The 1st R&D – Air Quality Measurement on Playgrounds in an Industrial City": "Year 2017: The 1st R&D – Air Quality Measurement on Playgrounds in an Industrial City",
-  "In the winter of 2017–2018, Robonomics engineers purchased professional air quality sensors certified for the European market, which allowed detailed analysis of air quality for specific impurities, such as NOx, SOx — typical of car and factory emissions. The sensor also measured dust particles in the air and basic environmental parameters.": "In the winter of 2017–2018, Robonomics engineers purchased professional air quality sensors certified for the European market, which allowed detailed analysis of air quality for specific impurities, such as NOx, SOx — typical of car and factory emissions. The sensor also measured dust particles in the air and basic environmental parameters.",
-  "The uniqueness of this sensor — which might seem funny in 2025 — was that in 2017 it was still difficult to find well-known sensors with IoT modules for cloud data transfer. The Spanish manufacturer Libelium offered expensive sensors, but we decided to buy them to develop software for real-time connection of the sensor to an information page and a cloud database — that was the experiment. Thus, for the first time, we started monitoring air quality using modern methods, which, unlike state systems at that time, allowed data to be collected not manually and more frequently than twice a day, and sensors could be placed almost anywhere — for example, on a lamppost in a residential courtyard at a playground.": "The uniqueness of this sensor — which might seem funny in 2025 — was that in 2017 it was still difficult to find well-known sensors with IoT modules for cloud data transfer. The Spanish manufacturer Libelium offered expensive sensors, but we decided to buy them to develop software for real-time connection of the sensor to an information page and a cloud database — that was the experiment. Thus, for the first time, we started monitoring air quality using modern methods, which, unlike state systems at that time, allowed data to be collected not manually and more frequently than twice a day, and sensors could be placed almost anywhere — for example, on a lamppost in a residential courtyard at a playground.",
-  "Year 2018: The Problem of Trust in Society and Searching for Alternatives for Citizen Monitoring": "Year 2018: The Problem of Trust in Society and Searching for Alternatives for Citizen Monitoring",
-  "Realizing that no matter what we did, we could not motivate citizens to equip playgrounds with sensors using funds from house maintenance fees and provide them with an online service for residents, we started looking for an alternative to our initial idea. This is how we found a project from Stuttgart (also an industrial region with an automotive industry, like Tolyatti on the Volga, where we did our tests). Luftdaten or sensors.community was already, in our view, the first successful citizen monitoring project, whose organizational approach helped overcome the public trust issue for sensor data. The idea was that instead of expensive monitoring funded by an entire building, you could offer individual enthusiasts a DIY kit to build a home air quality station, dramatically reducing both costs and complexity. By then, the project already had thousands of users in Europe. Inspired by their approach and considering our own experience from the previous year, we continued developing the open source online service, shifting towards a sensor map instead of a local air quality portal for residential courtyards.": "Realizing that no matter what we did, we could not motivate citizens to equip playgrounds with sensors using funds from house maintenance fees and provide them with an online service for residents, we started looking for an alternative to our initial idea. This is how we found a project from Stuttgart (also an industrial region with an automotive industry, like Tolyatti on the Volga, where we did our tests). Luftdaten or sensors.community was already, in our view, the first successful citizen monitoring project, whose organizational approach helped overcome the public trust issue for sensor data. The idea was that instead of expensive monitoring funded by an entire building, you could offer individual enthusiasts a DIY kit to build a home air quality station, dramatically reducing both costs and complexity. By then, the project already had thousands of users in Europe. Inspired by their approach and considering our own experience from the previous year, we continued developing the open source online service, shifting towards a sensor map instead of a local air quality portal for residential courtyards.",
-  "Year 2019: Three Cool R&D Projects in Air and Water Quality Monitoring": "Year 2019: Three Cool R&D Projects in Air and Water Quality Monitoring",
-  "By mid-2018, we began experimenting with affordable, but high-quality dust sensors without detailed analysis of specific substances. We also tried futuristic mobility scenarios for environmental sensors.": "By mid-2018, we began experimenting with affordable, but high-quality dust sensors without detailed analysis of specific substances. We also tried futuristic mobility scenarios for environmental sensors.",
-  "Over about 12–14 months, we deployed dozens of sensors in city billboards in Tolyatti, created a solar-powered water drone capable of analyzing water quality online in a similar way, and conducted experiments with ecologists to test the hypothesis that air quality sensors on aerial drones could be used in hard-to-reach areas, such as around landfill sites.": "Over about 12–14 months, we deployed dozens of sensors in city billboards in Tolyatti, created a solar-powered water drone capable of analyzing water quality online in a similar way, and conducted experiments with ecologists to test the hypothesis that air quality sensors on aerial drones could be used in hard-to-reach areas, such as around landfill sites.",
-  "Our water drone project was ultimately chosen as a showcase at the largest IoT World Congress in Europe, in Barcelona in 2019. The billboard sensors proved reliable and gave the first insights during city pollution events, as data came from many points across the city.": "Our water drone project was ultimately chosen as a showcase at the largest IoT World Congress in Europe, in Barcelona in 2019. The billboard sensors proved reliable and gave the first insights during city pollution events, as data came from many points across the city.",
-  "We even managed to arrange for a certified mobile laboratory to visit for detailed analysis when we detected sustained particle exceedances from 2–3 neighboring sensors. But in 2019, COVID started, and almost all activity except laboratory work had to be stopped for a while…": "We even managed to arrange for a certified mobile laboratory to visit for detailed analysis when we detected sustained particle exceedances from 2–3 neighboring sensors. But in 2019, COVID started, and almost all activity except laboratory work had to be stopped for a while…",
-  "Year 2021: Launching the sensors.social Prototype and Showcasing at the UN COP25 Platform": "Year 2021: Launching the sensors.social Prototype and Showcasing at the UN COP25 Platform",
-  "By early 2021, the Altruist developer team, together with partners, launched an initiative to create an open environmental data repository that could potentially replace audit checks in the MRV (monitoring, reporting, verification) field. We hope to return to the UN platform in a few years and show how sensor networks, without human involvement, can verify sustainable emissions reduction — or, on the contrary, prove the opposite regardless of company claims in your region.": "By early 2021, the Altruist developer team, together with partners, launched an initiative to create an open environmental data repository that could potentially replace audit checks in the MRV (monitoring, reporting, verification) field. We hope to return to the UN platform in a few years and show how sensor networks, without human involvement, can verify sustainable emissions reduction — or, on the contrary, prove the opposite regardless of company claims in your region.",
-  "We also started focusing on the quality of sensor network architecture with mapping. We developed an architecture allowing the creation of federated sensor networks based on Altruist, providing great freedom for local communities to set up their own services as needed, and released all the code on GitHub. Today, sensors.social serves as a reference implementation, available for anyone in the world to create their own sensor network.": "We also started focusing on the quality of sensor network architecture with mapping. We developed an architecture allowing the creation of federated sensor networks based on Altruist, providing great freedom for local communities to set up their own services as needed, and released all the code on GitHub. Today, sensors.social serves as a reference implementation, available for anyone in the world to create their own sensor network.",
-  "Over the past four years, we have made dozens of software releases necessary to build a user sensor network without corporate clouds. Today, sensors.social is both one of the most complex examples of sensor network integration and at the same time…": "Over the past four years, we have made dozens of software releases necessary to build a user sensor network without corporate clouds. Today, sensors.social is both one of the most complex examples of sensor network integration and at the same time…",
-  "Having built involvement in civic sensor networks, sensor maps, and analytics online services, we decided to develop our own sensor device, rather than assembling them from kits for each user who wanted to join the project.": "Having built involvement in civic sensor networks, sensor maps, and analytics online services, we decided to develop our own sensor device, rather than assembling them from kits for each user who wanted to join the project.",
-  "This took us three years, about seven design iterations — ordering PCB manufacturing from Chinese factories, assembling cases, and testing in real conditions. As a result, by mid-2025, the two-module Altruist air quality sensor is ready for sale on online platforms.": "This took us three years, about seven design iterations — ordering PCB manufacturing from Chinese factories, assembling cases, and testing in real conditions. As a result, by mid-2025, the two-module Altruist air quality sensor is ready for sale on online platforms.",
+  "Altruist is a two-module air quality sensor that will be useful for residents of large cities, home automation enthusiasts, and those who want to create their own local environmental monitoring community anywhere in the world. Altruist has many advantages in its class of devices, which we’ll discuss separately, but in this publication, we want to tell the story leading up to the launch of this consumer product — a unique and fascinating story!":
+    "Altruist is a two-module air quality sensor that will be useful for residents of large cities, home automation enthusiasts, and those who want to create their own local environmental monitoring community anywhere in the world. Altruist has many advantages in its class of devices, which we’ll discuss separately, but in this publication, we want to tell the story leading up to the launch of this consumer product — a unique and fascinating story!",
+  "Year 2017: The 1st R&D – Air Quality Measurement on Playgrounds in an Industrial City":
+    "Year 2017: The 1st R&D – Air Quality Measurement on Playgrounds in an Industrial City",
+  "In the winter of 2017–2018, Robonomics engineers purchased professional air quality sensors certified for the European market, which allowed detailed analysis of air quality for specific impurities, such as NOx, SOx — typical of car and factory emissions. The sensor also measured dust particles in the air and basic environmental parameters.":
+    "In the winter of 2017–2018, Robonomics engineers purchased professional air quality sensors certified for the European market, which allowed detailed analysis of air quality for specific impurities, such as NOx, SOx — typical of car and factory emissions. The sensor also measured dust particles in the air and basic environmental parameters.",
+  "The uniqueness of this sensor — which might seem funny in 2025 — was that in 2017 it was still difficult to find well-known sensors with IoT modules for cloud data transfer. The Spanish manufacturer Libelium offered expensive sensors, but we decided to buy them to develop software for real-time connection of the sensor to an information page and a cloud database — that was the experiment. Thus, for the first time, we started monitoring air quality using modern methods, which, unlike state systems at that time, allowed data to be collected not manually and more frequently than twice a day, and sensors could be placed almost anywhere — for example, on a lamppost in a residential courtyard at a playground.":
+    "The uniqueness of this sensor — which might seem funny in 2025 — was that in 2017 it was still difficult to find well-known sensors with IoT modules for cloud data transfer. The Spanish manufacturer Libelium offered expensive sensors, but we decided to buy them to develop software for real-time connection of the sensor to an information page and a cloud database — that was the experiment. Thus, for the first time, we started monitoring air quality using modern methods, which, unlike state systems at that time, allowed data to be collected not manually and more frequently than twice a day, and sensors could be placed almost anywhere — for example, on a lamppost in a residential courtyard at a playground.",
+  "Year 2018: The Problem of Trust in Society and Searching for Alternatives for Citizen Monitoring":
+    "Year 2018: The Problem of Trust in Society and Searching for Alternatives for Citizen Monitoring",
+  "Realizing that no matter what we did, we could not motivate citizens to equip playgrounds with sensors using funds from house maintenance fees and provide them with an online service for residents, we started looking for an alternative to our initial idea. This is how we found a project from Stuttgart (also an industrial region with an automotive industry, like Tolyatti on the Volga, where we did our tests). Luftdaten or sensors.community was already, in our view, the first successful citizen monitoring project, whose organizational approach helped overcome the public trust issue for sensor data. The idea was that instead of expensive monitoring funded by an entire building, you could offer individual enthusiasts a DIY kit to build a home air quality station, dramatically reducing both costs and complexity. By then, the project already had thousands of users in Europe. Inspired by their approach and considering our own experience from the previous year, we continued developing the open source online service, shifting towards a sensor map instead of a local air quality portal for residential courtyards.":
+    "Realizing that no matter what we did, we could not motivate citizens to equip playgrounds with sensors using funds from house maintenance fees and provide them with an online service for residents, we started looking for an alternative to our initial idea. This is how we found a project from Stuttgart (also an industrial region with an automotive industry, like Tolyatti on the Volga, where we did our tests). Luftdaten or sensors.community was already, in our view, the first successful citizen monitoring project, whose organizational approach helped overcome the public trust issue for sensor data. The idea was that instead of expensive monitoring funded by an entire building, you could offer individual enthusiasts a DIY kit to build a home air quality station, dramatically reducing both costs and complexity. By then, the project already had thousands of users in Europe. Inspired by their approach and considering our own experience from the previous year, we continued developing the open source online service, shifting towards a sensor map instead of a local air quality portal for residential courtyards.",
+  "Year 2019: Three Cool R&D Projects in Air and Water Quality Monitoring":
+    "Year 2019: Three Cool R&D Projects in Air and Water Quality Monitoring",
+  "By mid-2018, we began experimenting with affordable, but high-quality dust sensors without detailed analysis of specific substances. We also tried futuristic mobility scenarios for environmental sensors.":
+    "By mid-2018, we began experimenting with affordable, but high-quality dust sensors without detailed analysis of specific substances. We also tried futuristic mobility scenarios for environmental sensors.",
+  "Over about 12–14 months, we deployed dozens of sensors in city billboards in Tolyatti, created a solar-powered water drone capable of analyzing water quality online in a similar way, and conducted experiments with ecologists to test the hypothesis that air quality sensors on aerial drones could be used in hard-to-reach areas, such as around landfill sites.":
+    "Over about 12–14 months, we deployed dozens of sensors in city billboards in Tolyatti, created a solar-powered water drone capable of analyzing water quality online in a similar way, and conducted experiments with ecologists to test the hypothesis that air quality sensors on aerial drones could be used in hard-to-reach areas, such as around landfill sites.",
+  "Our water drone project was ultimately chosen as a showcase at the largest IoT World Congress in Europe, in Barcelona in 2019. The billboard sensors proved reliable and gave the first insights during city pollution events, as data came from many points across the city.":
+    "Our water drone project was ultimately chosen as a showcase at the largest IoT World Congress in Europe, in Barcelona in 2019. The billboard sensors proved reliable and gave the first insights during city pollution events, as data came from many points across the city.",
+  "We even managed to arrange for a certified mobile laboratory to visit for detailed analysis when we detected sustained particle exceedances from 2–3 neighboring sensors. But in 2019, COVID started, and almost all activity except laboratory work had to be stopped for a while…":
+    "We even managed to arrange for a certified mobile laboratory to visit for detailed analysis when we detected sustained particle exceedances from 2–3 neighboring sensors. But in 2019, COVID started, and almost all activity except laboratory work had to be stopped for a while…",
+  "Year 2021: Launching the sensors.social Prototype and Showcasing at the UN COP25 Platform":
+    "Year 2021: Launching the sensors.social Prototype and Showcasing at the UN COP25 Platform",
+  "By early 2021, the Altruist developer team, together with partners, launched an initiative to create an open environmental data repository that could potentially replace audit checks in the MRV (monitoring, reporting, verification) field. We hope to return to the UN platform in a few years and show how sensor networks, without human involvement, can verify sustainable emissions reduction — or, on the contrary, prove the opposite regardless of company claims in your region.":
+    "By early 2021, the Altruist developer team, together with partners, launched an initiative to create an open environmental data repository that could potentially replace audit checks in the MRV (monitoring, reporting, verification) field. We hope to return to the UN platform in a few years and show how sensor networks, without human involvement, can verify sustainable emissions reduction — or, on the contrary, prove the opposite regardless of company claims in your region.",
+  "We also started focusing on the quality of sensor network architecture with mapping. We developed an architecture allowing the creation of federated sensor networks based on Altruist, providing great freedom for local communities to set up their own services as needed, and released all the code on GitHub. Today, sensors.social serves as a reference implementation, available for anyone in the world to create their own sensor network.":
+    "We also started focusing on the quality of sensor network architecture with mapping. We developed an architecture allowing the creation of federated sensor networks based on Altruist, providing great freedom for local communities to set up their own services as needed, and released all the code on GitHub. Today, sensors.social serves as a reference implementation, available for anyone in the world to create their own sensor network.",
+  "Over the past four years, we have made dozens of software releases necessary to build a user sensor network without corporate clouds. Today, sensors.social is both one of the most complex examples of sensor network integration and at the same time…":
+    "Over the past four years, we have made dozens of software releases necessary to build a user sensor network without corporate clouds. Today, sensors.social is both one of the most complex examples of sensor network integration and at the same time…",
+  "Having built involvement in civic sensor networks, sensor maps, and analytics online services, we decided to develop our own sensor device, rather than assembling them from kits for each user who wanted to join the project.":
+    "Having built involvement in civic sensor networks, sensor maps, and analytics online services, we decided to develop our own sensor device, rather than assembling them from kits for each user who wanted to join the project.",
+  "This took us three years, about seven design iterations — ordering PCB manufacturing from Chinese factories, assembling cases, and testing in real conditions. As a result, by mid-2025, the two-module Altruist air quality sensor is ready for sale on online platforms.":
+    "This took us three years, about seven design iterations — ordering PCB manufacturing from Chinese factories, assembling cases, and testing in real conditions. As a result, by mid-2025, the two-module Altruist air quality sensor is ready for sale on online platforms.",
   "What’s Next?": "What’s Next?",
-  "Soon, we will launch on Indiegogo, and then we want to make the Altruist sensor available worldwide through online platforms like Amazon, as well as on regional distributor websites. Check the “devices” section at robonomics.network, select “Altruist”, and purchase it in the way that is most convenient for you.": "Soon, we will launch on Indiegogo, and then we want to make the Altruist sensor available worldwide through online platforms like Amazon, as well as on regional distributor websites. Check the “devices” section at robonomics.network, select “Altruist”, and purchase it in the way that is most convenient for you.",
+  "Soon, we will launch on Indiegogo, and then we want to make the Altruist sensor available worldwide through online platforms like Amazon, as well as on regional distributor websites. Check the “devices” section at robonomics.network, select “Altruist”, and purchase it in the way that is most convenient for you.":
+    "Soon, we will launch on Indiegogo, and then we want to make the Altruist sensor available worldwide through online platforms like Amazon, as well as on regional distributor websites. Check the “devices” section at robonomics.network, select “Altruist”, and purchase it in the way that is most convenient for you.",
   "Find out who Altruist was designed for": "Find out who Altruist was designed for",
   "on this page": "on this page",
-  "Years 2022–2025: Hardware Design and the Start of Altruist Dev Kit Sales": "Years 2022–2025: Hardware Design and the Start of Altruist Dev Kit Sales",
-  "The summer of 2018 was a real test for us! We prepared our first report on the development of a 24/7 civic monitoring mechanism based on modern open source internet technologies and wanted to present the results of a one-year trial from a single playground in an industrial city. But things did not go as expected. In local social network groups, our report was met with a wave of criticism, insults, and all kinds of accusations! The problem was that citizens did not like the fact that in a specific city area, near water, far from factories, the air turned out to be not that bad, which angered residents of less environmentally favorable areas. They accused us of being hired by the government to prepare such a report, called us corrupt, claimed we were spending some federal budget (even though everything was paid for by the project team). So, a huge amount of criticism, and no focus on the software we developed or discussion of the data website. Only criticism of where the measurements were taken.": "The summer of 2018 was a real test for us! We prepared our first report on the development of a 24/7 civic monitoring mechanism based on modern open source internet technologies and wanted to present the results of a one-year trial from a single playground in an industrial city. But things did not go as expected. In local social network groups, our report was met with a wave of criticism, insults, and all kinds of accusations! The problem was that citizens did not like the fact that in a specific city area, near water, far from factories, the air turned out to be not that bad, which angered residents of less environmentally favorable areas. They accused us of being hired by the government to prepare such a report, called us corrupt, claimed we were spending some federal budget (even though everything was paid for by the project team). So, a huge amount of criticism, and no focus on the software we developed or discussion of the data website. Only criticism of where the measurements were taken.",
+  "Years 2022–2025: Hardware Design and the Start of Altruist Dev Kit Sales":
+    "Years 2022–2025: Hardware Design and the Start of Altruist Dev Kit Sales",
+  "The summer of 2018 was a real test for us! We prepared our first report on the development of a 24/7 civic monitoring mechanism based on modern open source internet technologies and wanted to present the results of a one-year trial from a single playground in an industrial city. But things did not go as expected. In local social network groups, our report was met with a wave of criticism, insults, and all kinds of accusations! The problem was that citizens did not like the fact that in a specific city area, near water, far from factories, the air turned out to be not that bad, which angered residents of less environmentally favorable areas. They accused us of being hired by the government to prepare such a report, called us corrupt, claimed we were spending some federal budget (even though everything was paid for by the project team). So, a huge amount of criticism, and no focus on the software we developed or discussion of the data website. Only criticism of where the measurements were taken.":
+    "The summer of 2018 was a real test for us! We prepared our first report on the development of a 24/7 civic monitoring mechanism based on modern open source internet technologies and wanted to present the results of a one-year trial from a single playground in an industrial city. But things did not go as expected. In local social network groups, our report was met with a wave of criticism, insults, and all kinds of accusations! The problem was that citizens did not like the fact that in a specific city area, near water, far from factories, the air turned out to be not that bad, which angered residents of less environmentally favorable areas. They accused us of being hired by the government to prepare such a report, called us corrupt, claimed we were spending some federal budget (even though everything was paid for by the project team). So, a huge amount of criticism, and no focus on the software we developed or discussion of the data website. Only criticism of where the measurements were taken.",
   "Dual-module, outdoor and indoor": "Dual-module, outdoor and indoor",
   "Can be outdoor or indoor": "Can be outdoor or indoor",
   "Two separate modules": "Two separate modules",
@@ -174,10 +242,12 @@ export default {
   "Only indoor": "Only indoor",
   "Indoor CO2": "Indoor CO2",
   "User Interface on Device": "User Interface on Device",
-  "LED indication on Urban + E-ink screen on Insight": "LED indication on Urban + E-ink screen on Insight",
+  "LED indication on Urban + E-ink screen on Insight":
+    "LED indication on Urban + E-ink screen on Insight",
   "Only LED strip": "Only LED strip",
   "LED indication and small screen on Indoor": "LED indication and small screen on Indoor",
-  "LED indication on Outdoor and LCD screen on Pro": "LED indication on Outdoor and LCD screen on Pro",
+  "LED indication on Outdoor and LCD screen on Pro":
+    "LED indication on Outdoor and LCD screen on Pro",
   "microSD Support": "microSD Support",
   "Power Connector": "Power Connector",
   "USB Type-C": "USB Type-C",
@@ -196,7 +266,8 @@ export default {
   "Mandatory Cloud Connection": "Mandatory Cloud Connection",
   "Local Device Management via IP": "Local Device Management via IP",
   "Full control over settings": "Full control over settings",
-  "Most functions are not available, settings only via corporate cloud": "Most functions are not available, settings only via corporate cloud",
+  "Most functions are not available, settings only via corporate cloud":
+    "Most functions are not available, settings only via corporate cloud",
   "No, but available via Home Assistant": "No, but available via Home Assistant",
   "No, only in the app": "No, only in the app",
   "Online Air Quality Map by Community": "Online Air Quality Map by Community",
@@ -204,27 +275,31 @@ export default {
   "Yes, main entry point to view data": "Yes, main entry point to view data",
   "Home Assistant Integration": "Home Assistant Integration",
   "Yes, only the HA addon is needed": "Yes, only the HA addon is needed",
-  "Yes, but limited API and cloud connection are required": "Yes, but limited API and cloud connection are required",
+  "Yes, but limited API and cloud connection are required":
+    "Yes, but limited API and cloud connection are required",
   "Yes, but only for Pro": "Yes, but only for Pro",
   "Data Control and Ownership": "Data Control and Ownership",
-  "The user owns the data and controls its distribution": "The user owns the data and controls its distribution",
-  "The company owns the data, but users can view and export it with some limitations": "The company owns the data, but users can view and export it with some limitations",
+  "The user owns the data and controls its distribution":
+    "The user owns the data and controls its distribution",
+  "The company owns the data, but users can view and export it with some limitations":
+    "The company owns the data, but users can view and export it with some limitations",
   "Open Source and Hardware": "Open Source and Hardware",
   "Custom Firmware and DIY-mods": "Custom Firmware and DIY-mods",
   "Where to get Altruist Indoor & Outdoor Sensor": "Where to get Altruist Indoor & Outdoor Sensor",
-  "Air monitor for indoors & outdoors: urban PM & noise, bedroom CO₂, indoor vs outdoor temp & humidity, barometric pressure, E-Ink display, Wi-Fi, USB-C, no forced cloud, Home Assistant ready. DIY & modding friendly! Super Early Bird – €149 | Amazon – €295 (Fall 2025).": "Air monitor for indoors & outdoors: urban PM & noise, bedroom CO₂, indoor vs outdoor temp & humidity, barometric pressure, E-Ink display, Wi-Fi, USB-C, no forced cloud, Home Assistant ready. DIY & modding friendly! Super Early Bird – €149 | Amazon – €295 (Fall 2025).",
+  "Air monitor for indoors & outdoors: urban PM & noise, bedroom CO₂, indoor vs outdoor temp & humidity, barometric pressure, E-Ink display, Wi-Fi, USB-C, no forced cloud, Home Assistant ready. DIY & modding friendly! Super Early Bird – €149 | Amazon – €295 (Fall 2025).":
+    "Air monitor for indoors & outdoors: urban PM & noise, bedroom CO₂, indoor vs outdoor temp & humidity, barometric pressure, E-Ink display, Wi-Fi, USB-C, no forced cloud, Home Assistant ready. DIY & modding friendly! Super Early Bird – €149 | Amazon – €295 (Fall 2025).",
   "Join Indiegogo Campaign": "Join Indiegogo Campaign",
-  "Model": "Model",
-  "Yes": "Yes",
-  "No": "No",
-  "Housing": "Housing",
+  Model: "Model",
+  Yes: "Yes",
+  No: "No",
+  Housing: "Housing",
   "Altruist Urban & Insight": "Altruist Urban & Insight",
   "PurpleAir Zen": "PurpleAir Zen",
   "AirGradient Indoor & Outdoor": "AirGradient Indoor & Outdoor",
   "Netatmo Weather Station": "Netatmo Weather Station",
   "AirVisual Pro & Outdoor": "AirVisual Pro & Outdoor",
-  "Price": "Price",
-  "Type": "Type",
+  Price: "Price",
+  Type: "Type",
   "Altruist use cases": "Altruist use cases",
   "Altruist timeline": "Altruist timeline",
   "Altruist compare": "Altruist compare",
@@ -232,22 +307,22 @@ export default {
   "Air Sensor Comparison Table": "Air Sensor Comparison Table",
   "Map data": "Map data",
   "OpenStreetMap contributors": "OpenStreetMap contributors",
-  "Photo": "Photo",
+  Photo: "Photo",
   "Secured by": "Secured by",
   "Daily Recap": "Daily Recap",
-  "Realtime": "Realtime",
+  Realtime: "Realtime",
   "Dust & Particles": "Dust & Particles",
-  "Noise": "Noise",
-  "Climate": "Climate",
-  "Pressure": "Pressure",
-  "Good": "Good",
-  "Moderate": "Moderate",
+  Noise: "Noise",
+  Climate: "Climate",
+  Pressure: "Pressure",
+  Good: "Good",
+  Moderate: "Moderate",
   "Unhealthy for Sensitive Groups": "Unhealthy for Sensitive Groups",
-  "Unhealthy": "Unhealthy",
+  Unhealthy: "Unhealthy",
   "Very Unhealthy": "Very Unhealthy",
-  "Hazardous": "Hazardous",
-  "Today": "Today",
+  Hazardous: "Hazardous",
+  Today: "Today",
   "days left": "days left",
   "Air quality monitor on": "Air quality monitor on",
-  "Up to -42%": "Up to -42%"
+  "Up to -42%": "Up to -42%",
 };

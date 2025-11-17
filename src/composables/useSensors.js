@@ -7,7 +7,15 @@ import { useBookmarks } from "@/composables/useBookmarks";
 import { pinned_sensors } from "@config";
 import * as sensorsUtils from "../utils/map/sensors";
 import { clearActiveMarker, setActiveMarker } from "../utils/map/markers";
-import { getSensors, getSensorDataWithCache, getMaxData, unsubscribeRealtime, saveAddressToCache, getCachedAddress, getSensorOwner } from "../utils/map/sensors/requests";
+import {
+  getSensors,
+  getSensorDataWithCache,
+  getMaxData,
+  unsubscribeRealtime,
+  saveAddressToCache,
+  getCachedAddress,
+  getSensorOwner,
+} from "../utils/map/sensors/requests";
 import { getAddress } from "../utils/utils";
 import { hasValidCoordinates } from "../utils/utils";
 import { dayBoundsUnix, getPeriodBounds } from "@/utils/date";
@@ -21,14 +29,14 @@ const sensorsNoLocation = ref([]);
 const sensorsLoaded = ref(false);
 
 const createDefaultLogsProgress = () => ({
-  status: 'idle',
+  status: "idle",
   active: false,
   totalDays: 0,
   cachedDays: 0,
   loadedDays: 0,
   missingDays: 0,
   percent: 0,
-  mode: null
+  mode: null,
 });
 
 const logsProgress = ref(createDefaultLogsProgress());
@@ -52,7 +60,7 @@ export function useSensors(localeComputed) {
     if (!sensorId) return;
 
     // Проверяем, есть ли owner уже в списке сенсоров
-    const existing = sensors.value.find(s => s.sensor_id === sensorId);
+    const existing = sensors.value.find((s) => s.sensor_id === sensorId);
     if (existing && existing.owner) {
       return Promise.resolve(existing.owner);
     }
@@ -63,20 +71,20 @@ export function useSensors(localeComputed) {
     }
 
     const promise = getSensorOwner(sensorId)
-      .then(owner => {
+      .then((owner) => {
         if (owner) {
           setSensorData(sensorId, { owner });
           if (sensorPoint.value && sensorPoint.value.sensor_id === sensorId) {
             sensorPoint.value = {
               ...sensorPoint.value,
-              owner
+              owner,
             };
           }
         }
         return owner;
       })
-      .catch(error => {
-        console.warn('Failed to load owner for sensor', sensorId, error);
+      .catch((error) => {
+        console.warn("Failed to load owner for sensor", sensorId, error);
         return null;
       })
       .finally(() => {
@@ -86,7 +94,6 @@ export function useSensors(localeComputed) {
     ownerPromises.set(sensorId, promise);
     return promise;
   };
-
 
   const isSensor = computed(() => {
     return !!(route.query.sensor && sensorPoint.value && sensorPoint.value.sensor_id);
@@ -113,14 +120,14 @@ export function useSensors(localeComputed) {
    */
   const setSensorData = (sensorId, data) => {
     if (!sensorId || !data) return;
-    
+
     // existingSensors: Создаем копию массива для обеспечения реактивности Vue
     // Если мы мутируем существующий массив (sensors.value), Vue не увидит изменения
     // и watcher на sensors не сработает. Создание нового массива гарантирует
     // что setSensors() получит новую ссылку и реактивность сработает корректно
     const existingSensors = [...(sensors.value || [])];
-    const sensorIndex = existingSensors.findIndex(s => s.sensor_id === sensorId);
-    
+    const sensorIndex = existingSensors.findIndex((s) => s.sensor_id === sensorId);
+
     if (sensorIndex >= 0) {
       // Обновляем существующий сенсор - мержим данные вместо замены
       const existingSensor = existingSensors[sensorIndex];
@@ -130,10 +137,10 @@ export function useSensors(localeComputed) {
         model: data.model || existingSensor.model,
         maxdata: { ...existingSensor.maxdata, ...(data.maxdata || {}) },
         data: { ...existingSensor.data, ...(data.data || {}) }, // Мержим данные!
-        logs: data.logs !== undefined ? data.logs : (existingSensor.logs ?? null),
-        owner: data.owner !== undefined ? data.owner : existingSensor.owner
+        logs: data.logs !== undefined ? data.logs : existingSensor.logs ?? null,
+        owner: data.owner !== undefined ? data.owner : existingSensor.owner,
       };
-      
+
       // Создаем унифицированную точку с мерженными данными
       const sensorData = formatPointForSensor(updatedSensor, { calculateValue: false });
       existingSensors[sensorIndex] = sensorData;
@@ -145,11 +152,11 @@ export function useSensors(localeComputed) {
         maxdata: data.maxdata || {},
         data: data.data || {},
         logs: data.logs ?? null,
-        owner: data.owner || null
+        owner: data.owner || null,
       });
       existingSensors.push(sensorData);
     }
-    
+
     setSensors(existingSensors);
   };
 
@@ -160,10 +167,10 @@ export function useSensors(localeComputed) {
    */
   const updateSensorLogs = async (sensorId) => {
     if (!isSensorOpen(sensorId)) return;
-    
+
     // Для remote провайдера: если логи уже загружены (массив), не делаем повторный запрос
     // Логи обновляются только при смене даты/периода (через clearSensorLogs)
-    if (mapState.currentProvider.value === 'remote') {
+    if (mapState.currentProvider.value === "remote") {
       const currentLogs = sensorPoint.value?.logs;
       if (Array.isArray(currentLogs)) {
         // Логи уже загружены для remote - не делаем повторный запрос
@@ -171,13 +178,13 @@ export function useSensors(localeComputed) {
         return;
       }
     }
-    
+
     try {
       // Определяем режим таймлайна и получаем соответствующие границы
       const timelineMode = mapState.timelineMode.value;
       let start, end;
-      
-      if (timelineMode === 'day') {
+
+      if (timelineMode === "day") {
         // Для дня используем точные границы дня
         const bounds = dayBoundsUnix(mapState.currentDate.value);
         start = bounds.start;
@@ -190,32 +197,32 @@ export function useSensors(localeComputed) {
         end = bounds.end;
 
         logsProgress.value = {
-          status: 'loading',
+          status: "loading",
           active: true,
           totalDays: 0,
           cachedDays: 0,
           loadedDays: 0,
           missingDays: 0,
           percent: 0,
-          mode: timelineMode
+          mode: timelineMode,
         };
       }
-      
+
       // Отменяем предыдущий запрос логов если он еще выполняется
       if (currentLogsAbortController) {
         currentLogsAbortController.abort();
       }
-      
+
       currentLogsRequestId = Math.random().toString(36);
       const requestId = currentLogsRequestId;
-      
+
       // Создаем новый AbortController для этого запроса
       currentLogsAbortController = new AbortController();
-      
+
       // Загружаем логи через API с поддержкой отмены и кэшированием
       // НЕ инициализируем logArray как [], чтобы не создавать промежуточное состояние
       const handleProgressUpdate = (payload) => {
-        if (!['week', 'month'].includes(mapState.timelineMode.value)) return;
+        if (!["week", "month"].includes(mapState.timelineMode.value)) return;
         const current = logsProgress.value;
         const totalDays = payload.totalDays ?? current.totalDays;
         const loadedDays = payload.loadedDays ?? current.loadedDays;
@@ -226,13 +233,13 @@ export function useSensors(localeComputed) {
 
         logsProgress.value = {
           status: nextStatus,
-          active: nextStatus === 'loading' || nextStatus === 'progress' || nextStatus === 'init',
+          active: nextStatus === "loading" || nextStatus === "progress" || nextStatus === "init",
           totalDays,
           cachedDays,
           loadedDays,
           missingDays,
           percent,
-          mode: mapState.timelineMode.value
+          mode: mapState.timelineMode.value,
         };
       };
 
@@ -251,16 +258,16 @@ export function useSensors(localeComputed) {
         resetLogsProgress();
         return;
       }
-      
+
       // Обогащаем логи данными о точке росы
-      
+
       // Проверяем, есть ли кэшированный адрес
       const cachedAddress = logArray && logArray._cachedAddress;
       if (cachedAddress && sensorPoint.value) {
         // Обновляем адрес из кэша
         sensorPoint.value = { ...sensorPoint.value, address: cachedAddress };
       }
-      
+
       // Обновляем только логи
       // logArray может быть:
       // - массивом (даже пустым) = данные загружены
@@ -272,44 +279,43 @@ export function useSensors(localeComputed) {
       } else if (Array.isArray(logArray)) {
         // Данные загружены (даже если пустой массив)
         sensorPoint.value = { ...sensorPoint.value, logs: [...logArray] };
-        
+
         // Сохраняем логи
         setSensorData(sensorId, {
-          logs: logArray
+          logs: logArray,
         });
 
-        if (['week', 'month'].includes(mapState.timelineMode.value)) {
+        if (["week", "month"].includes(mapState.timelineMode.value)) {
           logsProgress.value = {
-            status: 'done',
+            status: "done",
             active: false,
             totalDays: logsProgress.value.totalDays || logsProgress.value.loadedDays,
             cachedDays: logsProgress.value.cachedDays,
             loadedDays: logsProgress.value.totalDays || logsProgress.value.loadedDays,
             missingDays: 0,
             percent: 100,
-            mode: mapState.timelineMode.value
+            mode: mapState.timelineMode.value,
           };
         } else {
           resetLogsProgress();
         }
       }
     } catch (error) {
-      console.error('Error updating sensor logs:', error);
+      console.error("Error updating sensor logs:", error);
       // При ошибке устанавливаем null (логи не загружены)
       sensorPoint.value = { ...sensorPoint.value, logs: null };
       logsProgress.value = {
-        status: 'error',
+        status: "error",
         active: false,
         totalDays: logsProgress.value.totalDays,
         cachedDays: logsProgress.value.cachedDays,
         loadedDays: logsProgress.value.loadedDays,
         missingDays: logsProgress.value.missingDays,
         percent: logsProgress.value.percent,
-        mode: mapState.timelineMode.value
+        mode: mapState.timelineMode.value,
       };
     }
   };
-
 
   /**
    * Открывает попап сенсора с данными и адресом
@@ -330,97 +336,108 @@ export function useSensors(localeComputed) {
     if (!point.sensor_id) {
       return;
     }
-    
+
     try {
-        isUpdatingPopup.value = true;
+      isUpdatingPopup.value = true;
 
-        // Получаем адрес сенсора - сначала из кэша, потом из API
-        if(!point.address && hasValidCoordinates(point.geo) && point.address !== 'Loading address...'){
-            point.address = `Loading address...`;
-            
-            // Сначала проверяем кэшированный адрес
-            getCachedAddress(point.sensor_id).then(cachedAddress => {
-                if (cachedAddress && sensorPoint.value && sensorPoint.value.sensor_id === point.sensor_id) {
-                    sensorPoint.value.address = cachedAddress;
-                } else {
-                    // Если в кэше нет, получаем из API
-                    getAddress(point.geo.lat, point.geo.lng, localeComputed.value).then(address => {
-                        if (sensorPoint.value && sensorPoint.value.sensor_id === point.sensor_id &&  address) {
-                            sensorPoint.value.address = address;
-                            // Сохраняем адрес в кэш
-                            saveAddressToCache(point.sensor_id, address);
-                        }
-                    });
-                }
+      // Получаем адрес сенсора - сначала из кэша, потом из API
+      if (
+        !point.address &&
+        hasValidCoordinates(point.geo) &&
+        point.address !== "Loading address..."
+      ) {
+        point.address = `Loading address...`;
+
+        // Сначала проверяем кэшированный адрес
+        getCachedAddress(point.sensor_id).then((cachedAddress) => {
+          if (
+            cachedAddress &&
+            sensorPoint.value &&
+            sensorPoint.value.sensor_id === point.sensor_id
+          ) {
+            sensorPoint.value.address = cachedAddress;
+          } else {
+            // Если в кэше нет, получаем из API
+            getAddress(point.geo.lat, point.geo.lng, localeComputed.value).then((address) => {
+              if (sensorPoint.value && sensorPoint.value.sensor_id === point.sensor_id && address) {
+                sensorPoint.value.address = address;
+                // Сохраняем адрес в кэш
+                saveAddressToCache(point.sensor_id, address);
+              }
             });
+          }
+        });
+      }
+
+      // Загружаем owner, если он отсутствует
+      if (!point.owner) {
+        ensureOwnerLoaded(point.sensor_id);
+      }
+
+      // Проверяем есть ли изменения в данных сенсора
+      const foundSensor = sensors.value.find((s) => s.sensor_id === point.sensor_id);
+      const isNewPopup = !isSensorOpen(point.sensor_id);
+      const hasDataChanges =
+        !foundSensor ||
+        !foundSensor.geo ||
+        !point.geo ||
+        foundSensor.geo.lat !== point.geo.lat ||
+        foundSensor.geo.lng !== point.geo.lng ||
+        foundSensor.address !== point.address;
+
+      // Если попап не открыт для того же сенсора ИЛИ есть изменения в данных
+      if (isNewPopup || hasDataChanges) {
+        if (isNewPopup) {
+          mapState.mapinactive.value = true;
         }
 
-        // Загружаем owner, если он отсутствует
-        if (!point.owner) {
-          ensureOwnerLoaded(point.sensor_id);
+        // Если логи есть в foundSensor, добавляем их в point
+        // НО: если массив пустой, не копируем - оставляем null,
+        // чтобы различать "не загружено" (null) и "загружено, но пусто" ([])
+        const hasLogsInPoint = point.logs && Array.isArray(point.logs);
+        const hasLogsInSensor =
+          foundSensor &&
+          foundSensor.logs &&
+          Array.isArray(foundSensor.logs) &&
+          foundSensor.logs.length > 0;
+        if (hasLogsInSensor && !hasLogsInPoint) {
+          point.logs = foundSensor.logs;
         }
 
-        // Проверяем есть ли изменения в данных сенсора
-        const foundSensor = sensors.value.find(s => s.sensor_id === point.sensor_id);
-        const isNewPopup = !isSensorOpen(point.sensor_id);
-        const hasDataChanges = !foundSensor || 
-            !foundSensor.geo || 
-            !point.geo ||
-            foundSensor.geo.lat !== point.geo.lat || 
-            foundSensor.geo.lng !== point.geo.lng ||
-            foundSensor.address !== point.address;
-
-        // Если попап не открыт для того же сенсора ИЛИ есть изменения в данных
-        if (isNewPopup || hasDataChanges) {
-            
-            if (isNewPopup) {
-                mapState.mapinactive.value = true;
-            }
-
-            // Если логи есть в foundSensor, добавляем их в point
-            // НО: если массив пустой, не копируем - оставляем null,
-            // чтобы различать "не загружено" (null) и "загружено, но пусто" ([])
-            const hasLogsInPoint = point.logs && Array.isArray(point.logs);
-            const hasLogsInSensor = foundSensor && foundSensor.logs && Array.isArray(foundSensor.logs) && foundSensor.logs.length > 0;
-            if (hasLogsInSensor && !hasLogsInPoint) {
-                point.logs = foundSensor.logs;
-            }
-            
-            // Убеждаемся что logs не undefined
-            if (point.logs === undefined) {
-                point.logs = null;
-            }
-
-            sensorPoint.value = formatPointForSensor({
-                ...point,
-                geo: point.geo,
-                zoom: point.zoom
-            });
-
-            // sensors
-            setSensorData(point.sensor_id, {
-                geo: point.geo,
-                zoom: point.zoom,
-                address: point.address
-            });
-
-            // Устанавливаем активный маркер и двигаем карту
-            setActiveMarker(point.sensor_id);
-        }
-  
-        // Обновляем логи асинхронно для быстрого открытия попапа
-        // Для remote: если логи уже загружены (массив), не делаем повторный запрос
-        // Для realtime: всегда обновляем (данные приходят в реальном времени)
-        const currentLogs = sensorPoint.value?.logs;
-        if (mapState.currentProvider.value === 'remote' && Array.isArray(currentLogs)) {
-          // Логи уже загружены для remote - не делаем повторный запрос
-        } else {
-          // Логи не загружены или это realtime - загружаем/обновляем
-          updateSensorLogs(point.sensor_id);
+        // Убеждаемся что logs не undefined
+        if (point.logs === undefined) {
+          point.logs = null;
         }
 
+        sensorPoint.value = formatPointForSensor({
+          ...point,
+          geo: point.geo,
+          zoom: point.zoom,
+        });
+
+        // sensors
+        setSensorData(point.sensor_id, {
+          geo: point.geo,
+          zoom: point.zoom,
+          address: point.address,
+        });
+
+        // Устанавливаем активный маркер и двигаем карту
+        setActiveMarker(point.sensor_id);
+      }
+
+      // Обновляем логи асинхронно для быстрого открытия попапа
+      // Для remote: если логи уже загружены (массив), не делаем повторный запрос
+      // Для realtime: всегда обновляем (данные приходят в реальном времени)
+      const currentLogs = sensorPoint.value?.logs;
+      if (mapState.currentProvider.value === "remote" && Array.isArray(currentLogs)) {
+        // Логи уже загружены для remote - не делаем повторный запрос
+      } else {
+        // Логи не загружены или это realtime - загружаем/обновляем
+        updateSensorLogs(point.sensor_id);
+      }
     } catch (error) {
-      console.error('Error updating sensor popup:', error);
+      console.error("Error updating sensor popup:", error);
       // Сбрасываем состояние при ошибке
       sensorPoint.value = null;
       mapState.mapinactive.value = false;
@@ -437,9 +454,8 @@ export function useSensors(localeComputed) {
    * @returns {Object} Унифицированный объект point
    */
   const formatPointForSensor = (basePoint, options = {}) => {
-    
     const { calculateValue = false } = options;
-    
+
     const point = {
       sensor_id: basePoint.sensor_id,
       geo: basePoint.geo,
@@ -450,16 +466,16 @@ export function useSensors(localeComputed) {
       owner: basePoint.owner || null,
       isBookmarked: basePoint.isBookmarked || false,
       logs: basePoint.logs ?? null,
-      iconLocal: pinned_sensors[basePoint.sensor_id]?.icon || null
+      iconLocal: pinned_sensors[basePoint.sensor_id]?.icon || null,
     };
-    
+
     // Вычисляем значение и isEmpty только если нужно
     if (calculateValue) {
       const { value, isEmpty } = calculateMarkerValue(point);
       point.value = value;
       point.isEmpty = isEmpty;
     }
-    
+
     return point;
   };
 
@@ -473,24 +489,23 @@ export function useSensors(localeComputed) {
    */
   const calculateMarkerValue = (point) => {
     const currentUnit = mapState.currentUnit.value;
-    
+
     if (mapState.currentProvider.value === "remote") {
       // Remote режим: используем maxdata
       const value = point?.maxdata?.[currentUnit];
-      
-      
+
       if (value !== null && value !== undefined && !isNaN(Number(value))) {
         return { value: Number(value), isEmpty: false };
       }
     } else {
       // Realtime режим: используем последнее значение
       const lastValue = point?.data?.[currentUnit];
-      
+
       if (lastValue !== null && lastValue !== undefined && !isNaN(Number(lastValue))) {
         return { value: Number(lastValue), isEmpty: false };
       }
     }
-    
+
     return { value: null, isEmpty: true };
   };
 
@@ -514,14 +529,15 @@ export function useSensors(localeComputed) {
         : {};
 
       // Устанавливаем закладку
-      point.isBookmarked = idbBookmarks.value?.some(bookmark => bookmark.id === point.sensor_id) || false;
+      point.isBookmarked =
+        idbBookmarks.value?.some((bookmark) => bookmark.id === point.sensor_id) || false;
 
       // Обновляем маркер с правильным цветом
       const unifiedPoint = formatPointForSensor(point, { calculateValue: true });
 
       sensorsUtils.upsertPoint(unifiedPoint, mapState.currentUnit.value);
     } catch (error) {
-      console.error('Error updating marker:', error, point);
+      console.error("Error updating marker:", error, point);
     }
   };
 
@@ -536,7 +552,7 @@ export function useSensors(localeComputed) {
         sensorPoint.value = { ...sensorPoint.value, logs: null };
       }
       // Очищаем логи в массиве sensors
-      const sensorIndex = sensors.value.findIndex(s => s.sensor_id === sensorId);
+      const sensorIndex = sensors.value.findIndex((s) => s.sensor_id === sensorId);
       if (sensorIndex >= 0) {
         const updatedSensors = [...sensors.value];
         updatedSensors[sensorIndex] = { ...updatedSensors[sensorIndex], logs: null };
@@ -552,23 +568,23 @@ export function useSensors(localeComputed) {
 
   const handlerCloseSensor = (unwatchRealtime) => {
     mapState.mapinactive.value = false;
-    
+
     // Сначала отписываемся от realtime
     if (unwatchRealtime) {
       unsubscribeRealtime(unwatchRealtime);
     }
-    
+
     // Затем очищаем состояние попапа сенсора
     sensorPoint.value = null;
-    
+
     // Очищаем активный маркер (также сбрасывает активную область карты)
     clearActiveMarker();
-    
+
     // Убираем sensor из URL при закрытии попапа
     const currentQuery = { ...route.query };
     delete currentQuery.sensor;
     router.replace({ query: currentQuery });
-    
+
     sensorsUtils.refreshClusters();
   };
 
@@ -582,23 +598,28 @@ export function useSensors(localeComputed) {
    */
   const updateSensorMaxData = async () => {
     // Проверяем, что это remote режим и есть сенсоры
-    if (mapState.currentProvider.value !== 'remote' || sensors.value.length === 0) {
+    if (mapState.currentProvider.value !== "remote" || sensors.value.length === 0) {
       return;
     }
-    
+
     const { start, end } = dayBoundsUnix(mapState.currentDate.value);
 
     try {
       // Получаем обновленные сенсоры с maxdata
-      const updatedSensors = await getMaxData(start, end, mapState.currentUnit.value, sensors.value);
-      
+      const updatedSensors = await getMaxData(
+        start,
+        end,
+        mapState.currentUnit.value,
+        sensors.value
+      );
+
       // Обновляем сенсоры
       setSensors(updatedSensors);
-      
+
       // Обновляем маркеры после обновления maxdata
       updateSensorMarkers(false);
     } catch (error) {
-      console.error('Error updating maxdata:', error);
+      console.error("Error updating maxdata:", error);
     }
   };
 
@@ -606,8 +627,8 @@ export function useSensors(localeComputed) {
     // Определяем режим таймлайна и получаем соответствующие границы
     const timelineMode = mapState.timelineMode.value;
     let start, end;
-    
-    if (timelineMode === 'day') {
+
+    if (timelineMode === "day") {
       // Для дня используем точные границы дня
       const bounds = dayBoundsUnix(mapState.currentDate.value);
       start = bounds.start;
@@ -622,20 +643,24 @@ export function useSensors(localeComputed) {
     // Отменяем предыдущий запрос если он еще выполняется
     currentRequestId = Math.random().toString(36);
     const requestId = currentRequestId;
-    
+
     // Очищаем список сенсоров в приложении
     clearSensors();
-    
+
     // Получаем список сенсоров для обоих режимов
     try {
       // Получаем базовые данные сенсоров (координаты, адреса)
-      const { sensors: sensorsData, sensorsNoLocation: sensorsNoLocationData } = await getSensors(start, end, mapState.currentProvider.value);
-      
+      const { sensors: sensorsData, sensorsNoLocation: sensorsNoLocationData } = await getSensors(
+        start,
+        end,
+        mapState.currentProvider.value
+      );
+
       // Проверяем, не был ли запрос отменен
       if (currentRequestId !== requestId) {
         return;
       }
-      
+
       // Обновляем список сенсоров в приложении
       if (sensorsData && Array.isArray(sensorsData)) {
         setSensors(sensorsData);
@@ -644,11 +669,11 @@ export function useSensors(localeComputed) {
         setSensorsNoLocation(sensorsNoLocationData);
       }
     } catch (error) {
-      console.error('Error fetching sensor history:', error);
+      console.error("Error fetching sensor history:", error);
     }
   };
 
-  let lastUpdateKey = '';
+  let lastUpdateKey = "";
 
   /**
    * Обновляет все маркеры сенсоров на карте на основе данных из sensors
@@ -673,14 +698,14 @@ export function useSensors(localeComputed) {
       if (clear) {
         sensorsUtils.clearAllMarkers();
       }
-      
+
       let markersCreated = 0;
       let markersSkipped = 0;
-      
+
       // Используем данные из sensors (уже содержат координаты и данные)
       for (const sensor of sensorsData) {
         if (!sensor.sensor_id) continue;
-        
+
         // Проверяем координаты перед созданием маркера
         const lat = Number(sensor.geo.lat);
         const lng = Number(sensor.geo.lng);
@@ -688,24 +713,23 @@ export function useSensors(localeComputed) {
           markersSkipped++;
           continue;
         }
-        
+
         // Создаем маркер с правильным цветом
         const point = formatPointForSensor(sensor, { calculateValue: true });
-          
+
         // Используем updateSensorMarker для единообразной логики
         updateSensorMarker(point);
         markersCreated++;
       }
-      
+
       // Обновляем кластеры после добавления всех маркеров
       try {
         sensorsUtils.refreshClusters();
       } catch (error) {
-        console.warn('refreshClusters: Map context not ready yet');
+        console.warn("refreshClusters: Map context not ready yet");
       }
-      
     } catch (error) {
-      console.error('Error updating markers:', error);
+      console.error("Error updating markers:", error);
     }
   };
 
@@ -761,10 +785,10 @@ export function useSensors(localeComputed) {
     if (!Array.isArray(logs) || logs.length === 0) {
       return { hasCo2: false, hasNoise: false };
     }
-    
+
     return {
       hasCo2: logs.some(hasCo2InLog),
-      hasNoise: logs.some(hasNoiseInLog)
+      hasNoise: logs.some(hasNoiseInLog),
     };
   };
 
@@ -777,10 +801,10 @@ export function useSensors(localeComputed) {
     if (!data) {
       return { hasCo2: false, hasNoise: false };
     }
-    
+
     return {
       hasCo2: hasValue(data.co2),
-      hasNoise: hasValue(data.noiseavg) || hasValue(data.noisemax)
+      hasNoise: hasValue(data.noiseavg) || hasValue(data.noisemax),
     };
   };
 
@@ -790,20 +814,20 @@ export function useSensors(localeComputed) {
    * @returns {string} Тип сенсора: 'diy', 'insight', 'urban', 'altruist'
    */
   const getSensorType = (point) => {
-    if (!point) return 'diy';
-    
+    if (!point) return "diy";
+
     // Если нет owner -> 'diy'
     if (!point.owner) {
-      return 'diy';
+      return "diy";
     }
-    
+
     // Проверяем логи для определения типа
     const logs = point.logs;
-    const isRealtime = mapState.currentProvider.value === 'realtime';
-    
+    const isRealtime = mapState.currentProvider.value === "realtime";
+
     let hasCo2 = false;
     let hasNoise = false;
-    
+
     // Приоритет: сначала проверяем логи, если есть
     if (Array.isArray(logs) && logs.length > 0) {
       const logsData = checkLogsData(logs);
@@ -815,18 +839,18 @@ export function useSensors(localeComputed) {
       hasCo2 = currentData.hasCo2;
       hasNoise = currentData.hasNoise;
     }
-    
+
     // Определяем тип на основе наличия co2 и шума
     if (hasCo2 && !hasNoise) {
-      return 'insight';
+      return "insight";
     }
-    
+
     if (!hasCo2 && hasNoise) {
-      return 'urban';
+      return "urban";
     }
-    
+
     // Если есть owner, но нет данных для определения типа -> 'altruist'
-    return 'altruist';
+    return "altruist";
   };
 
   return {
@@ -836,10 +860,10 @@ export function useSensors(localeComputed) {
     sensorsNoLocation,
     sensorsLoaded,
     logsProgress,
-    
+
     // Computed
     isSensor,
-    
+
     // Functions
     isSensorOpen,
     setSensorData,

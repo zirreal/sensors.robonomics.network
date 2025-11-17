@@ -1,80 +1,52 @@
 <template>
   <div class="sensor-timeline">
     <div class="sensor-timeline-tabs">
-      <button 
+      <button
         :class="{ active: timelineMode === 'realtime' }"
         @click="handleTimelineModeChange('realtime')"
       >
         Realtime
       </button>
-      <button 
-        :class="{ active: timelineMode === 'day' }"
-        @click="handleTimelineModeChange('day')"
-      >
+      <button :class="{ active: timelineMode === 'day' }" @click="handleTimelineModeChange('day')">
         Day
       </button>
-      <button 
+      <button
         :class="{ active: timelineMode === 'week' }"
         @click="handleTimelineModeChange('week')"
       >
         Week
       </button>
-      <button 
+      <button
         :class="{ active: timelineMode === 'month' }"
         @click="handleTimelineModeChange('month')"
       >
         Month
       </button>
     </div>
-    
+
     <div class="sensor-timeline-span">
       <!-- Realtime - текущее время + last updated -->
       <div v-if="timelineMode === 'realtime'" class="realtime-info">
         <div class="rt-time">{{ getCurrentTime() }}</div>
         <div v-if="lastUpdatedTime" class="rt-status">Last updated: {{ lastUpdatedTime }}</div>
       </div>
-      
+
       <!-- Day - input type date -->
       <div v-else-if="timelineMode === 'day'" class="day-controls">
-        <input 
-          type="date" 
-          v-model="pickedDate" 
-          :max="maxDate" 
-          @change="handleDateChange" 
-        />
+        <input type="date" v-model="pickedDate" :max="maxDate" @change="handleDateChange" />
       </div>
-      
+
       <!-- Week, Month - диапазон дат -->
       <div v-else-if="timelineMode === 'week'" class="range-controls">
-        <input 
-          type="date" 
-          :value="getWeekStartDate()" 
-          :max="maxDate"
-          disabled
-        />
+        <input type="date" :value="getWeekStartDate()" :max="maxDate" disabled />
         <span>—</span>
-        <input 
-          type="date" 
-          v-model="pickedDate" 
-          :max="maxDate"
-          @change="handleWeekEndChange"
-        />
+        <input type="date" v-model="pickedDate" :max="maxDate" @change="handleWeekEndChange" />
       </div>
-      
+
       <div v-else-if="timelineMode === 'month'" class="range-controls">
-        <input 
-          type="date" 
-          :value="getMonthStartDate()" 
-          :max="maxDate"
-          disabled
-        />
+        <input type="date" :value="getMonthStartDate()" :max="maxDate" disabled />
         <span>—</span>
-        <input 
-          type="date" 
-          v-model="pickedDate" 
-          :max="maxDate"
-          @change="handleMonthEndChange"
-        />
+        <input type="date" v-model="pickedDate" :max="maxDate" @change="handleMonthEndChange" />
       </div>
     </div>
   </div>
@@ -84,16 +56,16 @@
 import { reactive, computed, ref, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { useMap } from '@/composables/useMap';
-import { useSensors } from '@/composables/useSensors';
-import { dayISO } from '../../../utils/date';
+import { useMap } from "@/composables/useMap";
+import { useSensors } from "@/composables/useSensors";
+import { dayISO } from "../../../utils/date";
 
 const props = defineProps({
   log: Array,
-  point: Object
+  point: Object,
 });
 
-const emit = defineEmits(['dateChange']);
+const emit = defineEmits(["dateChange"]);
 
 const route = useRoute();
 const router = useRouter();
@@ -103,26 +75,28 @@ const sensorsUI = useSensors();
 
 // Локальное состояние
 const state = reactive({
-  timelineMode: 'realtime' // 'realtime', 'day', 'week', 'month'
+  timelineMode: "realtime", // 'realtime', 'day', 'week', 'month'
 });
 
 // Максимальная дата (сегодня) - computed для реактивности
 const maxDate = computed(() => dayISO());
 
 // Реактивная переменная для обновления времени
-const currentTime = ref(new Date().toLocaleTimeString('en-GB', { 
-  hour12: false,
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit'
-}));
+const currentTime = ref(
+  new Date().toLocaleTimeString("en-GB", {
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  })
+);
 
 // Выбранная пользователем дата для v-model (синхронизируется с store)
 const pickedDate = computed({
   get: () => mapState.currentDate.value,
   set: (value) => {
     mapState.setCurrentDate(value);
-  }
+  },
 });
 
 // Computed для режима таймлайна
@@ -134,24 +108,24 @@ const timelineMode = computed(() => state.timelineMode);
  */
 const handleTimelineModeChange = (mode) => {
   state.timelineMode = mode;
-  
+
   // Обнуляем logs при переключении периодов для показа skeleton
   if (props.point?.sensor_id && sensorsUI) {
     sensorsUI.clearSensorLogs(props.point.sensor_id);
   }
-  
-  if (mode === 'realtime') {
+
+  if (mode === "realtime") {
     // Переключаемся на realtime провайдер с текущей датой
-    mapState.setMapSettings(route, router, { 
-      provider: 'realtime',
-      date: dayISO() // Устанавливаем текущую дату
+    mapState.setMapSettings(route, router, {
+      provider: "realtime",
+      date: dayISO(), // Устанавливаем текущую дату
     });
-    mapState.setTimelineMode('realtime');
+    mapState.setTimelineMode("realtime");
   } else {
     // Для day/week/month переключаемся на remote провайдер
-    mapState.setMapSettings(route, router, { provider: 'remote' });
+    mapState.setMapSettings(route, router, { provider: "remote" });
     mapState.setTimelineMode(mode);
-    
+
     // Для day/week/month не меняем дату - только переключаем провайдер
     // Логи будут загружены с правильными границами в updateSensorLogs
   }
@@ -215,14 +189,14 @@ const lastUpdatedTime = computed(() => {
   if (!Array.isArray(props.log) || props.log.length === 0) {
     return null;
   }
-  
+
   // Берем последний элемент логов (самое свежее измерение)
   const last = props.log[props.log.length - 1];
-  
+
   if (!last || !last.timestamp) {
     return null;
   }
-  
+
   // Форматируем время последнего обновления
   return new Date(last.timestamp * 1000).toLocaleString();
 });
@@ -231,37 +205,37 @@ const lastUpdatedTime = computed(() => {
 const handleDateChange = async (event) => {
   // Убираем фокус с input (особенно важно на мобильных)
   event.target.blur();
-  
+
   // Ждем следующего тика, чтобы v-model успел обновиться
   await nextTick();
-  
+
   // Эмитим событие изменения даты
-  emit('dateChange');
+  emit("dateChange");
 };
 
 onMounted(() => {
   // Инициализируем режим таймлайна в зависимости от провайдера
-  if (mapState.currentProvider.value === 'realtime') {
-    state.timelineMode = 'realtime';
+  if (mapState.currentProvider.value === "realtime") {
+    state.timelineMode = "realtime";
   } else {
     // Используем глобальное состояние или day по умолчанию
     const globalMode = mapState.timelineMode.value;
-    state.timelineMode = globalMode || 'day';
+    state.timelineMode = globalMode || "day";
   }
-  
+
   // Обновляем время каждую секунду для realtime режима
   const timeInterval = setInterval(() => {
-    if (state.timelineMode === 'realtime') {
+    if (state.timelineMode === "realtime") {
       const now = new Date();
-      currentTime.value = now.toLocaleTimeString('en-GB', { 
+      currentTime.value = now.toLocaleTimeString("en-GB", {
         hour12: false,
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
       });
     }
   }, 1000);
-  
+
   // Очищаем интервал при размонтировании
   onUnmounted(() => {
     clearInterval(timeInterval);
@@ -284,11 +258,11 @@ watch(
   (newProvider) => {
     if (newProvider) {
       // Автоматически переключаем режим таймлайна в зависимости от провайдера
-      if (newProvider === 'realtime') {
-        state.timelineMode = 'realtime';
-      } else if (state.timelineMode === 'realtime') {
+      if (newProvider === "realtime") {
+        state.timelineMode = "realtime";
+      } else if (state.timelineMode === "realtime") {
         // Если переключились с realtime на remote, переключаемся на day
-        state.timelineMode = 'day';
+        state.timelineMode = "day";
       }
     }
   }
@@ -296,7 +270,6 @@ watch(
 </script>
 
 <style scoped>
-
 .sensor-timeline {
   text-align: center;
 }
@@ -308,7 +281,7 @@ watch(
   border-radius: 20px;
 }
 
-.sensor-timeline-tabs button{
+.sensor-timeline-tabs button {
   padding: 0.2rem 0.8rem;
   color: var(--color-dark);
   font-weight: bold;

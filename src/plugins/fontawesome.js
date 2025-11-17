@@ -89,7 +89,7 @@ library.add(
   faFileLines,
   faPenToSquare,
   faTrash,
-  faFloppyDisk,
+  faFloppyDisk
 );
 
 export function useIcons(app) {

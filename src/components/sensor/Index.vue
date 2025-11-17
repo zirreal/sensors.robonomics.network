@@ -1,14 +1,14 @@
 <template>
   <div class="popup-js active">
-
-
     <section class="sensor-header">
       <div class="sensor-type">
-        <a v-if="log !== null && sensorTypeImage" :href="sensorTypeLink" target="_blank" rel="noopener noreferrer">
-          <img 
-            :src="sensorTypeImage" 
-            :alt="sensorType"
-          />
+        <a
+          v-if="log !== null && sensorTypeImage"
+          :href="sensorTypeLink"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img :src="sensorTypeImage" :alt="sensorType" />
         </a>
       </div>
 
@@ -29,43 +29,43 @@
     <!-- <div class="sensor-info-desc">Here you'll see some custom description</div> -->
 
     <div class="sensor-panel">
-      <button 
-        class="panel-button" 
+      <button
+        class="panel-button"
         :class="{ active: activeTab === 'chart' }"
-        @click.prevent="activeTab = 'chart'" 
+        @click.prevent="activeTab = 'chart'"
         :title="'Analytics'"
       >
         <font-awesome-icon icon="fa-solid fa-chart-line" />
       </button>
-      <button 
-        class="panel-button" 
+      <button
+        class="panel-button"
         :class="{ active: activeTab === 'info' }"
-        @click.prevent="activeTab = 'info'" 
+        @click.prevent="activeTab = 'info'"
         :title="t('sensorpopup.infotitle')"
       >
         <font-awesome-icon icon="fa-regular fa-file-lines" />
       </button>
-      <button 
-        class="panel-button" 
+      <button
+        class="panel-button"
         :class="{ active: activeTab === 'sharelink' }"
-        @click.prevent="activeTab = 'sharelink'" 
+        @click.prevent="activeTab = 'sharelink'"
         :title="t('sensorpopup.sharedefault')"
       >
         <font-awesome-icon icon="fa-solid fa-link" />
       </button>
-      <button 
-        class="panel-button" 
+      <button
+        class="panel-button"
         :class="{ active: activeTab === 'bookmarks' }"
-        @click.prevent="activeTab = 'bookmarks'" 
+        @click.prevent="activeTab = 'bookmarks'"
         :title="t('sensorpopup.bookmarkbutton')"
       >
         <font-awesome-icon icon="fa-regular fa-bookmark" />
       </button>
-      <button 
+      <button
         v-if="isAccountsEnabled"
-        class="panel-button" 
+        class="panel-button"
         :class="{ active: activeTab === 'edit' }"
-        @click.prevent="activeTab = 'edit'" 
+        @click.prevent="activeTab = 'edit'"
         :title="t('sensorpopup.edit') || 'Edit'"
       >
         <font-awesome-icon icon="fa-regular fa-pen-to-square" />
@@ -73,18 +73,13 @@
     </div>
 
     <div class="scrollable-y">
-
       <div v-show="activeTab === 'chart'" class="tab-content">
         <NativeShare />
         <Analytics :point="point" :log="log" />
       </div>
 
       <div v-show="activeTab === 'info'" class="tab-content">
-        <Info
-          :sensor-id="sensor_id"
-          :owner="owner"
-          :geo="geo"
-        />
+        <Info :sensor-id="sensor_id" :owner="owner" :geo="geo" />
       </div>
 
       <div v-show="activeTab === 'sharelink'" class="tab-content">
@@ -93,23 +88,15 @@
 
       <!-- Bookmarks Tab -->
       <div v-show="activeTab === 'bookmarks'" class="tab-content">
-
-        <Bookmark
-          v-if="sensor_id"
-          :id="sensor_id"
-          :address="point?.address"
-          :geo="geo"
-        />
-
+        <Bookmark v-if="sensor_id" :id="sensor_id" :address="point?.address" :geo="geo" />
       </div>
 
       <div v-if="isAccountsEnabled && activeTab === 'edit'" class="tab-content">
         <section>
-          <h3>{{ t('sensorpopup.edit') || 'Edit' }}</h3>
-          <p>{{ t('sensorpopup.edit') || 'Edit functionality coming soon' }}</p>
+          <h3>{{ t("sensorpopup.edit") || "Edit" }}</h3>
+          <p>{{ t("sensorpopup.edit") || "Edit functionality coming soon" }}</p>
         </section>
       </div>
-
     </div>
   </div>
 </template>
@@ -117,11 +104,11 @@
 <script setup>
 import { computed, ref, watch, onMounted, onBeforeUnmount } from "vue";
 import { useI18n } from "vue-i18n";
-import { useMap } from '@/composables/useMap';
-import { useSensors } from '@/composables/useSensors';
-import { useBookmarks } from '@/composables/useBookmarks';
-import { getAvatar } from '@/utils/avatarGenerator';
-import { settings } from '@config';
+import { useMap } from "@/composables/useMap";
+import { useSensors } from "@/composables/useSensors";
+import { useBookmarks } from "@/composables/useBookmarks";
+import { getAvatar } from "@/utils/avatarGenerator";
+import { settings } from "@config";
 
 import Bookmark from "./tabs/Bookmark.vue";
 import Analytics from "./tabs/Analytics.vue";
@@ -130,11 +117,10 @@ import ShareLink from "./tabs/ShareLink.vue";
 import NativeShare from "./widgets/NativeShare.vue";
 
 // Импортируем изображения типов сенсоров
-import diyIcon from '@/assets/images/sensorTypes/DIY.svg';
-import insightIcon from '@/assets/images/sensorTypes/Insight.svg';
-import urbanIcon from '@/assets/images/sensorTypes/Urban.svg';
-import altruistIcon from '@/assets/images/sensorTypes/Altruist.svg';
-
+import diyIcon from "@/assets/images/sensorTypes/DIY.svg";
+import insightIcon from "@/assets/images/sensorTypes/Insight.svg";
+import urbanIcon from "@/assets/images/sensorTypes/Urban.svg";
+import altruistIcon from "@/assets/images/sensorTypes/Altruist.svg";
 
 const props = defineProps({
   point: Object,
@@ -150,16 +136,16 @@ const localeComputed = computed(() => localStorage.getItem("locale") || locale.v
 const sensorsUI = useSensors(localeComputed);
 
 // Активная вкладка
-const activeTab = ref('chart');
+const activeTab = ref("chart");
 
 // Проверяем, включен ли сервис accounts
 const isAccountsEnabled = computed(() => settings?.SERVICES?.accounts === true);
 
 // Порядок табов для навигации клавиатурой (edit только если accounts включен)
 const tabsOrder = computed(() => {
-  const base = ['chart', 'info', 'sharelink', 'bookmarks'];
+  const base = ["chart", "info", "sharelink", "bookmarks"];
   if (isAccountsEnabled.value) {
-    base.push('edit');
+    base.push("edit");
   }
   return base;
 });
@@ -167,26 +153,25 @@ const tabsOrder = computed(() => {
 // Функция для переключения табов клавиатурой
 const handleKeydown = (event) => {
   // Проверяем, что нажата стрелка влево или вправо
-  if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+  if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
     // Предотвращаем стандартное поведение (прокрутку страницы)
     event.preventDefault();
-    
+
     const currentIndex = tabsOrder.value.indexOf(activeTab.value);
     if (currentIndex === -1) return;
-    
+
     let nextIndex;
-    if (event.key === 'ArrowLeft') {
+    if (event.key === "ArrowLeft") {
       // Переход к предыдущему табу (циклически)
       nextIndex = currentIndex === 0 ? tabsOrder.value.length - 1 : currentIndex - 1;
     } else {
       // Переход к следующему табу (циклически)
       nextIndex = currentIndex === tabsOrder.value.length - 1 ? 0 : currentIndex + 1;
     }
-    
+
     activeTab.value = tabsOrder.value[nextIndex];
   }
 };
-
 
 const sensor_id = computed(() => {
   // sensor_id всегда приходит из props.point (обрабатывается в Main.vue)
@@ -197,18 +182,24 @@ const sensor_id = computed(() => {
 const sensorAvatar = ref(null);
 
 // Генерируем аватарку при изменении sensor_id
-watch(sensor_id, (newId) => {
-  if (newId) {
-    getAvatar(newId, 60).then(avatar => {
-      sensorAvatar.value = avatar;
-    }).catch(error => {
-      console.error('Error generating avatar:', error);
+watch(
+  sensor_id,
+  (newId) => {
+    if (newId) {
+      getAvatar(newId, 60)
+        .then((avatar) => {
+          sensorAvatar.value = avatar;
+        })
+        .catch((error) => {
+          console.error("Error generating avatar:", error);
+          sensorAvatar.value = null;
+        });
+    } else {
       sensorAvatar.value = null;
-    });
-  } else {
-    sensorAvatar.value = null;
-  }
-}, { immediate: true });
+    }
+  },
+  { immediate: true }
+);
 
 const geo = computed(() => {
   // Координаты всегда приходят из props.point.geo (обрабатывается в Main.vue)
@@ -220,9 +211,8 @@ const owner = computed(() => props.point?.owner || null);
 // Проверяем, добавлен ли сенсор в закладки
 const isBookmarked = computed(() => {
   if (!sensor_id.value) return false;
-  return idbBookmarks.value?.some(bookmark => bookmark.id === sensor_id.value) || false;
+  return idbBookmarks.value?.some((bookmark) => bookmark.id === sensor_id.value) || false;
 });
-
 
 // Гарантируем, что logs всегда массив
 const log = computed(() => (Array.isArray(props.point?.logs) ? props.point.logs : null));
@@ -233,42 +223,36 @@ const sensorType = computed(() => sensorsUI.getSensorType(props.point));
 // Вычисляем путь к изображению типа сенсора
 const sensorTypeImage = computed(() => {
   if (!sensorType.value) return null;
-  
+
   const typeMap = {
-    'diy': diyIcon,
-    'insight': insightIcon,
-    'urban': urbanIcon,
-    'altruist': altruistIcon
+    diy: diyIcon,
+    insight: insightIcon,
+    urban: urbanIcon,
+    altruist: altruistIcon,
   };
-  
+
   return typeMap[sensorType.value] || null;
 });
 
 // Вычисляем ссылку для типа сенсора
 const sensorTypeLink = computed(() => {
-  if (sensorType.value === 'diy') {
-    return 'https://robonomics.academy/en/learn/sensors-connectivity-course/sensor-hardware/';
+  if (sensorType.value === "diy") {
+    return "https://robonomics.academy/en/learn/sensors-connectivity-course/sensor-hardware/";
   }
-  return 'https://shop.akagi.dev/products/outdoor-sensor-altruist-dev-kit';
+  return "https://shop.akagi.dev/products/outdoor-sensor-altruist-dev-kit";
 });
 
-
-
 // Функции для табов теперь не нужны - переключение происходит через activeTab
-
-
-
 
 const closesensor = () => {
   // Просто эмитим событие закрытия - всю логику обрабатывает Main.vue
   emit("close");
 };
 
-
 /**
  * Генерирует ссылку на карту в зависимости от устройства
  * @param {number} lat - Широта
- * @param {number} lon - Долгота  
+ * @param {number} lon - Долгота
  * @param {string} [label="Sensor"] - Подпись для метки
  * @returns {string} URL ссылки на карту
  */
@@ -286,16 +270,15 @@ function getMapLink(lat, lon, label = "Sensor") {
   return `https://www.google.com/maps?q=${lat},${lon}`;
 }
 
-
 onMounted(() => {
   // Инициализация компонента
   // Добавляем обработчик клавиатуры для переключения табов
-  window.addEventListener('keydown', handleKeydown);
+  window.addEventListener("keydown", handleKeydown);
 });
 
 onBeforeUnmount(() => {
   // Удаляем обработчик клавиатуры при размонтировании
-  window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener("keydown", handleKeydown);
 });
 
 // Watcher для изменений даты (из UI или внешних источников)
@@ -309,16 +292,11 @@ watch(
   }
 );
 
-
-
-
 // URL обновление теперь происходит только в Main.vue
 // Здесь оставляем только UI-специфичную логику
-
 </script>
 
 <style scoped>
-
 /* + Заголовок сенсора: тип, выбор даты, кнопка закрыть */
 
 .sensor-type {
@@ -341,11 +319,8 @@ watch(
   gap: var(--gap);
   grid-template-columns: 30px 1fr 30px;
   align-items: center;
-} 
+}
 /* - Заголовок сенсора: тип, выбор даты, кнопка закрыть */
-
-
-
 
 .popup-js.active {
   container: popup / inline-size;
@@ -481,11 +456,9 @@ watch(
 
 /* - realtime */
 
-
 .sensor-info {
   text-align: center;
 }
-
 
 .sensor-info-title {
   display: flex;
@@ -506,7 +479,6 @@ watch(
     flex-direction: column;
     text-align: center;
   }
-  
 }
 .sensor-info-title h3 {
   margin-bottom: 0;
@@ -562,7 +534,7 @@ watch(
 
 .tab-content {
   --tab-offset-x: 0;
-  --tab-offset-y: calc(var(--gap)*3);
+  --tab-offset-y: calc(var(--gap) * 3);
   padding: var(--tab-offset-y) var(--tab-offset-x);
   position: relative;
 }

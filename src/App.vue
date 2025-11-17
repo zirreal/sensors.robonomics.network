@@ -34,39 +34,35 @@ watch(() => route.name, updateAppClass, { immediate: true });
 function cleanupOldLocalStorage() {
   try {
     const keysToRemove = [];
-    
+
     // Проходим по всем ключам в localStorage
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && (key.startsWith('aqi_cache') || key.startsWith('revgeo_addr_'))) {
+      if (key && (key.startsWith("aqi_cache") || key.startsWith("revgeo_addr_"))) {
         keysToRemove.push(key);
       }
     }
-    
+
     // Удаляем найденные ключи
-    keysToRemove.forEach(key => {
+    keysToRemove.forEach((key) => {
       localStorage.removeItem(key);
     });
-    
+
     if (keysToRemove.length > 0) {
       console.log(`Cleaned up ${keysToRemove.length} old localStorage entries:`, keysToRemove);
     }
   } catch (error) {
-    console.warn('Failed to cleanup localStorage:', error);
+    console.warn("Failed to cleanup localStorage:", error);
   }
 }
 
 onMounted(async () => {
-
   // Очищаем устаревшие данные из localStorage
   cleanupOldLocalStorage();
-  
+
   // Инициализация Matomo
   const waitForMatomo = setInterval(() => {
-    if (
-      typeof window.Matomo !== "undefined" &&
-      typeof window.Matomo.getTracker === "function"
-    ) {
+    if (typeof window.Matomo !== "undefined" && typeof window.Matomo.getTracker === "function") {
       clearInterval(waitForMatomo);
 
       const trackPage = () => {
@@ -82,7 +78,7 @@ onMounted(async () => {
       trackPage();
     }
   }, 100);
-  
+
   /* + INIT ACCOUNT */
   /*
   При маунте: загружаем аккаунты из IndexedDB через стор,
@@ -114,7 +110,6 @@ onMounted(async () => {
 
 // Watcher для изменения даты убран - теперь данные загружаются только через Main.vue handlerHistory
 // Это предотвращает дублирующиеся запросы к API
-
 </script>
 
 <style>

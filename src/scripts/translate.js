@@ -8,12 +8,12 @@ dotenv.config();
 
 const openai = new OpenAI({ apiKey: process.env.VITE_OPENAI_KEY });
 
-// CONFIG 
-const LANGUAGES = ["en", "ru"];  // Add/remove languages here
+// CONFIG
+const LANGUAGES = ["en", "ru"]; // Add/remove languages here
 const SKIP_KEYS = []; // Add keys to skip here
 const PRESERVE_KEYS = [
   "Climate",
-  "Daily Recap", 
+  "Daily Recap",
   "Realtime",
   "RADIATION",
   "Pressure",
@@ -25,7 +25,7 @@ const PRESERVE_KEYS = [
   "Hazardous",
   "Today",
   "Dust & Particles",
-  "Noise"
+  "Noise",
 ];
 const TRANSLATION_FILES_DIR = "src/translate";
 const CACHE_FILE = "src/scripts/openai-cache.json";
@@ -46,10 +46,9 @@ const flatten = (obj, prefix = "") => {
   return res;
 };
 
-// Load/save cache 
+// Load/save cache
 const loadCache = () => {
-  if (fs.existsSync(CACHE_FILE))
-    return JSON.parse(fs.readFileSync(CACHE_FILE, "utf-8"));
+  if (fs.existsSync(CACHE_FILE)) return JSON.parse(fs.readFileSync(CACHE_FILE, "utf-8"));
   return {};
 };
 
@@ -57,7 +56,7 @@ const saveCache = (cache) => {
   fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
 };
 
-// Extract translation keys 
+// Extract translation keys
 const extractTranslationKeys = async () => {
   const files = await fg(PROJECT_FILES_GLOB);
   // Match both $t(...) and t(...)
@@ -75,7 +74,7 @@ const extractTranslationKeys = async () => {
   return [...keys];
 };
 
-// Translate using OpenAI with caching 
+// Translate using OpenAI with caching
 const translateWithOpenAI = async (text, targetLang, cache) => {
   const cacheKey = `${text}|${targetLang}`;
   if (cache[cacheKey]) return cache[cacheKey];
@@ -100,7 +99,7 @@ const translateWithOpenAI = async (text, targetLang, cache) => {
   return translated;
 };
 
-// Load and save locale files 
+// Load and save locale files
 const loadLocaleFile = async (lang) => {
   const filePath = path.resolve(TRANSLATION_FILES_DIR, `${lang}.js`);
   if (!fs.existsSync(filePath)) return {};
@@ -115,7 +114,7 @@ const saveLocaleFile = (lang, data) => {
   fs.writeFileSync(filePath, content);
 };
 
-// Main function 
+// Main function
 const run = async () => {
   const keys = await extractTranslationKeys();
   const cache = loadCache();
@@ -141,9 +140,20 @@ const run = async () => {
       }
     }
 
-
     // keys to translate
-    const SHORT_LIST = ['Yes', 'No', 'Model', 'New', 'Housing', 'Climate', 'Type', 'Price', 'Photo', 'Limited', 'Map'];
+    const SHORT_LIST = [
+      "Yes",
+      "No",
+      "Model",
+      "New",
+      "Housing",
+      "Climate",
+      "Type",
+      "Price",
+      "Photo",
+      "Limited",
+      "Map",
+    ];
 
     // Translate missing keys
     for (const key of keys) {
@@ -167,7 +177,6 @@ const run = async () => {
         continue;
       }
 
-     
       const hasTemplateVariable = /\$\{[^}]+\}/;
       const looksLikePath = /^\/|\/.*\//;
       if (hasTemplateVariable.test(key) || looksLikePath.test(key)) {
@@ -187,9 +196,7 @@ const run = async () => {
       if (lang === "en") {
         translated = key; // copy verbatim for English
       } else {
-        const baseText = isSimpleNestedKey(key)
-          ? key.split(".").pop().replace(/_/g, " ")
-          : key;
+        const baseText = isSimpleNestedKey(key) ? key.split(".").pop().replace(/_/g, " ") : key;
         translated = await translateWithOpenAI(baseText, lang, cache);
       }
 

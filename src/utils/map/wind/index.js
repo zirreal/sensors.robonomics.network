@@ -3,10 +3,10 @@
  * Handles wind arrows, wind layer, and wind data visualization
  */
 
-import L from 'leaflet';
-import 'leaflet-velocity';
-import 'leaflet-velocity/dist/leaflet-velocity.css';
-import { settings } from '@config';
+import L from "leaflet";
+import "leaflet-velocity";
+import "leaflet-velocity/dist/leaflet-velocity.css";
+import { settings } from "@config";
 
 export const immediate = false;
 
@@ -14,12 +14,12 @@ let windLayer;
 
 /**
  * Initializes wind layer with data from wind provider
- * 
+ *
  * Скорость анимации зависит от реальных данных:
  * - Направление: точно отражает реальное направление ветра
  * - Интенсивность цвета: зависит от реальной силы ветра (0-15 м/с)
  * - Скорость анимации: масштабируется через velocityScale для видимости
- * 
+ *
  * Данные приходят с сервера в формате GRIB и содержат:
  * - U-компонента ветра (восток-запад)
  * - V-компонента ветра (север-юг)
@@ -29,28 +29,28 @@ export async function initWindLayer() {
   if (windLayer) {
     return; // Уже инициализирован
   }
-  
+
   try {
     const response = await fetch(settings.WIND_PROVIDER);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    
+
     windLayer = L.velocityLayer({
       displayValues: false,
       data,
-      maxVelocity: 15,        // Максимальная скорость ветра для нормализации (м/с)
-      velocityScale: 0.01,   // Уменьшаем скорость анимации для спокойной визуализации
+      maxVelocity: 15, // Максимальная скорость ветра для нормализации (м/с)
+      velocityScale: 0.01, // Уменьшаем скорость анимации для спокойной визуализации
       colorScale: ["rgb(60,157,194)", "rgb(128,205,193)", "rgb(250,112,52)", "rgb(245,64,32)"],
-      particleAge: 20,        // Короткое время жизни частиц
+      particleAge: 20, // Короткое время жизни частиц
       particleMultiplier: 0.001, // Мало частиц
-      frameRate: 10,           // Малый FPS
-      opacity: 0.2,           // Почти прозрачный для видимости карты
-      displayValues: false,   // Отключаем отображение значений
+      frameRate: 10, // Малый FPS
+      opacity: 0.2, // Почти прозрачный для видимости карты
+      displayValues: false, // Отключаем отображение значений
     });
   } catch (error) {
-    console.error('Failed to fetch wind data:', error);
+    console.error("Failed to fetch wind data:", error);
     throw error;
   }
 }
@@ -102,7 +102,7 @@ export function createWindArrowMarker(coord, data, colors) {
     icon: createWindArrowIcon(data.data.windang, data.data.windspeed, colors.basic),
     typeMarker: "arrow",
   });
-  
+
   return marker;
 }
 
@@ -133,7 +133,9 @@ export function shouldShowAsWindArrow(point) {
  */
 export function updateMarkerWithWindData(existingMarker, point, colors) {
   if (hasWindData(point)) {
-    existingMarker.setIcon(createWindArrowIcon(point.data.windang, point.data.windspeed, colors.basic));
+    existingMarker.setIcon(
+      createWindArrowIcon(point.data.windang, point.data.windspeed, colors.basic)
+    );
   }
   return existingMarker;
 }
@@ -143,35 +145,35 @@ export function updateMarkerWithWindData(existingMarker, point, colors) {
  */
 export function destroyWindLayer() {
   if (windLayer) {
-    console.log('Destroying wind layer and cleaning up resources');
-    
+    console.log("Destroying wind layer and cleaning up resources");
+
     // Удаляем слой с карты если он добавлен
     if (window.mapContext && window.mapContext.map && window.mapContext.map.hasLayer(windLayer)) {
       window.mapContext.map.removeLayer(windLayer);
     }
-    
+
     // Останавливаем анимацию если есть
     if (windLayer._stopAnimation) {
       windLayer._stopAnimation();
     }
-    
+
     // Очищаем canvas если есть
     if (windLayer._canvas) {
       windLayer._canvas.remove();
       windLayer._canvas = null;
     }
-    
+
     // Очищаем данные
     if (windLayer._data) {
       windLayer._data = null;
     }
-    
+
     // Удаляем обработчики событий
     if (windLayer.off) {
       windLayer.off();
     }
-    
+
     windLayer = null;
-    console.log('Wind layer destroyed and resources cleaned up');
+    console.log("Wind layer destroyed and resources cleaned up");
   }
 }

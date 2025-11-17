@@ -4,17 +4,18 @@
     "tagName": "v${version}",
     "requireCleanWorkingDir": false,
     "requireUpstream": false,
-    "requireCommits": false
+    "requireCommits": false,
+    "push": true
   },
   "github": {
     "release": true,
-    "releaseName": "v${version}"
+    "releaseName": "v${version}",
+    "autoGenerate": true
   },
   "npm": {
     "publish": false
   },
   "hooks": {
-    "before:init": ["npm run lint"],
     "after:bump": "echo 'Version bumped to ${version}'"
   }
 }

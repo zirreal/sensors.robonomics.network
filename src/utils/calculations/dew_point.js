@@ -1,22 +1,22 @@
 /**
  * =============================================================================
- * 
+ *
  *     Функции для расчета точки росы
- * 
+ *
  *     Точка росы - это температура, при которой водяной пар в воздухе
  *     начинает конденсироваться в жидкую воду.
- * 
+ *
  *     Формула Магнуса-Тетенса:
  *     Td = (b * γ) / (a - γ)
  *     где γ = (a * T) / (b + T) + ln(RH/100)
- * 
+ *
  *     где:
  *     - Td - точка росы в °C
- *     - T - температура в °C  
+ *     - T - температура в °C
  *     - RH - относительная влажность в %
  *     - a = 17.27
  *     - b = 237.7
- * 
+ *
  * =============================================================================
  */
 
@@ -27,7 +27,12 @@
  * @returns {number|null} Точка росы в градусах Цельсия или null при неверных данных
  */
 export const calculateDewPoint = (temperature, humidity) => {
-  if (typeof temperature !== 'number' || typeof humidity !== 'number' || humidity <= 0 || humidity > 100) {
+  if (
+    typeof temperature !== "number" ||
+    typeof humidity !== "number" ||
+    humidity <= 0 ||
+    humidity > 100
+  ) {
     return null;
   }
 
@@ -45,7 +50,7 @@ export const calculateDewPoint = (temperature, humidity) => {
  * @returns {Object} Обогащенные данные с точкой росы (если возможно)
  */
 export const enrichWithDewPoint = (data) => {
-  if (data && typeof data.temperature === 'number' && typeof data.humidity === 'number') {
+  if (data && typeof data.temperature === "number" && typeof data.humidity === "number") {
     const dew = calculateDewPoint(data.temperature, data.humidity);
     if (dew !== null) {
       return { ...data, dewpoint: dew };
@@ -60,8 +65,8 @@ export const enrichWithDewPoint = (data) => {
  */
 export const enrichLogsWithDewPoint = (logArr) => {
   if (!Array.isArray(logArr)) return;
-  
-  logArr.forEach(entry => {
+
+  logArr.forEach((entry) => {
     if (entry?.data) {
       entry.data = enrichWithDewPoint(entry.data);
     }

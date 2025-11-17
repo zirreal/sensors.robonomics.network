@@ -11,13 +11,13 @@ export const ICON_CONFIG = {
   cluster: {
     iconSize: new L.Point(40, 40),
     className: "sensor-cluster",
-    ...DEFAULT_COLORS.cluster
+    ...DEFAULT_COLORS.cluster,
   },
   point: {
     iconSize: new L.Point(30, 30),
     className: "sensor-point",
-    ...DEFAULT_COLORS.point
-  }
+    ...DEFAULT_COLORS.point,
+  },
 };
 
 /**
@@ -33,25 +33,25 @@ export const ICON_CONFIG = {
  * @returns {string} HTML string
  */
 export function createIconHTML({ text, image, color, container = {} }) {
-  const { class: wrapperClass = '', style: wrapperStyle = '', attributes = {} } = container;
-  
+  const { class: wrapperClass = "", style: wrapperStyle = "", attributes = {} } = container;
+
   // Определяем содержимое
-  let content = '';
+  let content = "";
   if (image) {
     content = `<div class="sensor-icon-image"><img src="${image}" alt=""></div>`;
   } else if (text !== undefined && text !== null) {
     content = `<span>${text}</span>`;
   }
-  
+
   // Формируем атрибуты
   const attrsString = Object.entries(attributes)
     .map(([key, value]) => `${key}="${value}"`)
-    .join(' ');
-  
+    .join(" ");
+
   // Добавляем CSS переменную для цвета
-  const colorStyle = color ? `--color: ${color};` : '';
+  const colorStyle = color ? `--color: ${color};` : "";
   const finalStyle = `${colorStyle}${wrapperStyle}`;
-  
+
   return `<div class="sensor-icon ${wrapperClass}" style="${finalStyle}" ${attrsString}>${content}</div>`;
 }
 
@@ -64,36 +64,42 @@ export function createIconHTML({ text, image, color, container = {} }) {
  * @param {Function} isDarkColor - Function to check if color is dark
  * @returns {L.DivIcon} Cluster icon
  */
-export function createIconCluster(cluster, unit = null, getClusterWinningColor, getBorderColor, isDarkColor) {
+export function createIconCluster(
+  cluster,
+  unit = null,
+  getClusterWinningColor,
+  getBorderColor,
+  isDarkColor
+) {
   try {
     const markers = cluster.getAllChildMarkers();
     const childCount = cluster.getChildCount();
     let childCountCalc = 0;
-    
+
     // Early return if no markers
     if (childCount === 0 || markers.length === 0) {
       return new L.DivIcon({
         html: createIconHTML({
           text: childCount,
-          color: ICON_CONFIG.cluster.initColor
+          color: ICON_CONFIG.cluster.initColor,
         }),
         className: ICON_CONFIG.cluster.className,
         iconSize: ICON_CONFIG.cluster.iconSize,
       });
     }
-  
+
     // Use new color calculation functions
-    const validMarkers = markers.filter(marker => {
+    const validMarkers = markers.filter((marker) => {
       const data = marker.options.data;
       if (!data || data.value === undefined || data.value === "") return false;
       childCountCalc++;
       return true;
     });
-    
+
     let color = ICON_CONFIG.cluster.initColor; // default color
     let colorBorder = ICON_CONFIG.cluster.initBorderColor;
     let isDark = false;
-    
+
     if (unit && childCountCalc > 0) {
       // Get winning color using new function
       color = getClusterWinningColor(validMarkers, unit);
@@ -104,7 +110,7 @@ export function createIconCluster(cluster, unit = null, getClusterWinningColor, 
     return new L.DivIcon({
       html: createIconHTML({
         text: childCount,
-        color: color
+        color: color,
       }),
       className: ICON_CONFIG.cluster.className,
       iconSize: ICON_CONFIG.cluster.iconSize,
@@ -114,7 +120,7 @@ export function createIconCluster(cluster, unit = null, getClusterWinningColor, 
     return new L.DivIcon({
       html: createIconHTML({
         text: cluster.getChildCount(),
-        color: ICON_CONFIG.cluster.initColor
+        color: ICON_CONFIG.cluster.initColor,
       }),
       className: ICON_CONFIG.cluster.className,
       iconSize: ICON_CONFIG.cluster.iconSize,
@@ -133,7 +139,7 @@ export function createIconCluster(cluster, unit = null, getClusterWinningColor, 
  */
 export function createIconPoint({ colors, isBookmarked, id, image }) {
   const htmlParams = {};
-  
+
   if (image) {
     // Image marker
     htmlParams.image = image;
@@ -141,20 +147,19 @@ export function createIconPoint({ colors, isBookmarked, id, image }) {
     // Default marker
     htmlParams.color = colors.basic;
   }
-  
+
   // Container parameters (common for both types)
   htmlParams.container = {
     class: `${isBookmarked ? "sensor-bookmarked" : ""}`,
-    attributes: { 'data-id': id ?? "" }
+    attributes: { "data-id": id ?? "" },
   };
-  
+
   return new L.DivIcon({
     html: createIconHTML(htmlParams),
     className: ICON_CONFIG.point.className,
     iconSize: ICON_CONFIG.point.iconSize,
   });
 }
-
 
 /**
  * Creates marker (universal for both image and circle markers)
@@ -165,13 +170,13 @@ export function createIconPoint({ colors, isBookmarked, id, image }) {
  * @param {string} typeMarker - Marker type ('image' or 'circle')
  * @returns {L.Marker} Marker
  */
-export function createMarker(coord, data, colors, image = null, typeMarker = 'circle') {
+export function createMarker(coord, data, colors, image = null, typeMarker = "circle") {
   return L.marker(new L.LatLng(coord[0], coord[1]), {
     icon: createIconPoint({
       image: image,
       colors: colors,
       isBookmarked: data.isBookmarked,
-      id: data.sensor_id || data.message_id
+      id: data.sensor_id || data.message_id,
     }),
     data: data,
     typeMarker: typeMarker,

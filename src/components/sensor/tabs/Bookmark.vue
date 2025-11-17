@@ -1,6 +1,6 @@
 <template>
   <!-- <h4>{{ t('sensorpopup.bookmarkbutton') }}</h4> -->
-  
+
   <form class="flexline" @submit.prevent="handleSubmit">
     <input
       type="text"
@@ -52,18 +52,13 @@
 </template>
 
 <script>
-import { useI18n } from 'vue-i18n';
-import {
-  IDBgettable,
-  IDBworkflow,
-  IDBdeleteByKey,
-  notifyDBChange,
-} from "../../../utils/idb";
+import { useI18n } from "vue-i18n";
+import { IDBgettable, IDBworkflow, IDBdeleteByKey, notifyDBChange } from "../../../utils/idb";
 import { idbschemas } from "@config";
 
 const schema = idbschemas?.Sensors;
 const DB_NAME = schema?.dbname;
-const STORE = Object.keys(schema?.stores || {}).find(key => key === "bookmarks") || null;
+const STORE = Object.keys(schema?.stores || {}).find((key) => key === "bookmarks") || null;
 
 export default {
   props: ["address", "geo", "id"],
@@ -108,9 +103,7 @@ export default {
 
     async addbookmark() {
       const bookmark = await this.findbookmark();
-      const sensorElement = document.querySelector(
-        `[data-id="${this.$props.id}"]`
-      );
+      const sensorElement = document.querySelector(`[data-id="${this.$props.id}"]`);
 
       if (bookmark) {
         if (this.bookmarkid) {
@@ -131,10 +124,7 @@ export default {
               });
 
               requestUpdate.addEventListener("success", () => {
-                if (
-                  sensorElement &&
-                  !sensorElement.classList.contains("sensor-bookmarked")
-                ) {
+                if (sensorElement && !sensorElement.classList.contains("sensor-bookmarked")) {
                   sensorElement.classList.add("sensor-bookmarked");
                 }
                 this.IsBookmarked = true;
@@ -149,12 +139,9 @@ export default {
         IDBworkflow(DB_NAME, STORE, "readwrite", (store) => {
           store.add({
             name: this.bookmarkname, // Используем упрощенную структуру
-            id: this.$props.id
+            id: this.$props.id,
           });
-          if (
-            sensorElement &&
-            !sensorElement.classList.contains("sensor-bookmarked")
-          ) {
+          if (sensorElement && !sensorElement.classList.contains("sensor-bookmarked")) {
             sensorElement.classList.add("sensor-bookmarked");
           }
           this.IsBookmarked = true;
@@ -167,32 +154,30 @@ export default {
 
     async deletebookmark() {
       if (!this.bookmarkid) return;
-      
-      const sensorElement = document.querySelector(
-        `[data-id="${this.$props.id}"]`
-      );
+
+      const sensorElement = document.querySelector(`[data-id="${this.$props.id}"]`);
 
       try {
         await IDBdeleteByKey(DB_NAME, STORE, this.bookmarkid);
-        
+
         if (sensorElement && sensorElement.classList.contains("sensor-bookmarked")) {
           sensorElement.classList.remove("sensor-bookmarked");
         }
-        
+
         this.IsBookmarked = false;
         this.bookmarkid = null;
         this.bookmarkname = "";
         this.isEditing = false;
         notifyDBChange(DB_NAME, STORE);
       } catch (error) {
-        console.error('Error deleting bookmark:', error);
+        console.error("Error deleting bookmark:", error);
       }
     },
   },
 
   async mounted() {
     const bookmark = await this.findbookmark();
-    
+
     if (bookmark) {
       this.IsBookmarked = true;
       this.bookmarkid = bookmark.id;

@@ -1,7 +1,6 @@
 import { settings } from "@config";
 import { fetchJson } from "@/utils/utils";
 
-
 class Provider {
   constructor(url) {
     this.url = url.replace(/\/$/, "");
@@ -11,9 +10,9 @@ class Provider {
 
   async status() {
     try {
-      const res = await fetch(`${settings.REMOTE_PROVIDER}api/sensor/cities`, { 
-        method: 'HEAD',
-        cache: 'no-store' 
+      const res = await fetch(`${settings.REMOTE_PROVIDER}api/sensor/cities`, {
+        method: "HEAD",
+        cache: "no-store",
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return true;
@@ -21,7 +20,6 @@ class Provider {
       return false;
     }
   }
-
 
   ready() {
     return Promise.resolve(); // Remote provider is always ready
@@ -37,7 +35,10 @@ class Provider {
 
   async lastValuesForPeriod(start, end, type) {
     try {
-      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/last/${start}/${end}/${type}`, { cache: 'no-store' });
+      const result = await fetchJson(
+        `${settings.REMOTE_PROVIDER}api/sensor/last/${start}/${end}/${type}`,
+        { cache: "no-store" }
+      );
       return result?.result || {};
     } catch {
       return {};
@@ -46,7 +47,10 @@ class Provider {
 
   async maxValuesForPeriod(start, end, type) {
     try {
-      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/v2/sensor/maxdata/${type}/${start}/${end}`, { cache: 'no-store' });
+      const result = await fetchJson(
+        `${settings.REMOTE_PROVIDER}api/v2/sensor/maxdata/${type}/${start}/${end}`,
+        { cache: "no-store" }
+      );
       return result?.result || {};
     } catch {
       return {};
@@ -55,7 +59,10 @@ class Provider {
 
   async messagesForPeriod(start, end) {
     try {
-      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/v2/sensor/messages/${start}/${end}`, { cache: 'no-store' });
+      const result = await fetchJson(
+        `${settings.REMOTE_PROVIDER}api/v2/sensor/messages/${start}/${end}`,
+        { cache: "no-store" }
+      );
       return result?.result || [];
     } catch {
       return [];
@@ -64,7 +71,9 @@ class Provider {
 
   async getHistoryBySensor(sensor) {
     try {
-      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/${sensor}`, { cache: 'no-store' });
+      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/${sensor}`, {
+        cache: "no-store",
+      });
       return result?.result || [];
     } catch {
       return [];
@@ -73,7 +82,10 @@ class Provider {
 
   async getHistoryPeriodBySensor(sensor, start, end) {
     try {
-      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/${sensor}/${start}/${end}`, { cache: 'no-store' });
+      const result = await fetchJson(
+        `${settings.REMOTE_PROVIDER}api/sensor/${sensor}/${start}/${end}`,
+        { cache: "no-store" }
+      );
       return result?.result || [];
     } catch {
       return [];
@@ -82,7 +94,10 @@ class Provider {
 
   async getSensorsForPeriod(start, end) {
     try {
-      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/v2/sensor/list/${start}/${end}`, { cache: 'no-store' });
+      const result = await fetchJson(
+        `${settings.REMOTE_PROVIDER}api/v2/sensor/list/${start}/${end}`,
+        { cache: "no-store" }
+      );
       return result?.result || [];
     } catch {
       return [];
@@ -91,7 +106,10 @@ class Provider {
 
   static async getMeasurements(start, end) {
     try {
-      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/measurements/${start}/${end}`, { cache: 'no-store' });
+      const result = await fetchJson(
+        `${settings.REMOTE_PROVIDER}api/sensor/measurements/${start}/${end}`,
+        { cache: "no-store" }
+      );
       return result?.result || [];
     } catch {
       return [];

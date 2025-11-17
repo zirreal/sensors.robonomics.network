@@ -19,9 +19,7 @@ class Provider {
         );
         console.log(
           "pubsub",
-          this.node.services.pubsub
-            .getSubscribers(topic)
-            .map((peer) => peer.toString())
+          this.node.services.pubsub.getSubscribers(topic).map((peer) => peer.toString())
         );
       };
       // this.node.addEventListener("peer:connect", (evt) => {
@@ -58,7 +56,7 @@ class Provider {
   getHistoryPeriod(start, end) {
     // Для libp2p возвращаем все данные из истории
     const result = {};
-    Object.keys(this.history).forEach(sensorId => {
+    Object.keys(this.history).forEach((sensorId) => {
       if (this.history[sensorId]) {
         result[sensorId] = this.history[sensorId];
       }

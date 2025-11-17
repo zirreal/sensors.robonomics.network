@@ -63,8 +63,7 @@ export default {
     fetchOptOutState() {
       // Ensure Matomo and the tracker are available
       const matomoReady =
-        typeof window.Matomo !== "undefined" &&
-        typeof window.Matomo.getTracker === "function";
+        typeof window.Matomo !== "undefined" && typeof window.Matomo.getTracker === "function";
 
       if (!matomoReady) return false; // Matomo not ready yet
 
@@ -78,8 +77,6 @@ export default {
       return true; // successfully fetched
     },
 
-
-
     waitForMatomo() {
       if (this.fetchOptOutState()) return;
 
@@ -89,8 +86,7 @@ export default {
           this.paqCheckInterval = null;
         }
       }, 100);
-    }
-
+    },
   },
 
   watch: {

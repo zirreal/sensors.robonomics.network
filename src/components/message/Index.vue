@@ -16,10 +16,9 @@
         </div>
       </section>
 
-
       <section>
         <h3>{{ t("messagepopup.infotitle") }}</h3>
-        
+
         <div class="infoline flexline" v-if="message?.timestamp">
           <div class="infoline-title">{{ t("messagepopup.infotime") }}:</div>
           <div class="infoline-info">
@@ -30,10 +29,11 @@
         <div class="infoline flexline" v-if="geo && geo.lat && geo.lng">
           <div class="infoline-title">{{ t("messagepopup.infogeo") }}:</div>
           <div class="infoline-info">
-            <a 
+            <a
               :href="getMapLink(geo.lat, geo.lng, `Message: ${message?.author || 'Unknown'}`)"
               target="_blank"
-            >{{ geo.lat }}, {{ geo.lng }}</a>
+              >{{ geo.lat }}, {{ geo.lng }}</a
+            >
           </div>
         </div>
 
@@ -93,12 +93,11 @@ const emit = defineEmits(["close"]);
 
 // Computed для форматирования текста сообщения
 const formattedMessage = computed(() => {
-  if (!props.message?.message) return '';
-  
-  // Заменяем \n на настоящие переносы строк
-  return props.message.message.replace(/\\n/g, '\n');
-});
+  if (!props.message?.message) return "";
 
+  // Заменяем \n на настоящие переносы строк
+  return props.message.message.replace(/\\n/g, "\n");
+});
 
 const { t } = useI18n();
 const { proxy } = getCurrentInstance();
@@ -107,7 +106,7 @@ const globalWindow = window;
 
 // Локальное состояние только для UI компонента
 const state = reactive({
-  sharedDefault: false
+  sharedDefault: false,
 });
 
 const shareData = () => {
@@ -119,7 +118,6 @@ const shareData = () => {
   }
 };
 
-
 const closeMessage = () => {
   emit("close");
 };
@@ -130,8 +128,8 @@ const closeMessage = () => {
  * @returns {string} Отформатированная дата
  */
 const formatTimestamp = (timestamp) => {
-  if (!timestamp) return '';
-  
+  if (!timestamp) return "";
+
   try {
     const date = new Date(timestamp * 1000);
     return date.toLocaleString();
@@ -143,7 +141,7 @@ const formatTimestamp = (timestamp) => {
 /**
  * Генерирует ссылку на карту в зависимости от устройства
  * @param {number} lat - Широта
- * @param {number} lon - Долгота  
+ * @param {number} lon - Долгота
  * @param {string} [label="Message"] - Подпись для метки
  * @returns {string} URL ссылки на карту
  */
@@ -160,7 +158,6 @@ function getMapLink(lat, lon, label = "Message") {
   }
   return `https://www.google.com/maps?q=${lat},${lon}`;
 }
-
 </script>
 
 <style scoped>
@@ -230,7 +227,6 @@ function getMapLink(lat, lon, label = "Message") {
   margin: 0;
 }
 
-
 /* Стили заглушки для текста */
 .skeleton-text {
   display: inline-block;
@@ -290,7 +286,7 @@ function getMapLink(lat, lon, label = "Message") {
   }
 
   .close {
-    font-size: 2rem !important; 
+    font-size: 2rem !important;
   }
 }
 

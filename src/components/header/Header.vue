@@ -1,20 +1,23 @@
 <template>
   <header :class="`route-${route.name || route.path.replaceAll('/', '-')}`">
-
     <div class="header-content flexline space-between">
       <div class="flexline align-start">
         <router-link to="/" class="appicon">
           <img :alt="settings.TITLE" src="../../../public/app-icon-512.png" />
         </router-link>
         <!-- Если есть sensorsNoLocation - показываем details с полным содержимым -->
-        <details v-if="sensorsList?.length > 0 && sensorsNoLocation?.length > 0" tabindex="0" class="sensors details-popup">
+        <details
+          v-if="sensorsList?.length > 0 && sensorsNoLocation?.length > 0"
+          tabindex="0"
+          class="sensors details-popup"
+        >
           <summary class="sensors-counter">
             <IconSensor class="sensors-mainicon" />
             {{ sensorsList?.length + sensorsNoLocation?.length }}
           </summary>
           <div class="details-content nogeo">
             <section>
-              <h4>{{sensorsNoLocation?.length}} sensors without geolocation</h4>
+              <h4>{{ sensorsNoLocation?.length }} sensors without geolocation</h4>
               <ul class="sensors-list">
                 <li v-for="sensor in sensorsNoLocation" :key="sensor.id">
                   <a :href="getSensorLink(sensor)">
@@ -25,7 +28,7 @@
             </section>
           </div>
         </details>
-        
+
         <!-- Если sensorsNoLocation пуст - показываем только div.sensors-counter -->
         <div v-else-if="sensorsList?.length > 0" class="sensors-counter">
           <IconSensor class="sensors-mainicon" />
@@ -34,9 +37,7 @@
       </div>
 
       <div class="flexline">
-
         <div id="about" class="popover popover-top-right" popover>
-
           <h3>{{ $t("header.title") }}</h3>
           <p>
             {{ $t("header.text1") }}
@@ -44,21 +45,28 @@
               href="https://www.fsf.org/campaigns/priority-projects/decentralization-federation"
               target="_blank"
               rel="noopener"
-            >{{ $t("header.link1") }}</a>
+              >{{ $t("header.link1") }}</a
+            >
             {{ $t("header.text2") }}
             <a
               href="https://robonomics.academy/en/learn/sensors-connectivity-course/sensors-connectivity-module/"
               target="_blank"
               rel="noopener"
-            >{{ $t("header.link2") }}</a>
+              >{{ $t("header.link2") }}</a
+            >
             {{ $t("header.text3") }}
           </p>
-          <p>{{$t('Map data')}} © <a href="https://www.openstreetmap.org/copyright" target="_blank">{{ $t('OpenStreetMap contributors') }}</a></p>
+          <p>
+            {{ $t("Map data") }} ©
+            <a href="https://www.openstreetmap.org/copyright" target="_blank">{{
+              $t("OpenStreetMap contributors")
+            }}</a>
+          </p>
 
           <section class="navlinks">
-            <router-link to="/altruist-use-cases/">{{ $t('Altruist use cases') }}</router-link>
-            <router-link to="/altruist-timeline/">{{ $t('Altruist timeline') }}</router-link>
-            <router-link to="/altruist-compare/">{{ $t('Altruist comparison table') }}</router-link>
+            <router-link to="/altruist-use-cases/">{{ $t("Altruist use cases") }}</router-link>
+            <router-link to="/altruist-timeline/">{{ $t("Altruist timeline") }}</router-link>
+            <router-link to="/altruist-compare/">{{ $t("Altruist comparison table") }}</router-link>
             <router-link to="/air-measurements/">{{ $t("links.measurement") }}</router-link>
             <router-link to="/privacy-policy/">{{ $t("links.privacy") }}</router-link>
           </section>
@@ -90,8 +98,8 @@
           :class="{ active: bookmarksCount > 0 }"
           popovertarget="bookmarks"
         >
-          <font-awesome-icon 
-            :icon="bookmarksCount > 0 ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'" 
+          <font-awesome-icon
+            :icon="bookmarksCount > 0 ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'"
           />
           <b v-if="bookmarksCount > 0">{{ bookmarksCount }}</b>
         </button>
@@ -134,9 +142,6 @@ const sensorsNoLocation = computed(() => sensorsData.sensorsNoLocation);
 // Количество закладок
 const bookmarksCount = computed(() => idbBookmarks.value?.length || 0);
 
-
-
-
 // Make a link for sensor. E.g. origin/#/provider/pm10/20/lat/lng/sensor_id
 const getSensorLink = (sensor) => {
   return router.resolve({
@@ -161,67 +166,64 @@ const formatSensorId = (id) => {
   return id;
 };
 
-
-
-watch(locale, (newValue) => {
-  i18nLocale.value = newValue;
-  localStorage.setItem("locale", newValue);
-}, {immediate: true});
-
+watch(
+  locale,
+  (newValue) => {
+    i18nLocale.value = newValue;
+    localStorage.setItem("locale", newValue);
+  },
+  { immediate: true }
+);
 
 onMounted(() => {
-
   // Close all opened details on body click if this is Tooltip
-    
-  document.body.onclick = (e) => {
 
-      const current = e.target.closest('details[tabindex="0"]'); //save clicked element to detect if it is our current detail
-      document.body.querySelectorAll('details[tabindex="0"]')
-          .forEach((e) => {
-              if(e !== current){ //we need this condition not to break details behavior
-                e.open = false
-              }
-      })
-  }
+  document.body.onclick = (e) => {
+    const current = e.target.closest('details[tabindex="0"]'); //save clicked element to detect if it is our current detail
+    document.body.querySelectorAll('details[tabindex="0"]').forEach((e) => {
+      if (e !== current) {
+        //we need this condition not to break details behavior
+        e.open = false;
+      }
+    });
+  };
 
   // Update for Indiegogo timer hourly
   // timer = setInterval(() => { now.value = new Date() }, 1000 * 60 * 60);
 });
-
 </script>
 
 <style scoped>
+header {
+  left: 0;
+  position: sticky;
+  top: 0;
+  width: 100vw;
+  z-index: 99;
+  pointer-events: none;
+  box-shadow: 0 6px 12px -4px rgba(0, 0, 0, 0.12);
+}
 
-  header {
-    left: 0;
-    position: sticky;
-    top: 0;
-    width: 100vw;
-    z-index: 99;
-    pointer-events: none;
-    box-shadow: 0 6px 12px -4px rgba(0, 0, 0, 0.12);
-  }
+header.route-altruist-compare {
+  position: static;
+}
 
-  header.route-altruist-compare {
-    position: static;
-  }
+header > * {
+  pointer-events: all;
+}
 
-  header > * {
-    pointer-events: all;
-  }
+.header-content {
+  padding: calc(var(--gap) / 2) var(--gap);
+  background-color: var(--app-bodybg);
+}
 
-  .header-content {
-    padding: calc(var(--gap)/2) var(--gap);
-    background-color: var(--app-bodybg);
-  }
-
-  .appicon {
-    border-radius: 0.5rem;
-    display: block;
-    overflow: hidden;
-    user-select: none;
-    width: 2.5rem;
-  }
+.appicon {
+  border-radius: 0.5rem;
+  display: block;
+  overflow: hidden;
+  user-select: none;
+  width: 2.5rem;
+}
 
 .appicon img {
   display: block;
@@ -370,8 +372,6 @@ onMounted(() => {
   }
 }
 
-
-
 @media screen and (width > 900px) {
   .nogeo {
     display: grid;
@@ -380,12 +380,10 @@ onMounted(() => {
     /* min-width: min(800px, calc(100vw - (var(--gap) * 2))) !important; */
     gap: calc(var(--gap) * 2);
   }
-
 }
 
 .locale-select-container {
   text-align: center;
   margin-top: var(--gap);
 }
-
 </style>

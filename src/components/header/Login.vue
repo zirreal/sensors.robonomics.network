@@ -1,38 +1,22 @@
 <template>
-  <router-link
-    v-if="accounts.length === 0"
-    to="/login/"
-    class="button"
-  >
-    Login
-  </router-link>
+  <router-link v-if="accounts.length === 0" to="/login/" class="button"> Login </router-link>
   <template v-else>
     <div id="accounts" class="popover popover-top-right" popover>
-      <div
-        v-for="acc in accounts"
-        :key="acc.address"
-        class="account-row"
-      >
+      <div v-for="acc in accounts" :key="acc.address" class="account-row">
         <span>{{ acc.address }}</span>
         <button @click="deleteAccount(acc)">delete</button>
 
         <!-- сенсоры -->
-        <div style="font-size: 0.95em; margin-left: 20px;">
+        <div style="font-size: 0.95em; margin-left: 20px">
           <template v-if="acc.sensorsLoading">
-            <span style="opacity: 0.7;">Loading sensors...</span>
+            <span style="opacity: 0.7">Loading sensors...</span>
           </template>
 
           <template v-else-if="acc.sensors.length">
             Sensors:
             <ul>
-              <li
-                v-for="sensor in acc.sensors"
-                :key="sensor"
-              >
-                <router-link
-                  :to="getSensorLink(sensor)"
-                  @click="reloadOnClick"
-                >
+              <li v-for="sensor in acc.sensors" :key="sensor">
+                <router-link :to="getSensorLink(sensor)" @click="reloadOnClick">
                   {{ sensor }}
                 </router-link>
               </li>
@@ -40,7 +24,7 @@
           </template>
 
           <template v-else>
-            <span style="opacity: 0.6;">No available sensors</span>
+            <span style="opacity: 0.6">No available sensors</span>
           </template>
         </div>
       </div>

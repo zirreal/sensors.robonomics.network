@@ -8,31 +8,29 @@
     @keyup.enter.prevent="handleCopy"
   >
     <slot />
-    <font-awesome-icon
-      :icon="successCopy ? 'fa-solid fa-check' : 'fa-regular fa-copy'"
-    />
-</a>
+    <font-awesome-icon :icon="successCopy ? 'fa-solid fa-check' : 'fa-regular fa-copy'" />
+  </a>
 </template>
 
 <script setup>
-import { ref, getCurrentInstance, onBeforeUnmount } from 'vue';
+import { ref, getCurrentInstance, onBeforeUnmount } from "vue";
 
 const props = defineProps({
   msg: {
     type: [String, Number],
-    default: ''
+    default: "",
   },
   title: {
     type: String,
-    default: ''
+    default: "",
   },
   notify: {
     type: String,
-    default: ''
-  }
+    default: "",
+  },
 });
 
-const emit = defineEmits(['copied']);
+const emit = defineEmits(["copied"]);
 
 const successCopy = ref(false);
 const resetTimer = ref(null);
@@ -52,42 +50,42 @@ const showSuccessState = () => {
 const notify = () => {
   if (!props.notify) return;
   proxy?.$notify?.({
-    position: 'top right',
-    text: props.notify
+    position: "top right",
+    text: props.notify,
   });
 };
 
 const writeToClipboard = async (value) => {
-  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(value);
     return;
   }
 
-  const textarea = document.createElement('textarea');
+  const textarea = document.createElement("textarea");
   textarea.value = value;
-  textarea.setAttribute('readonly', 'readonly');
-  textarea.style.position = 'absolute';
-  textarea.style.left = '-9999px';
+  textarea.setAttribute("readonly", "readonly");
+  textarea.style.position = "absolute";
+  textarea.style.left = "-9999px";
   document.body.appendChild(textarea);
   textarea.select();
   try {
-    document.execCommand('copy');
+    document.execCommand("copy");
   } finally {
     document.body.removeChild(textarea);
   }
 };
 
 const handleCopy = async () => {
-  const text = String(props.msg ?? '');
+  const text = String(props.msg ?? "");
   if (!text) return;
 
   try {
     await writeToClipboard(text);
     showSuccessState();
     notify();
-    emit('copied');
+    emit("copied");
   } catch (error) {
-    console.error('Failed to copy text:', error);
+    console.error("Failed to copy text:", error);
   }
 };
 
@@ -107,13 +105,18 @@ onBeforeUnmount(() => {
   gap: calc(var(--gap) * 0.4);
 }
 
-.copy .fa-copy, .copy .fa-check {
+.copy .fa-copy,
+.copy .fa-check {
   color: var(--color-link);
-  font-size:calc(var(--font-size) * 1.4);
+  font-size: calc(var(--font-size) * 1.4);
 }
 
-.copy:not(:last-child) { margin-right: calc(var(--gap) * 0.9); }
-.copy:not(:first-child) { margin-left: calc(var(--gap) * 0.9); }
+.copy:not(:last-child) {
+  margin-right: calc(var(--gap) * 0.9);
+}
+.copy:not(:first-child) {
+  margin-left: calc(var(--gap) * 0.9);
+}
 
 /* @media screen and (max-width: 680px) {
   .copy {

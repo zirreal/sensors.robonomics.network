@@ -11,12 +11,8 @@
         </div>
       </div>
     </div>
-    
-    <select 
-      v-model="selectedVersion" 
-      @change="handleVersionChange"
-      class="aqi-version-select"
-    >
+
+    <select v-model="selectedVersion" @change="handleVersionChange" class="aqi-version-select">
       <option value="us">US EPA</option>
       <option value="eu">EU Standards</option>
     </select>
@@ -24,29 +20,29 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { useMap } from '@/composables/useMap';
-import { calculateAQIIndex as calculateAQIIndexUS } from '../../../utils/calculations/aqi/us';
-import { calculateAQIIndex as calculateAQIIndexEU } from '../../../utils/calculations/aqi/eu';
-import aqiUSZones from '../../../measurements/aqi_us';
-import aqiEUZones from '../../../measurements/aqi_eu';
+import { computed, ref, onMounted, watch } from "vue";
+import { useI18n } from "vue-i18n";
+import { useMap } from "@/composables/useMap";
+import { calculateAQIIndex as calculateAQIIndexUS } from "../../../utils/calculations/aqi/us";
+import { calculateAQIIndex as calculateAQIIndexEU } from "../../../utils/calculations/aqi/eu";
+import aqiUSZones from "../../../measurements/aqi_us";
+import aqiEUZones from "../../../measurements/aqi_eu";
 
 const props = defineProps({
-  logs: { type: Array, default: () => [] }
+  logs: { type: Array, default: () => [] },
 });
 
 const { locale } = useI18n();
 const mapState = useMap();
-const localeComputed = computed(() => localStorage.getItem('locale') || locale.value || 'en');
+const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
 const selectedVersion = ref(mapState.aqiVersion.value);
 
 // AQI version selector function
-const getAQICalculator = (version = 'us') => {
+const getAQICalculator = (version = "us") => {
   switch (version) {
-    case 'us':
+    case "us":
       return calculateAQIIndexUS;
-    case 'eu':
+    case "eu":
       return calculateAQIIndexEU;
     default:
       return calculateAQIIndexUS;
@@ -54,8 +50,8 @@ const getAQICalculator = (version = 'us') => {
 };
 
 // Get appropriate zones based on AQI version
-const getAQIZones = (version = 'us') => {
-  if (version === 'eu') {
+const getAQIZones = (version = "us") => {
+  if (version === "eu") {
     return aqiEUZones;
   }
   return aqiUSZones;
@@ -64,31 +60,30 @@ const getAQIZones = (version = 'us') => {
 const aqiValue = computed(() => {
   const calculateAQIIndex = getAQICalculator(mapState.aqiVersion.value);
   const v = calculateAQIIndex(props.logs);
-  
-  
-  return typeof v === 'number' ? v : null;
+
+  return typeof v === "number" ? v : null;
 });
 
 const aqiTitle = computed(() => {
   // Показываем разные названия в зависимости от выбранной версии AQI
-  if (mapState.aqiVersion.value === 'eu') {
-    return 'AQI (EU)';
+  if (mapState.aqiVersion.value === "eu") {
+    return "AQI (EU)";
   } else {
-    return 'AQI (US EPA)';
+    return "AQI (US EPA)";
   }
 });
 
 const matchedZone = computed(() => {
   if (aqiValue.value === null) return null;
   const zones = getAQIZones(mapState.aqiVersion.value);
-  return zones.find(z => typeof z.valueMax === 'number' && aqiValue.value <= z.valueMax) || null;
+  return zones.find((z) => typeof z.valueMax === "number" && aqiValue.value <= z.valueMax) || null;
 });
 
 const zoneLabel = computed(() => {
   const z = matchedZone.value;
-  if (!z?.label) return '';
+  if (!z?.label) return "";
   const l = localeComputed.value;
-  return z.label[l] || z.label.en || '';
+  return z.label[l] || z.label.en || "";
 });
 
 const aqiStyle = computed(() => {
@@ -112,13 +107,13 @@ watch(
   (newVersion) => {
     // Update local selected version
     selectedVersion.value = newVersion;
-    
+
     // Clear AQI cache and refresh markers
-    import('@/utils/map/markers').then(module => {
+    import("@/utils/map/markers").then((module) => {
       if (module.clearAQICache) {
         module.clearAQICache(mapState.currentDate.value);
       }
-      
+
       if (module.refreshClusters) {
         module.refreshClusters();
       }
@@ -156,9 +151,15 @@ watch(
   flex-direction: column;
   justify-content: center;
 }
-.aqi-value { font-size: 18px; }
-.aqi-label { font-size: 7px; font-weight: bold; }
-.aqi-subtext { font-size: 10px; font-weight: bold; }
+.aqi-value {
+  font-size: 18px;
+}
+.aqi-label {
+  font-size: 7px;
+  font-weight: bold;
+}
+.aqi-subtext {
+  font-size: 10px;
+  font-weight: bold;
+}
 </style>
-
-

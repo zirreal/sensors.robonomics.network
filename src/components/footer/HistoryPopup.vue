@@ -114,8 +114,10 @@ export default {
   },
   async created() {
     try {
-      const res = await fetch(`${settings.REMOTE_PROVIDER}api/sensor/cities`, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Network response was not ok');
+      const res = await fetch(`${settings.REMOTE_PROVIDER}api/sensor/cities`, {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("Network response was not ok");
       const result = await res.json();
       this.cities = result.result;
       const country = Object.keys(this.cities);

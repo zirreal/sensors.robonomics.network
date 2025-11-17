@@ -28,8 +28,8 @@ import { useBookmarks } from "@/composables/useBookmarks";
 const props = defineProps({
   mapRef: {
     type: Object,
-    default: null
-  }
+    default: null,
+  },
 });
 
 const emit = defineEmits(["clickMarker", "clickMessage"]);
@@ -69,8 +69,8 @@ const map = ref(null);
 
 // Определяем тему с учетом сохраненного выбора пользователя
 const getInitialTheme = () => {
-  const savedMapTheme = localStorage.getItem('mapTheme');
-  if (savedMapTheme === 'satellite' && settings?.MAP?.theme?.satellite) {
+  const savedMapTheme = localStorage.getItem("mapTheme");
+  if (savedMapTheme === "satellite" && settings?.MAP?.theme?.satellite) {
     return settings.MAP.theme.satellite;
   }
   return window?.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
@@ -89,8 +89,8 @@ const themelistener = ({ matches, media }) => {
   }
 
   // Не меняем тему если пользователь выбрал спутник
-  const savedMapTheme = localStorage.getItem('mapTheme');
-  if (savedMapTheme === 'satellite' && settings?.MAP?.theme?.satellite) {
+  const savedMapTheme = localStorage.getItem("mapTheme");
+  if (savedMapTheme === "satellite" && settings?.MAP?.theme?.satellite) {
     return;
   }
 
@@ -108,7 +108,6 @@ const updateTheme = (newTheme) => {
   currentTheme.value = newTheme;
   setTheme(newTheme);
 };
-
 
 // Закрывает tooltip с сообщением о геолокации
 const closegeotip = () => {
@@ -128,11 +127,13 @@ const opengeotip = (msg) => {
 // Загружает позицию карты из localStorage или использует настройки по умолчанию
 const getlocalmappos = () => {
   const hasStoredPosition = !!localStorage.getItem("map-position");
-  const lastsettings = localStorage.getItem("map-position") || JSON.stringify({
-    lat: settings.MAP.position.lat,
-    lng: settings.MAP.position.lng,
-    zoom: settings.MAP.zoom,
-  });
+  const lastsettings =
+    localStorage.getItem("map-position") ||
+    JSON.stringify({
+      lat: settings.MAP.position.lat,
+      lng: settings.MAP.position.lng,
+      zoom: settings.MAP.zoom,
+    });
 
   const { lat, lng, zoom } = JSON.parse(lastsettings);
   mapState.setMapSettings(route, router, { lat, lng, zoom });
@@ -156,10 +157,9 @@ const setPosDefault = () => {
   mapState.setMapSettings(route, router, {
     lat: settings.MAP.position.lat,
     lng: settings.MAP.position.lng,
-    zoom: settings.MAP.zoom
+    zoom: settings.MAP.zoom,
   });
 };
-
 
 // Инициализирует позицию карты: URL → localStorage → настройки по умолчанию
 const initializeMapPosition = () => {
@@ -184,7 +184,7 @@ const getUserGeolocation = () => {
         mapState.setMapSettings(route, router, {
           lat: userposition.value[0],
           lng: userposition.value[1],
-          zoom: 20
+          zoom: 20,
         });
 
         if (userposition.value && map.value) {
@@ -234,9 +234,12 @@ const resetgeo = async () => {
     mapState.setMapSettings(route, router, {
       lat: mapState.mapposition.value.lat,
       lng: mapState.mapposition.value.lng,
-      zoom: mapState.mapposition.value.zoom
+      zoom: mapState.mapposition.value.zoom,
     });
-    moveMap([mapState.mapposition.value.lat, mapState.mapposition.value.lng], mapState.mapposition.value.zoom);
+    moveMap(
+      [mapState.mapposition.value.lat, mapState.mapposition.value.lng],
+      mapState.mapposition.value.zoom
+    );
     showGeoTip(message);
   } catch (error) {
     showGeoTip(error);
@@ -250,13 +253,13 @@ const onMapMove = (e) => {
   const newLat = e.target.getCenter().lat.toFixed(4);
   const newLng = e.target.getCenter().lng.toFixed(4);
   const newZoom = e.target.getZoom();
-  
+
   const settings = {
     lat: parseFloat(newLat),
     lng: parseFloat(newLng),
-    zoom: parseInt(newZoom)
+    zoom: parseInt(newZoom),
   };
-  
+
   mapState.setMapSettings(route, router, settings);
 };
 
@@ -271,10 +274,14 @@ const setupMapEventHandlers = () => {
 // Инициализирует компоненты карты: маркеры, ветер, закладки
 const initializeMapComponents = async () => {
   // Инициализируем контекст карты перед инициализацией сенсоров
-  initMapContext(toRaw(map.value), (data) => {
-    emit("clickMarker", data);
-  }, mapState.currentUnit.value);
-  
+  initMapContext(
+    toRaw(map.value),
+    (data) => {
+      emit("clickMarker", data);
+    },
+    mapState.currentUnit.value
+  );
+
   initSensors((data) => {
     emit("clickMarker", data);
   }, mapState.currentUnit.value);
@@ -295,13 +302,20 @@ const initializeMapComponents = async () => {
 const loadMap = async () => {
   geoisloading.value = false;
 
-  map.value = init([mapState.mapposition.value.lat, mapState.mapposition.value.lng], mapState.mapposition.value.zoom, theme.value);
+  map.value = init(
+    [mapState.mapposition.value.lat, mapState.mapposition.value.lng],
+    mapState.mapposition.value.zoom,
+    theme.value
+  );
   mapState.setMapSettings(route, router, {
     lat: mapState.mapposition.value.lat,
     lng: mapState.mapposition.value.lng,
-    zoom: mapState.mapposition.value.zoom
+    zoom: mapState.mapposition.value.zoom,
   });
-  moveMap([mapState.mapposition.value.lat, mapState.mapposition.value.lng], mapState.mapposition.value.zoom);
+  moveMap(
+    [mapState.mapposition.value.lat, mapState.mapposition.value.lng],
+    mapState.mapposition.value.zoom
+  );
 
   setupMapEventHandlers();
   await initializeMapComponents();
@@ -316,16 +330,11 @@ watch(geomsg, (v) => {
   console.debug("geomsg changed", v);
 });
 
-
 // Настраивает слушатели изменения темы системы
 const setupThemeListeners = () => {
   if (window.matchMedia) {
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", themelistener);
-    window
-      .matchMedia("(prefers-color-scheme: light)")
-      .addEventListener("change", themelistener);
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", themelistener);
+    window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", themelistener);
   }
 };
 
@@ -337,14 +346,14 @@ const initializeMapWithGeolocation = async () => {
   } catch (error) {
     showGeoTip(error + `, ${t("geolocationdefaultsetup")}`);
   }
-  
+
   await loadMap();
 };
 
 onMounted(async () => {
   setupThemeListeners();
   await initializeMapWithGeolocation();
-  
+
   // Устанавливаем глобальную ссылку на функцию updateTheme
   window.mapUpdateTheme = updateTheme;
 });
@@ -359,10 +368,9 @@ onUnmounted(() => {
 
 // Экспортируем функцию для обновления темы
 defineExpose({
-  updateTheme
+  updateTheme,
 });
 </script>
-
 
 <style scoped>
 .mapcontainer {

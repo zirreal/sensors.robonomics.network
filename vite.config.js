@@ -6,7 +6,6 @@ import { defineConfig } from "vite";
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
-
   return {
     base: "/",
     // server: { https: true },
@@ -38,11 +37,11 @@ export default defineConfig(() => {
         target: ["es2020"],
       },
       include: [
-        '@fortawesome/fontawesome-svg-core',
-        '@fortawesome/free-regular-svg-icons',
-        '@fortawesome/free-solid-svg-icons',
-        '@fortawesome/vue-fontawesome'
-      ]
+        "@fortawesome/fontawesome-svg-core",
+        "@fortawesome/free-regular-svg-icons",
+        "@fortawesome/free-solid-svg-icons",
+        "@fortawesome/vue-fontawesome",
+      ],
     },
   };
 });

@@ -2,26 +2,22 @@
   <button
     class="toggle-button"
     :class="[
-      { 
-        active: modelValue
-      }
+      {
+        active: modelValue,
+      },
     ]"
     v-bind="$attrs"
     @click="toggleValue"
   >
     <font-awesome-icon :icon="iconClass" />
-    <font-awesome-icon 
-      v-if="modelValue" 
-      icon="fa-solid fa-check" 
-      class="check-icon"
-    />
+    <font-awesome-icon v-if="modelValue" icon="fa-solid fa-check" class="check-icon" />
     <slot />
   </button>
 </template>
 
 <script>
 export default {
-  inheritAttrs: false
+  inheritAttrs: false,
 };
 </script>
 
@@ -29,18 +25,18 @@ export default {
 const props = defineProps({
   modelValue: {
     type: Boolean,
-    default: false
+    default: false,
   },
   iconClass: {
     type: String,
-    required: true
-  }
+    required: true,
+  },
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(["update:modelValue"]);
 
 const toggleValue = () => {
-  emit('update:modelValue', !props.modelValue);
+  emit("update:modelValue", !props.modelValue);
 };
 </script>
 
@@ -87,4 +83,3 @@ const toggleValue = () => {
   padding: 2px;
 }
 </style>
-

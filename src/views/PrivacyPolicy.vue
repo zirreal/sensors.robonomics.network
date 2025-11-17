@@ -1,8 +1,5 @@
 <template>
-  <MetaInfo
-    pageTitle= "Sensors.social Privacy Policy"
-    pageImage="/og-privacy-policy.webp"
-  />
+  <MetaInfo pageTitle="Sensors.social Privacy Policy" pageImage="/og-privacy-policy.webp" />
   <PageTextLayout>
     <h1>{{ $t("privacypolicy.title") }}</h1>
 
@@ -83,7 +80,6 @@
       </p>
     </div>
   </PageTextLayout>
-
 </template>
 
 <script setup>
@@ -98,10 +94,7 @@ const router = useRouter();
 
 onMounted(() => {
   const waitForMatomo = setInterval(() => {
-    if (
-      typeof window.Matomo !== "undefined" &&
-      typeof window.Matomo.getTracker === "function"
-    ) {
+    if (typeof window.Matomo !== "undefined" && typeof window.Matomo.getTracker === "function") {
       clearInterval(waitForMatomo);
 
       const trackPage = () => {
@@ -118,7 +111,6 @@ onMounted(() => {
     }
   }, 100);
 });
-
 </script>
 
 <style scoped>

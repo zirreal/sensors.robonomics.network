@@ -1,30 +1,44 @@
 <template>
   <MetaInfo
-    :pageTitle= "$t('Air quality measurements information')"
-    :pageDescription="$t('Sensors.social Air Quality Map — an interactive tool for viewing, analyzing, and comparing real-time air quality data from sensors. Get up-to-date information on air conditions in your area.')"
+    :pageTitle="$t('Air quality measurements information')"
+    :pageDescription="
+      $t(
+        'Sensors.social Air Quality Map — an interactive tool for viewing, analyzing, and comparing real-time air quality data from sensors. Get up-to-date information on air conditions in your area.'
+      )
+    "
     pageImage="/og-air-measurements.webp"
   />
   <PageTextLayout>
     <h1>{{ $t("measures.title") }}</h1>
 
     <section v-for="(measurement, key) in measurements" :key="key" :id="key.toUpperCase()">
-
-      <template v-if="measurement?.nameshort && measurement?.description && measurement?.description !== ''">
-
+      <template
+        v-if="measurement?.nameshort && measurement?.description && measurement?.description !== ''"
+      >
         <h2>
           {{ measurement?.nameshort?.[locale] }}
-          <span v-if="measurement.name?.[locale] && measurement.name?.[locale] !== measurement?.nameshort?.[locale]">{{ measurement.name?.[locale] }}</span>
+          <span
+            v-if="
+              measurement.name?.[locale] &&
+              measurement.name?.[locale] !== measurement?.nameshort?.[locale]
+            "
+            >{{ measurement.name?.[locale] }}</span
+          >
         </h2>
 
         <div v-if="measurement?.zones" class="measures">
-          <div v-for="(zone, index) in measurement.zones" :key="index" :style="{ backgroundColor: zone.color }">
+          <div
+            v-for="(zone, index) in measurement.zones"
+            :key="index"
+            :style="{ backgroundColor: zone.color }"
+          >
             <b>
-            {{ zone.label[locale] ? zone.label[locale] : zone.label.en }}
+              {{ zone.label[locale] ? zone.label[locale] : zone.label.en }}
             </b>
             <span v-if="typeof zone.valueMax === 'number'">
               {{ $t("scales.upto") }} {{ zone.valueMax }}
               <template v-if="measurement.unit && measurement.unit !== ''">
-                {{ ' ' + measurement.unit }}
+                {{ " " + measurement.unit }}
               </template>
             </span>
             <span v-else>{{ $t("scales.above") }}</span>
@@ -33,7 +47,6 @@
 
         <template v-if="measurement?.description && Array.isArray(measurement?.description)">
           <template v-for="(block, idx) in measurement.description" :key="idx">
-
             <h4 v-if="block.tag === 'subtitle'">
               {{ block.text?.[locale] ?? block.text?.en }}
             </h4>
@@ -49,21 +62,18 @@
             </ul>
           </template>
         </template>
-
       </template>
     </section>
-
   </PageTextLayout>
 </template>
 
-
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { useI18n } from 'vue-i18n';
+import { useI18n } from "vue-i18n";
 import PageTextLayout from "../components/layouts/PageText.vue";
-import MetaInfo from '../components/MetaInfo.vue';
-import measurements from '../measurements';
+import MetaInfo from "../components/MetaInfo.vue";
+import measurements from "../measurements";
 
 const { locale } = useI18n();
 const currentLocale = ref(locale.value);
@@ -76,10 +86,7 @@ const router = useRouter();
 
 onMounted(() => {
   const waitForMatomo = setInterval(() => {
-    if (
-      typeof window.Matomo !== "undefined" &&
-      typeof window.Matomo.getTracker === "function"
-    ) {
+    if (typeof window.Matomo !== "undefined" && typeof window.Matomo.getTracker === "function") {
       clearInterval(waitForMatomo);
 
       const trackPage = () => {
@@ -97,7 +104,6 @@ onMounted(() => {
   }, 100);
 });
 </script>
-
 
 <style scoped>
 h2 span {
@@ -122,7 +128,6 @@ h2 span {
 .measures span {
   display: block;
 }
-
 
 .air-measurements ol {
   padding-left: calc(var(--gap) * 1.5);
