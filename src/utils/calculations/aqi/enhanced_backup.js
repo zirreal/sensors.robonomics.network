@@ -10,7 +10,7 @@ import aqiMeasurement from "../../../measurements/aqi";
 function normalizeReading(x, pollutant) {
   if (!Number.isFinite(x)) return null;
   if (x < 0) return null;
-  if (pollutant === 'pm25') return Math.trunc(x * 10) / 10; // до 0.1 µg/m³
+  if (pollutant === "pm25") return Math.trunc(x * 10) / 10; // до 0.1 µg/m³
   return Math.trunc(x); // pm10 до целого
 }
 
@@ -25,14 +25,19 @@ export function aqiFromConc(conc, pollutant) {
   let prevValue = -1; // чтобы первая зона стала [0..value]
   for (const z of sourceZones) {
     const bp = z?.[pollutant];
-    if (!bp || typeof z.valueMax !== 'number') continue;
+    if (!bp || typeof z.valueMax !== "number") continue;
     const I_lo = prevValue < 0 ? 0 : prevValue + 1;
     const I_hi = z.valueMax;
-    mapped.push({ concentrationMin: bp.concentrationMin, concentrationMax: bp.concentrationMax, I_lo, I_hi });
+    mapped.push({
+      concentrationMin: bp.concentrationMin,
+      concentrationMax: bp.concentrationMax,
+      I_lo,
+      I_hi,
+    });
     prevValue = z.valueMax;
   }
 
-  const bp = mapped.find(b => c >= b.concentrationMin && c <= b.concentrationMax);
+  const bp = mapped.find((b) => c >= b.concentrationMin && c <= b.concentrationMax);
   if (bp) {
     const { concentrationMin, concentrationMax, I_lo, I_hi } = bp;
     return ((I_hi - I_lo) / (concentrationMax - concentrationMin)) * (c - concentrationMin) + I_lo;
@@ -55,7 +60,12 @@ export function calculateAQIIndex(logs) {
     const tsSec = l?.timestamp;
     if (!Number.isFinite(tsSec)) continue;
     const d = new Date(tsSec * 1000);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate()
+    ).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(
+      2,
+      "0"
+    )}`;
     if (!minuteBuckets.has(key)) minuteBuckets.set(key, { pm25: [], pm10: [], ts: tsSec });
     const bucket = minuteBuckets.get(key);
     bucket.ts = Math.max(bucket.ts, tsSec);
@@ -73,8 +83,8 @@ export function calculateAQIIndex(logs) {
   // 2) Почасовые корзины из минут
   const hourBuckets = new Map(); // key: 'YYYY-MM-DD HH' → { pm25: number[], pm10: number[], ts: number }
   for (const m of minuteAverages) {
-    const [datePart, hm] = m.key.split(' ');
-    const hourKey = `${datePart} ${hm.slice(0,2)}`;
+    const [datePart, hm] = m.key.split(" ");
+    const hourKey = `${datePart} ${hm.slice(0, 2)}`;
     if (!hourBuckets.has(hourKey)) hourBuckets.set(hourKey, { pm25: [], pm10: [], ts: m.ts });
     const hb = hourBuckets.get(hourKey);
     hb.ts = Math.max(hb.ts, m.ts);
@@ -94,61 +104,59 @@ export function calculateAQIIndex(logs) {
   if (windowHours.length < 2) return undefined;
 
   // 4) Среднее по окну
-  const pm25Hourly = windowHours.map(h => h.pm25).filter(Number.isFinite);
-  const pm10Hourly = windowHours.map(h => h.pm10).filter(Number.isFinite);
+  const pm25Hourly = windowHours.map((h) => h.pm25).filter(Number.isFinite);
+  const pm10Hourly = windowHours.map((h) => h.pm10).filter(Number.isFinite);
   const pm25Avg = average(pm25Hourly);
   const pm10Avg = average(pm10Hourly);
 
-  const aqiPM25 = pm25Avg !== null ? aqiFromConc(pm25Avg, 'pm25') : null;
-  const aqiPM10 = pm10Avg !== null ? aqiFromConc(pm10Avg, 'pm10') : null;
+  const aqiPM25 = pm25Avg !== null ? aqiFromConc(pm25Avg, "pm25") : null;
+  const aqiPM10 = pm10Avg !== null ? aqiFromConc(pm10Avg, "pm10") : null;
 
   if (aqiPM25 === null && aqiPM10 === null) return undefined;
-  
+
   // Поправка на остаточное загрязнение после пиков
   let final = Math.max(aqiPM25 ?? 0, aqiPM10 ?? 0);
-  
+
   // Анализируем пики: находим часы с высоким загрязнением
   const highPollutionHours = [];
   const threshold = 100; // порог высокого загрязнения
-  
+
   windowHours.forEach((hour, index) => {
     const pm25 = hour.pm25;
     const pm10 = hour.pm10;
     const maxHourly = Math.max(pm25 || 0, pm10 || 0);
-    
+
     if (maxHourly > threshold) {
       highPollutionHours.push({ index, concentration: maxHourly });
     }
   });
-  
+
   if (highPollutionHours.length >= 1) {
     // Находим максимальную концентрацию
-    const maxConcentration = Math.max(...highPollutionHours.map(h => h.concentration));
-    
+    const maxConcentration = Math.max(...highPollutionHours.map((h) => h.concentration));
+
     // Базовый множитель поправки на остаточное загрязнение (научно обоснованный)
     // Исследования показывают, что остаточное воздействие составляет 8-12% от пика
-    let peakBonus = Math.min(maxConcentration * 0.10, 40); // 10% вместо 15%
-    
+    let peakBonus = Math.min(maxConcentration * 0.1, 40); // 10% вместо 15%
+
     // Дополнительная поправка за продолжительность воздействия
     if (highPollutionHours.length >= 2) {
       // Исследования: каждые 2 часа воздействия увеличивают риск на 3-5%
       const durationBonus = Math.min(highPollutionHours.length * 3, 20); // 3 пункта за час
       peakBonus += durationBonus;
     }
-    
+
     // Если пик продолжался 4+ часов (пылевая буря), дополнительная поправка
     if (highPollutionHours.length >= 4) {
       // Длительные пылевые бури создают остаточное загрязнение на 5-8%
       const stormBonus = Math.min(maxConcentration * 0.06, 25); // 6% от концентрации
       peakBonus += stormBonus;
     }
-    
+
     final = Math.max(final, final + peakBonus);
   }
-  
+
   return Math.round(Math.min(final, 500)); // ограничиваем максимумом AQI
 }
 
 export default calculateAQIIndex;
-
-

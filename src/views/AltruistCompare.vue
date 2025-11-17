@@ -1,22 +1,23 @@
 <template>
   <MetaInfo
-    :pageTitle= "$t('Compare table for Altruist with other air quality sensors')"
-    :pageDescription="$t('Explore the advantages and special features of each sensor and choose the one that best suits your needs!')"
+    :pageTitle="$t('Compare table for Altruist with other air quality sensors')"
+    :pageDescription="
+      $t(
+        'Explore the advantages and special features of each sensor and choose the one that best suits your needs!'
+      )
+    "
     pageImage="/og-compare.webp"
   />
   <PageTextLayout>
-
     <AltruistCompare gif />
-
   </PageTextLayout>
 </template>
-
 
 <script setup>
 import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 
-import MetaInfo from '../components/MetaInfo.vue';
+import MetaInfo from "../components/MetaInfo.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
 import AltruistCompare from "../components/devices/altruist/AltruistCompare.vue";
 
@@ -24,10 +25,7 @@ const router = useRouter();
 
 onMounted(() => {
   const waitForMatomo = setInterval(() => {
-    if (
-      typeof window.Matomo !== "undefined" &&
-      typeof window.Matomo.getTracker === "function"
-    ) {
+    if (typeof window.Matomo !== "undefined" && typeof window.Matomo.getTracker === "function") {
       clearInterval(waitForMatomo);
 
       const trackPage = () => {

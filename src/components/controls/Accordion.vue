@@ -1,20 +1,14 @@
 <template>
   <section class="accordion">
-    <button
-      class="accordion__header"
-      type="button"
-      @click="toggle"
-      :aria-expanded="isOpen"
-    >
-      <span><slot name="title">{{ title }}</slot></span>
+    <button class="accordion__header" type="button" @click="toggle" :aria-expanded="isOpen">
+      <span
+        ><slot name="title">{{ title }}</slot></span
+      >
       <font-awesome-icon :icon="isOpen ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" />
     </button>
 
     <transition name="accordion-collapse">
-      <div
-        v-show="isOpen"
-        class="accordion__body"
-      >
+      <div v-show="isOpen" class="accordion__body">
         <slot />
       </div>
     </transition>
@@ -22,17 +16,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref } from "vue";
 
 const props = defineProps({
   title: {
     type: String,
-    default: ''
+    default: "",
   },
   defaultOpen: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 });
 
 const isOpen = ref(props.defaultOpen);
@@ -88,4 +82,3 @@ const toggle = () => {
   opacity: 1;
 }
 </style>
-

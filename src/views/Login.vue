@@ -15,7 +15,9 @@
 
       <div v-if="account" class="preview">
         <div>You are signing in as:</div>
-        <div><b>{{ formatAddress(account) }}</b></div>
+        <div>
+          <b>{{ formatAddress(account) }}</b>
+        </div>
         <label class="label-line">
           <span>Type (advanced):</span>
           <select v-model="keyType" class="select-link">
@@ -35,7 +37,7 @@
         :class="loginStatus === 'success' ? 'button-green' : null"
         :disabled="loginStatus === 'success'"
       >
-        {{ loginStatus === 'success' ? 'Signed in' : 'Sign in' }}
+        {{ loginStatus === "success" ? "Signed in" : "Sign in" }}
       </button>
 
       <div v-if="loginStatus === 'success' && lastAddress" class="preview">
@@ -156,7 +158,9 @@ async function handleLogin(e) {
 </script>
 
 <style scoped>
-h3 { text-align: center; }
+h3 {
+  text-align: center;
+}
 
 form {
   display: grid;
@@ -166,13 +170,17 @@ form {
   margin: 0 auto;
 }
 
-input, button, select {
+input,
+button,
+select {
   display: block;
   width: 100%;
   height: auto;
 }
 
-.preview { --font-size: 1rem; }
+.preview {
+  --font-size: 1rem;
+}
 
 .label-line {
   display: flex;

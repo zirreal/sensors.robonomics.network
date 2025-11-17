@@ -4,21 +4,22 @@ import { idbschemas } from "@config";
 
 // Проверяем наличие конфигурации для новой базы данных
 if (!idbschemas?.Sensors) {
-  console.warn('Sensors database configuration not found. Bookmarks functionality disabled.');
+  console.warn("Sensors database configuration not found. Bookmarks functionality disabled.");
 }
 
 const schema = idbschemas?.Sensors;
 const DB_NAME = schema?.dbname;
-const STORE = Object.keys(schema?.stores || {}).find(key => key === "bookmarks") || null;
+const STORE = Object.keys(schema?.stores || {}).find((key) => key === "bookmarks") || null;
 
 // Конфигурация для старой базы данных (может отсутствовать)
 const oldSchema = idbschemas?.SensorsDBBookmarks;
 const OLD_DB_NAME = oldSchema?.dbname;
-const OLD_STORE = oldSchema ? Object.keys(oldSchema.stores || {}).find(key => key === "bookmarks") || null : null;
+const OLD_STORE = oldSchema
+  ? Object.keys(oldSchema.stores || {}).find((key) => key === "bookmarks") || null
+  : null;
 
 // Глобальное состояние для закладок
 const idbBookmarks = ref([]);
-
 
 // Автоматическая миграция при запуске приложения
 const autoMigrate = async () => {
@@ -35,12 +36,12 @@ const autoMigrate = async () => {
     } catch (error) {
       // Старая база не существует, это нормально
     }
-    
+
     // Если в старой базе нет данных, пропускаем миграцию
     if (!oldBookmarks || oldBookmarks.length === 0) {
       return;
     }
-    
+
     const { forceMigration } = useBookmarks();
     const success = await forceMigration();
     if (success) {
@@ -50,14 +51,14 @@ const autoMigrate = async () => {
         await new Promise((resolve, reject) => {
           deleteReq.onsuccess = () => resolve();
           deleteReq.onerror = () => reject(deleteReq.error);
-          deleteReq.onblocked = () => reject(new Error('Database deletion blocked'));
+          deleteReq.onblocked = () => reject(new Error("Database deletion blocked"));
         });
       } catch (error) {
-        console.warn('Could not delete old database automatically:', error);
+        console.warn("Could not delete old database automatically:", error);
       }
     }
   } catch (error) {
-    console.error('Auto-migration failed:', error);
+    console.error("Auto-migration failed:", error);
   }
 };
 
@@ -73,12 +74,12 @@ export function useBookmarks() {
 
     try {
       // Сначала инициализируем новую базу данных, создав пустую запись
-      IDBworkflow(DB_NAME, STORE, 'readwrite', (store) => {
+      IDBworkflow(DB_NAME, STORE, "readwrite", (store) => {
         // Создаем пустую запись для инициализации базы
-        const initRecord = { id: 'init', temp: true };
+        const initRecord = { id: "init", temp: true };
         store.put(initRecord);
         // Сразу удаляем инициализационную запись
-        store.delete('init');
+        store.delete("init");
       });
 
       // Проверяем, есть ли данные в старой базе перед миграцией (только если есть конфигурация)
@@ -99,21 +100,21 @@ export function useBookmarks() {
             toStore: STORE,
             transform: (oldBookmark) => ({
               id: oldBookmark.id,
-              name: oldBookmark.customName || oldBookmark.id // Используем customName или id как fallback
+              name: oldBookmark.customName || oldBookmark.id, // Используем customName или id как fallback
             }),
-            clearSource: true
+            clearSource: true,
           });
         }
       }
-      
+
       idbBookmarks.value = await IDBgettable(DB_NAME, STORE);
     } catch (error) {
-      console.error('Error in idbBookmarkGet:', error);
+      console.error("Error in idbBookmarkGet:", error);
       // Fallback: пытаемся получить данные напрямую
       try {
         idbBookmarks.value = await IDBgettable(DB_NAME, STORE);
       } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError);
+        console.error("Fallback also failed:", fallbackError);
         idbBookmarks.value = [];
       }
     }
@@ -136,10 +137,10 @@ export function useBookmarks() {
 
     try {
       // Инициализируем базу данных
-      IDBworkflow(DB_NAME, STORE, 'readwrite', (store) => {
-        const initRecord = { id: 'init', temp: true };
+      IDBworkflow(DB_NAME, STORE, "readwrite", (store) => {
+        const initRecord = { id: "init", temp: true };
         store.put(initRecord);
-        store.delete('init');
+        store.delete("init");
       });
 
       // Выполняем миграцию с преобразованием структуры
@@ -150,9 +151,9 @@ export function useBookmarks() {
         toStore: STORE,
         transform: (oldBookmark) => ({
           id: oldBookmark.id,
-          name: oldBookmark.customName || oldBookmark.id
+          name: oldBookmark.customName || oldBookmark.id,
         }),
-        clearSource: true
+        clearSource: true,
       });
 
       if (success) {
@@ -162,7 +163,7 @@ export function useBookmarks() {
 
       return success;
     } catch (error) {
-      console.error('Force migration error:', error);
+      console.error("Force migration error:", error);
       return false;
     }
   };
@@ -174,4 +175,3 @@ export function useBookmarks() {
     forceMigration,
   };
 }
-

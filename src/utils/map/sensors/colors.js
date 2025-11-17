@@ -9,14 +9,14 @@ import { getMeasurementByName } from "../../../measurements/tools";
 export const DEFAULT_COLORS = {
   cluster: {
     initColor: "#a1a1a1", // default gray color
-    initBorderColor: "#999"
+    initBorderColor: "#999",
   },
   point: {
     initColor: "#a1a1a1", // default gray color
     initBorderColor: "#999",
     initRgb: [161, 161, 161], // RGB equivalent of initColor
-    userMessageColor: "#f99981" // User message color
-  }
+    userMessageColor: "#f99981", // User message color
+  },
 };
 
 /**
@@ -31,7 +31,7 @@ export function getColorForValue(value, unit, point = null) {
   if (value === null || value === undefined || isNaN(value)) {
     return DEFAULT_COLORS.point.initColor; // Default color for no data
   }
-  
+
   const scaleParams = getMeasurementByName(unit);
   const zones = scaleParams?.zones || [];
   if (unit && zones.length > 0) {
@@ -53,13 +53,13 @@ export function getColorForValue(value, unit, point = null) {
  */
 export function getBorderColor(color) {
   // Convert color to RGB for border calculation
-  const tempEl = document.createElement('div');
+  const tempEl = document.createElement("div");
   tempEl.style.color = color;
   document.body.appendChild(tempEl);
   const computedColor = getComputedStyle(tempEl).color;
   document.body.removeChild(tempEl);
-  
-  if (computedColor.startsWith('rgb')) {
+
+  if (computedColor.startsWith("rgb")) {
     const rgb = computedColor.match(/\d+/g);
     if (rgb && rgb.length >= 3) {
       const r = parseInt(rgb[0]);
@@ -68,7 +68,7 @@ export function getBorderColor(color) {
       return `rgb(${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)})`;
     }
   }
-  
+
   return DEFAULT_COLORS.point.initBorderColor; // Fallback
 }
 
@@ -78,23 +78,23 @@ export function getBorderColor(color) {
  * @returns {boolean} - True if color is dark
  */
 export function isDarkColor(color) {
-  const tempEl = document.createElement('div');
+  const tempEl = document.createElement("div");
   tempEl.style.color = color;
   document.body.appendChild(tempEl);
   const computedColor = getComputedStyle(tempEl).color;
   document.body.removeChild(tempEl);
-  
-  if (computedColor.startsWith('rgb')) {
+
+  if (computedColor.startsWith("rgb")) {
     const rgb = computedColor.match(/\d+/g);
     if (rgb && rgb.length >= 3) {
       const r = parseInt(rgb[0]);
       const g = parseInt(rgb[1]);
       const b = parseInt(rgb[2]);
       // Use luminance formula: 0.299*R + 0.587*G + 0.114*B
-      return (r * 0.299 + g * 0.587 + b * 0.114) < 128;
+      return r * 0.299 + g * 0.587 + b * 0.114 < 128;
     }
   }
-  
+
   return false; // Fallback
 }
 
@@ -111,14 +111,14 @@ export function getMarkerColors(point, unit, isUserMessage = false) {
     border: DEFAULT_COLORS.point.initBorderColor,
     rgb: DEFAULT_COLORS.point.initRgb,
   };
-  
+
   // For regular markers, apply color based on value
   if (!isUserMessage && !point.isEmpty) {
     const color = getColorForValue(point.value, unit, point);
     colors.basic = color;
     colors.border = getBorderColor(color);
   }
-  
+
   return colors;
 }
 
@@ -130,38 +130,38 @@ export function getMarkerColors(point, unit, isUserMessage = false) {
  */
 export function getClusterWinningColor(markers, unit) {
   const zoneCounts = new Map(); // zone color -> count
-  
+
   // Sort markers by sensor_id for consistent results
   const sortedMarkers = [...markers].sort((a, b) => {
-    const idA = a.options.data?.sensor_id || '';
-    const idB = b.options.data?.sensor_id || '';
+    const idA = a.options.data?.sensor_id || "";
+    const idB = b.options.data?.sensor_id || "";
     return idA.localeCompare(idB);
   });
-  
+
   for (const marker of sortedMarkers) {
     const data = marker.options.data;
     if (!data) continue;
-    
+
     const value = data.value;
     if (value === null || value === undefined || isNaN(value)) continue;
-    
+
     // Get color for this marker's value
     const markerColor = getColorForValue(value, unit, data);
-    
+
     // Count this zone
     zoneCounts.set(markerColor, (zoneCounts.get(markerColor) || 0) + 1);
   }
-  
+
   // Find the winning zone (most common color)
   let maxCount = 0;
   let winningColor = DEFAULT_COLORS.cluster.initColor;
-  
+
   for (const [color, count] of zoneCounts) {
     if (count > maxCount) {
       maxCount = count;
       winningColor = color;
     }
   }
-  
+
   return winningColor;
 }

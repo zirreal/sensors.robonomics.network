@@ -3,11 +3,11 @@
  * Handles message markers and message visualization
  */
 
-import { MARKER_CLASSES } from '../markers';
-import { getMapContext } from '../map';
-import * as utils from '../markers';
-import { setActiveMarker, clearActiveMarker } from '../markers';
-import * as icons from './icons';
+import { MARKER_CLASSES } from "../markers";
+import { getMapContext } from "../map";
+import * as utils from "../markers";
+import { setActiveMarker, clearActiveMarker } from "../markers";
+import * as icons from "./icons";
 import L from "leaflet";
 
 /**
@@ -47,7 +47,7 @@ function createMessageClusterGroup(iconCreateFn) {
     removeOutsideVisibleBounds: true,
     chunkProgress: (processed, total, elapsed) => {
       // Можно добавить логику прогресса загрузки
-    }
+    },
   });
 }
 
@@ -68,49 +68,51 @@ export function isReadyLayer() {
 function upsertMessageMarker(point) {
   // Вычисляем координаты (сообщения используют scatter)
   const coord = utils.scatterCoords([point.geo.lat, point.geo.lng], point.message_id);
-  
+
   // Ищем существующий маркер
   const existingMarker = findMessageMarker(point.message_id);
-  
+
   // Если маркер существует, обновляем его
   if (existingMarker) {
     // Проверяем, был ли маркер активным
     const wasActive = existingMarker.getElement()?.classList.contains(MARKER_CLASSES.active);
-    
+
     // Обновляем данные маркера
     existingMarker.options.data = point;
-    
+
     // Обновляем иконку
-    existingMarker.setIcon(icons.createIconPoint({
-      id: point.message_id
-    }));
-    
+    existingMarker.setIcon(
+      icons.createIconPoint({
+        id: point.message_id,
+      })
+    );
+
     // Восстанавливаем активное состояние если было
     if (wasActive) {
       existingMarker.getElement()?.classList.add(MARKER_CLASSES.active);
     }
-    
+
     return { marker: existingMarker, isNew: false };
   }
-  
+
   // Создаем новый маркер
   const newMarker = icons.createMarker(coord, point);
-  
+
   // Добавляем маркер на слой
   const ctx = getMapContext();
   if (ctx.messagesLayer) {
     ctx.messagesLayer.addLayer(newMarker);
-    
+
     // Добавляем обработчики событий для маркера
     utils.attachMarkerEvents(newMarker, (data) => {
-      setActiveMarker(data.message_id, 'message');
+      setActiveMarker(data.message_id, "message");
       // Вызываем callback если он есть в контексте
       if (ctx.messageClickHandler) {
         ctx.messageClickHandler(data);
       }
     });
   }
-  
+
   return { marker: newMarker, isNew: true };
 }
 
@@ -122,7 +124,7 @@ function upsertMessageMarker(point) {
 function findMessageMarker(messageId) {
   const ctx = getMapContext();
   if (!ctx.messagesLayer) return null;
-  
+
   let foundMarker = null;
   ctx.messagesLayer.eachLayer((layer) => {
     if (layer.options?.data?.message_id === messageId) {
@@ -130,7 +132,7 @@ function findMessageMarker(messageId) {
       return false; // Прерываем итерацию
     }
   });
-  
+
   return foundMarker;
 }
 
@@ -140,31 +142,31 @@ function findMessageMarker(messageId) {
  */
 export function init(cb) {
   const ctx = getMapContext();
-  
+
   if (!ctx.map) {
     return;
   }
-  
+
   // Создаем кластерную группу для маркеров сообщений с более агрессивной кластеризацией
   ctx.messagesLayer = createMessageClusterGroup((cluster) => icons.createIconCluster(cluster));
-  
+
   // Добавляем слой на карту
   if (ctx.map && ctx.messagesLayer) {
     ctx.map.addLayer(ctx.messagesLayer);
-    
+
     // Добавляем слушатель изменения зума для обновления кластеризации
-    ctx.map.on('zoomend', () => {
+    ctx.map.on("zoomend", () => {
       // Принудительно обновляем кластеризацию при изменении зума
       if (ctx.messagesLayer) {
         ctx.messagesLayer.refreshClusters();
       }
     });
   }
-  
+
   // Создаем обработчик клика для маркеров сообщений
   const messageClickHandler = (data) => {
     // Устанавливаем активный маркер
-    setActiveMarker(data.message_id, 'message');
+    setActiveMarker(data.message_id, "message");
     cb(data);
   };
 
@@ -175,7 +177,6 @@ export function init(cb) {
   if (ctx.messagesLayer) {
     utils.attachClusterEvents(ctx.messagesLayer, messageClickHandler);
   }
-
 }
 
 /**
@@ -186,16 +187,16 @@ export function updateMessages(messages) {
   if (!isReadyLayer()) {
     return;
   }
-  
+
   const ctx = getMapContext();
-  
+
   // Очищаем существующие маркеры
   if (ctx.messagesLayer) {
     ctx.messagesLayer.clearLayers();
   }
-  
+
   // Добавляем новые маркеры
-  messages.forEach(point => {
+  messages.forEach((point) => {
     if (point.geo && point.geo.lat && point.geo.lng) {
       upsertMessageMarker(point);
     }
@@ -221,17 +222,15 @@ export function destroyMessagesLayer() {
   const ctx = getMapContext();
   if (ctx.map && ctx.messagesLayer) {
     // Удаляем слушатель зума
-    ctx.map.off('zoomend');
-    
+    ctx.map.off("zoomend");
+
     // Удаляем слой с карты
     ctx.map.removeLayer(ctx.messagesLayer);
-    
+
     // Очищаем ссылку
     ctx.messagesLayer = null;
   }
 }
-
-
 
 /**
  * Switch messages layer visibility
@@ -240,7 +239,7 @@ export function destroyMessagesLayer() {
 export function switchMessagesLayer(enabled = false) {
   const ctx = getMapContext();
   if (!ctx.map || !ctx.messagesLayer) return;
-  
+
   if (enabled) {
     ctx.map.addLayer(ctx.messagesLayer);
   } else {

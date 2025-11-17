@@ -6,8 +6,8 @@ export default [
     color: "var(--measure-green)",
     label: {
       en: "Good",
-      ru: "Хорошо"
-    }
+      ru: "Хорошо",
+    },
   },
   {
     valueMax: 100,
@@ -16,8 +16,8 @@ export default [
     color: "var(--measure-bluegreen)",
     label: {
       en: "Moderate",
-      ru: "Умеренно"
-    }
+      ru: "Умеренно",
+    },
   },
   {
     valueMax: 150,
@@ -26,8 +26,8 @@ export default [
     color: "var(--measure-yellow)",
     label: {
       en: "Unhealthy for Sensitive Groups",
-      ru: "Вредно для чувствительных групп"
-    }
+      ru: "Вредно для чувствительных групп",
+    },
   },
   {
     valueMax: 200,
@@ -36,8 +36,8 @@ export default [
     color: "var(--measure-orange)",
     label: {
       en: "Unhealthy",
-      ru: "Вредно"
-    }
+      ru: "Вредно",
+    },
   },
   {
     valueMax: 300,
@@ -46,8 +46,8 @@ export default [
     color: "var(--measure-red)",
     label: {
       en: "Very Unhealthy",
-      ru: "Очень вредно"
-    }
+      ru: "Очень вредно",
+    },
   },
   {
     valueMax: 500,
@@ -56,7 +56,7 @@ export default [
     color: "var(--measure-darkred)",
     label: {
       en: "Hazardous",
-      ru: "Опасно"
-    }
-  }
+      ru: "Опасно",
+    },
+  },
 ];

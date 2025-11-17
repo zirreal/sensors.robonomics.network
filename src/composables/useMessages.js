@@ -1,11 +1,11 @@
-import { ref, computed } from 'vue';
-import { useMap } from '@/composables/useMap';
-import { instanceMap } from '@/utils/map/map';
-import { setActiveMarker } from '@/utils/map/markers';
-import { getMessagesForPeriod } from '@/utils/map/messages/requests';
-import { getAddress } from '@/utils/utils';
-import * as messagesUtils from '@/utils/map/messages';
-import { hasValidCoordinates } from '@/utils/utils';
+import { ref, computed } from "vue";
+import { useMap } from "@/composables/useMap";
+import { instanceMap } from "@/utils/map/map";
+import { setActiveMarker } from "@/utils/map/markers";
+import { getMessagesForPeriod } from "@/utils/map/messages/requests";
+import { getAddress } from "@/utils/utils";
+import * as messagesUtils from "@/utils/map/messages";
+import { hasValidCoordinates } from "@/utils/utils";
 
 export function useMessages(locale) {
   const mapState = useMap();
@@ -33,20 +33,18 @@ export function useMessages(locale) {
 
       // Загружаем сообщения через requests.js
       const result = await getMessagesForPeriod(startTimestamp, endTimestamp);
-      
-      
+
       // Сохраняем данные в локальные переменные
       messages.value = result.messages;
       messagesNoLocation.value = result.messagesNoLocation;
       messagesLoaded.value = true;
-      
+
       // Обновляем маркеры на карте (используем локальные данные)
       messagesUtils.updateMessages(messages.value);
-      
-      return result;
 
+      return result;
     } catch (error) {
-      console.error('Error loading messages:', error);
+      console.error("Error loading messages:", error);
       messagesError.value = error;
       messages.value = [];
       messagesNoLocation.value = [];
@@ -67,7 +65,7 @@ export function useMessages(locale) {
       message: messageData.message,
       timestamp: messageData.timestamp,
       author: messageData.author,
-      address: messageData.address || ''
+      address: messageData.address || "",
     };
   };
 
@@ -75,15 +73,15 @@ export function useMessages(locale) {
   const handlerOpenMessage = (message) => {
     isMessage.value = true;
     messagePoint.value = message;
-    setActiveMarker(message.message_id, 'message');
-    
+    setActiveMarker(message.message_id, "message");
+
     // Делаем карту неактивной при открытии попапа сообщения
     mapState.mapinactive.value = true;
 
     // Получаем адрес сообщения асинхронно, если его нет
     if (!message.address && hasValidCoordinates(message.geo)) {
       messagePoint.value.address = `Loading address...`;
-      getAddress(message.geo.lat, message.geo.lng, locale.value).then(address => {
+      getAddress(message.geo.lat, message.geo.lng, locale.value).then((address) => {
         if (messagePoint.value && messagePoint.value.message_id === message.message_id && address) {
           messagePoint.value.address = address;
         }
@@ -94,8 +92,8 @@ export function useMessages(locale) {
   const handlerCloseMessage = () => {
     isMessage.value = false;
     messagePoint.value = null;
-    setActiveMarker(null, 'message');
-    
+    setActiveMarker(null, "message");
+
     // Возвращаем карту в активное состояние при закрытии попапа
     mapState.mapinactive.value = false;
   };

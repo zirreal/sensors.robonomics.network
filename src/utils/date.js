@@ -7,32 +7,32 @@ export function dayISO(input) {
     d = new Date();
   } else if (input instanceof Date) {
     d = input;
-  } else if (typeof input === 'number') {
+  } else if (typeof input === "number") {
     // Accept both seconds and milliseconds
     d = new Date(input < 1e12 ? input * 1000 : input);
-  } else if (typeof input === 'string') {
+  } else if (typeof input === "string") {
     d = new Date(input);
   } else {
     d = new Date();
   }
   // Use local date instead of UTC to avoid timezone issues
   const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
 export function dayBoundsUnix(isoDate) {
-  const [y, m, d] = String(isoDate).split('-').map(Number);
-  
+  const [y, m, d] = String(isoDate).split("-").map(Number);
+
   // Используем локальное время для правильных границ дня
   // Highcharts использует useUTC: false, поэтому timestamp'ы должны быть в локальном времени
   const startDate = new Date(y, m - 1, d, 0, 0, 0, 0);
   const endDate = new Date(y, m - 1, d, 23, 59, 59, 999);
-  
+
   const start = Math.floor(startDate.getTime() / 1000);
   const end = Math.floor(endDate.getTime() / 1000);
-  
+
   return { start, end };
 }
 
@@ -42,71 +42,72 @@ export function dayBoundsUnix(isoDate) {
  * @param {string} mode - режим: 'day', 'week', 'month'
  * @returns {Object} объект с start и end в unix timestamp
  */
-export function getPeriodBounds(isoDate, mode = 'day') {
-  const [y, m, d] = String(isoDate).split('-').map(Number);
+export function getPeriodBounds(isoDate, mode = "day") {
+  const [y, m, d] = String(isoDate).split("-").map(Number);
   const today = dayISO();
-  
+
   let endDate;
   let startDate;
-  
+
   // Если это текущий день, показываем до текущего момента
-  if (isoDate === today && mode === 'day') {
+  if (isoDate === today && mode === "day") {
     endDate = new Date(); // текущий момент
   } else {
     endDate = new Date(y, m - 1, d, 23, 59, 59, 999);
   }
-  
+
   switch (mode) {
-    case 'week':
+    case "week":
       // Неделя: 7 дней назад от конечной даты
       startDate = new Date(endDate);
       startDate.setDate(endDate.getDate() - 6);
       startDate.setHours(0, 0, 0, 0);
       break;
-      
-    case 'month':
+
+    case "month":
       // Месяц: 30 дней назад от конечной даты
       startDate = new Date(endDate);
       startDate.setDate(endDate.getDate() - 29);
       startDate.setHours(0, 0, 0, 0);
       break;
-      
-    case 'day':
+
+    case "day":
     default:
       // День: только выбранная дата
       startDate = new Date(y, m - 1, d, 0, 0, 0, 0);
       break;
   }
-  
+
   return {
     start: Math.floor(startDate.getTime() / 1000),
-    end: Math.floor(endDate.getTime() / 1000)
+    end: Math.floor(endDate.getTime() / 1000),
   };
 }
 
 export function addDaysISO(isoDate, deltaDays) {
-  const [y, m, d] = String(isoDate).split('-').map(Number);
+  const [y, m, d] = String(isoDate).split("-").map(Number);
   const dt = new Date(y, m - 1, d);
   dt.setDate(dt.getDate() + Number(deltaDays || 0));
   return dt.toISOString().slice(0, 10);
 }
 
 export function addMonthsISO(isoDate, deltaMonths) {
-  const [y, m, d] = String(isoDate).split('-').map(Number);
+  const [y, m, d] = String(isoDate).split("-").map(Number);
   const dt = new Date(y, m - 1, d);
   dt.setMonth(dt.getMonth() + Number(deltaMonths || 0));
   return dt.toISOString().slice(0, 10);
 }
 
 export function unixToISODate(unixSeconds) {
-  if (!unixSeconds) return '';
+  if (!unixSeconds) return "";
   return new Date(Number(unixSeconds) * 1000).toISOString().slice(0, 10);
 }
 
 export function formatUnixLocale(unixSeconds, locale) {
   const dt = new Date(Number(unixSeconds) * 1000);
-  const fmt = new Intl.DateTimeFormat(locale || (localStorage.getItem('locale') || 'en'), {
-    dateStyle: 'medium', timeStyle: 'short'
+  const fmt = new Intl.DateTimeFormat(locale || localStorage.getItem("locale") || "en", {
+    dateStyle: "medium",
+    timeStyle: "short",
   });
   return fmt.format(dt);
 }
@@ -114,20 +115,18 @@ export function formatUnixLocale(unixSeconds, locale) {
 // Safely parse date from input (handles different locales and formats)
 export function parseInputDate(dateString) {
   if (!dateString) return dayISO();
-  
+
   // If it's already in YYYY-MM-DD format, return as is
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
     return dateString;
   }
-  
+
   // Try to parse as Date and convert to ISO
   const parsedDate = new Date(dateString);
   if (isNaN(parsedDate.getTime())) {
-    console.warn('Invalid date string:', dateString, 'falling back to today');
+    console.warn("Invalid date string:", dateString, "falling back to today");
     return dayISO();
   }
-  
+
   return dayISO(parsedDate);
 }
-
-

@@ -1,6 +1,6 @@
 import { Buffer } from "buffer";
 import { createApp } from "vue";
-import { createHead } from '@vueuse/head'
+import { createHead } from "@vueuse/head";
 import App from "./App.vue";
 import { usePlugins } from "./plugins";
 import "@oddbird/popover-polyfill";

@@ -22,18 +22,17 @@ import { computed, onMounted, onUnmounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useBookmarks } from "@/composables/useBookmarks";
 import { IDBdeleteByKey, notifyDBChange } from "../utils/idb";
-import {settings, idbschemas} from "@config";
+import { settings, idbschemas } from "@config";
 // import { getTypeProvider } from "@/utils/utils"; // deprecated
 
 const schema = idbschemas?.Sensors;
 const DB_NAME = schema?.dbname;
-const STORE = Object.keys(schema?.stores || {}).find(key => key === "bookmarks") || null;
+const STORE = Object.keys(schema?.stores || {}).find((key) => key === "bookmarks") || null;
 
 const router = useRouter();
 const route = useRoute();
 const { idbBookmarks, idbBookmarkGet, watchBookmarks } = useBookmarks();
 const bookmarks = computed(() => idbBookmarks.value);
-
 
 async function deletebookmark(id) {
   await IDBdeleteByKey(DB_NAME, STORE, id);
@@ -78,15 +77,23 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-a, a b { display: block; }
+a,
+a b {
+  display: block;
+}
 
-.addresssm { color: var(--app-textcolor); font-size: 0.7em; }
+.addresssm {
+  color: var(--app-textcolor);
+  font-size: 0.7em;
+}
 
-section { justify-content: space-between; }
+section {
+  justify-content: space-between;
+}
 
 section:not(:last-child) {
-  padding-bottom: calc(var(--gap)/2);
-  margin-bottom: calc(var(--gap)/2);
+  padding-bottom: calc(var(--gap) / 2);
+  margin-bottom: calc(var(--gap) / 2);
   border-bottom: 1px solid var(--app-textcolor);
 }
 
@@ -96,7 +103,12 @@ button {
   font-size: 1.2em;
   transition: color 0.2s ease-in;
 }
-button:hover { color: var(--color-red); }
+button:hover {
+  color: var(--color-red);
+}
 
-.bookmarkslist { max-height: 70svh; overflow-y: auto; }
+.bookmarkslist {
+  max-height: 70svh;
+  overflow-y: auto;
+}
 </style>

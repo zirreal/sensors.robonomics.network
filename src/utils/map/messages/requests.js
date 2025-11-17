@@ -18,10 +18,8 @@ const REMOTE_PROVIDER = new Provider(settings.REMOTE_PROVIDER);
  */
 export async function getMessagesForPeriod(startTimestamp, endTimestamp) {
   try {
-
     // Используем messagesForPeriod из remote.js
     const messagesData = await REMOTE_PROVIDER.messagesForPeriod(startTimestamp, endTimestamp);
-
 
     // Обрабатываем данные сообщений
     const messages = [];
@@ -43,22 +41,22 @@ export async function getMessagesForPeriod(startTimestamp, endTimestamp) {
 
       // Создаем ключ для проверки дублей (гео + таймстамп)
       const duplicateKey = `${lat}_${lng}_${timestamp}`;
-      
+
       // Пропускаем дубли
       if (processedMessages.has(duplicateKey)) {
         continue;
       }
-      
+
       // Добавляем в набор обработанных
       processedMessages.add(duplicateKey);
 
       const messageInfo = {
-        message_id: timestamp + '_' + lat + '_' + lng, // уникальный ID
+        message_id: timestamp + "_" + lat + "_" + lng, // уникальный ID
         geo: { lat, lng },
-        message: messageData.message || '',
+        message: messageData.message || "",
         timestamp: timestamp,
-        author: messageData.author || 'Unknown',
-        address: messageData.address || '' // добавляем поле адреса
+        author: messageData.author || "Unknown",
+        address: messageData.address || "", // добавляем поле адреса
       };
 
       if (!hasValidCoordinates({ lat, lng })) {
@@ -80,14 +78,13 @@ export async function getMessagesForPeriod(startTimestamp, endTimestamp) {
     // Возвращаем отфильтрованные данные
     return {
       messages: filteredMessages,
-      messagesNoLocation: filteredNoLocation
+      messagesNoLocation: filteredNoLocation,
     };
-
   } catch (error) {
-    console.error('Error loading messages:', error);
+    console.error("Error loading messages:", error);
     return {
       messages: [],
-      messagesNoLocation: []
+      messagesNoLocation: [],
     };
   }
 }

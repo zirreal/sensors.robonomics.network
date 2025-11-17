@@ -10,9 +10,9 @@ import { idbschemas } from "@config";
     Возвращает конфиг выбранной БД из idbschemas.
 */
 function getDBConfig(dbname) {
-    const db = idbschemas[dbname];
-    if (!db) throw new Error(`No config for db: ${dbname}`);
-    return db;
+  const db = idbschemas[dbname];
+  if (!db) throw new Error(`No config for db: ${dbname}`);
+  return db;
 }
 
 /*
@@ -20,10 +20,10 @@ function getDBConfig(dbname) {
     Возвращает схему objectStore выбранной БД.
 */
 function getStoreConfig(dbname, dbtable) {
-    const db = getDBConfig(dbname);
-    const store = db.stores[dbtable];
-    if (!store) throw new Error(`No schema for objectStore: ${dbtable} in ${dbname}`);
-    return store;
+  const db = getDBConfig(dbname);
+  const store = db.stores[dbtable];
+  if (!store) throw new Error(`No schema for objectStore: ${dbtable} in ${dbname}`);
+  return store;
 }
 
 /*
@@ -38,40 +38,44 @@ function getStoreConfig(dbname, dbtable) {
         IDBworkflow('SensorsDBBookmarks', 'bookmarks', 'readwrite', store => { store.put({...}) })
 */
 export function IDBworkflow(dbname, dbtable, mode, onsuccess) {
-    const dbconf = getDBConfig(dbname);
-    const { dbversion } = dbconf;
-    const { keyPath, autoIncrement } = getStoreConfig(dbname, dbtable);
+  const dbconf = getDBConfig(dbname);
+  const { dbversion } = dbconf;
+  const { keyPath, autoIncrement } = getStoreConfig(dbname, dbtable);
 
-    const IDB = window.indexedDB || window.webkitIndexedDB;
-    if (!IDB) { return; }
+  const IDB = window.indexedDB || window.webkitIndexedDB;
+  if (!IDB) {
+    return;
+  }
 
-    let db = null;
-    const DBOpenReq = IDB.open(dbname, dbversion);
+  let db = null;
+  const DBOpenReq = IDB.open(dbname, dbversion);
 
-    DBOpenReq.addEventListener('error', err => {
+  DBOpenReq.addEventListener("error", (err) => {
+    console.warn(err);
+  });
+
+  DBOpenReq.addEventListener("success", (e) => {
+    db = e.target.result;
+    if (db.objectStoreNames.contains(dbtable)) {
+      let tx = db.transaction(dbtable, mode);
+      tx.addEventListener("error", (err) => {
         console.warn(err);
-    });
+      });
+      const store = tx.objectStore(dbtable);
+      onsuccess(store);
+    }
+  });
 
-    DBOpenReq.addEventListener('success', e => {
-        db = e.target.result;
-        if (db.objectStoreNames.contains(dbtable)) {
-            let tx = db.transaction(dbtable, mode);
-            tx.addEventListener('error', err => { console.warn(err); });
-            const store = tx.objectStore(dbtable);
-            onsuccess(store);
-        }
+  DBOpenReq.addEventListener("upgradeneeded", (e) => {
+    db = e.target.result;
+    // создаёт или пересоздаёт все objectStore согласно конфигу для выбранной БД
+    Object.entries(dbconf.stores).forEach(([storeName, { keyPath, autoIncrement }]) => {
+      if (db.objectStoreNames.contains(storeName)) {
+        db.deleteObjectStore(storeName);
+      }
+      db.createObjectStore(storeName, { keyPath, autoIncrement });
     });
-
-    DBOpenReq.addEventListener('upgradeneeded', (e) => {
-        db = e.target.result;
-        // создаёт или пересоздаёт все objectStore согласно конфигу для выбранной БД
-        Object.entries(dbconf.stores).forEach(([storeName, { keyPath, autoIncrement }]) => {
-            if (db.objectStoreNames.contains(storeName)) {
-                db.deleteObjectStore(storeName);
-            }
-            db.createObjectStore(storeName, { keyPath, autoIncrement });
-        });
-    });
+  });
 }
 
 /*
@@ -81,20 +85,20 @@ export function IDBworkflow(dbname, dbtable, mode, onsuccess) {
         IDBgettable('SensorsDBBookmarks', 'bookmarks').then(arr => ...)
 */
 export function IDBgettable(dbname, dbtable) {
-    return new Promise((resolve) => {
-        let datafromtable = [];
-        IDBworkflow(dbname, dbtable, 'readonly', store => {
-            store.openCursor().addEventListener('success', e => {
-                const cursor = e.target.result;
-                if (cursor) {
-                    datafromtable.push(cursor.value);
-                    cursor.continue();
-                } else {
-                    resolve(datafromtable);
-                }
-            });
-        });
+  return new Promise((resolve) => {
+    let datafromtable = [];
+    IDBworkflow(dbname, dbtable, "readonly", (store) => {
+      store.openCursor().addEventListener("success", (e) => {
+        const cursor = e.target.result;
+        if (cursor) {
+          datafromtable.push(cursor.value);
+          cursor.continue();
+        } else {
+          resolve(datafromtable);
+        }
+      });
     });
+  });
 }
 
 /*
@@ -105,18 +109,13 @@ export function IDBgettable(dbname, dbtable) {
         IDBdeleteByKey('SensorsDBBookmarks', 'bookmarks', 5)
 */
 export function IDBdeleteByKey(dbname, dbtable, key) {
-    return new Promise((resolve, reject) => {
-        IDBworkflow(
-            dbname,
-            dbtable,
-            "readwrite",
-            (store) => {
-                const req = store.delete(key);
-                req.onsuccess = () => resolve();
-                req.onerror = (e) => reject(e);
-            }
-        );
+  return new Promise((resolve, reject) => {
+    IDBworkflow(dbname, dbtable, "readwrite", (store) => {
+      const req = store.delete(key);
+      req.onsuccess = () => resolve();
+      req.onerror = (e) => reject(e);
     });
+  });
 }
 
 /*
@@ -127,21 +126,21 @@ export function IDBdeleteByKey(dbname, dbtable, key) {
         IDBcleartable('SensorsDBBookmarks', 'bookmarks')
 */
 export function IDBcleartable(dbname, dbtable) {
-    IDBworkflow(dbname, dbtable, 'readwrite', store => {
-        const request = store.clear();
+  IDBworkflow(dbname, dbtable, "readwrite", (store) => {
+    const request = store.clear();
 
-        request.onsuccess = () => {
-            const bc = new BroadcastChannel('idb_changed');
-            bc.postMessage(dbtable);
-            bc.close();
-            return true;
-        };
+    request.onsuccess = () => {
+      const bc = new BroadcastChannel("idb_changed");
+      bc.postMessage(dbtable);
+      bc.close();
+      return true;
+    };
 
-        request.onerror = (err) => {
-            console.error(`Error to empty Object Store: ${err}`);
-            return false;
-        };
-    });
+    request.onerror = (err) => {
+      console.error(`Error to empty Object Store: ${err}`);
+      return false;
+    };
+  });
 }
 
 /*
@@ -150,25 +149,24 @@ export function IDBcleartable(dbname, dbtable) {
     Для безопасного хранения строки в IndexedDB.
 */
 export async function encryptText(text) {
-    const MAGIC = "altruist-v1";
-    const enc = new TextEncoder();
-    const iv = window.crypto.getRandomValues(new Uint8Array(12));
-    const key = await window.crypto.subtle.generateKey(
-        { name: 'AES-GCM', length: 256 },
-        true,
-        ['encrypt', 'decrypt']
-    );
-    const ciphertext = await window.crypto.subtle.encrypt(
-        { name: "AES-GCM", iv },
-        key,
-        enc.encode(`${MAGIC}:${text}`)
-    );
-    const exportedKey = await window.crypto.subtle.exportKey("jwk", key);
-    return {
-        ciphertext: Array.from(new Uint8Array(ciphertext)),
-        iv: Array.from(iv),
-        key: exportedKey,
-    };
+  const MAGIC = "altruist-v1";
+  const enc = new TextEncoder();
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const key = await window.crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, [
+    "encrypt",
+    "decrypt",
+  ]);
+  const ciphertext = await window.crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    enc.encode(`${MAGIC}:${text}`)
+  );
+  const exportedKey = await window.crypto.subtle.exportKey("jwk", key);
+  return {
+    ciphertext: Array.from(new Uint8Array(ciphertext)),
+    iv: Array.from(iv),
+    key: exportedKey,
+  };
 }
 
 /*
@@ -177,29 +175,25 @@ export async function encryptText(text) {
     Возвращает строку или null при ошибке.
 */
 export async function decryptText(data) {
-    try {
-        const MAGIC = "altruist-v1";
-        const dec = new TextDecoder();
-        const key = await window.crypto.subtle.importKey(
-            "jwk",
-            data.key,
-            { name: "AES-GCM" },
-            false,
-            ["decrypt"]
-        );
-        const decrypted = await window.crypto.subtle.decrypt(
-            { name: "AES-GCM", iv: new Uint8Array(data.iv) },
-            key,
-            new Uint8Array(data.ciphertext)
-        );
-        const str = dec.decode(new Uint8Array(decrypted));
-        if (str.startsWith(MAGIC + ":")) {
-            return str.slice(MAGIC.length + 1);
-        }
-        return null;
-    } catch (e) {
-        return null;
+  try {
+    const MAGIC = "altruist-v1";
+    const dec = new TextDecoder();
+    const key = await window.crypto.subtle.importKey("jwk", data.key, { name: "AES-GCM" }, false, [
+      "decrypt",
+    ]);
+    const decrypted = await window.crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: new Uint8Array(data.iv) },
+      key,
+      new Uint8Array(data.ciphertext)
+    );
+    const str = dec.decode(new Uint8Array(decrypted));
+    if (str.startsWith(MAGIC + ":")) {
+      return str.slice(MAGIC.length + 1);
     }
+    return null;
+  } catch (e) {
+    return null;
+  }
 }
 
 /*
@@ -210,9 +204,9 @@ export async function decryptText(data) {
         notifyDBChange('Altruist', 'Accounts')
 */
 export function notifyDBChange(dbname, dbtable) {
-    const bc = new BroadcastChannel('idb_changed');
-    bc.postMessage({ dbname, tablename: dbtable });
-    bc.close();
+  const bc = new BroadcastChannel("idb_changed");
+  bc.postMessage({ dbname, tablename: dbtable });
+  bc.close();
 }
 
 /*
@@ -227,16 +221,16 @@ export function notifyDBChange(dbname, dbtable) {
         onUnmounted(stop);
 */
 export function watchDBChange(dbname, dbtable, callback) {
-    const bc = new BroadcastChannel('idb_changed');
+  const bc = new BroadcastChannel("idb_changed");
 
-    bc.onmessage = (event) => {
-        const { dbname: changedDB, tablename: changedTable } = event.data || {};
-        if (changedDB === dbname && changedTable === dbtable) {
-            callback();
-        }
-    };
+  bc.onmessage = (event) => {
+    const { dbname: changedDB, tablename: changedTable } = event.data || {};
+    if (changedDB === dbname && changedTable === dbtable) {
+      callback();
+    }
+  };
 
-    return () => bc.close();
+  return () => bc.close();
 }
 
 /*
@@ -244,8 +238,8 @@ export function watchDBChange(dbname, dbtable, callback) {
     Проверяет поддержку IndexedDB в окружении.
 */
 export function hasIndexedDB() {
-    const IDB = window.indexedDB || window.webkitIndexedDB;
-    return !!IDB;
+  const IDB = window.indexedDB || window.webkitIndexedDB;
+  return !!IDB;
 }
 
 /*
@@ -261,56 +255,55 @@ export function hasIndexedDB() {
     @returns {Promise<boolean>} true если миграция прошла успешно
 */
 export async function migrateDB(migrationConfig) {
-    const {
-        fromDB,
-        fromStore,
-        toDB,
-        toStore,
-        transform = (data) => data, // По умолчанию данные не изменяются
-        clearSource = true
-    } = migrationConfig;
+  const {
+    fromDB,
+    fromStore,
+    toDB,
+    toStore,
+    transform = (data) => data, // По умолчанию данные не изменяются
+    clearSource = true,
+  } = migrationConfig;
 
+  try {
+    // Проверяем, существует ли исходная база данных
+    let sourceData = [];
     try {
-        // Проверяем, существует ли исходная база данных
-        let sourceData = [];
-        try {
-            sourceData = await IDBgettable(fromDB, fromStore);
-            if (!sourceData || sourceData.length === 0) {
-                return true;
-            }
-        } catch (error) {
-            return true; // Не считаем это ошибкой
-        }
-
-        if (!sourceData || sourceData.length === 0) {
-            return true;
-        }
-
-        // Мигрируем данные
-        for (const record of sourceData) {
-            const transformedRecord = transform(record);
-            
-            IDBworkflow(toDB, toStore, 'readwrite', (store) => {
-                store.put(transformedRecord);
-            });
-        }
-
-        // Очищаем исходную таблицу если требуется
-        if (clearSource) {
-            try {
-                await IDBcleartable(fromDB, fromStore);
-            } catch (error) {
-                console.warn(`Could not clear source table ${fromDB}.${fromStore}:`, error);
-            }
-        }
-
-        // Уведомляем об изменениях в целевой базе
-        notifyDBChange(toDB, toStore);
-
+      sourceData = await IDBgettable(fromDB, fromStore);
+      if (!sourceData || sourceData.length === 0) {
         return true;
-
+      }
     } catch (error) {
-        console.error('Migration failed:', error);
-        return false;
+      return true; // Не считаем это ошибкой
     }
+
+    if (!sourceData || sourceData.length === 0) {
+      return true;
+    }
+
+    // Мигрируем данные
+    for (const record of sourceData) {
+      const transformedRecord = transform(record);
+
+      IDBworkflow(toDB, toStore, "readwrite", (store) => {
+        store.put(transformedRecord);
+      });
+    }
+
+    // Очищаем исходную таблицу если требуется
+    if (clearSource) {
+      try {
+        await IDBcleartable(fromDB, fromStore);
+      } catch (error) {
+        console.warn(`Could not clear source table ${fromDB}.${fromStore}:`, error);
+      }
+    }
+
+    // Уведомляем об изменениях в целевой базе
+    notifyDBChange(toDB, toStore);
+
+    return true;
+  } catch (error) {
+    console.error("Migration failed:", error);
+    return false;
+  }
 }

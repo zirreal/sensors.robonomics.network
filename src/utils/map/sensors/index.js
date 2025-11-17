@@ -1,9 +1,9 @@
-import { MARKER_CLASSES } from '../markers';
-import { getMapContext } from '../map';
-import * as utils from '../markers';
-import { findMarker as findMarkerGeneral } from '../markers';
-import * as icons from './icons';
-import * as colors from './colors';
+import { MARKER_CLASSES } from "../markers";
+import { getMapContext } from "../map";
+import * as utils from "../markers";
+import { findMarker as findMarkerGeneral } from "../markers";
+import * as icons from "./icons";
+import * as colors from "./colors";
 
 // Функция для получения контекста (вызывается внутри функций)
 
@@ -30,32 +30,34 @@ export function isReadyLayer() {
 function upsertMarker(point, colors, sensor_id = null) {
   // Вычисляем координаты (сенсоры всегда используют scatter)
   const coord = utils.scatterCoords([point.geo.lat, point.geo.lng], point.sensor_id);
-  
+
   // Определяем тип маркера (только для сенсоров: image или circle)
   const markerType = point.iconLocal ? "image" : "circle";
 
   // Ищем существующий маркер
   const existingMarker = sensor_id ? findMarker(sensor_id) : null;
-  
+
   // Если маркер существует, обновляем его
   if (existingMarker) {
     // Проверяем, был ли маркер активным
     const wasActive = existingMarker.getElement()?.classList.contains(MARKER_CLASSES.active);
-    
+
     // Update marker data first
     existingMarker.options.data = point;
-    
+
     // Обновляем иконку
-    existingMarker.setIcon(icons.createIconPoint({
-      image: point.iconLocal,
-      colors: colors,
-      isBookmarked: point.isBookmarked,
-      id: point.sensor_id
-    }));
-    
+    existingMarker.setIcon(
+      icons.createIconPoint({
+        image: point.iconLocal,
+        colors: colors,
+        isBookmarked: point.isBookmarked,
+        id: point.sensor_id,
+      })
+    );
+
     // Применяем вычисленные координаты
     existingMarker.setLatLng(new L.LatLng(coord[0], coord[1]));
-    
+
     // Восстанавливаем активный класс если маркер был активным
     if (wasActive) {
       const element = existingMarker.getElement();
@@ -63,22 +65,21 @@ function upsertMarker(point, colors, sensor_id = null) {
         element.classList.add(MARKER_CLASSES.active);
       }
     }
-    
+
     return { marker: existingMarker, isNew: false };
   }
-  
+
   // Создаем новый маркер
   const marker = icons.createMarker(
-    coord, 
-    point, 
-    colors, 
+    coord,
+    point,
+    colors,
     point.iconLocal, // image (null для circle маркеров)
     markerType
   );
-  
+
   return { marker, isNew: true };
 }
-
 
 /**
  * Добавляет маркер сенсора на карту
@@ -86,12 +87,11 @@ function upsertMarker(point, colors, sensor_id = null) {
  * @param {string} [unit] - Единица измерения
  */
 async function addMarker(point, unit = null) {
-
   // пропускаем датчики с «нулевой» геопозицией
   const tolerance = 0.001;
   const lat = Number(point.geo.lat);
   const lng = Number(point.geo.lng);
-  
+
   if (Math.abs(lat) < tolerance && Math.abs(lng) < tolerance) {
     return;
   }
@@ -100,14 +100,14 @@ async function addMarker(point, unit = null) {
   const markerColors = colors.getMarkerColors(point, unit, false);
 
   const { marker, isNew } = upsertMarker(point, markerColors, point.sensor_id);
-  
+
   if (isNew) {
     // Добавляем класс обновления для визуальной обратной связи
     const iconElement = marker.getElement();
     if (iconElement) {
       iconElement.classList.add(MARKER_CLASSES.updating);
     }
-    
+
     // Прикрепляем все события включая клик для нового маркера
     const ctx = getMapContext();
     utils.attachMarkerEvents(marker, ctx.markerClickHandler);
@@ -116,7 +116,7 @@ async function addMarker(point, unit = null) {
     if (ctx.markersLayer) {
       ctx.markersLayer.addLayer(marker);
     }
-    
+
     // Убираем класс обновления после добавления на карту
     setTimeout(() => {
       if (iconElement) {
@@ -127,16 +127,12 @@ async function addMarker(point, unit = null) {
   // Для существующего маркера ничего дополнительного не нужно - он уже обновлен
 }
 
-
-
 // Функция findMarker теперь экспортируется из markers.js
 // Оставляем только для обратной совместимости
 export function findMarker(sensor_id) {
   // Используем общую функцию из markers.js
-  return findMarkerGeneral(sensor_id, 'sensor');
+  return findMarkerGeneral(sensor_id, "sensor");
 }
-
-
 
 /**
  * Очищает все маркеры сенсоров с карты
@@ -148,8 +144,6 @@ export function clearAllMarkers() {
   }
 }
 
-
-
 export function upsertPoint(point, unit = null) {
   try {
     // Сенсоры всегда используют addMarker
@@ -159,19 +153,17 @@ export function upsertPoint(point, unit = null) {
   }
 }
 
-
 export function switchMessagesLayer(map, enabled = false) {
   for (const messagesLayer of Object.values(messagesLayers)) {
     if (messagesLayer) {
       if (enabled) {
         map.addLayer(messagesLayer);
-    } else {
+      } else {
         map.removeLayer(messagesLayer);
       }
     }
   }
 }
-
 
 export function refreshClusters() {
   const ctx = getMapContext();
@@ -180,11 +172,7 @@ export function refreshClusters() {
   }
 }
 
-
 // Функция для применения активного класса к маркеру
-
-
-
 
 /**
  * Инициализирует систему маркеров на карте
@@ -195,7 +183,17 @@ export async function init(cb, unit = null) {
   const ctx = getMapContext();
 
   // Создаем основной слой маркеров
-  ctx.markersLayer = utils.createClusterGroup((cluster) => icons.createIconCluster(cluster, unit, colors.getClusterWinningColor, colors.getBorderColor, colors.isDarkColor), unit);
+  ctx.markersLayer = utils.createClusterGroup(
+    (cluster) =>
+      icons.createIconCluster(
+        cluster,
+        unit,
+        colors.getClusterWinningColor,
+        colors.getBorderColor,
+        colors.isDarkColor
+      ),
+    unit
+  );
   ctx.map.addLayer(ctx.markersLayer);
 
   // Создаем обработчик клика для маркеров
@@ -203,9 +201,7 @@ export async function init(cb, unit = null) {
 
   // Устанавливаем защиту от рекурсии
   utils.setupRecursionProtection(ctx.map);
-  
 
   // Прикрепляем события к основному слою маркеров
   utils.attachClusterEvents(ctx.markersLayer, ctx.markerClickHandler);
-
 }

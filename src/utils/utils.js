@@ -8,9 +8,9 @@ import { dayISO } from "@/utils/date";
  * @returns {Promise<object>} Parsed JSON data
  */
 export async function fetchJson(url, options = {}) {
-  const defaultOptions = { 
-    credentials: "omit", 
-    cache: "no-cache" 
+  const defaultOptions = {
+    credentials: "omit",
+    cache: "no-cache",
   };
   const res = await fetch(url, { ...defaultOptions, ...options });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -41,7 +41,6 @@ export function mergeDeep(target, source) {
   return target;
 }
 
-
 /**
  * Проверяет, являются ли координаты валидными (не нулевыми)
  * @param {Object} geo - Объект с координатами {lat, lng}
@@ -51,10 +50,10 @@ export function hasValidCoordinates(geo) {
   if (!geo || !geo.lat || !geo.lng) {
     return false;
   }
-  
+
   const lat = Number(geo.lat);
   const lng = Number(geo.lng);
-  
+
   return Math.abs(lat) > 0.001 && Math.abs(lng) > 0.001;
 }
 
@@ -65,28 +64,29 @@ export function hasValidCoordinates(geo) {
  * @param {string} language - язык для адреса
  * @returns {string} строка адреса или координаты через запятую
  */
-export async function getAddress(lat, lng, language = 'en') {
+export async function getAddress(lat, lng, language = "en") {
   const zoomAddr = Number(window?.appSettings?.GEOCODER?.zoom?.address) || 18;
-  const tpl = window?.appSettings?.GEOCODER?.urlTemplate ||
+  const tpl =
+    window?.appSettings?.GEOCODER?.urlTemplate ||
     "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={lat}&lon={lon}&zoom={zoom}&addressdetails={addressdetails}&accept-language={lang}";
   const url = tpl
-    .replace('{lat}', encodeURIComponent(lat))
-    .replace('{lon}', encodeURIComponent(lng))
-    .replace('{zoom}', encodeURIComponent(zoomAddr))
-    .replace('{addressdetails}', '1')
-    .replace('{lang}', encodeURIComponent(language));
+    .replace("{lat}", encodeURIComponent(lat))
+    .replace("{lon}", encodeURIComponent(lng))
+    .replace("{zoom}", encodeURIComponent(zoomAddr))
+    .replace("{addressdetails}", "1")
+    .replace("{lang}", encodeURIComponent(language));
 
   try {
     const response = await fetch(url);
     const data = await response.json();
     const addr = buildAddressFromAny(data);
-    
+
     // Если получили адрес, объединяем его в строку
     if (addr && Array.isArray(addr.address) && addr.address.length > 0) {
       const parts = [];
       if (addr.country) parts.push(addr.country);
       parts.push(...addr.address);
-      return parts.join(', ');
+      return parts.join(", ");
     }
   } catch {}
 

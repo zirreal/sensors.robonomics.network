@@ -17,12 +17,11 @@ export const MARKER_CLASSES = {
   hovered: "is-hovered",
   hoverable: "hoverable",
   tapHighlight: "tap-highlight",
-  updating: "updating"
+  updating: "updating",
 };
 
 const IS_TOUCH =
-  typeof window !== "undefined" &&
-  ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+  typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
 
 /**
  * Scatters coordinates to avoid overlapping markers
@@ -69,7 +68,6 @@ export function scatterCoords([latRaw, lngRaw], seed, meters = 15) {
   return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : [lat0, lng0];
 }
 
-
 /**
  * Sets up recursion protection for map methods
  * @param {L.Map} mapInstance - Leaflet map instance
@@ -77,7 +75,7 @@ export function scatterCoords([latRaw, lngRaw], seed, meters = 15) {
 export function setupRecursionProtection(mapInstance) {
   // Prevent infinite recursion in panInsideBounds
   const originalPanInsideBounds = mapInstance.panInsideBounds;
-  mapInstance.panInsideBounds = function(bounds, options) {
+  mapInstance.panInsideBounds = function (bounds, options) {
     if (this._panningInsideBounds) {
       return this;
     }
@@ -170,18 +168,18 @@ export function attachMarkerEvents(marker, clickCallback) {
  */
 export function attachClusterEvents(layer, clickHandler) {
   const { map } = getMapContext();
-  
+
   layer.on("clusterclick", (e) => {
     const cluster = e.layer;
     const childCount = cluster.getChildCount();
     const nowZoom = map.getZoom();
     const targetZoom = map.getBoundsZoom(cluster.getBounds(), true);
-    
+
     // если много детей или далеко - зуммируем
-    if (childCount > 15 || (targetZoom - nowZoom) > 2) {
+    if (childCount > 15 || targetZoom - nowZoom > 2) {
       e.originalEvent?.preventDefault?.();
       e.originalEvent?.stopPropagation?.();
-      
+
       map.fitBounds(cluster.getBounds(), {
         padding: [20, 20],
         animate: true,
@@ -189,10 +187,10 @@ export function attachClusterEvents(layer, clickHandler) {
       });
     } else {
       // Иначе просто spiderfy
-      try { 
-        cluster.spiderfy(); 
+      try {
+        cluster.spiderfy();
       } catch (error) {
-        console.warn('Spiderfy failed:', error);
+        console.warn("Spiderfy failed:", error);
       }
     }
   });
@@ -223,17 +221,17 @@ function centerMapOnMarker(marker) {
  * @param {string} type - Тип маркера: 'sensor' или 'message' (по умолчанию 'sensor')
  * @returns {L.Marker|false} Найденный маркер или false
  */
-export function findMarker(markerId, type = 'sensor') {
+export function findMarker(markerId, type = "sensor") {
   const ctx = getMapContext();
-  
+
   // Определяем слой и поле ID в зависимости от типа
-  const layer = type === 'message' ? ctx.messagesLayer : ctx.markersLayer;
-  const idField = type === 'message' ? 'message_id' : 'sensor_id';
-  
+  const layer = type === "message" ? ctx.messagesLayer : ctx.markersLayer;
+  const idField = type === "message" ? "message_id" : "sensor_id";
+
   if (!layer) return false;
-  
+
   let found = false;
-  
+
   // Ищем в слое маркеров
   layer.eachLayer((m) => {
     if (!found && m.options.data?.[idField] === markerId) {
@@ -249,43 +247,43 @@ export function findMarker(markerId, type = 'sensor') {
  * @param {string} markerId - ID маркера (sensor_id или message_id)
  * @param {string} type - Тип маркера: 'sensor' или 'message' (по умолчанию 'sensor')
  */
-export function setActiveMarker(markerId, type = 'sensor') {
+export function setActiveMarker(markerId, type = "sensor") {
   if (!markerId) return;
-  
+
   const ctx = getMapContext();
-  
+
   // Определяем слой и поле ID в зависимости от типа
-  const layer = type === 'message' ? ctx.messagesLayer : ctx.markersLayer;
-  const idField = type === 'message' ? 'message_id' : 'sensor_id';
-  
+  const layer = type === "message" ? ctx.messagesLayer : ctx.markersLayer;
+  const idField = type === "message" ? "message_id" : "sensor_id";
+
   if (!layer) {
     console.warn(`setActiveMarker: ${type}Layer is not initialized`);
     return;
   }
-  
+
   // Сначала пытаемся найти маркер сразу
   const marker = findMarker(markerId, type);
-  
+
   if (marker) {
     // Маркер найден, применяем активный класс
     applyActiveMarker(marker);
     centerMapOnMarker(marker);
     return;
   }
-  
+
   // Маркер не найден, подписываемся на добавление слоев
   const onLayerAdd = (e) => {
     const addedMarker = e.layer;
-    
+
     if (addedMarker.options.data?.[idField] === markerId) {
       // Нашли нужный маркер, отписываемся и применяем активный класс
-      layer.off('layeradd', onLayerAdd);
+      layer.off("layeradd", onLayerAdd);
       applyActiveMarker(addedMarker);
       centerMapOnMarker(addedMarker);
     }
   };
-  
-  layer.on('layeradd', onLayerAdd);
+
+  layer.on("layeradd", onLayerAdd);
 }
 
 /**
@@ -294,44 +292,44 @@ export function setActiveMarker(markerId, type = 'sensor') {
  */
 export function applyActiveMarker(marker) {
   if (!marker) return;
-  
+
   const { activeMarker } = getMapContext();
-  
+
   // Если маркер уже активен, ничего не делаем
   if (activeMarker && activeMarker === marker) {
     return;
   }
-  
+
   // Убираем активность с предыдущего маркера
   clearActiveMarker();
-  
+
   // Touch highlight для мобильных устройств (как при клике)
   if (IS_TOUCH && marker._icon) {
     marker._icon.classList.add(MARKER_CLASSES.tapHighlight);
     setTimeout(() => marker._icon.classList.remove(MARKER_CLASSES.tapHighlight), 550);
   }
-  
+
   // Функция для применения активного класса
   const applyActiveClass = () => {
     const element = marker.getElement();
-    
+
     if (element) {
       element.classList.add(MARKER_CLASSES.active);
       // Обновляем активный маркер в контексте
       const ctx = getMapContext();
       ctx.activeMarker = marker;
     } else {
-      console.log('Element still not ready for marker:', marker);
+      console.log("Element still not ready for marker:", marker);
     }
   };
-  
+
   // Проверяем, готов ли маркер к работе
   if (marker._icon && marker._icon.parentNode) {
     // Маркер уже готов - применяем активный класс
     applyActiveClass();
   } else {
     // Ждем события 'add' от Leaflet
-    marker.once('add', applyActiveClass);
+    marker.once("add", applyActiveClass);
   }
 }
 
@@ -340,16 +338,16 @@ export function applyActiveMarker(marker) {
  */
 export function clearActiveMarker() {
   const ctx = getMapContext();
-  
+
   if (ctx.activeMarker) {
     const element = ctx.activeMarker.getElement();
-    
+
     if (element) {
       element.classList.remove(MARKER_CLASSES.active);
     }
     ctx.activeMarker = null;
   }
-  
+
   // Сбрасываем активную область карты
   if (ctx.map) {
     ctx.map.setActiveArea({

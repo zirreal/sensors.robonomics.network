@@ -89,7 +89,7 @@ export function init(position, zoom, theme = "light") {
   // Soft fallback to OSM if nothing resolved
   if (!layerMapLight) layerMapLight = layerFromThemeKey("osm", noWrap);
   if (!layerMapDark) layerMapDark = layerFromThemeKey("osm", noWrap);
-  
+
   // Create satellite layer
   layerMapSatellite = layerFromThemeKey("esri-imagery", noWrap);
 
@@ -149,12 +149,12 @@ export function init(position, zoom, theme = "light") {
 // Switch map theme (light/dark/satellite)
 export function setTheme(theme) {
   const map = instanceMap();
-  
+
   // Remove all existing layers
   if (layerMapLight && map.hasLayer(layerMapLight)) map.removeLayer(layerMapLight);
   if (layerMapDark && map.hasLayer(layerMapDark)) map.removeLayer(layerMapDark);
   if (layerMapSatellite && map.hasLayer(layerMapSatellite)) map.removeLayer(layerMapSatellite);
-  
+
   // Add the selected layer
   if (theme === "light" && layerMapLight) {
     map.addLayer(layerMapLight);
@@ -177,21 +177,21 @@ export function setTheme(theme) {
 export function moveMap(position, zoom, options = {}) {
   const map = instanceMap();
   if (!map) return;
-  
+
   const { popup = false, animate = true, setZoom = true } = options;
-  
+
   // Нормализуем координаты
   const coords = Array.isArray(position) ? position : [position.lat, position.lng];
   const z = typeof zoom === "number" ? Math.max(zoom, map.getMinZoom()) : map.getZoom();
-  
+
   // Обработка попапа - сначала устанавливаем активную область
   if (popup) {
     const MIN_VISIBLE_MAP_WIDTH = 100;
-    
+
     // Используем setTimeout для ожидания рендеринга попапа
     setTimeout(() => {
-      const popupElement = document.querySelector('.popup-js.active');
-        
+      const popupElement = document.querySelector(".popup-js.active");
+
       if (popupElement) {
         const popupRect = popupElement.getBoundingClientRect();
         const visibleMapWidth = window.innerWidth - popupRect.width;
@@ -206,7 +206,7 @@ export function moveMap(position, zoom, options = {}) {
           });
         }
       }
-      
+
       // Перемещаем карту ПОСЛЕ установки активной области
       if (setZoom) {
         map.setView(coords, z, { animate });
@@ -222,7 +222,7 @@ export function moveMap(position, zoom, options = {}) {
       map.panTo(coords, { animate });
     }
   }
-  
+
   // Применяем ограничения границ
   if (mode === "island") {
     if (map.getZoom() === map.getMinZoom()) {
@@ -235,7 +235,6 @@ export function moveMap(position, zoom, options = {}) {
     clampInside(WORLD_BOUNDS);
   }
 }
-
 
 // Draw user marker with zoom-based radius
 export function drawuser(position, zoom) {
@@ -279,7 +278,7 @@ function applyIslandBounds(isResize = false) {
   if (!boundsLimit || map._applyingBounds) return;
 
   map._applyingBounds = true;
-  
+
   try {
     map.setMaxBounds(boundsLimit);
     const minZ = map.getBoundsZoom(boundsLimit, true);
@@ -323,9 +322,9 @@ function applyWorldBounds(isResize = false) {
 // Ensure map center/bounds are inside given limits
 function clampInside(limits) {
   if (!map || !limits || map._clamping) return;
-  
+
   map._clamping = true;
-  
+
   try {
     if (!limits.contains(map.getCenter())) {
       map.panInsideBounds(limits, { animate: false });
@@ -365,9 +364,9 @@ export function initMapContext(mapInstance, cb, unit = null) {
     windLayer: null,
     markerClickHandler: (data) => cb(data),
     activeMarker: null,
-    unit: unit
+    unit: unit,
   };
-  
+
   return mapContext;
 }
 
@@ -378,7 +377,7 @@ export function initMapContext(mapInstance, cb, unit = null) {
  */
 export function getMapContext() {
   if (!mapContext) {
-    throw new Error('Map context not initialized. Call initMapContext first.');
+    throw new Error("Map context not initialized. Call initMapContext first.");
   }
   return mapContext;
 }
@@ -386,23 +385,20 @@ export function getMapContext() {
 // Функции для работы с границами карты
 export function getMapBounds(mapInstance) {
   if (!mapInstance) return null;
-  
+
   const bounds = mapInstance.getBounds();
   return {
     north: bounds.getNorth(),
     south: bounds.getSouth(),
     east: bounds.getEast(),
-    west: bounds.getWest()
+    west: bounds.getWest(),
   };
 }
 
 export function isPointInBounds(lat, lng, bounds) {
   if (!bounds) return true; // Если границы не определены, показываем все точки
-  
-  return lat >= bounds.south && 
-         lat <= bounds.north && 
-         lng >= bounds.west && 
-         lng <= bounds.east;
+
+  return lat >= bounds.south && lat <= bounds.north && lng >= bounds.west && lng <= bounds.east;
 }
 
 export function isPointInMapBounds(lat, lng, mapInstance) {
@@ -417,7 +413,7 @@ export function isPointInMapBounds(lat, lng, mapInstance) {
  */
 export function getConfigBounds(config) {
   const boundsDelta = config?.MAP?.boundsDelta;
-  
+
   // Если boundsDelta пустые, возвращаем null (нет границ)
   if (!boundsDelta?.lat || !boundsDelta?.lng) {
     return null;
@@ -433,7 +429,7 @@ export function getConfigBounds(config) {
     north: centerLat + deltaLat / 2,
     south: centerLat - deltaLat / 2,
     east: centerLng + deltaLng / 2,
-    west: centerLng - deltaLng / 2
+    west: centerLng - deltaLng / 2,
   };
 }
 
@@ -445,8 +441,8 @@ export function getConfigBounds(config) {
  */
 export function filterByBounds(items, bounds) {
   if (!bounds) return items;
-  
-  return items.filter(item => {
+
+  return items.filter((item) => {
     if (!item?.geo) return false;
     const lat = Number(item.geo.lat);
     const lng = Number(item.geo.lng);

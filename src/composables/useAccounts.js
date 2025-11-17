@@ -25,27 +25,30 @@ const accounts = ref([]); // [{ phrase, address, type, devices, ts }]
 export function useAccounts() {
   const addAccount = async ({ phrase, address, type, devices, ts }, { persist = true } = {}) => {
     // console.log('addAccount', phrase, address, type, devices, ts, persist)
-    const idx = accounts.value.findIndex(a => a.address === address);
+    const idx = accounts.value.findIndex((a) => a.address === address);
     const item = { phrase, address, type, devices, ts: ts || Date.now() };
-    if (idx !== -1) accounts.value[idx] = item; else accounts.value.push(item);
+    if (idx !== -1) accounts.value[idx] = item;
+    else accounts.value.push(item);
 
     if (persist && hasIndexedDB()) {
-      IDBworkflow(DB_NAME, STORE, "readwrite", store => { store.put(item); });
+      IDBworkflow(DB_NAME, STORE, "readwrite", (store) => {
+        store.put(item);
+      });
       notifyDBChange(DB_NAME, STORE);
     }
     return item;
   };
 
   const removeAccounts = async (addresses) => {
-    const list = Array.isArray(addresses) ? addresses : (addresses ? [addresses] : []);
+    const list = Array.isArray(addresses) ? addresses : addresses ? [addresses] : [];
     if (list.length === 0) return;
 
     const toDelete = new Set(list);
 
-    accounts.value = accounts.value.filter(a => !toDelete.has(a.address));
+    accounts.value = accounts.value.filter((a) => !toDelete.has(a.address));
 
     if (hasIndexedDB()) {
-      await Promise.all(list.map(addr => IDBdeleteByKey(DB_NAME, STORE, addr)));
+      await Promise.all(list.map((addr) => IDBdeleteByKey(DB_NAME, STORE, addr)));
       notifyDBChange(DB_NAME, STORE);
     }
   };
@@ -89,9 +92,7 @@ export function useAccounts() {
 
     const promise = (async () => {
       try {
-        const response = await fetch(
-          `https://roseman.airalab.org/api/sensor/sensors/${key}`
-        );
+        const response = await fetch(`https://roseman.airalab.org/api/sensor/sensors/${key}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const result = await response.json();
         const data = Array.isArray(result.sensors) ? result.sensors : [];
@@ -111,7 +112,7 @@ export function useAccounts() {
   return {
     // State
     accounts,
-    
+
     // Actions
     addAccount,
     removeAccounts,

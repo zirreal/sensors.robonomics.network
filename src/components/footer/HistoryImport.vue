@@ -87,7 +87,7 @@ export default {
   async created() {
     try {
       const res = await fetch(`${settings.REMOTE_PROVIDER}api/sensor/cities`);
-      if (!res.ok) throw new Error('Network response was not ok');
+      if (!res.ok) throw new Error("Network response was not ok");
       const result = await res.json();
       this.cities = result.result;
       const country = Object.keys(this.cities);

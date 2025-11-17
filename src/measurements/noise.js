@@ -4,53 +4,53 @@ export default {
   label: "Noise",
   name: {
     en: "Noise",
-    ru: "Шум"
+    ru: "Шум",
   },
   nameshort: {
     en: "Noise",
-    ru: "Шум"
+    ru: "Шум",
   },
   unit: "dB",
-  
+
   zones: [
     {
       valueMax: 40,
       color: "var(--measure-green)",
       label: {
         en: "Faint",
-        ru: "Тихо"
-      }
+        ru: "Тихо",
+      },
     },
     {
       valueMax: 70,
       color: "var(--measure-bluegreen)",
       label: {
         en: "Moderate",
-        ru: "Удовлетворительно"
-      }
+        ru: "Удовлетворительно",
+      },
     },
     {
       valueMax: 80,
       color: "var(--measure-yellow)",
       label: {
         en: "Loud",
-        ru: "Шумно"
-      }
+        ru: "Шумно",
+      },
     },
     {
       valueMax: 100,
       color: "var(--measure-orange)",
       label: {
         en: "Very loud",
-        ru: "Очень шумно"
-      }
+        ru: "Очень шумно",
+      },
     },
     {
       color: "#7a00da",
       label: {
         en: "Extremely loud",
-        ru: "Экстремально шумно"
-      }
+        ru: "Экстремально шумно",
+      },
     },
   ],
   calculate: function (v) {

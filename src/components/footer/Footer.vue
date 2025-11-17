@@ -1,15 +1,14 @@
-
 <template>
   <div class="mapcontrols">
     <div class="flexline">
       <ToggleButton
-          v-if="settings.WIND_PROVIDER"
-          v-model="wind"
-          icon-class="fa-solid fa-wind"
-          class="wind-toggle"
-          :disabled="!realtime"
-          :title="$t('layer.wind')"
-        />
+        v-if="settings.WIND_PROVIDER"
+        v-model="wind"
+        icon-class="fa-solid fa-wind"
+        class="wind-toggle"
+        :disabled="!realtime"
+        :title="$t('layer.wind')"
+      />
 
       <ToggleButton
         v-if="hasMessagesData"
@@ -25,22 +24,16 @@
           <HistoryImport />
         </section>
       </div>
-       <button class="popovercontrol button-round-outline" popovertarget="mapsettings">
-         <font-awesome-icon icon="fa-solid fa-download" />
-       </button>
+      <button class="popovercontrol button-round-outline" popovertarget="mapsettings">
+        <font-awesome-icon icon="fa-solid fa-download" />
+      </button>
     </div>
 
     <div class="flexline">
-
       <ProviderType />
 
       <!-- выбор даты -->
-      <input
-        type="date"
-        v-model="start"
-        :max="maxDate"
-        :disabled="realtime"
-      />
+      <input type="date" v-model="start" :max="maxDate" :disabled="realtime" />
 
       <!-- выбор измерения -->
       <select v-model="type" v-if="sensorsUI.sensors.length > 0 && availableOptions?.length > 0">
@@ -52,12 +45,14 @@
 
     <div class="flexline">
       <div class="mapcontrols-geo">
-        <button 
+        <button
           v-if="settings.MAP?.theme?.satellite"
-          @click="toggleMapTheme" 
+          @click="toggleMapTheme"
           :title="mapTheme === 'satellite' ? 'Switch to default theme' : 'Switch to satellite view'"
         >
-          <font-awesome-icon :icon="mapTheme === 'default' ? 'fa-solid fa-satellite' : 'fa-regular fa-map'" />
+          <font-awesome-icon
+            :icon="mapTheme === 'default' ? 'fa-solid fa-satellite' : 'fa-regular fa-map'"
+          />
         </button>
 
         <button
@@ -66,10 +61,14 @@
           @click.prevent="centerOnUser"
           :area-label="$t('showlocation')"
           :title="geoisloading ? $t('locationloading') : $t('showlocation')"
-          >
+        >
           <font-awesome-icon icon="fa-solid fa-location-arrow" :fade="geoisloading" />
 
-          <div class="geolocation-tip" v-if="geomsg !== ''" :class="geomsgopened ? 'opened' : 'closed'">
+          <div
+            class="geolocation-tip"
+            v-if="geomsg !== ''"
+            :class="geomsgopened ? 'opened' : 'closed'"
+          >
             {{ geomsg }}
             <font-awesome-icon
               icon="fa-solid fa-xmark"
@@ -82,11 +81,10 @@
         <button @click="zoomOut" :disabled="isMinZoom" title="Zoom out">
           <font-awesome-icon icon="fa-solid fa-minus" />
         </button>
-        
+
         <button @click="zoomIn" :disabled="isMaxZoom" title="Zoom in">
           <font-awesome-icon icon="fa-solid fa-plus" />
         </button>
-        
       </div>
     </div>
   </div>
@@ -122,15 +120,15 @@ const geomsgopenedtimer = ref(null);
 const props = defineProps({
   geoavailable: {
     type: Boolean,
-    default: false
+    default: false,
   },
   geoisloading: {
     type: Boolean,
-    default: false
+    default: false,
   },
   mapRef: {
     type: Object,
-    default: null
+    default: null,
   },
 });
 
@@ -166,19 +164,17 @@ const type = computed({
   get: () => mapState.currentUnit.value,
   set: (val) => {
     mapState.setMapSettings(route, router, { type: val });
-  }
+  },
 });
 const availableUnits = ref(["pm10"]);
 const locale = computed(() => {
   return i18nLocale.value || localStorage.getItem("locale") || "en";
 });
 
-
-
 // Check if localStorage is available
 const isLocalStorageAvailable = () => {
   try {
-    const test = 'localStorage_test';
+    const test = "localStorage_test";
     localStorage.setItem(test, test);
     localStorage.removeItem(test);
     return true;
@@ -200,36 +196,36 @@ const availableOptions = computed(() => {
       };
     })
     .filter((item) => Boolean(item));
-  
+
   // Add AQI option only if:
   // 1. We have PM2.5 and PM10 data
   // 2. We're in history mode (not realtime)
   // 3. localStorage is available
-  if (availableUnits.value.includes('pm25') && 
-      availableUnits.value.includes('pm10') && 
-      !realtime.value &&
-      isLocalStorageAvailable()) {
+  if (
+    availableUnits.value.includes("pm25") &&
+    availableUnits.value.includes("pm10") &&
+    !realtime.value &&
+    isLocalStorageAvailable()
+  ) {
     // Ensure AQI appears first in the list
     const aqiOption = {
-      value: 'aqi',
-      name: measurements.aqi?.nameshort?.[locale.value] + ' (Beta)' || 'AQI',
+      value: "aqi",
+      name: measurements.aqi?.nameshort?.[locale.value] + " (Beta)" || "AQI",
     };
     // Avoid duplicates if any
-    const filtered = opts.filter(o => o.value !== 'aqi');
+    const filtered = opts.filter((o) => o.value !== "aqi");
     opts = [aqiOption, ...filtered];
   }
-  
+
   // Remove "Noise" from available options
-  opts = opts.filter(opt => opt.value !== 'noise');
-  
+  opts = opts.filter((opt) => opt.value !== "noise");
+
   return opts;
 });
 
 // вычисления для истории
 const startTimestamp = computed(() => String(dayBoundsUnix(start.value).start));
 const endTimestamp = computed(() => String(dayBoundsUnix(start.value).end));
-
-
 
 // type теперь computed, поэтому watcher не нужен
 
@@ -238,10 +234,10 @@ const endTimestamp = computed(() => String(dayBoundsUnix(start.value).end));
 watch(start, async (newDate) => {
   // Безопасно парсим дату из input
   const parsedDate = parseInputDate(newDate);
-  
+
   // Устанавливаем новую дату и синхронизируем
   mapState.setMapSettings(route, router, { date: parsedDate });
-  
+
   // Если слой сообщений включен, обновляем данные
   if (messages.value) {
     try {
@@ -249,7 +245,7 @@ watch(start, async (newDate) => {
       const endTimestamp = dayBoundsUnix(parsedDate).end;
       await messagesUI.loadMessages(startTimestamp, endTimestamp);
     } catch (error) {
-      console.error('Failed to update messages for new date:', error);
+      console.error("Failed to update messages for new date:", error);
     }
   }
 });
@@ -285,23 +281,23 @@ watch(
 watch(wind, async (enabled) => {
   // Проверяем, что карта инициализирована
   if (!instanceMap()) {
-    console.warn('Wind layer: Map not initialized yet');
+    console.warn("Wind layer: Map not initialized yet");
     return;
   }
-  
+
   if (enabled && settings.WIND_PROVIDER) {
     try {
       await initWindLayer();
       switchWindLayer(instanceMap(), true);
     } catch (error) {
-      console.error('Failed to initialize wind layer:', error);
+      console.error("Failed to initialize wind layer:", error);
       wind.value = false; // Отключаем checkbox при ошибке
     }
   } else {
     // При отключении ветра сначала скрываем слой, затем полностью очищаем ресурсы
     switchWindLayer(instanceMap(), false);
     if (!enabled) {
-      console.log('Wind disabled, cleaning up resources');
+      console.log("Wind disabled, cleaning up resources");
       destroyWindLayer();
     }
   }
@@ -314,27 +310,29 @@ watch(
   () => mapState.currentProvider.value,
   (newProvider, oldProvider) => {
     // If switching to realtime mode and current type is AQI, switch to PM2.5
-    if (newProvider === 'realtime' && type.value === 'aqi') {
-      type.value = 'pm25';
+    if (newProvider === "realtime" && type.value === "aqi") {
+      type.value = "pm25";
     }
-    
+
     // Очищаем ветер при переключении с realtime на другой провайдер
-    if (oldProvider === 'realtime' && newProvider !== 'realtime') {
-      console.log('Cleaning up wind layer when switching away from realtime');
+    if (oldProvider === "realtime" && newProvider !== "realtime") {
+      console.log("Cleaning up wind layer when switching away from realtime");
       destroyWindLayer();
       wind.value = false; // Отключаем checkbox
     }
-    
+
     // При переключении на realtime автоматически включаем ветер, если он был включен ранее
-    if (newProvider === 'realtime' && wind.value && settings.WIND_PROVIDER) {
+    if (newProvider === "realtime" && wind.value && settings.WIND_PROVIDER) {
       // Небольшая задержка для инициализации карты
       setTimeout(() => {
         if (instanceMap()) {
-          initWindLayer().then(() => {
-            switchWindLayer(instanceMap(), true);
-          }).catch(error => {
-            console.error('Failed to initialize wind layer on realtime switch:', error);
-          });
+          initWindLayer()
+            .then(() => {
+              switchWindLayer(instanceMap(), true);
+            })
+            .catch((error) => {
+              console.error("Failed to initialize wind layer on realtime switch:", error);
+            });
         }
       }, 100);
     }
@@ -349,17 +347,17 @@ onMounted(async () => {
     const head = arr.filter((v) => toMove.includes(v));
     const tail = arr.filter((v) => !toMove.includes(v));
     availableUnits.value = [...head, ...tail];
-    
+
     // Respect external unit (composable) as the single source of truth
     const preferred = mapState.currentUnit.value;
-    if (preferred === 'aqi' && !isLocalStorageAvailable()) {
-      type.value = 'pm25';
+    if (preferred === "aqi" && !isLocalStorageAvailable()) {
+      type.value = "pm25";
     } else {
       type.value = preferred;
     }
-    
+
     // Инициализируем ветер если он был включен и мы в realtime режиме
-    if (wind.value && mapState.currentProvider.value === 'realtime' && settings.WIND_PROVIDER) {
+    if (wind.value && mapState.currentProvider.value === "realtime" && settings.WIND_PROVIDER) {
       // Небольшая задержка для инициализации карты
       setTimeout(async () => {
         if (instanceMap()) {
@@ -367,13 +365,13 @@ onMounted(async () => {
             await initWindLayer();
             switchWindLayer(instanceMap(), true);
           } catch (error) {
-            console.error('Failed to initialize wind layer on mount:', error);
+            console.error("Failed to initialize wind layer on mount:", error);
             wind.value = false;
           }
         }
       }, 500); // Увеличиваем задержку для гарантии инициализации карты
     }
-    
+
     // Инициализируем слой сообщений если поддерживается
     if (settings.SERVICES?.messages) {
       setTimeout(async () => {
@@ -384,19 +382,18 @@ onMounted(async () => {
               // Обработчик клика по маркеру сообщения
               handleMessageClick(messageData);
             });
-            
+
             // Загружаем сообщения за текущий период для проверки наличия данных
             const startTimestamp = dayBoundsUnix(start.value).start;
             const endTimestamp = dayBoundsUnix(start.value).end;
             await messagesUI.loadMessages(startTimestamp, endTimestamp);
-            
+
             // Показываем слой на карте только если тогл включен
             if (messages.value) {
               messagesUI.toggleMessagesLayer(true);
             }
-            
           } catch (error) {
-            console.error('Failed to initialize messages layer on mount:', error);
+            console.error("Failed to initialize messages layer on mount:", error);
             messages.value = false;
           }
         }
@@ -418,19 +415,16 @@ watch(messages, async (enabled) => {
         // Обработчик клика по маркеру сообщения
         handleMessageClick(messageData);
       });
-      
-      
+
       // Показываем слой на карте
       messagesUI.toggleMessagesLayer(true);
-      
+
       // Затем загружаем сообщения
       const startTimestamp = dayBoundsUnix(start.value).start;
       const endTimestamp = dayBoundsUnix(start.value).end;
       const result = await messagesUI.loadMessages(startTimestamp, endTimestamp);
-      
-      
     } catch (error) {
-      console.error('Failed to initialize messages layer:', error);
+      console.error("Failed to initialize messages layer:", error);
       messages.value = false;
     }
   } else {
@@ -467,25 +461,25 @@ const isMinZoom = computed(() => {
 });
 
 // Состояние темы карты
-const mapTheme = ref(localStorage.getItem('mapTheme') || 'default'); // 'default' или 'satellite'
+const mapTheme = ref(localStorage.getItem("mapTheme") || "default"); // 'default' или 'satellite'
 
 // Функция переключения темы карты
 const toggleMapTheme = () => {
-  if (mapTheme.value === 'default') {
+  if (mapTheme.value === "default") {
     // Переключаемся на спутниковую карту из конфига
-    mapTheme.value = 'satellite';
-    localStorage.setItem('mapTheme', 'satellite');
+    mapTheme.value = "satellite";
+    localStorage.setItem("mapTheme", "satellite");
     // Обновляем тему через глобальную функцию
     if (window.mapUpdateTheme) {
       window.mapUpdateTheme(settings.MAP.theme.satellite);
     }
   } else {
     // Возвращаемся к дефолтной теме (светлой/темной)
-    mapTheme.value = 'default';
-    localStorage.setItem('mapTheme', 'default');
+    mapTheme.value = "default";
+    localStorage.setItem("mapTheme", "default");
     // Определяем системную тему
     const isDarkMode = window?.matchMedia("(prefers-color-scheme: dark)").matches;
-    const defaultTheme = isDarkMode ? 'dark' : 'light';
+    const defaultTheme = isDarkMode ? "dark" : "light";
     // Обновляем тему через глобальную функцию
     if (window.mapUpdateTheme) {
       window.mapUpdateTheme(defaultTheme);
@@ -512,20 +506,20 @@ const opengeotip = (msg) => {
 
 // Функция позиционирования
 const centerOnUser = () => {
-  emit('center-on-user');
-  opengeotip(t('locationloading'));
+  emit("center-on-user");
+  opengeotip(t("locationloading"));
 };
 
 // Обработчик клика на маркер сообщения
 const handleMessageClick = (messageData) => {
   // Эмитим событие для Main.vue
-  emit('clickMessage', messageData);
+  emit("clickMessage", messageData);
 };
 
 // Делаем функции доступными для родительского компонента
 defineExpose({
   opengeotip,
-  closegeotip
+  closegeotip,
 });
 </script>
 
@@ -571,19 +565,18 @@ defineExpose({
   left: var(--app-controlsgap);
 }
 
-
 #mapsettings {
   min-width: 20vw;
 }
 
 @media screen and (max-width: 820px) {
-  .mapcontrols, .mapcontrols .flexline {
+  .mapcontrols,
+  .mapcontrols .flexline {
     flex-direction: column;
     gap: var(--gap);
     align-items: end;
   }
 }
-
 
 .geolocation {
   position: relative;
@@ -628,7 +621,6 @@ defineExpose({
   bottom: -10px;
   right: 15px;
 }
-
 
 .geolocation-tipclose {
   position: absolute;
