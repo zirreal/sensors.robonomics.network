@@ -10,34 +10,40 @@
 
 ## Как сделать релиз
 
-### Автоматический способ (рекомендуется)
+### 3 шага
 
-Используйте `release-it` для автоматической синхронизации всех версий:
+**Шаг 1: Обновите CHANGELOG.md**
+   - Откройте `CHANGELOG.md`
+   - Добавьте описание новой версии в начало файла (см. формат ниже)
+   - Сохраните файл
 
-```bash
-# Патч-релиз (1.0.0 -> 1.0.1) - для багфиксов
-npm run release:patch
+**Шаг 2: Закоммитьте изменения**
+   ```bash
+   git add .
+   git commit -m "feat: prepare v{version} release"
+   ```
+   ⚠️ **Важно:** Все изменения должны быть закоммичены перед запуском release-it
 
-# Минорный релиз (1.0.0 -> 1.1.0) - для новых функций
-npm run release:minor
+**Шаг 3: Запустите release-it**
+   ```bash
+   # Для багфиксов (4.0.2 -> 4.0.3)
+   npm run release:patch
 
-# Мажорный релиз (1.0.0 -> 2.0.0) - для breaking changes
-npm run release:major
+   # Для новых функций (4.0.2 -> 4.1.0)
+   npm run release:minor
 
-# Интерактивный выбор версии
-npm run release
-```
+   # Для breaking changes (4.0.2 -> 5.0.0)
+   npm run release:major
+   ```
 
-### Что делает release-it:
+**Готово!** Release-it автоматически:
+- ✅ Обновит версию в `package.json`
+- ✅ Создаст commit `chore: release v{version}`
+- ✅ Создаст git tag `v{version}`
+- ✅ Запушит все на GitHub
+- ✅ Создаст GitHub Release (если настроен GITHUB_TOKEN)
 
-1. ✅ Проверяет, что рабочая директория чистая (можно отключить в `.release-it.json`)
-2. ✅ Запускает линтер (`npm run lint`)
-3. ✅ Обновляет версию в `package.json`
-4. ✅ Создает git commit с сообщением `chore: release v{version}`
-5. ✅ Создает git tag `v{version}`
-6. ✅ Создает GitHub Release (если настроен GitHub token)
-
-⚠️ **CHANGELOG.md обновляется вручную** (см. раздел ниже)
+**Никаких дополнительных команд не требуется!** Release-it делает все автоматически благодаря настройкам в `.release-it.json`.
 
 ### Dry-run (проверка без изменений)
 
