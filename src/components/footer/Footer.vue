@@ -644,6 +644,7 @@ defineExpose({
   color: var(--color-dark);
   border: 0;
   cursor: pointer;
+  font-size: 1.2em;
 }
 
 .mapcontrols-geo button[disabled] {
