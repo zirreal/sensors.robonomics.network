@@ -30,6 +30,7 @@ function resolveJsonMerged(file) {
 export const idbschemas = resolve("idb-schemas.json");
 export const agents = resolve("agents.json");
 export const pinned_sensors = resolve("pinned_sensors.js");
+export const excluded_sensors = resolve("excluded_sensors.js");
 export const themes = resolve("themes.js");
 
 // Final merged settings

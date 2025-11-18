@@ -3,7 +3,7 @@ import Libp2pProvider from "@/providers/libp2p";
 import { getConfigBounds, filterByBounds } from "../map";
 import { hasValidCoordinates, fetchJson } from "../../utils";
 import { dayISO, dayBoundsUnix } from "../../date";
-import { settings } from "@config";
+import { settings, excluded_sensors } from "@config";
 
 // Глобальные константы провайдеров
 const REMOTE_PROVIDER = new Provider(settings.REMOTE_PROVIDER);
@@ -117,11 +117,37 @@ export async function getSensors(start, end, provider = "remote") {
       }
     }
 
+    // Применяем фильтрацию по excluded_sensors конфигу
+    const filteredSensors = filterSensorsByConfig(sensors);
+    const filteredSensorsNoLocation = filterSensorsByConfig(sensorsNoLocation);
+
     const bounds = getConfigBounds(settings);
     return {
-      sensors: filterByBounds(sensors, bounds),
-      sensorsNoLocation: filterByBounds(sensorsNoLocation, bounds),
+      sensors: filterByBounds(filteredSensors, bounds),
+      sensorsNoLocation: filterByBounds(filteredSensorsNoLocation, bounds),
     };
+  }
+}
+
+/**
+ * Фильтрует сенсоры согласно конфигурации excluded_sensors
+ * @param {Array} sensors - массив сенсоров для фильтрации
+ * @returns {Array} отфильтрованный массив сенсоров
+ */
+function filterSensorsByConfig(sensors) {
+  if (!excluded_sensors || !excluded_sensors.sensors || excluded_sensors.sensors.length === 0) {
+    return sensors;
+  }
+
+  const { mode, sensors: configSensors } = excluded_sensors;
+  const sensorIdsSet = new Set(configSensors);
+
+  if (mode === 'include-only') {
+    // Whitelist: показываем только сенсоры из списка
+    return sensors.filter(sensor => sensorIdsSet.has(sensor.sensor_id));
+  } else {
+    // Blacklist (exclude): скрываем сенсоры из списка
+    return sensors.filter(sensor => !sensorIdsSet.has(sensor.sensor_id));
   }
 }
 

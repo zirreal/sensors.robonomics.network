@@ -4,7 +4,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useMap } from "@/composables/useMap";
 import { useBookmarks } from "@/composables/useBookmarks";
 
-import { pinned_sensors } from "@config";
+import { pinned_sensors, excluded_sensors } from "@config";
 import * as sensorsUtils from "../utils/map/sensors";
 import { clearActiveMarker, setActiveMarker } from "../utils/map/markers";
 import {
@@ -519,8 +519,37 @@ export function useSensors(localeComputed) {
    * @param {Object} point.maxdata - Максимальные данные
    * @throws {Error} При ошибке логирует ошибку и пропускает маркер
    */
+  /**
+   * Проверяет, должен ли сенсор быть отфильтрован согласно конфигурации excluded_sensors
+   * @param {string} sensorId - ID сенсора
+   * @returns {boolean} true если сенсор должен быть скрыт
+   */
+  const shouldFilterSensor = (sensorId) => {
+    if (!excluded_sensors || !excluded_sensors.sensors || excluded_sensors.sensors.length === 0) {
+      return false;
+    }
+
+    const { mode, sensors: configSensors } = excluded_sensors;
+    const sensorIdsSet = new Set(configSensors);
+
+    if (mode === 'include-only') {
+      // Whitelist: скрываем сенсоры, которых нет в списке
+      return !sensorIdsSet.has(sensorId);
+    } else {
+      // Blacklist (exclude): скрываем сенсоры из списка
+      return sensorIdsSet.has(sensorId);
+    }
+  };
+
   const updateSensorMarker = (point) => {
     if (!point.model || !sensorsUtils.isReadyLayer()) return;
+
+    // Проверяем фильтрацию по excluded_sensors
+    if (shouldFilterSensor(point.sensor_id)) {
+      // Удаляем маркер, если он уже существует
+      sensorsUtils.removeMarker(point.sensor_id);
+      return;
+    }
 
     try {
       // Нормализуем данные
@@ -705,6 +734,12 @@ export function useSensors(localeComputed) {
       // Используем данные из sensors (уже содержат координаты и данные)
       for (const sensor of sensorsData) {
         if (!sensor.sensor_id) continue;
+
+        // Проверяем фильтрацию по excluded_sensors
+        if (shouldFilterSensor(sensor.sensor_id)) {
+          markersSkipped++;
+          continue;
+        }
 
         // Проверяем координаты перед созданием маркера
         const lat = Number(sensor.geo.lat);

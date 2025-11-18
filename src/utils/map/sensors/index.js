@@ -144,6 +144,22 @@ export function clearAllMarkers() {
   }
 }
 
+/**
+ * Удаляет конкретный маркер сенсора с карты
+ * @param {string} sensorId - ID сенсора
+ */
+export function removeMarker(sensorId) {
+  if (!sensorId) return;
+  
+  const marker = findMarker(sensorId);
+  if (marker) {
+    const ctx = getMapContext();
+    if (ctx.markersLayer) {
+      ctx.markersLayer.removeLayer(marker);
+    }
+  }
+}
+
 export function upsertPoint(point, unit = null) {
   try {
     // Сенсоры всегда используют addMarker

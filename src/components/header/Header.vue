@@ -19,7 +19,7 @@
             <section>
               <h4>{{ sensorsNoLocation?.length }} sensors without geolocation</h4>
               <ul class="sensors-list">
-                <li v-for="sensor in sensorsNoLocation" :key="sensor.id">
+                <li v-for="sensor in sensorsNoLocation" :key="sensor.sensor_id">
                   <a :href="getSensorLink(sensor)">
                     <b>{{ formatSensorId(sensor.sensor_id) }}</b>
                   </a>
@@ -113,7 +113,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, reactive } from "vue";
 import { languages } from "@/translate";
-import { settings } from "@config";
+import { settings, excluded_sensors } from "@config";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 
@@ -136,8 +136,33 @@ const mapState = useMap();
 const { idbBookmarks } = useBookmarks();
 const localeComputed = computed(() => locale.value || "en");
 const sensorsData = reactive(useSensors(localeComputed));
-const sensorsList = computed(() => sensorsData.sensors);
-const sensorsNoLocation = computed(() => sensorsData.sensorsNoLocation);
+
+/**
+ * Фильтрует сенсоры согласно конфигурации excluded_sensors
+ * @param {Array} sensors - массив сенсоров для фильтрации
+ * @returns {Array} отфильтрованный массив сенсоров
+ */
+const filterSensors = (sensors) => {
+  if (!excluded_sensors || !excluded_sensors.sensors || excluded_sensors.sensors.length === 0) {
+    return sensors || [];
+  }
+
+  const { mode, sensors: configSensors } = excluded_sensors;
+  const sensorIdsSet = new Set(configSensors);
+
+  if (!Array.isArray(sensors)) return [];
+
+  if (mode === 'include-only') {
+    // Whitelist: показываем только сенсоры из списка
+    return sensors.filter(sensor => sensorIdsSet.has(sensor.sensor_id));
+  } else {
+    // Blacklist (exclude): скрываем сенсоры из списка
+    return sensors.filter(sensor => !sensorIdsSet.has(sensor.sensor_id));
+  }
+};
+
+const sensorsList = computed(() => filterSensors(sensorsData.sensors));
+const sensorsNoLocation = computed(() => filterSensors(sensorsData.sensorsNoLocation));
 
 // Количество закладок
 const bookmarksCount = computed(() => idbBookmarks.value?.length || 0);
