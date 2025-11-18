@@ -1,6 +1,6 @@
 {
   "name": "sensors.social",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "type": "module",
   "private": true,
   "scripts": {
@@ -10,9 +10,9 @@
     "preview": "npx kill-port 4173 && vite preview --port 4173",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
     "release": "release-it",
-    "release:patch": "release-it patch",
-    "release:minor": "release-it minor",
-    "release:major": "release-it major",
+    "release:patch": "release-it patch --ci",
+    "release:minor": "release-it minor --ci",
+    "release:major": "release-it major --ci",
     "release:dry-run": "release-it --dry-run"
   },
   "dependencies": {
