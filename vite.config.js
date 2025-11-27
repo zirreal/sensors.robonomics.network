@@ -1,6 +1,5 @@
 import { fileURLToPath, URL } from "node:url";
 
-import prerender from "@prerenderer/rollup-plugin";
 import vue from "@vitejs/plugin-vue";
 import { defineConfig } from "vite";
 
@@ -11,17 +10,6 @@ export default defineConfig(() => {
     // server: { https: true },
     plugins: [
       vue(),
-      prerender({
-        routes: [
-          "/",
-          "/privacy-policy",
-          "/air-measurements",
-          "/altruist-timeline",
-          "/altruist-use-cases",
-          "/altruist-compare",
-        ],
-        renderer: "@prerenderer/renderer-puppeteer",
-      }),
     ],
     resolve: {
       alias: {
