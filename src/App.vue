@@ -1,4 +1,14 @@
 <template>
+  <div class="maintenance-banner">
+    <a
+      href="https://x.com/AIRA_Robonomics/status/1993637692744093734"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="maintenance-banner-link"
+    >
+      We're working on fixing technical issues. Sensor data may be temporarily unavailable on the map.
+    </a>
+  </div>
   <RouterView />
   <notifications :classes="['notify', 'vue-notification']" />
 </template>
@@ -116,5 +126,42 @@ onMounted(async () => {
 .notify {
   font-size: 20px !important;
   font-weight: bold;
+}
+
+.maintenance-banner {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--color-red);
+  color: var(--color-light);
+  text-align: center;
+  padding: 0.5rem var(--gap);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.maintenance-banner-link {
+  display: block;
+  color: var(--color-light);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+  font-weight: 900;
+}
+
+.maintenance-banner-link:hover {
+  opacity: 0.9;
+  text-decoration: underline;
+  color: var(--color-light);
+}
+
+@media screen and (max-width: 600px) {
+  .maintenance-banner {
+    padding: 0.4rem calc(var(--gap) / 2);
+  }
+
+  .maintenance-banner-link {
+    font-size: 0.85rem;
+  }
 }
 </style>
