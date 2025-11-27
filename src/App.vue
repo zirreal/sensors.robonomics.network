@@ -1,14 +1,12 @@
 <template>
-  <div class="maintenance-banner">
+  <!-- <div class="maintenance-banner">
     <a
-      href="https://x.com/AIRA_Robonomics/status/1993637692744093734"
+      href=""
       target="_blank"
       rel="noopener noreferrer"
       class="maintenance-banner-link"
-    >
-      We're working on fixing technical issues. Sensor data may be temporarily unavailable on the map.
-    </a>
-  </div>
+    ></a>
+  </div> -->
   <RouterView />
   <notifications :classes="['notify', 'vue-notification']" />
 </template>
