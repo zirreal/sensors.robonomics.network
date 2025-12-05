@@ -8,10 +8,11 @@
   },
   "Sensors": {
     "dbname": "Sensors",
-    "dbversion": 1,
+    "dbversion": 2,
     "stores": {
       "sensorData": { "keyPath": "id", "autoIncrement": false },
-      "bookmarks": { "keyPath": "id", "autoIncrement": true }
+      "bookmarks": { "keyPath": "id", "autoIncrement": true },
+      "dataHealth": { "keyPath": "sensorId", "autoIncrement": false }
     }
   },
   "SensorsDBBookmarks": {

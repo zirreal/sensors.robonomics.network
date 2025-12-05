@@ -4,7 +4,10 @@
 
     <section class="flexline-mobile-column">
       <div class="flexline mb">
-        <AQI v-if="mapState.currentProvider.value !== 'realtime'" :logs="log" />
+        <AQI 
+          v-if="mapState.currentProvider.value !== 'realtime' && isPMHealthy" 
+          :logs="log" 
+        />
       </div>
     </section>
 
@@ -19,7 +22,14 @@
         </div>
       </div>
 
-      <Chart v-if="Array.isArray(point?.logs) && point?.logs.length > 0" :log="log" />
+
+      <Chart 
+        v-if="Array.isArray(point?.logs) && point?.logs.length > 0" 
+        :log="log" 
+        :dataHealth="dataHealth"
+        :hiddenOverlays="hiddenOverlays"
+        @hide-overlay="handleHideOverlay"
+      />
       <div
         v-else-if="
           mapState.currentProvider.value === 'remote' &&
@@ -74,10 +84,11 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useMap } from "@/composables/useMap";
 import { useSensors } from "@/composables/useSensors";
+import { useDataHealth } from "@/composables/useDataHealth";
 import measurements from "../../../measurements";
 
 import AQI from "../widgets/AQI.vue";
@@ -94,8 +105,35 @@ const { t } = useI18n();
 const mapState = useMap();
 const localeComputed = computed(() => localStorage.getItem("locale") || "en");
 const sensorsUI = useSensors(localeComputed);
+const { dataHealth, loadDataHealth: loadDataHealthComposable } = useDataHealth();
+const hiddenOverlays = ref([]); // Массив категорий, для которых скрыт оверлей
 
 const hasLogs = computed(() => Array.isArray(props.log) && props.log.length > 0);
+
+// Проверяем, здоровы ли данные PM (для отображения AQI)
+const isPMHealthy = computed(() => {
+  if (!dataHealth.value) return true; // Если данных нет, считаем здоровым
+  return dataHealth.value.pm?.healthy !== false;
+});
+
+// Проверяем, есть ли нездоровые данные
+const hasUnhealthyData = computed(() => {
+  if (!dataHealth.value) return false;
+  
+  // Проверяем каждую категорию
+  const pmUnhealthy = dataHealth.value.pm?.healthy === false;
+  const climateUnhealthy = dataHealth.value.climate?.healthy === false;
+  const noiseUnhealthy = dataHealth.value.noise?.healthy === false;
+  
+  return pmUnhealthy || climateUnhealthy || noiseUnhealthy;
+});
+
+// Обработчик скрытия оверлея
+const handleHideOverlay = (categoryKey) => {
+  if (!hiddenOverlays.value.includes(categoryKey)) {
+    hiddenOverlays.value.push(categoryKey);
+  }
+};
 
 const logsProgress = sensorsUI.logsProgress;
 
@@ -169,6 +207,12 @@ function buildUnitsList() {
   return Array.from(set).sort();
 }
 
+// Загрузка и проверка dataHealth
+const loadDataHealth = () => {
+  const sensorId = props.point?.sensor_id;
+  loadDataHealthComposable(sensorId, props.log);
+};
+
 // Обновляем units при изменении логов
 watch(
   () => props.log,
@@ -186,6 +230,19 @@ watch(
   },
   { immediate: true }
 );
+
+// Загружаем dataHealth при монтировании и при изменении sensor_id
+watch(
+  () => props.point?.sensor_id,
+  () => {
+    loadDataHealth();
+  },
+  { immediate: true }
+);
+
+onMounted(() => {
+  loadDataHealth();
+});
 </script>
 
 <style scoped>
@@ -277,5 +334,17 @@ watch(
   justify-content: space-between;
   font-size: 0.8em;
   color: var(--color-dark);
+}
+
+.bugged-sensor {
+  flex-direction: column;
+}
+
+.bugged-sensor-data {
+  text-align: center;
+}
+
+.bugged-sensor h3 {
+  margin-bottom: 0.2rem;
 }
 </style>

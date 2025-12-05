@@ -102,6 +102,27 @@ export function IDBgettable(dbname, dbtable) {
 }
 
 /*
+    IDBgetByKey(dbname, dbtable, key)
+    Получает одну запись по ключу из выбранной БД/objectStore.
+    Возвращает Promise с записью или null если не найдено.
+    Пример:
+        IDBgetByKey('Sensors', 'dataHealth', 'sensor123').then(record => ...)
+*/
+export function IDBgetByKey(dbname, dbtable, key) {
+  return new Promise((resolve) => {
+    IDBworkflow(dbname, dbtable, "readonly", (store) => {
+      const request = store.get(key);
+      request.onsuccess = () => {
+        resolve(request.result || null);
+      };
+      request.onerror = () => {
+        resolve(null);
+      };
+    });
+  });
+}
+
+/*
     IDBdeleteByKey(dbname, dbtable, key)
     Удаляет одну запись по ключу из выбранной БД/objectStore.
     Возвращает Promise, который resolve после удаления.
