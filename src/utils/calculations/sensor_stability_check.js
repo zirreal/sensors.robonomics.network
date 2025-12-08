@@ -348,60 +348,65 @@ export function checkRHInstantJumps(logArr) {
 
 // Шум
 /**
- * Проверяет, что noise AVG и noise MAX одинаковые в течение 3 часов и больше
+ * Проверяет, что noise AVG и noise MAX одинаковые в течение 5 часов и больше
  * @param {Array} logArr - массив логов с timestamp и data
  * @returns {boolean}
  */
 export function checkNoiseAvgMaxSame(logArr) {
-  const THREE_HOURS = 3 * 3600; // секунды
-  if (!logArr || logArr.length < 3) return false; // Нужно минимум 3 записи
+  const FIVE_HOURS = 5 * 3600; // секунды
+  if (!logArr || logArr.length < 5) return false; // Нужно минимум 5 записей
 
   const now = Math.max(...logArr.map(d => d.timestamp));
   const last5h = logArr
-    .filter(d => now - d.timestamp <= THREE_HOURS)
+    .filter(d => now - d.timestamp <= FIVE_HOURS)
     .sort((a, b) => a.timestamp - b.timestamp);
 
-  if (last5h.length < 3) return false;
+  if (last5h.length < 5) return false;
 
   let sameCount = 0;
   let validCount = 0;
-  const EPSILON = 0.1; // погрешность для сравнения
+  const EPSILON = 0.5; // погрешность для сравнения 
 
   for (const log of last5h) {
     const avg = log?.data?.noiseavg;
     const max = log?.data?.noisemax;
     if (avg !== undefined && avg !== null && max !== undefined && max !== null) {
       validCount++;
+      // Проверяем, что они почти одинаковые (с учетом погрешности)
       if (Math.abs(avg - max) < EPSILON) {
         sameCount++;
       }
     }
   }
 
-  if (validCount < 3) return false;
+  if (validCount < 5) return false;
 
-  return sameCount === validCount && validCount >= 3;
+  // Требуем 90%+ одинаковых значений
+  // Если почти все значения одинаковые - это проблема
+  return sameCount / validCount >= 0.9 && validCount >= 5;
 }
 
 /**
  * Проверяет, что Noise max < 35 и avg < 20 в течение 3 часов и больше
  * Учитывает, что в тихих местах это может быть нормально
+ * Проверяем только если значения подозрительно низкие И это продолжается долго
  * @param {Array} logArr - массив логов с timestamp и data
  * @returns {boolean}
  */
 export function checkNoiseTooLow(logArr) {
   const THREE_HOURS = 3 * 3600; // секунды
-  if (!logArr || logArr.length < 3) return false; // Нужно минимум 3 записи
+  if (!logArr || logArr.length < 5) return false; // Нужно минимум 5 записей
 
   const now = Math.max(...logArr.map(d => d.timestamp));
   const last3h = logArr
     .filter(d => now - d.timestamp <= THREE_HOURS)
     .sort((a, b) => a.timestamp - b.timestamp);
 
-  if (last3h.length < 3) return false;
+  if (last3h.length < 5) return false;
 
   let lowCount = 0;
   let validCount = 0;
+  let suspiciouslyLowCount = 0; // Очень низкие значения (max < 30, avg < 15)
 
   for (const log of last3h) {
     const avg = log?.data?.noiseavg;
@@ -410,48 +415,56 @@ export function checkNoiseTooLow(logArr) {
       validCount++;
       if (max < 35 && avg < 20) {
         lowCount++;
+        // Проверяем, что значения подозрительно низкие
+        if (max < 30 && avg < 15) {
+          suspiciouslyLowCount++;
+        }
       }
     }
   }
 
-  if (validCount < 3) return false;
-  return lowCount === validCount && validCount >= 3;
+  if (validCount < 5) return false;
+  
+  // Требуем 90%+ низких значений И хотя бы 50% подозрительно низких
+  const lowRatio = lowCount / validCount;
+  const suspiciousRatio = suspiciouslyLowCount / validCount;
+  
+  return lowRatio >= 0.9 && suspiciousRatio >= 0.5 && validCount >= 5;
 }
 
 /**
  * Проверяет, что значения шума не меняются в диапазоне больше 3 часов
  * Учитывает, что в тихих местах значения могут быть стабильными
+ * Проверяем только если значения "залипли" на одном числе
  * @param {Array} logArr - массив логов с timestamp и data
  * @returns {boolean}
- * @note Диапазон RANGE_THRESHOLD может потребовать уточнения
  */
 export function checkNoiseNoChange(logArr) {
-  const THREE_HOURS = 3 * 3600; // секунды
-  if (!logArr || logArr.length < 4) return false; // Нужно минимум 4 записи
+  const FIVE_HOURS = 5 * 3600; // секунды
+  if (!logArr || logArr.length < 5) return false; // Нужно минимум 5 записей
 
   const now = Math.max(...logArr.map(d => d.timestamp));
   const last3h = logArr
-    .filter(d => now - d.timestamp <= THREE_HOURS)
+    .filter(d => now - d.timestamp <= FIVE_HOURS)
     .sort((a, b) => a.timestamp - b.timestamp);
 
-  if (last3h.length < 4) return false;
+  if (last3h.length < 5) return false;
 
   // Используем noiseavg или noisemax (приоритет noiseavg)
   const noiseValues = last3h
     .map(d => d?.data?.noiseavg ?? d?.data?.noisemax)
-    .filter(v => v !== undefined && v !== null);
+    .filter(v => v !== undefined && v !== null && v > 0); // Игнорируем нулевые значения
 
+  if (noiseValues.length < 5) return false;
 
-  // Увеличиваем порог - значения могут незначительно меняться
-  const RANGE_THRESHOLD = 5; // значения не меняются больше чем на 2 единицы (было 1)
-
-  // Проверяем, что все значения в узком диапазоне
-  const min = Math.min(...noiseValues);
-  const max = Math.max(...noiseValues);
-  const range = max - min;
-
-  // Требуем очень узкий диапазон И достаточно много данных
-  return range <= RANGE_THRESHOLD && noiseValues.length >= 4;
+  // Проверяем стандартное отклонение - если оно очень маленькое, значения "залипли"
+  const mean = noiseValues.reduce((a, b) => a + b, 0) / noiseValues.length;
+  const variance = noiseValues.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / noiseValues.length;
+  const std = Math.sqrt(variance);
+  
+  // Если std очень маленькое (< 1 dB), это подозрительно - значения "залипли"
+  // И среднее значение не должно быть нулевым
+  return std < 1 && mean > 0 && noiseValues.length >= 5;
 }
 
 /**
