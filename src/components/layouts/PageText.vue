@@ -7,6 +7,9 @@
     <nav class="footer-section">
       <ul class="footer-section-in">
         <li>
+          <router-link to="/altruist-device-info">{{ $t("Altruist device info") }}</router-link>
+        </li>
+        <li>
           <router-link to="/altruist-use-cases">{{ $t("Altruist use cases") }}</router-link>
         </li>
         <li>
