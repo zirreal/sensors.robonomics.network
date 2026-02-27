@@ -19,6 +19,9 @@
           <router-link to="/air-measurements">{{ $t("links.measurement") }}</router-link>
         </li>
         <li>
+          <router-link to="/construction-monitoring">{{ $t("Construction monitoring") }}</router-link>
+        </li>
+        <li>
           <router-link to="/privacy-policy">{{ $t("links.privacy") }}</router-link>
         </li>
       </ul>
@@ -80,6 +83,11 @@ import ReleaseInfo from "../../components/ReleaseInfo.vue";
 
 .container-pagetext ul {
   list-style: initial;
+  margin-left: var(--gap);
+}
+
+.container-pagetext ol {
+  list-style: decimal;
   margin-left: var(--gap);
 }
 
