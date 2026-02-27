@@ -19,6 +19,7 @@ export default defineConfig(() => {
           "/altruist-timeline",
           "/altruist-use-cases",
           "/altruist-compare",
+          "/construction-monitoring",
         ],
         renderer: "@prerenderer/renderer-puppeteer",
       }),
