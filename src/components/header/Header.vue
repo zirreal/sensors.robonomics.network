@@ -64,6 +64,7 @@
           </p>
 
           <section class="navlinks">
+            <router-link to="/altruist-device-info/">{{ $t("Altruist device info") }}</router-link>
             <router-link to="/altruist-use-cases/">{{ $t("Altruist use cases") }}</router-link>
             <router-link to="/altruist-timeline/">{{ $t("Altruist timeline") }}</router-link>
             <router-link to="/altruist-compare/">{{ $t("Altruist comparison table") }}</router-link>
