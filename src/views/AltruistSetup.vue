@@ -29,6 +29,10 @@
         {{ $t("Altruist Urban is an outdoor air quality monitor measuring particulate matter (PM2.5 / PM10), temperature, humidity, atmospheric pressure, and noise level.") }}
       </p>
 
+      <p>
+        <img :src="urbanSetupImg" :alt="$t('Altruist Urban setup diagram')" class="setup-diagram" />
+      </p>
+
       <h3>{{ $t("Step 1 — Power") }}</h3>
       <p>
         {{ $t("Connect the sensor to a USB-C power source. Minimum requirement: 5V / 1A.") }}
@@ -92,6 +96,10 @@
       <h2>{{ $t("Set Up Your Altruist Insight") }}</h2>
       <p>
         {{ $t("Altruist Insight is an indoor air quality monitor with an e-ink display, measuring CO2, temperature, humidity, and atmospheric pressure.") }}
+      </p>
+
+      <p>
+        <img :src="insightSetupImg" :alt="$t('Altruist Insight setup diagram')" class="setup-diagram" />
       </p>
 
       <h3>{{ $t("Step 1 — Power") }}</h3>
@@ -239,6 +247,9 @@ import { useRouter } from "vue-router";
 import MetaInfo from "../components/MetaInfo.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
 
+import urbanSetupImg from "@/assets/images/pages/altruist-setup/altruist-setup-urban.webp";
+import insightSetupImg from "@/assets/images/pages/altruist-setup/altruist-setup-insight.webp";
+
 const router = useRouter();
 
 onMounted(() => {
@@ -280,5 +291,14 @@ code {
   padding: 0.15em 0.4em;
   border-radius: 4px;
   font-family: monospace;
+}
+
+.setup-diagram {
+  display: block;
+  width: 100%;
+  max-width: 900px;
+  margin: 1rem 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
 }
 </style>
