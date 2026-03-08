@@ -19,6 +19,9 @@
           <router-link to="/altruist-compare">{{ $t("Altruist compare") }}</router-link>
         </li>
         <li>
+          <router-link to="/altruist-setup">{{ $t("Altruist setup") }}</router-link>
+        </li>
+        <li>
           <router-link to="/air-measurements">{{ $t("links.measurement") }}</router-link>
         </li>
         <li>
