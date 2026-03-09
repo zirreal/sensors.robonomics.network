@@ -20,6 +20,7 @@ export default defineConfig(() => {
           "/altruist-use-cases",
           "/altruist-compare",
           "/altruist-device-info",
+          "/altruist-setup",
           "/construction-monitoring",
         ],
         renderer: "@prerenderer/renderer-puppeteer",
