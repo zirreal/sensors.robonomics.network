@@ -538,4 +538,11 @@ export default {
   "Sensor module, USB-A to USB-C cable, wall mount, double-sided tape (×2), external antenna, user manual": "Sensor module, USB-A to USB-C cable, wall mount, double-sided tape (×2), external antenna, user manual",
   "Sensor module with e-ink display, USB-A to USB-C cable, user manual": "Sensor module with e-ink display, USB-A to USB-C cable, user manual",
   "Need help? Contact support:": "Need help? Contact support:",
+  "Download PDF instruction": "Download PDF instruction",
+  "Full setup diagram": "Full setup diagram",
+  "UV Cover": "UV Cover",
+  "UV Cover for Altruist Urban": "UV Cover for Altruist Urban",
+  "Outdoor protection against sun and rain with UV resistance. Made from ASA plastic.": "Outdoor protection against sun and rain with UV resistance. Made from ASA plastic.",
+  "1 Cover, 1 Wall mount, 2 Screws, 2 Double-sided tapes, 1 User manual": "1 Cover, 1 Wall mount, 2 Screws, 2 Double-sided tapes, 1 User manual",
+  "Download UV Cover instruction": "Download UV Cover instruction",
 };

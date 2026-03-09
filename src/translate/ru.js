@@ -539,4 +539,11 @@ export default {
   "Sensor module, USB-A to USB-C cable, wall mount, double-sided tape (×2), external antenna, user manual": "Датчик, кабель USB-A — USB-C, крепление на стену, двусторонний скотч (×2), внешняя антенна, руководство пользователя",
   "Sensor module with e-ink display, USB-A to USB-C cable, user manual": "Датчик с e-ink дисплеем, кабель USB-A — USB-C, руководство пользователя",
   "Need help? Contact support:": "Нужна помощь? Обращайтесь в поддержку:",
+  "Download PDF instruction": "Скачать PDF инструкцию",
+  "Full setup diagram": "Полная схема настройки",
+  "UV Cover": "УФ-козырёк",
+  "UV Cover for Altruist Urban": "УФ-козырёк для Altruist Urban",
+  "Outdoor protection against sun and rain with UV resistance. Made from ASA plastic.": "Защита от солнца и дождя с УФ-стойкостью. Изготовлен из пластика ASA.",
+  "1 Cover, 1 Wall mount, 2 Screws, 2 Double-sided tapes, 1 User manual": "1 козырёк, 1 крепление, 2 шурупа, 2 двусторонних скотча, 1 инструкция",
+  "Download UV Cover instruction": "Скачать инструкцию УФ-козырька",
 };
