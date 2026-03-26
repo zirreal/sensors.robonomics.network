@@ -28,6 +28,9 @@
           <router-link to="/construction-monitoring">{{ $t("Construction monitoring") }}</router-link>
         </li>
         <li>
+          <router-link to="/noise-data-real-estate">{{ $t("Noise data for real estate") }}</router-link>
+        </li>
+        <li>
           <router-link to="/privacy-policy">{{ $t("links.privacy") }}</router-link>
         </li>
       </ul>

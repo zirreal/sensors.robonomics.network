@@ -6,6 +6,7 @@ import AltruistUseCases from "./views/AltruistUseCases.vue";
 import AltruistDeviceInfo from "./views/AltruistDeviceInfo.vue";
 import AltruistSetup from "./views/AltruistSetup.vue";
 import ConstructionMonitoring from "./views/ConstructionMonitoring.vue";
+import NoiseDataRealEstate from "./views/NoiseDataRealEstate.vue";
 import Login from "./views/Login.vue";
 import Main from "./views/Main.vue";
 import PrivacyPolicy from "./views/PrivacyPolicy.vue";
@@ -64,6 +65,11 @@ const router = createRouter({
       path: "/construction-monitoring/",
       name: "construction-monitoring",
       component: ConstructionMonitoring,
+    },
+    {
+      path: "/noise-data-real-estate/",
+      name: "noise-data-real-estate",
+      component: NoiseDataRealEstate,
     },
     {
       path: "/login/",
