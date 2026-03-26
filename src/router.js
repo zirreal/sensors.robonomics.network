@@ -3,6 +3,9 @@ import AirMeasurements from "./views/AirMeasurements.vue";
 import AltruistCompare from "./views/AltruistCompare.vue";
 import AltruistTimeline from "./views/AltruistTimeline.vue";
 import AltruistUseCases from "./views/AltruistUseCases.vue";
+import AltruistDeviceInfo from "./views/AltruistDeviceInfo.vue";
+import AltruistSetup from "./views/AltruistSetup.vue";
+import ConstructionMonitoring from "./views/ConstructionMonitoring.vue";
 import Login from "./views/Login.vue";
 import Main from "./views/Main.vue";
 import PrivacyPolicy from "./views/PrivacyPolicy.vue";
@@ -46,6 +49,21 @@ const router = createRouter({
       path: "/altruist-compare/",
       name: "altruist-compare",
       component: AltruistCompare,
+    },
+    {
+      path: "/altruist-device-info/",
+      name: "altruist-device-info",
+      component: AltruistDeviceInfo,
+    },
+    {
+      path: "/altruist-setup/",
+      name: "altruist-setup",
+      component: AltruistSetup,
+    },
+    {
+      path: "/construction-monitoring/",
+      name: "construction-monitoring",
+      component: ConstructionMonitoring,
     },
     {
       path: "/login/",

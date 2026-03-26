@@ -7,6 +7,9 @@
     <nav class="footer-section">
       <ul class="footer-section-in">
         <li>
+          <router-link to="/altruist-device-info">{{ $t("Altruist device info") }}</router-link>
+        </li>
+        <li>
           <router-link to="/altruist-use-cases">{{ $t("Altruist use cases") }}</router-link>
         </li>
         <li>
@@ -16,7 +19,13 @@
           <router-link to="/altruist-compare">{{ $t("Altruist compare") }}</router-link>
         </li>
         <li>
+          <router-link to="/altruist-setup">{{ $t("Altruist setup") }}</router-link>
+        </li>
+        <li>
           <router-link to="/air-measurements">{{ $t("links.measurement") }}</router-link>
+        </li>
+        <li>
+          <router-link to="/construction-monitoring">{{ $t("Construction monitoring") }}</router-link>
         </li>
         <li>
           <router-link to="/privacy-policy">{{ $t("links.privacy") }}</router-link>
@@ -80,6 +89,11 @@ import ReleaseInfo from "../../components/ReleaseInfo.vue";
 
 .container-pagetext ul {
   list-style: initial;
+  margin-left: var(--gap);
+}
+
+.container-pagetext ol {
+  list-style: decimal;
   margin-left: var(--gap);
 }
 

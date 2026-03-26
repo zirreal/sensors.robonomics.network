@@ -64,10 +64,13 @@
           </p>
 
           <section class="navlinks">
+            <router-link to="/altruist-device-info/">{{ $t("Altruist device info") }}</router-link>
             <router-link to="/altruist-use-cases/">{{ $t("Altruist use cases") }}</router-link>
             <router-link to="/altruist-timeline/">{{ $t("Altruist timeline") }}</router-link>
             <router-link to="/altruist-compare/">{{ $t("Altruist comparison table") }}</router-link>
+            <router-link to="/altruist-setup/">{{ $t("Altruist setup") }}</router-link>
             <router-link to="/air-measurements/">{{ $t("links.measurement") }}</router-link>
+            <router-link to="/construction-monitoring/">{{ $t("Construction monitoring") }}</router-link>
             <router-link to="/privacy-policy/">{{ $t("links.privacy") }}</router-link>
           </section>
 
