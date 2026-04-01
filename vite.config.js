@@ -22,6 +22,7 @@ export default defineConfig(() => {
           "/altruist-device-info",
           "/altruist-setup",
           "/construction-monitoring",
+          "/noise-data-real-estate",
         ],
         renderer: "@prerenderer/renderer-puppeteer",
       }),
