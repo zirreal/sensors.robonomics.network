@@ -11,11 +11,11 @@ const mapposition = ref({
 
 const mapinactive = ref(false);
 
-// Безопасная инициализация currentUnit
+// Инициализация currentUnit
 const getCurrentUnitValue = () => {
   const stored = localStorage.getItem("currentUnit");
   const config = settings?.MAP?.measure;
-  const fallback = "pm25";
+  const fallback = "pm10";
 
   // Если в localStorage есть строка - используем её
   if (stored && typeof stored === "string") {
@@ -163,7 +163,7 @@ export function useMap() {
       route.query.type,
       currentUnit.value,
       "currentUnit",
-      "pm25"
+      "pm10"
     ).toLowerCase();
 
     const currentDateValue = getPriorityValue(route.query.date, currentDate.value, null, dayISO());

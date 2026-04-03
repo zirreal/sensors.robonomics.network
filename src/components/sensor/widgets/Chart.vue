@@ -102,7 +102,7 @@ const chartRef = ref(null);
 
 // Группировка параметров для легенды графика
 const GROUPS = {
-  dust: { members: ["pm25", "pm10"], labelKey: "Dust & Particles" },
+  dust: { members: ["pm10", "pm25"], labelKey: "Dust & Particles" },
   noise: { members: ["noisemax", "noiseavg", "noise"], labelKey: "Noise" },
   climate: { members: ["temperature", "humidity"], labelKey: "Climate" },
 };

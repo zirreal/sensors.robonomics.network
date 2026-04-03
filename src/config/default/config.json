@@ -18,7 +18,7 @@
       "lat": "",
       "lng": ""
     },
-    "measure": "pm25",
+    "measure": "pm10",
     "theme": {
       "light": "carto-light",
       "dark": "carto-dark",
