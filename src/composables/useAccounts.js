@@ -5,12 +5,15 @@ import {
   IDBdeleteByKey,
   notifyDBChange,
   hasIndexedDB,
+  encryptText,
+  decryptText,
 } from "../utils/idb";
 import { idbschemas } from "@config";
 
 const schema = idbschemas?.Altruist || {};
 const DB_NAME = schema.dbname;
 const STORE = Object.keys(schema.stores || { Accounts: {} })[0] || "Accounts";
+const SESSION_ACCOUNTS_KEY = "altruist_session_accounts";
 
 // Small in-memory cache for getUserSensors to prevent request storms.
 // - USER_SENSORS_TTL_MS: how long a successful result is considered fresh.
@@ -22,19 +25,93 @@ const userSensorsCache = new Map(); // owner -> { ts, data } | { promise }
 // Глобальное состояние аккаунтов (разделяется между всеми экземплярами composable)
 const accounts = ref([]); // [{ phrase, address, type, devices, ts }]
 
+function readSessionAccounts() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_ACCOUNTS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSessionAccounts(list) {
+  try {
+    if (!Array.isArray(list) || list.length === 0) {
+      sessionStorage.removeItem(SESSION_ACCOUNTS_KEY);
+      return;
+    }
+    sessionStorage.setItem(SESSION_ACCOUNTS_KEY, JSON.stringify(list));
+  } catch {
+  }
+}
+
+function isEncryptedPhrasePayload(value) {
+  return !!(
+    value &&
+    typeof value === "object" &&
+    Array.isArray(value.ciphertext) &&
+    Array.isArray(value.iv) &&
+    value.key
+  );
+}
+
+async function encryptPhraseForStorage(phrase) {
+  const text = typeof phrase === "string" ? phrase : "";
+  if (!text) return "";
+  try {
+    return await encryptText(text);
+  } catch {
+    // Fallback for environments where WebCrypto is unavailable.
+    return text;
+  }
+}
+
+async function decryptPhraseFromStorage(phrase) {
+  if (typeof phrase === "string") return phrase;
+  if (!isEncryptedPhrasePayload(phrase)) return "";
+  try {
+    const decrypted = await decryptText(phrase);
+    return typeof decrypted === "string" ? decrypted : "";
+  } catch {
+    return "";
+  }
+}
+
+async function normalizeAccountsFromStorage(list) {
+  if (!Array.isArray(list) || list.length === 0) return [];
+  return Promise.all(
+    list.map(async (acc) => ({
+      ...acc,
+      phrase: await decryptPhraseFromStorage(acc?.phrase),
+    }))
+  );
+}
+
 export function useAccounts() {
   const addAccount = async ({ phrase, address, type, devices, ts }, { persist = true } = {}) => {
     // console.log('addAccount', phrase, address, type, devices, ts, persist)
     const idx = accounts.value.findIndex((a) => a.address === address);
-    const item = { phrase, address, type, devices, ts: ts || Date.now() };
+    const item = { phrase, address, type, devices, ts: ts || Date.now(), persist };
     if (idx !== -1) accounts.value[idx] = item;
     else accounts.value.push(item);
 
     if (persist && hasIndexedDB()) {
+      const encryptedPhrase = await encryptPhraseForStorage(phrase);
+      const itemForStorage = { ...item, phrase: encryptedPhrase, persist: true };
       IDBworkflow(DB_NAME, STORE, "readwrite", (store) => {
-        store.put(item);
+        store.put(itemForStorage);
       });
       notifyDBChange(DB_NAME, STORE);
+      const session = readSessionAccounts().filter((a) => a.address !== address);
+      writeSessionAccounts(session);
+    } else {
+      const encryptedPhrase = await encryptPhraseForStorage(phrase);
+      const itemForStorage = { ...item, phrase: encryptedPhrase, persist: false };
+      const session = readSessionAccounts().filter((a) => a.address !== address);
+      session.push(itemForStorage);
+      writeSessionAccounts(session);
     }
     return item;
   };
@@ -47,6 +124,9 @@ export function useAccounts() {
 
     accounts.value = accounts.value.filter((a) => !toDelete.has(a.address));
 
+    const session = readSessionAccounts().filter((a) => !toDelete.has(a.address));
+    writeSessionAccounts(session);
+
     if (hasIndexedDB()) {
       await Promise.all(list.map((addr) => IDBdeleteByKey(DB_NAME, STORE, addr)));
       notifyDBChange(DB_NAME, STORE);
@@ -54,11 +134,58 @@ export function useAccounts() {
   };
 
   const getAccounts = async () => {
+    const sessionRaw = readSessionAccounts();
+    const sessionAccounts = (await normalizeAccountsFromStorage(sessionRaw)).map((acc) => ({
+      ...acc,
+      persist: false,
+    }));
+
+    // Best-effort migration: if legacy plaintext phrases are present in sessionStorage, re-save encrypted.
+    const sessionHasLegacyPlain = sessionRaw.some(
+      (acc) => typeof acc?.phrase === "string" && String(acc.phrase).trim().length > 0
+    );
+    if (sessionHasLegacyPlain) {
+      const migrated = await Promise.all(
+        sessionRaw.map(async (acc) => {
+          const p = acc?.phrase;
+          if (typeof p === "string" && p.trim()) {
+            return { ...acc, phrase: await encryptPhraseForStorage(p) };
+          }
+          return acc;
+        })
+      );
+      writeSessionAccounts(migrated);
+    }
+
     if (!hasIndexedDB()) {
+      accounts.value = [...sessionAccounts];
       return accounts.value;
     }
     const data = await IDBgettable(DB_NAME, STORE);
-    accounts.value = Array.isArray(data) ? data : [];
+    const persistentRaw = Array.isArray(data) ? data : [];
+    const persistentAccounts = (await normalizeAccountsFromStorage(persistentRaw)).map((acc) => ({
+      ...acc,
+      persist: acc?.persist === false ? false : true,
+    }));
+
+    // Best-effort migration: if legacy plaintext phrases are present in IndexedDB, re-save encrypted.
+    const legacyPlain = persistentRaw.filter(
+      (acc) => typeof acc?.phrase === "string" && String(acc.phrase).trim().length > 0
+    );
+    if (legacyPlain.length > 0) {
+      for (const acc of legacyPlain) {
+        const encryptedPhrase = await encryptPhraseForStorage(acc.phrase);
+        IDBworkflow(DB_NAME, STORE, "readwrite", (store) => {
+          store.put({ ...acc, phrase: encryptedPhrase });
+        });
+      }
+      notifyDBChange(DB_NAME, STORE);
+    }
+
+    const merged = new Map();
+    for (const acc of persistentAccounts) merged.set(acc.address, acc);
+    for (const acc of sessionAccounts) merged.set(acc.address, acc);
+    accounts.value = [...merged.values()];
     return accounts.value;
   };
 

@@ -64,14 +64,38 @@
           </p>
 
           <section class="navlinks">
-            <router-link to="/altruist-device-info/">{{ $t("Altruist device info") }}</router-link>
-            <router-link to="/altruist-use-cases/">{{ $t("Altruist use cases") }}</router-link>
-            <router-link to="/altruist-timeline/">{{ $t("Altruist timeline") }}</router-link>
-            <router-link to="/altruist-compare/">{{ $t("Altruist comparison table") }}</router-link>
-            <router-link to="/altruist-setup/">{{ $t("Altruist setup") }}</router-link>
-            <router-link to="/air-measurements/">{{ $t("links.measurement") }}</router-link>
-            <router-link to="/construction-monitoring/">{{ $t("Construction monitoring") }}</router-link>
-            <router-link to="/privacy-policy/">{{ $t("links.privacy") }}</router-link>
+            <router-link class="navtile" to="/altruist-device-info/">
+              <font-awesome-icon class="navfa" icon="fa-solid fa-circle-info" />
+              <span>{{ $t("Altruist device info") }}</span>
+            </router-link>
+            <router-link class="navtile" to="/altruist-use-cases/">
+              <img class="navimg" :src="urbanIcon" alt="" aria-hidden="true" />
+              <span>{{ $t("Altruist use cases") }}</span>
+            </router-link>
+            <router-link class="navtile" to="/altruist-timeline/">
+              <font-awesome-icon class="navfa" icon="fa-solid fa-infinity" />
+              <span>{{ $t("Altruist timeline") }}</span>
+            </router-link>
+            <router-link class="navtile" to="/altruist-compare/">
+              <img class="navimg" :src="altruistIcon" alt="" aria-hidden="true" />
+              <span>{{ $t("Altruist comparison table") }}</span>
+            </router-link>
+            <router-link class="navtile" to="/altruist-setup/">
+              <img class="navimg" :src="diyIcon" alt="" aria-hidden="true" />
+              <span>{{ $t("Altruist setup") }}</span>
+            </router-link>
+            <router-link class="navtile" to="/air-measurements/">
+              <font-awesome-icon class="navfa" icon="fa-solid fa-chart-simple" />
+              <span>{{ $t("links.measurement") }}</span>
+            </router-link>
+            <router-link class="navtile" to="/construction-monitoring/">
+              <font-awesome-icon class="navfa" icon="fa-solid fa-helmet-safety" />
+              <span>{{ $t("Construction monitoring") }}</span>
+            </router-link>
+            <router-link class="navtile" to="/privacy-policy/">
+              <font-awesome-icon class="navfa" icon="fa-regular fa-file-lines" />
+              <span>{{ $t("links.privacy") }}</span>
+            </router-link>
           </section>
 
           <ReleaseInfo />
@@ -129,6 +153,10 @@ import ReleaseInfo from "../ReleaseInfo.vue";
 import Login from "./Login.vue";
 import Bookmarks from "@/components/Bookmarks.vue";
 
+import diyIcon from "@/assets/images/sensorTypes/DIY.svg";
+import urbanIcon from "@/assets/images/sensorTypes/Urban.svg";
+import altruistIcon from "@/assets/images/sensorTypes/Altruist.svg";
+
 const { locale: i18nLocale } = useI18n();
 const router = useRouter();
 const route = useRoute();
@@ -155,12 +183,12 @@ const filterSensors = (sensors) => {
 
   if (!Array.isArray(sensors)) return [];
 
-  if (mode === 'include-only') {
+  if (mode === "include-only") {
     // Whitelist: показываем только сенсоры из списка
-    return sensors.filter(sensor => sensorIdsSet.has(sensor.sensor_id));
+    return sensors.filter((sensor) => sensorIdsSet.has(sensor.sensor_id));
   } else {
     // Blacklist (exclude): скрываем сенсоры из списка
-    return sensors.filter(sensor => !sensorIdsSet.has(sensor.sensor_id));
+    return sensors.filter((sensor) => !sensorIdsSet.has(sensor.sensor_id));
   }
 };
 
@@ -259,20 +287,68 @@ header > * {
 }
 
 #about p {
-  font-size: 0.9em;
+  font-size: 1em;
+  line-height: 1.55;
+}
+
+#about h3 {
+  font-size: 1.4em;
+  letter-spacing: 0.2px;
+  margin-bottom: calc(var(--gap) * 0.75);
+}
+
+.locale-select-container select {
+  --app-inputpadding: 1rem;
+  height: auto;
+  line-height: 1.2;
+  padding-top: 0.9rem;
+  padding-bottom: 0.9rem;
 }
 
 .navlinks {
   font-weight: 900;
-  margin-bottom: calc(var(--gap) * 3);
+  margin-bottom: calc(var(--gap) * 1.5);
+  display: grid;
+  gap: calc(var(--gap) * 0.55);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.navlinks a {
-  margin-bottom: calc(var(--gap) * 0.5);
-  border-bottom: 1px dotted #000;
-  display: block;
-  padding: 5px 0;
+.navlinks a.navtile {
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--gap) * 0.5);
+  padding: calc(var(--gap) * 0.7) calc(var(--gap) * 0.5);
   text-decoration: none;
+  color: var(--color-blue);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.025), rgba(0, 0, 0, 0.01));
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  font-size: calc(var(--font-size) * 1.1);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.navlinks a.navtile:hover {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.045), rgba(0, 0, 0, 0.02));
+  border-color: rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.navlinks a.navtile span {
+  line-height: 1.15;
+}
+
+.navlinks a.navtile .navfa {
+  color: var(--color-dark);
+}
+
+.navimg {
+  width: 1.35em;
+  height: 1.35em;
+  flex: 0 0 auto;
+  display: block;
 }
 
 /* + sensors list */
@@ -281,8 +357,8 @@ header > * {
   display: flex;
   align-items: center;
   gap: 3px;
-  color: #000;
-  background: #fff;
+  color: var(--color-dark);
+  background-color: var(--color-light);
   border-radius: 5px;
   padding: 4px 5px;
   font-weight: bold;
@@ -390,6 +466,16 @@ header > * {
     min-width: 280px;
     max-width: calc(100vw - 32px);
     margin: 0 16px;
+  }
+
+  .navlinks {
+    grid-template-columns: 1fr;
+    gap: calc(var(--gap) * 1.4);
+  }
+
+  .navlinks a.navtile {
+    font-size: calc(var(--font-size) * 1.2);
+    padding: calc(var(--gap) * 1.5) calc(var(--gap) * 0.8);
   }
 }
 /* - bookmarks button */

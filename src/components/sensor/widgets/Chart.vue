@@ -39,7 +39,24 @@
     </div>
 
     <div class="chart-section-chart">
-      <Chart ref="chartRef" constructor-type="stockChart" :options="chartOptions" />
+      <div class="chart-wrapper">
+        <Chart ref="chartRef" constructor-type="stockChart" :options="chartOptions" />
+        
+        <!-- Оверлей для нездоровых категорий (показывается только для активной категории) -->
+        <div
+          v-if="activeLegendKey && !isGroupHealthy(activeLegendKey) && !isOverlayHidden(activeLegendKey)"
+          class="chart-overlay"
+        >
+          <div class="chart-overlay-content">
+            <h4>{{ $t(GROUPS[activeLegendKey]?.labelKey || activeLegendKey) }} {{ $t("seems to be wrong measured") || "seems to be wrong measured" }}</h4>
+            <p>{{ $t("probably something happened with your sensor") || "probably something happened with your sensor" }}</p>
+            <button class="button button-small" @click="emit('hide-overlay', activeLegendKey)">
+              {{ $t("Show data anyway") || "Show data anyway" }}
+            </button>
+          </div>
+        </div>
+      </div>
+      
       <div class="custom-legend">
         <span
           v-for="item in visibleLegend"
@@ -70,7 +87,11 @@ stockInit(Highcharts);
 
 const props = defineProps({
   log: { type: Array, default: () => [] },
+  dataHealth: { type: Object, default: () => null },
+  hiddenOverlays: { type: Array, default: () => [] }, // Массив категорий, для которых скрыт оверлей
 });
+
+const emit = defineEmits(['hide-overlay']);
 
 const route = useRoute();
 const router = useRouter();
@@ -122,7 +143,28 @@ const HIGHCHARTS_COLOR_ZONES = Object.fromEntries(
   })
 );
 
+// Проверяет, здоровы ли данные для группы
+const isGroupHealthy = (groupKey) => {
+  if (!props.dataHealth) return true; // Если dataHealth нет, показываем все
+
+  const healthMap = {
+    dust: props.dataHealth.pm,
+    climate: props.dataHealth.climate,
+    noise: props.dataHealth.noise,
+  };
+
+  const health = healthMap[groupKey];
+  return health ? health.healthy !== false : true; // По умолчанию здорово, если данных нет
+};
+
+// Проверяет, скрыт ли оверлей для группы (пользователь нажал "Show data anyway")
+const isOverlayHidden = (groupKey) => {
+  if (!props.hiddenOverlays) return false;
+  return props.hiddenOverlays.includes(groupKey);
+};
+
 // Строит список видимых элементов легенды на основе найденных в данных единиц измерения
+// Теперь показываем ВСЕ категории, независимо от здоровья
 const visibleLegend = computed(() => {
   const legend = [];
 
@@ -201,12 +243,6 @@ const yAxisConfig = computed(() =>
   }))
 );
 
-const activeGroupLegend = computed(() => {
-  const currentGroup = GROUPS_LOOKUP[mapState.currentUnit.value];
-  return currentGroup && visibleLegend.value.some((item) => item.key === currentGroup)
-    ? currentGroup
-    : null;
-});
 
 const activeLegendUnits = computed(() => {
   const legendKey = activeLegendKey.value;
@@ -1327,5 +1363,47 @@ onMounted(async () => {
 
 .chart-section-units.expanded .chart-unit-toggler {
   text-align: right;
+}
+
+.chart-wrapper {
+  position: relative;
+}
+
+.chart-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 4px;
+}
+
+.chart-overlay-content {
+  text-align: center;
+  padding: calc(var(--gap) * 2);
+  max-width: 400px;
+}
+
+.chart-overlay-content h4 {
+  margin: 0 0 calc(var(--gap) * 0.5) 0;
+  color: var(--color-dark);
+  font-size: 1.1rem;
+}
+
+.chart-overlay-content p {
+  margin: 0 0 calc(var(--gap) * 1) 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.chart-overlay-content .button-small {
+  font-size: 0.9rem;
+  padding: calc(var(--gap) * 0.5) calc(var(--gap) * 1.5);
 }
 </style>

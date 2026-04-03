@@ -14,6 +14,7 @@ export function usePlugins(app) {
   });
   app.use(polkadot, {
     start: false,
+    // endpoint: "wss://kusama.rpc.robonomics.network/",
     endpoint: "wss://polkadot.rpc.robonomics.network/",
   });
   useI18n(app);

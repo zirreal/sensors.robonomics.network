@@ -2,37 +2,45 @@
   --color-light: #fff;
   --color-dark: #000;
   --color-gray: #4e4e4f;
-  --color-middle-gray: #B6BDC4;
+  --color-middle-gray: #b6bdc4;
   --color-light-gray: #d5d3d3;
-  --color-blue: #007bff; 
+  --color-blue: #007bff;
   --color-teal: #12bfcc;
   --color-green: #60bc2a;
   --color-green-bright: hsl(83, 100%, 71%);
   --color-bright-green-dim: hsla(83, 100%, 71%, 0.372);
-  --color-red: #e2005a; 
+  --color-red: #e2005a;
   --color-bright-red: #ff4d00;
   --color-yellow: #f5ff00;
   --color-orange: #ff9d00;
   --color-purple: #7a00da;
   --color-navy: hsl(219, 63%, 45%);
 
-
   /* Measurements colors */
   --measure-nodata: #d5d3d3;
   --measure-green: #6bde28;
-  --measure-bluegreen: #01EAEA;
-  --measure-yellow: #FDCB24;
-  --measure-orange: #FF8732;
-  --measure-red: #FD4C1F;
-  --measure-darkred: #EB0004;
+  --measure-bluegreen: #01eaea;
+  --measure-yellow: #fdcb24;
+  --measure-orange: #ff8732;
+  --measure-red: #fd4c1f;
+  --measure-darkred: #eb0004;
   --measure-blue: #00aeff;
   --measure-darkblue: #016ee3;
 
   --color-link: var(--color-blue);
   --color-link-hover: var(--color-green);
 
-  --font-family--normal: 'Noto Sans', sans-serif;
+  --font-family--normal: "Noto Sans", sans-serif;
   --font-size: 0.9rem;
+
+  /* Some common styles for stories */
+  --surface-bg-soft: rgba(0, 0, 0, 0.02);
+  --surface-border: rgba(0, 0, 0, 0.12);
+  --surface-border-soft: rgba(0, 0, 0, 0.08);
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --pad-sm: 0.625rem;
+  --pad-md: 0.75rem;
 
   --gap: 1rem;
 
@@ -43,14 +51,14 @@
   --app-bordercolor: #000;
   --app-inputbg: #fff;
   --app-inputtextcolor: #000;
-  --app-inputpadding: .8rem;
-  --app-inputbradius: .3rem;
+  --app-inputpadding: 0.8rem;
+  --app-inputbradius: 0.3rem;
   --app-textcolor: #000;
   --app-inputheight: 2.4rem;
   --app-popoverbg: #fff;
-  --app-buttoncolor:hsl(211, 100%, 50%);
-  --app-buttoncolor-active:hsl(211, 96%, 40%);
-  --app-buttoncolor-hover:hsl(211, 98%, 34%);
+  --app-buttoncolor: hsl(211, 100%, 50%);
+  --app-buttoncolor-active: hsl(211, 96%, 40%);
+  --app-buttoncolor-hover: hsl(211, 98%, 34%);
   --app-buttontextcolor: #fff;
   --app-popoverbg: #fff;
   --app-tablebody: #fff;
@@ -62,8 +70,8 @@
 
 @media screen and (max-width: 500px) {
   :root {
-    --font-size: .8rem;
-    --gap: .5rem;
+    --font-size: 0.8rem;
+    --gap: 0.5rem;
   }
 
   .leaflet-bottom .leaflet-control {
@@ -79,10 +87,10 @@
     --app-tablerow: hsl(220, 23%, 18%);
     --app-tableborder: #ddd;
     --app-controlsgap: calc(var(--gap) * 0.5);
-    --app-buttoncolor:hsl(219, 100%, 60%);
-    --app-buttoncolor-hover:hsl(219, 100%, 50%);
+    --app-buttoncolor: hsl(219, 100%, 60%);
+    --app-buttoncolor-hover: hsl(219, 100%, 50%);
     --color-light-gray: #6d6d6d;
     --color-green-bright: hsl(83, 64%, 29%);
-    --color-bright-green-dim:  hsla(83, 64%, 29%, 0.55);
+    --color-bright-green-dim: hsla(83, 64%, 29%, 0.55);
   }
 }

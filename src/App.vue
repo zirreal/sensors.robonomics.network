@@ -16,7 +16,7 @@ import { RouterView } from "vue-router";
 import { onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
-// import { useAccounts } from "@/composables/useAccounts"; // TODO: раскомментировать когда будет нужно
+import { useAccounts } from "@/composables/useAccounts"; // TODO: раскомментировать когда будет нужно
 
 import config from "@/config/default/config.json";
 // import { getSensorsMapList } from "./utils/map/markers/requests"; // Убран - теперь используется только в Main.vue
@@ -94,25 +94,26 @@ onMounted(async () => {
   сохраняем обратно через addAccount.
 */
   // TODO: раскомментировать когда будет нужно
-  /*
-  if(config.SERVICES.accounts) {
+  if (config.SERVICES.accounts) {
     const accountStore = useAccounts();
     const accounts = await accountStore.getAccounts();
 
     if (accounts && accounts.length > 0) {
       for (const acc of accounts) {
         const sensors = await accountStore.getUserSensors(acc.address);
-        await accountStore.addAccount({
-          phrase: acc.phrase || "",
-          address: acc.address,
-          type: acc.type,
-          devices: sensors,
-          ts: acc.ts,
-        });
+        await accountStore.addAccount(
+          {
+            phrase: acc.phrase || "",
+            address: acc.address,
+            type: acc.type,
+            devices: sensors,
+            ts: acc.ts,
+          },
+          { persist: acc?.persist !== false }
+        );
       }
     }
   }
-  */
   /* - INIT ACCOUNT */
 });
 

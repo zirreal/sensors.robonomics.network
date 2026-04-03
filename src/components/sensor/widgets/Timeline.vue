@@ -1,27 +1,37 @@
 <template>
   <div class="sensor-timeline">
-    <div class="sensor-timeline-tabs">
-      <button
-        :class="{ active: timelineMode === 'realtime' }"
-        @click="handleTimelineModeChange('realtime')"
-      >
-        Realtime
-      </button>
-      <button :class="{ active: timelineMode === 'day' }" @click="handleTimelineModeChange('day')">
-        Day
-      </button>
-      <button
-        :class="{ active: timelineMode === 'week' }"
-        @click="handleTimelineModeChange('week')"
-      >
-        Week
-      </button>
-      <button
-        :class="{ active: timelineMode === 'month' }"
-        @click="handleTimelineModeChange('month')"
-      >
-        Month
-      </button>
+    <div class="sensor-timeline-top">
+      <div class="sensor-timeline-left" aria-hidden="true"></div>
+      <div class="sensor-timeline-tabs">
+        <button
+          :class="{ active: timelineMode === 'realtime' }"
+          @click="handleTimelineModeChange('realtime')"
+        >
+          Realtime
+        </button>
+        <button
+          :class="{ active: timelineMode === 'day' }"
+          @click="handleTimelineModeChange('day')"
+        >
+          Day
+        </button>
+        <button
+          :class="{ active: timelineMode === 'week' }"
+          @click="handleTimelineModeChange('week')"
+        >
+          Week
+        </button>
+        <button
+          :class="{ active: timelineMode === 'month' }"
+          @click="handleTimelineModeChange('month')"
+        >
+          Month
+        </button>
+      </div>
+
+      <div class="sensor-timeline-actions">
+        <slot name="actions" />
+      </div>
     </div>
 
     <div class="sensor-timeline-span">
@@ -274,6 +284,24 @@ watch(
   text-align: center;
 }
 
+.sensor-timeline-top {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: calc(var(--gap) * 0.5);
+}
+
+.sensor-timeline-left {
+  min-width: var(--app-inputheight);
+}
+
+.sensor-timeline-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
 .sensor-timeline-tabs {
   display: inline-flex;
   border: 1px solid #ccc;
@@ -296,10 +324,7 @@ watch(
 }
 
 .sensor-timeline-span {
-  display: flex;
-  align-items: center;
-  gap: var(--gap);
-  justify-content: center;
+  margin-bottom: calc(var(--gap) * 0.4);
 }
 
 .realtime-info {
