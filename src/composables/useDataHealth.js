@@ -7,6 +7,7 @@ import { getSensorData } from "../utils/map/sensors/requests";
 
 const DB_NAME = "Sensors";
 const STORE_NAME = "dataHealth";
+const HEALTH_CHECK_VERSION = 4;
 
 /**
  * Проверяет, нужно ли выполнить проверку (раз в день)
@@ -18,6 +19,10 @@ function shouldCheckHealth(existingHealth) {
     return true; // Никогда не проверяли
   }
 
+  if (existingHealth.version !== HEALTH_CHECK_VERSION) {
+    return true; // Пересчитываем после изменения логики проверок
+  }
+
   const ONE_DAY = 24 * 60 * 60 * 1000; // миллисекунды
   const now = Date.now();
   const timeSinceLastCheck = now - existingHealth.lastChecked;
@@ -26,16 +31,16 @@ function shouldCheckHealth(existingHealth) {
 }
 
 /**
- * Получает логи сенсора за последние 24 часа для проверки
+ * Получает логи сенсора за последние 7 дней для проверки
  * @param {string} sensorId - ID сенсора
  * @returns {Promise<Array>} массив логов
  */
 async function getRecentLogs(sensorId) {
   const now = Math.floor(Date.now() / 1000); // текущий timestamp в секундах
-  const ONE_DAY_AGO = now - 24 * 60 * 60; // 24 часа назад
+  const ONE_WEEK_AGO = now - 7 * 24 * 60 * 60; // 7 дней назад
 
   try {
-    const logs = await getSensorData(sensorId, ONE_DAY_AGO, now, "remote");
+    const logs = await getSensorData(sensorId, ONE_WEEK_AGO, now, "remote");
     return Array.isArray(logs) ? logs : [];
   } catch (error) {
     console.error(`Error fetching logs for sensor ${sensorId}:`, error);
@@ -51,9 +56,21 @@ async function getRecentLogs(sensorId) {
  */
 async function checkAndSaveDataHealth(sensorId, logs = null) {
   try {
-    // Если логи не переданы, загружаем их
-    if (!logs || !Array.isArray(logs)) {
-      logs = await getRecentLogs(sensorId);
+    // Для надежной диагностики всегда используем полный срез за 7 дней.
+    // Компонент может передать только дневной лог, которого недостаточно
+    // для детекторов залипания на длинном окне.
+    const recentLogs = await getRecentLogs(sensorId);
+    if (Array.isArray(logs) && logs.length > 0) {
+      // Объединяем переданные логи с недельными, убирая дубликаты по timestamp.
+      const merged = [...logs, ...recentLogs];
+      const byTs = new Map();
+      for (const item of merged) {
+        const ts = item?.timestamp;
+        if (ts !== undefined && ts !== null) byTs.set(ts, item);
+      }
+      logs = Array.from(byTs.values()).sort((a, b) => a.timestamp - b.timestamp);
+    } else {
+      logs = recentLogs;
     }
 
     // Выполняем проверку
@@ -65,6 +82,7 @@ async function checkAndSaveDataHealth(sensorId, logs = null) {
         const record = {
           sensorId,
           ...healthData,
+          version: HEALTH_CHECK_VERSION,
           lastChecked: Date.now(),
         };
         const request = store.put(record);
@@ -107,7 +125,7 @@ async function getOrCheckDataHealth(sensorId, logs = null) {
 
   // Возвращаем существующий dataHealth (убираем lastChecked из результата)
   if (existingHealth) {
-    const { lastChecked, ...healthData } = existingHealth;
+    const { lastChecked, version, ...healthData } = existingHealth;
     return healthData;
   }
 

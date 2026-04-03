@@ -1,32 +1,84 @@
 <template>
-  <router-link v-if="accounts.length === 0" to="/login/" class="button"> Login </router-link>
-  <template v-else>
-    <div id="accounts" class="popover popover-top-right" popover>
-      <div v-for="acc in accounts" :key="acc.address" class="account-row">
-        <span>{{ acc.address }}</span>
-        <button @click="deleteAccount(acc)">delete</button>
+  <button
+    class="popovercontrol button-round-outline"
+    type="button"
+    aria-label="Account"
+    disabled
+    v-if="false"
+    style="opacity: 0.7"
+  >
+    <font-awesome-icon icon="fa-solid fa-user" />
+  </button>
+  <template v-if="false">
+    <div id="accounts" class="popover popover-top-right accounts-popover" popover>
+      <div class="accounts-title">{{ $t("Accounts") }}</div>
 
-        <!-- сенсоры -->
-        <div style="font-size: 0.95em; margin-left: 20px">
-          <template v-if="acc.sensorsLoading">
-            <span style="opacity: 0.7">Loading sensors...</span>
-          </template>
-
-          <template v-else-if="acc.sensors.length">
-            Sensors:
-            <ul>
-              <li v-for="sensor in acc.sensors" :key="sensor">
-                <router-link :to="getSensorLink(sensor)" @click="reloadOnClick">
-                  {{ sensor }}
-                </router-link>
-              </li>
-            </ul>
-          </template>
-
-          <template v-else>
-            <span style="opacity: 0.6">No available sensors</span>
-          </template>
+      <div v-for="acc in accounts" :key="acc.address" class="account-card">
+        <div class="account-header">
+          <div class="account-address" :title="acc.address">
+            <img
+              v-if="avatarsByAddr[acc.address]"
+              class="account-avatar"
+              :src="avatarsByAddr[acc.address]"
+              alt=""
+              aria-hidden="true"
+            />
+            <font-awesome-icon v-else icon="fa-solid fa-user" class="account-icon" />
+            <b class="account-address-text">{{ collapseAddress(acc.address) }}</b>
+          </div>
+          <div class="account-actions">
+            <Copy
+              class="account-copy"
+              :msg="acc.address"
+              :title="'Copy address'"
+              :notify="'Copied'"
+            >
+              <span class="sr-only">Copy</span>
+            </Copy>
+            <button
+              class="account-delete"
+              type="button"
+              aria-label="Remove account"
+              @click="deleteAccount(acc)"
+            >
+              <font-awesome-icon icon="fa-solid fa-trash" />
+            </button>
+          </div>
         </div>
+
+        <details class="account-sensors" @toggle="onSensorsToggle(acc, $event)">
+          <summary class="account-sensors-summary">
+            <span>{{ $t("Sensors") }}</span>
+            <span class="muted" v-if="acc.sensorsLoading">Loading…</span>
+            <span class="muted" v-else-if="acc.sensors && acc.sensors.length">{{
+              acc.sensors.length
+            }}</span>
+          </summary>
+
+          <div class="account-sensors-body">
+            <div v-if="acc.sensorsLoading" class="muted">Loading sensors…</div>
+            <div v-else-if="!acc.sensors || acc.sensors.length === 0" class="muted">
+              {{ $t("No sensors found for this account yet.") }}
+            </div>
+            <div v-else class="sensor-chips">
+              <router-link
+                v-for="sensor in acc.sensors"
+                :key="sensor"
+                class="sensor-chip"
+                :to="getSensorLink(sensor)"
+              >
+                {{ sensor }}
+              </router-link>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="accounts-actions">
+        <router-link class="button" to="/login/">{{ $t("Manage accounts") }}</router-link>
+        <button class="button button-red" type="button" @click="logoutAll">
+          {{ $t("Log out all") }}
+        </button>
       </div>
     </div>
     <button class="popovercontrol button-round-outline" popovertarget="accounts">
@@ -36,31 +88,45 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-// import { useAccounts } from "@/composables/useAccounts"; // TODO: раскомментировать когда будет нужно
+import { ref, onMounted, watch } from "vue";
+import { useAccounts } from "@/composables/useAccounts"; // TODO: раскомментировать когда будет нужно
 import config from "@/config/default/config.json";
+import Copy from "@/components/controls/Copy.vue";
+import { generateAvatar } from "@/utils/avatarGenerator";
 // import { getTypeProvider } from "@/utils/utils"; // deprecated
 
-// const accountStore = useAccounts(); // TODO: раскомментировать когда будет нужно
+const accountStore = useAccounts(); // TODO: раскомментировать когда будет нужно
 const accounts = ref([]);
+const isReady = ref(false);
+const avatarsByAddr = ref({});
 
 // TODO: раскомментировать когда будет нужно
-/*
+
 // Загружаем все аккаунты из БД/стора и подгружаем сенсоры
 async function loadAccounts() {
+  isReady.value = false;
   const stored = await accountStore.getAccounts();
 
-  accounts.value = stored.map(acc => ({
+  accounts.value = stored.map((acc) => ({
     ...acc,
     sensors: [],
-    sensorsLoading: true,
+    sensorsLoading: false,
   }));
 
-  for (let i = 0; i < accounts.value.length; i++) {
-    const acc = accounts.value[i];
-    acc.sensors = await accountStore.getUserSensors(acc.address);
-    acc.sensorsLoading = false;
+  // Prefetch identicons for nicer UI
+  try {
+    const entries = await Promise.all(
+      accounts.value
+        .map((a) => a?.address)
+        .filter(Boolean)
+        .map(async (addr) => [addr, await generateAvatar(addr, 28)])
+    );
+    avatarsByAddr.value = Object.fromEntries(entries.filter(([, v]) => !!v));
+  } catch {
+    // ignore
   }
+
+  isReady.value = true;
 }
 
 // Удалить аккаунт по ключу, перезагрузить список
@@ -68,7 +134,19 @@ async function deleteAccount(acc) {
   await accountStore.removeAccounts(acc.address);
   await loadAccounts();
 }
-*/
+
+async function logoutAll() {
+  const stored = await accountStore.getAccounts();
+  const addresses = (stored || []).map((a) => a.address).filter(Boolean);
+  await accountStore.removeAccounts(addresses);
+  await loadAccounts();
+}
+
+function collapseAddress(addr) {
+  const s = String(addr || "");
+  if (s.length <= 16) return s;
+  return `${s.slice(0, 6)}...${s.slice(-6)}`;
+}
 
 // Сформировать ссылку на сенсор
 function getSensorLink(sensor) {
@@ -85,26 +163,193 @@ function getSensorLink(sensor) {
   };
 }
 
-function reloadOnClick() {
-  setTimeout(() => {
-    window.location.reload();
-  }, 50);
+// function reloadOnClick() {
+//   setTimeout(() => {
+//     window.location.reload();
+//   }, 50);
+// }
+
+async function onSensorsToggle(acc, event) {
+  const open = event?.target?.open === true;
+  if (!open) return;
+  if (!acc?.address) return;
+  if (acc.sensorsLoading) return;
+  if (Array.isArray(acc.sensors) && acc.sensors.length > 0) return;
+
+  try {
+    acc.sensorsLoading = true;
+    acc.sensors = await accountStore.getUserSensors(acc.address);
+  } finally {
+    acc.sensorsLoading = false;
+  }
 }
 
-// onMounted(loadAccounts); // TODO: раскомментировать когда будет нужно
+onMounted(loadAccounts); // TODO: раскомментировать когда будет нужно
+
+// Keep header state in sync with log in/out happening elsewhere (e.g. Login page)
+watch(
+  () => accountStore.accounts?.value?.map((a) => a.address).join(",") || "",
+  () => {
+    loadAccounts();
+  }
+);
 </script>
 
 <style scoped>
-.account-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 4px 0;
-  flex-direction: column;
-  margin-bottom: 10px;
+.accounts-popover {
+  min-width: 320px;
+  max-width: min(420px, 95vw);
 }
-ul {
-  margin: 2px 0 0 0;
-  padding: 0 0 0 12px;
+
+.accounts-title {
+  font-weight: 900;
+  margin-bottom: calc(var(--gap) * 0.75);
+}
+
+.account-card {
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  padding: var(--pad-sm);
+  background: var(--color-light);
+  display: grid;
+  gap: calc(var(--gap) * 0.8);
+}
+
+.account-card:not(:last-child) {
+  margin-bottom: calc(var(--gap) * 1.1);
+}
+
+.account-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--gap) * 1.1);
+}
+
+.account-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--gap) * 0.15);
+  flex: 0 0 auto;
+}
+
+.account-address {
+  font-size: calc(var(--font-size) * 1.05);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--gap) * 0.5);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-copy {
+  margin: 0;
+  opacity: 0.8;
+}
+
+.account-copy:hover {
+  opacity: 1;
+}
+
+.account-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.75;
+  flex: 0 0 auto;
+}
+
+.account-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.account-address-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-delete {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: calc(var(--gap) * 0.5) calc(var(--gap) * 0.3);
+  line-height: 1;
+  opacity: 0.75;
+}
+
+.account-delete:hover {
+  opacity: 1;
+  color: var(--color-red);
+}
+
+.muted {
+  opacity: 0.7;
+}
+
+.account-sensors {
+  border-top: 1px solid var(--surface-border-soft);
+  padding-top: calc(var(--gap) * 0.7);
+}
+
+.account-sensors summary::-webkit-details-marker,
+.account-sensors summary::marker {
+  content: "";
+  display: none;
+}
+
+.account-sensors-summary {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--gap) * 0.6);
+  font-weight: 700;
+}
+
+.account-sensors-body {
+  margin-top: calc(var(--gap) * 0.3);
+}
+
+.sensor-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sensor-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: calc(var(--gap) * 0.5) calc(var(--gap) * 0.3);
+  text-decoration: none;
+  color: var(--color-blue);
+  font-weight: 700;
+  font-size: var(--font-size);
+  hyphens: auto;
+  transition: color 0.33s ease-in-out;
+}
+
+.sensor-chip:hover {
+  color: var(--color-navy);
+}
+
+.accounts-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--gap) * 0.6);
+  margin-top: calc(var(--gap) * 0.8);
+}
+
+.accounts-actions .button {
+  width: 100%;
+  text-align: center;
 }
 </style>

@@ -18,7 +18,7 @@ import {
 } from "../utils/map/sensors/requests";
 import { getAddress } from "../utils/utils";
 import { hasValidCoordinates } from "../utils/utils";
-import { dayBoundsUnix, getPeriodBounds } from "@/utils/date";
+import { dayISO, dayBoundsUnix, getPeriodBounds } from "@/utils/date";
 
 const COORDINATE_TOLERANCE = 0.001; // Минимальное значение координат - маркеры с координатами меньше этого значения считаются невалидными
 const DEFAULT_SENSOR_MODEL = 2; // ID модели сенсора по умолчанию, если модель не указана
@@ -49,6 +49,7 @@ export function useSensors(localeComputed) {
 
   // Локальное состояние компонента
   const sensorPoint = ref(null);
+  const recentlyClosed = ref({ id: null, until: 0 });
 
   const resetLogsProgress = () => {
     logsProgress.value = createDefaultLogsProgress();
@@ -337,6 +338,21 @@ export function useSensors(localeComputed) {
       return;
     }
 
+    // If user just closed this popup, ignore late async updates to avoid reopening.
+    if (
+      recentlyClosed.value?.id &&
+      recentlyClosed.value.id === point.sensor_id &&
+      Date.now() < (recentlyClosed.value.until || 0)
+    ) {
+      return;
+    }
+
+    // If URL no longer points to this sensor (e.g. popup was closed),
+    // don't reopen it from stale async updates.
+    if (route.query.sensor !== point.sensor_id) {
+      return;
+    }
+
     try {
       isUpdatingPopup.value = true;
 
@@ -604,7 +620,11 @@ export function useSensors(localeComputed) {
     }
 
     // Затем очищаем состояние попапа сенсора
+    const closingId = route.query.sensor || null;
     sensorPoint.value = null;
+    if (closingId) {
+      recentlyClosed.value = { id: closingId, until: Date.now() + 1500 };
+    }
 
     // Очищаем активный маркер (также сбрасывает активную область карты)
     clearActiveMarker();
@@ -612,6 +632,17 @@ export function useSensors(localeComputed) {
     // Убираем sensor из URL при закрытии попапа
     const currentQuery = { ...route.query };
     delete currentQuery.sensor;
+
+    // If we navigated to a historical date via a Story, reset date back to today on close
+    try {
+      const shouldReset = sessionStorage.getItem("story_nav_set_date") === "1";
+      if (shouldReset) {
+        currentQuery.date = dayISO();
+        sessionStorage.removeItem("story_nav_set_date");
+        mapState.setCurrentDate(currentQuery.date);
+      }
+    } catch {}
+
     router.replace({ query: currentQuery });
 
     sensorsUtils.refreshClusters();

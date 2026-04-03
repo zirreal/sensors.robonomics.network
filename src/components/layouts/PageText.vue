@@ -25,10 +25,14 @@
           <router-link to="/air-measurements">{{ $t("links.measurement") }}</router-link>
         </li>
         <li>
-          <router-link to="/construction-monitoring">{{ $t("Construction monitoring") }}</router-link>
+          <router-link to="/construction-monitoring">{{
+            $t("Construction monitoring")
+          }}</router-link>
         </li>
         <li>
-          <router-link to="/noise-data-real-estate">{{ $t("Noise data for real estate") }}</router-link>
+          <router-link to="/noise-data-real-estate">{{
+            $t("Noise data for real estate")
+          }}</router-link>
         </li>
         <li>
           <router-link to="/privacy-policy">{{ $t("links.privacy") }}</router-link>
@@ -102,6 +106,13 @@ import ReleaseInfo from "../../components/ReleaseInfo.vue";
 
 .pagetext-highlight {
   font-weight: 900;
+  /* font-size: 1.08em; */
+  line-height: 1.55;
+}
+
+.pagetext-highlight p {
+  font-size: calc(var(--font-size) * 1.15);
+  line-height: inherit;
 }
 
 .pagetext-fullwidth-image {
@@ -136,8 +147,14 @@ footer {
 
 nav ul {
   display: flex;
-  gap: calc(var(--gap) * 3);
+  gap: calc(var(--gap) * 1.2) calc(var(--gap) * 2);
   font-weight: bold;
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+nav ul li {
+  margin-bottom: 0;
 }
 
 .footer-section.separate:not(:first-child) {

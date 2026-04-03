@@ -6,6 +6,10 @@
   />
   <Header />
 
+  <div class="below-header-stories" v-if="false">
+    <Stories />
+  </div>
+
   <Sensor
     v-if="sensorsUI.isSensor"
     :point="sensorsUI.sensorPoint"
@@ -35,6 +39,7 @@ import { useI18n } from "vue-i18n";
 import { useMap } from "@/composables/useMap";
 
 import Header from "../components/header/Header.vue";
+import Stories from "../components/header/Stories.vue";
 import Map from "../components/Map.vue";
 import Sensor from "../components/sensor/Index.vue";
 import MessagePopup from "../components/message/Index.vue";
@@ -256,15 +261,16 @@ watch(
         }
 
         // После загрузки сенсоров обновляем попап, если есть сенсор в URL
-        if (newQuery.sensor) {
+        const liveSensorId = route.query.sensor;
+        if (liveSensorId) {
           // Ищем полные данные сенсора в sensorsUI.sensors
-          const fullSensorData = sensorsUI.sensors.find((s) => s.sensor_id === newQuery.sensor);
+          const fullSensorData = sensorsUI.sensors.find((s) => s.sensor_id === liveSensorId);
           // Сохраняем адрес из текущего sensorPoint, если он есть
           const existingAddress = sensorsUI.sensorPoint?.address;
           const point = sensorsUI.formatPointForSensor(
             fullSensorData || {
-              sensor_id: newQuery.sensor,
-              geo: { lat: parseFloat(newQuery.lat), lng: parseFloat(newQuery.lng) },
+              sensor_id: liveSensorId,
+              geo: { lat: parseFloat(route.query.lat), lng: parseFloat(route.query.lng) },
               address: existingAddress || null,
             }
           );
@@ -318,3 +324,26 @@ watch(
 //   }
 // );
 </script>
+
+<style scoped>
+.below-header-stories {
+  position: sticky;
+  width: 100vw;
+  top: calc(40px + var(--gap)); /* roughly below header controls */
+  z-index: 98;
+  left: 0;
+  margin-top: 0;
+  pointer-events: none;
+}
+
+.below-header-stories :deep(.stories-bar) {
+  pointer-events: all;
+  width: 100%;
+}
+
+@media screen and (max-width: 500px) {
+  .below-header-stories {
+    top: calc(36px + var(--gap));
+  }
+}
+</style>

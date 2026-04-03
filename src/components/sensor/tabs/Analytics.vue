@@ -1,6 +1,10 @@
 <template>
   <div class="analytics-tab">
-    <Timeline :log="log" :point="point" />
+    <Timeline :log="log" :point="point">
+      <template #actions>
+        <NativeShare />
+      </template>
+    </Timeline>
 
     <section class="flexline-mobile-column">
       <div class="flexline mb">
@@ -94,6 +98,7 @@ import measurements from "../../../measurements";
 import AQI from "../widgets/AQI.vue";
 import Chart from "../widgets/Chart.vue";
 import Timeline from "../widgets/Timeline.vue";
+import NativeShare from "../widgets/NativeShare.vue";
 import Accordion from "../../controls/Accordion.vue";
 
 const props = defineProps({

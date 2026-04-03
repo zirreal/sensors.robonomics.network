@@ -348,42 +348,155 @@ export function checkRHInstantJumps(logArr) {
 
 // Шум
 /**
+ * Собирает метрики шума за длинное окно (по умолчанию 24 часа),
+ * чтобы отличать "тихо, но исправно" от реально залипшего канала.
+ * @param {Array} logArr
+ * @param {number} windowSeconds
+ * @returns {Object|null}
+ */
+function getNoiseStats(logArr, windowSeconds = 24 * 3600) {
+  if (!logArr || logArr.length < 10) return null;
+
+  const now = Math.max(...logArr.map(d => d.timestamp));
+  const windowLogs = logArr
+    .filter(d => now - d.timestamp <= windowSeconds)
+    .sort((a, b) => a.timestamp - b.timestamp);
+
+  if (windowLogs.length < 10) return null;
+
+  const avgValues = [];
+  const maxValues = [];
+  const pairKeyCount = new Map();
+  let nearSameCount = 0;
+  let spikeCount = 0;
+  let firstValidTs = null;
+  let lastValidTs = null;
+
+  for (const log of windowLogs) {
+    const avg = Number(log?.data?.noiseavg);
+    const max = Number(log?.data?.noisemax);
+    if (!Number.isFinite(avg) || !Number.isFinite(max) || avg <= 0 || max <= 0) continue;
+
+    if (firstValidTs === null) firstValidTs = log.timestamp;
+    lastValidTs = log.timestamp;
+
+    avgValues.push(avg);
+    maxValues.push(max);
+
+    const pairKey = `${Math.round(avg)}:${Math.round(max)}`;
+    pairKeyCount.set(pairKey, (pairKeyCount.get(pairKey) || 0) + 1);
+
+    if (Math.abs(max - avg) <= 0.3) nearSameCount++;
+    if (max - avg >= 2) spikeCount++;
+  }
+
+  const validCount = avgValues.length;
+  if (validCount < 10 || firstValidTs === null || lastValidTs === null) return null;
+
+  const avgMean = avgValues.reduce((a, b) => a + b, 0) / validCount;
+  const avgVariance = avgValues.reduce((a, b) => a + Math.pow(b - avgMean, 2), 0) / validCount;
+  const avgStd = Math.sqrt(avgVariance);
+
+  const maxMean = maxValues.reduce((a, b) => a + b, 0) / validCount;
+  const maxVariance = maxValues.reduce((a, b) => a + Math.pow(b - maxMean, 2), 0) / validCount;
+  const maxStd = Math.sqrt(maxVariance);
+
+  const dominantPair = Math.max(...pairKeyCount.values());
+
+  return {
+    validCount,
+    durationSec: lastValidTs - firstValidTs,
+    avgMean,
+    avgStd,
+    maxStd,
+    avgRange: Math.max(...avgValues) - Math.min(...avgValues),
+    maxRange: Math.max(...maxValues) - Math.min(...maxValues),
+    nearSameRatio: nearSameCount / validCount,
+    spikeRatio: spikeCount / validCount,
+    dominantPairRatio: dominantPair / validCount,
+  };
+}
+
+const NOISE_WEEK_SECONDS = 7 * 24 * 3600;
+
+/**
+ * Прямое правило: если шум "залип" около высокого уровня (80+ dB)
+ * на протяжении 12+ часов ВНУТРИ ОДНОГО ДНЯ, считаем это проблемой датчика.
+ * @param {Array} logArr
+ * @returns {boolean}
+ */
+export function checkNoiseLongFlatline80(logArr) {
+  const TWELVE_HOURS = 12 * 3600;
+  if (!logArr || logArr.length < 12) return false;
+
+  // Группируем точки по дню в UTC (YYYY-MM-DD)
+  const byDay = new Map();
+  for (const log of logArr) {
+    const ts = Number(log?.timestamp);
+    const v = Number(log?.data?.noiseavg ?? log?.data?.noisemax);
+    if (!Number.isFinite(ts) || ts <= 0) continue;
+    if (!Number.isFinite(v) || v <= 0) continue;
+
+    const dateKey = new Date(ts * 1000).toISOString().slice(0, 10);
+    if (!byDay.has(dateKey)) byDay.set(dateKey, []);
+    byDay.get(dateKey).push({ timestamp: ts, value: v });
+  }
+
+  // Проверяем каждый день независимо
+  for (const dayPoints of byDay.values()) {
+    if (!dayPoints || dayPoints.length < 12) continue;
+    dayPoints.sort((a, b) => a.timestamp - b.timestamp);
+
+    const duration = dayPoints[dayPoints.length - 1].timestamp - dayPoints[0].timestamp;
+    if (duration < TWELVE_HOURS) continue;
+
+    const values = dayPoints.map((p) => p.value);
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+    const std = Math.sqrt(variance);
+    const range = Math.max(...values) - Math.min(...values);
+
+    if (mean >= 80 && std <= 0.7 && range <= 2) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Проверяет, что noise AVG и noise MAX одинаковые в течение 5 часов и больше
  * @param {Array} logArr - массив логов с timestamp и data
  * @returns {boolean}
  */
 export function checkNoiseAvgMaxSame(logArr) {
-  const FIVE_HOURS = 5 * 3600; // секунды
-  if (!logArr || logArr.length < 5) return false; // Нужно минимум 5 записей
+  const stats = getNoiseStats(logArr, NOISE_WEEK_SECONDS);
+  if (!stats) return false;
 
-  const now = Math.max(...logArr.map(d => d.timestamp));
-  const last5h = logArr
-    .filter(d => now - d.timestamp <= FIVE_HOURS)
-    .sort((a, b) => a.timestamp - b.timestamp);
+  // Вариант 1: доминирующая пара значений и почти полное совпадение avg/max.
+  const dominantPairFlatline = (
+    stats.durationSec >= 36 * 3600 &&
+    stats.avgMean >= 70 &&
+    stats.nearSameRatio >= 0.9 &&
+    stats.dominantPairRatio >= 0.45 &&
+    stats.avgStd <= 0.8 &&
+    stats.spikeRatio <= 0.08
+  );
 
-  if (last5h.length < 5) return false;
+  // Вариант 2: "квантованное" высокое плато (например 81-82 dB),
+  // где из-за мелкой дребезги нет одной доминирующей пары,
+  // но сам сигнал очевидно залипший.
+  const quantizedHighFlatline = (
+    stats.durationSec >= 24 * 3600 &&
+    stats.avgMean >= 75 &&
+    stats.nearSameRatio >= 0.9 &&
+    stats.avgStd <= 0.5 &&
+    stats.avgRange <= 1.5 &&
+    stats.maxRange <= 2.5 &&
+    stats.spikeRatio <= 0.1
+  );
 
-  let sameCount = 0;
-  let validCount = 0;
-  const EPSILON = 0.5; // погрешность для сравнения 
-
-  for (const log of last5h) {
-    const avg = log?.data?.noiseavg;
-    const max = log?.data?.noisemax;
-    if (avg !== undefined && avg !== null && max !== undefined && max !== null) {
-      validCount++;
-      // Проверяем, что они почти одинаковые (с учетом погрешности)
-      if (Math.abs(avg - max) < EPSILON) {
-        sameCount++;
-      }
-    }
-  }
-
-  if (validCount < 5) return false;
-
-  // Требуем 90%+ одинаковых значений
-  // Если почти все значения одинаковые - это проблема
-  return sameCount / validCount >= 0.9 && validCount >= 5;
+  return dominantPairFlatline || quantizedHighFlatline;
 }
 
 /**
@@ -394,42 +507,19 @@ export function checkNoiseAvgMaxSame(logArr) {
  * @returns {boolean}
  */
 export function checkNoiseTooLow(logArr) {
-  const THREE_HOURS = 3 * 3600; // секунды
-  if (!logArr || logArr.length < 5) return false; // Нужно минимум 5 записей
+  const stats = getNoiseStats(logArr, NOISE_WEEK_SECONDS);
+  if (!stats) return false;
 
-  const now = Math.max(...logArr.map(d => d.timestamp));
-  const last3h = logArr
-    .filter(d => now - d.timestamp <= THREE_HOURS)
-    .sort((a, b) => a.timestamp - b.timestamp);
-
-  if (last3h.length < 5) return false;
-
-  let lowCount = 0;
-  let validCount = 0;
-  let suspiciouslyLowCount = 0; // Очень низкие значения (max < 30, avg < 15)
-
-  for (const log of last3h) {
-    const avg = log?.data?.noiseavg;
-    const max = log?.data?.noisemax;
-    if (avg !== undefined && avg !== null && max !== undefined && max !== null) {
-      validCount++;
-      if (max < 35 && avg < 20) {
-        lowCount++;
-        // Проверяем, что значения подозрительно низкие
-        if (max < 30 && avg < 15) {
-          suspiciouslyLowCount++;
-        }
-      }
-    }
-  }
-
-  if (validCount < 5) return false;
-  
-  // Требуем 90%+ низких значений И хотя бы 50% подозрительно низких
-  const lowRatio = lowCount / validCount;
-  const suspiciousRatio = suspiciouslyLowCount / validCount;
-  
-  return lowRatio >= 0.9 && suspiciousRatio >= 0.5 && validCount >= 5;
+  // Очень низкий и почти "цифровой" шум долгое время — это скорее поломка канала.
+  // Просто тихая среда (лес, парк) сюда обычно не попадает.
+  return (
+    stats.durationSec >= 24 * 3600 &&
+    stats.avgMean < 12 &&
+    stats.avgStd < 0.25 &&
+    stats.maxStd < 0.25 &&
+    stats.nearSameRatio >= 0.95 &&
+    stats.dominantPairRatio >= 0.5
+  );
 }
 
 /**
@@ -440,31 +530,20 @@ export function checkNoiseTooLow(logArr) {
  * @returns {boolean}
  */
 export function checkNoiseNoChange(logArr) {
-  const FIVE_HOURS = 5 * 3600; // секунды
-  if (!logArr || logArr.length < 5) return false; // Нужно минимум 5 записей
+  const stats = getNoiseStats(logArr, NOISE_WEEK_SECONDS);
+  if (!stats) return false;
 
-  const now = Math.max(...logArr.map(d => d.timestamp));
-  const last3h = logArr
-    .filter(d => now - d.timestamp <= FIVE_HOURS)
-    .sort((a, b) => a.timestamp - b.timestamp);
-
-  if (last3h.length < 5) return false;
-
-  // Используем noiseavg или noisemax (приоритет noiseavg)
-  const noiseValues = last3h
-    .map(d => d?.data?.noiseavg ?? d?.data?.noisemax)
-    .filter(v => v !== undefined && v !== null && v > 0); // Игнорируем нулевые значения
-
-  if (noiseValues.length < 5) return false;
-
-  // Проверяем стандартное отклонение - если оно очень маленькое, значения "залипли"
-  const mean = noiseValues.reduce((a, b) => a + b, 0) / noiseValues.length;
-  const variance = noiseValues.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / noiseValues.length;
-  const std = Math.sqrt(variance);
-  
-  // Если std очень маленькое (< 1 dB), это подозрительно - значения "залипли"
-  // И среднее значение не должно быть нулевым
-  return std < 1 && mean > 0 && noiseValues.length >= 5;
+  // Недельный паттерн "залипания": почти неизменный сигнал в течение долгого времени.
+  // Для тихих, но живых датчиков обычно есть больше разброса или пиков.
+  return (
+    stats.durationSec >= 48 * 3600 &&
+    stats.avgStd < 0.45 &&
+    stats.avgRange <= 2 &&
+    stats.maxRange <= 3 &&
+    stats.dominantPairRatio >= 0.5 &&
+    stats.nearSameRatio >= 0.88 &&
+    stats.spikeRatio <= 0.05
+  );
 }
 
 /**
@@ -493,7 +572,8 @@ export function checkNoiseStability(logArr) {
   return {
     avgMaxSame: checkNoiseAvgMaxSame(logArr),
     tooLow: checkNoiseTooLow(logArr),
-    noChange: checkNoiseNoChange(logArr)
+    noChange: checkNoiseNoChange(logArr),
+    longFlatline80: checkNoiseLongFlatline80(logArr),
   };
 }
 
