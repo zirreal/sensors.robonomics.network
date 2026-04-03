@@ -8,7 +8,7 @@ export default {
   "header.link2": "тут",
   "header.text3": "можно ознакомиться более подробно с технической стороной.",
   "measures.title": "Информация об измерениях воздуха",
-  "layer.wind": "Ветер realtime",
+  "layer.wind": "Ветер",
   "layer.messages": "Сообщения",
   "details.user": "Пользователь #",
   "details.photos": "Фотографии",
@@ -17,7 +17,8 @@ export default {
   "history.currentDay": "Текущие cутки",
   "history.currentMonth": "Последний месяц",
   "history.chooseDates": "Выбрать Даты",
-  "history.title": "Импорт данных",
+  "history.title": "Экспорт данных",
+  "history.reports": "Отчёты",
   "history.button": "Скачать csv файл",
   "history.download": "скачать",
   notice_with_fz:

@@ -8,7 +8,7 @@ export default {
   "header.link2": "here",
   "header.text3": "for further technical details.",
   "measures.title": "Air quality measurements information",
-  "layer.wind": "Realtime wind",
+  "layer.wind": "Wind",
   "layer.messages": "Messages",
   "details.user": "User #",
   "details.photos": "Photos",
@@ -17,7 +17,8 @@ export default {
   "history.currentDay": "Current day",
   "history.currentMonth": "Last month",
   "history.chooseDates": "Select dates",
-  "history.title": "Import data",
+  "history.title": "Export data",
+  "history.reports": "Reports",
   "history.button": "Download csv file",
   "history.download": "history.download",
   notice_with_fz:

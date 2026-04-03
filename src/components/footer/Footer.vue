@@ -3,11 +3,12 @@
     <div class="flexline">
       <ToggleButton
         v-if="settings.WIND_PROVIDER"
-        v-model="wind"
+        :model-value="wind"
+        @update:modelValue="onWindToggle"
         icon-class="fa-solid fa-wind"
         class="wind-toggle"
-        :disabled="!realtime"
-        :title="$t('layer.wind')"
+        :disabled="!windAllowed"
+        :label="$t('layer.wind')"
       />
 
       <ToggleButton
@@ -15,7 +16,7 @@
         v-model="messages"
         :icon-class="messages ? 'fa-solid fa-comment' : 'fa-regular fa-comment'"
         class="messages-toggle"
-        :title="$t('layer.messages')"
+        :label="$t('layer.messages')"
       />
 
       <div id="mapsettings" class="popover-bottom-left popover" popover>
@@ -24,8 +25,9 @@
           <HistoryImport />
         </section>
       </div>
-      <button class="popovercontrol button-round-outline" popovertarget="mapsettings">
+      <button class="popovercontrol button-round-outline button-round-outline-labeled" popovertarget="mapsettings">
         <font-awesome-icon icon="fa-solid fa-download" />
+        <span>{{ $t("history.reports") }}</span>
       </button>
     </div>
 
@@ -144,7 +146,19 @@ const { locale: i18nLocale, t } = useI18n();
 const start = ref(route.query.date || mapState.currentDate.value || dayISO());
 const maxDate = ref(dayISO());
 const realtime = computed(() => mapState.currentProvider.value === "realtime");
-const wind = ref(false);
+const readWindPref = () => {
+  try {
+    const stored = localStorage.getItem("wind");
+    // По умолчанию считаем, что пользователь ветром не “отключал”
+    return stored === null ? true : stored === "true";
+  } catch (e) {
+    // Если localStorage недоступен — не ограничиваем доступ
+    return true;
+  }
+};
+const wind = ref(readWindPref());
+const isToday = computed(() => start.value === dayISO());
+const windAllowed = computed(() => realtime.value || isToday.value);
 const messages = ref(settings.SERVICES?.messages || false);
 
 // Computed для проверки, есть ли данные сообщений для отображения
@@ -277,31 +291,36 @@ watch(
   },
   { immediate: true }
 );
-// Watcher для ветра
-watch(wind, async (enabled) => {
-  // Проверяем, что карта инициализирована
-  if (!instanceMap()) {
-    console.warn("Wind layer: Map not initialized yet");
-    return;
-  }
+// Логика слоя ветра: включаем только когда разрешено (realtime или "сегодня")
+watch(
+  [wind, windAllowed],
+  async ([enabled, allowed]) => {
+    const map = instanceMap();
+    if (!map) {
+      // На ранних стадиях компонента слой может быть недоступен —
+      // повторно инициализируем на `onMounted` (см. ниже).
+      console.warn("Wind layer: Map not initialized yet");
+      return;
+    }
 
-  if (enabled && settings.WIND_PROVIDER) {
-    try {
-      await initWindLayer();
-      switchWindLayer(instanceMap(), true);
-    } catch (error) {
-      console.error("Failed to initialize wind layer:", error);
-      wind.value = false; // Отключаем checkbox при ошибке
+    if (enabled && allowed && settings.WIND_PROVIDER) {
+      try {
+        await initWindLayer();
+        switchWindLayer(map, true);
+      } catch (error) {
+        console.error("Failed to initialize wind layer:", error);
+        // Не ломаем поведение UI: просто выключаем слой
+        destroyWindLayer();
+      }
+    } else {
+      // Когда ветер запрещен (не realtime и не сегодня) — скрываем слой.
+      // Когда `enabled=false` — дополнительно чистим ресурсы.
+      switchWindLayer(map, false);
+      if (!enabled) destroyWindLayer();
     }
-  } else {
-    // При отключении ветра сначала скрываем слой, затем полностью очищаем ресурсы
-    switchWindLayer(instanceMap(), false);
-    if (!enabled) {
-      console.log("Wind disabled, cleaning up resources");
-      destroyWindLayer();
-    }
-  }
-});
+  },
+  { immediate: true }
+);
 
 // watch(messages, (v) => switchMessagesLayer(instanceMap(), v));
 
@@ -313,35 +332,19 @@ watch(
     if (newProvider === "realtime" && type.value === "aqi") {
       type.value = "pm25";
     }
-
-    // Очищаем ветер при переключении с realtime на другой провайдер
-    if (oldProvider === "realtime" && newProvider !== "realtime") {
-      console.log("Cleaning up wind layer when switching away from realtime");
-      destroyWindLayer();
-      wind.value = false; // Отключаем checkbox
-    }
-
-    // При переключении на realtime автоматически включаем ветер, если он был включен ранее
-    if (newProvider === "realtime" && wind.value && settings.WIND_PROVIDER) {
-      // Небольшая задержка для инициализации карты
-      setTimeout(() => {
-        if (instanceMap()) {
-          initWindLayer()
-            .then(() => {
-              switchWindLayer(instanceMap(), true);
-            })
-            .catch((error) => {
-              console.error("Failed to initialize wind layer on realtime switch:", error);
-            });
-        }
-      }, 100);
-    }
   }
 );
 
 // загрузка списка измерений из API
 onMounted(async () => {
   try {
+    // Инициализируем ключ в localStorage, чтобы поведение было стабильным
+    // даже при отсутствии записи у пользователя.
+    if (isLocalStorageAvailable()) {
+      const stored = localStorage.getItem("wind");
+      if (stored === null) localStorage.setItem("wind", "true");
+    }
+
     const arr = await Remote.getMeasurements(startTimestamp.value, endTimestamp.value);
     const toMove = ["pm10", "pm25"];
     const head = arr.filter((v) => toMove.includes(v));
@@ -356,8 +359,9 @@ onMounted(async () => {
       type.value = preferred;
     }
 
-    // Инициализируем ветер если он был включен и мы в realtime режиме
-    if (wind.value && mapState.currentProvider.value === "realtime" && settings.WIND_PROVIDER) {
+    // На старте компонента поднимаем ветер, если пользователь его не отключал
+    // и текущий режим разрешает показывать (realtime или "сегодня").
+    if (wind.value && windAllowed.value && settings.WIND_PROVIDER) {
       // Небольшая задержка для инициализации карты
       setTimeout(async () => {
         if (instanceMap()) {
@@ -366,7 +370,8 @@ onMounted(async () => {
             switchWindLayer(instanceMap(), true);
           } catch (error) {
             console.error("Failed to initialize wind layer on mount:", error);
-            wind.value = false;
+            // UI state оставляем: просто не показываем слой
+            destroyWindLayer();
           }
         }
       }, 500); // Увеличиваем задержку для гарантии инициализации карты
@@ -403,6 +408,16 @@ onMounted(async () => {
     console.error(e);
   }
 });
+
+// Toggle ветра: сохраняем в localStorage только факт "отключения" по действию пользователя.
+const onWindToggle = (enabled) => {
+  wind.value = enabled;
+  try {
+    localStorage.setItem("wind", String(enabled));
+  } catch (e) {
+    // Если localStorage недоступен — работаем без сохранения
+  }
+};
 
 // type теперь computed, поэтому синхронизация не нужна
 

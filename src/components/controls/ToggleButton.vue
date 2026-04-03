@@ -4,12 +4,14 @@
     :class="[
       {
         active: modelValue,
+        'toggle-button-label': label && label.length > 0,
       },
     ]"
     v-bind="$attrs"
     @click="toggleValue"
   >
-    <font-awesome-icon :icon="iconClass" />
+    <font-awesome-icon :icon="iconClass" class="toggle-icon" />
+    <span v-if="label" class="toggle-label">{{ label }}</span>
     <font-awesome-icon v-if="modelValue" icon="fa-solid fa-check" class="check-icon" />
     <slot />
   </button>
@@ -31,6 +33,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  label: {
+    type: String,
+    default: "",
+  },
 });
 
 const emit = defineEmits(["update:modelValue"]);
@@ -44,11 +50,12 @@ const toggleValue = () => {
 .toggle-button {
   align-items: center;
   background-color: var(--app-inputbg);
-  border-radius: 50%;
+  border-radius: 5rem;
   border: var(--app-borderwidth) solid var(--app-bordercolor);
   cursor: pointer;
   display: flex;
   height: var(--app-inputheight);
+  flex-direction: column;
   justify-content: center;
   user-select: none;
   width: var(--app-inputheight);
@@ -56,6 +63,28 @@ const toggleValue = () => {
   font-size: var(--font-size);
   transition: all 0.2s ease;
   position: relative;
+}
+
+.toggle-button-label {
+  flex-direction: row;
+  width: auto;
+  padding: 0 0.5rem;
+  gap: 0.5rem;
+}
+
+.toggle-icon {
+  /* icon size tuned for small circular button */
+  font-size: 1em;
+  line-height: 1;
+  margin-top: 0;
+}
+
+.toggle-label {
+  font-size: calc(var(--font-size) * 0.8);
+  font-weight: bold;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .toggle-button:hover:not([disabled]) {
