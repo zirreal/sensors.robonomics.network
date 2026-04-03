@@ -233,6 +233,24 @@ input:disabled {
   opacity: 0.5;
 }
 
+.button-outlined {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--app-borderwidth) solid var(--app-bordercolor);
+  border-radius: 5rem;
+  color: var(--app-inputtextcolor);
+  font-size: var(--font-size);
+  font-weight: bold;
+  background-color: transparent;
+}
+
+.button-outlined:hover {
+  background-color: transparent;
+  color: var(--app-inputtextcolor);
+  border-color: var(--app-inputtextcolor);
+}
+
 .button-round-outline,
 .button-round-outline:hover {
   align-items: center;

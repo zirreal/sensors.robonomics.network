@@ -37,6 +37,12 @@
       </div>
 
       <div class="flexline">
+
+        <a href="https://x.com/sensorssocial" target="_blank" rel="noopener" class="button button-outlined">
+          <font-awesome-icon icon="fa-brands fa-x-twitter" aria-hidden="true" />
+          <span>Latest updates</span>
+        </a>
+
         <div id="about" class="popover popover-top-right" popover>
           <h3>{{ $t("header.title") }}</h3>
           <p>
