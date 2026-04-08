@@ -240,7 +240,7 @@ export async function fetchStoryList({ limit = 50, page = 1, start, end } = {}) 
 
 // --- Standalone Robonomics datalog ---
 
-const WS_ENDPOINT = "wss://kusama.rpc.robonomics.network/";
+const WS_ENDPOINT = "wss://polkadot.rpc.robonomics.network/";
 
 let apiPromise = null;
 
