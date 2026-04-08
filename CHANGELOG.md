@@ -1,3 +1,13 @@
+v4.0.4
+
+**Stories (new):**
+- Feat: Add “Stories” flow for sensor owners (create story with icon + comment + explicit `date`)
+- Feat: Submit stories as Robonomics datalog transactions
+- Feat: Fetch and render recent stories in a header carousel via RoSeMAN API (`/api/v2/story/list`)
+- Feat: Add “Stories for this day” banner in sensor chart (shows up to 3 newest stories for the selected day)
+- UX: Story links open the correct sensor/day (supports `timestamp` fallback) and can suggest a relevant chart measurement based on story icon
+- UX: Add ability to hide specific stories globally (feed + popup + sensor story lists) via a `(sensorId, timestamp)` denylist
+
 v4.0.3
 
 Added sensor type display (DYI, Urban, Insight), improved date and time selection UX in sensor popup, added ability to view week and month data in sensor analytics.

@@ -61,7 +61,7 @@
       >
         <font-awesome-icon icon="fa-regular fa-bookmark" />
       </button>
-      <!-- <button
+      <button
         v-if="isAccountsEnabled"
         class="panel-button"
         :class="{ active: activeTab === 'edit' }"
@@ -69,38 +69,35 @@
         :title="t('sensorpopup.edit') || 'Edit'"
       >
         <font-awesome-icon icon="fa-regular fa-pen-to-square" />
-      </button> -->
+      </button>
     </div>
 
     <div class="scrollable-y">
       <div v-show="activeTab === 'chart'" class="tab-content chart-tab">
-        <!-- <div v-if="activeStory" class="story-day">
-          <div
-            class="story-day-icon"
-            :style="{ '--story-color': iconColor(activeStory.iconId) }"
-          >
-            <font-awesome-icon
-              v-if="activeStory.icon"
-              :icon="activeStory.icon"
-              class="story-day-fa"
-              :style="{ color: iconColor(activeStory.iconId) }"
-            />
-          </div>
+        <div v-if="activeStories.length" class="story-day">
           <div class="story-day-body">
-            <div class="story-day-title">Story for this day</div>
-            <div class="story-day-text">{{ activeStory.message || activeStory.comment }}</div>
-          </div>
-          <button
-            class="story-day-close"
-            type="button"
-            aria-label="Hide story"
-            @click="dismissStory"
-          >
-            <font-awesome-icon icon="fa-solid fa-xmark" />
-          </button>
-        </div> -->
+            <div class="story-day-title">Stories for this day</div>
 
-        <!-- <div v-if="isAccountsEnabled" class="stories-cta">
+            <div class="story-day-list" :class="{ grid2: activeStories.length > 1 }">
+              <div v-for="s in activeStories" :key="s.id" class="story-day-item">
+                <div class="story-day-icon" :style="{ '--story-color': iconColor(s.iconId) }">
+                  <font-awesome-icon
+                    v-if="s.icon"
+                    :icon="s.icon"
+                    class="story-day-fa"
+                    :style="{ color: iconColor(s.iconId) }"
+                  />
+                </div>
+                <div class="story-day-item-body">
+                  <span class="story-day-dot" :style="{ background: iconColor(s.iconId) }"></span>
+                  <span class="story-day-text">{{ s.message || s.comment }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="isAccountsEnabled" class="stories-cta">
           <button
             class="button stories-cta-button"
             type="button"
@@ -110,9 +107,13 @@
             Stories
           </button>
           <div class="stories-cta-hint">
-            Add a short story about an unusual day — or browse recent stories for this sensor.
+            {{
+              $t(
+                "Add a short story about an unusual day — or browse recent stories for this sensor."
+              )
+            }}
           </div>
-        </div> -->
+        </div>
         <Analytics :point="point" :log="log" />
       </div>
 
@@ -128,7 +129,7 @@
       <div v-show="activeTab === 'bookmarks'" class="tab-content">
         <Bookmark v-if="sensor_id" :id="sensor_id" :address="point?.address" :geo="geo" />
       </div>
-      <!-- 
+
       <div v-if="isAccountsEnabled && activeTab === 'edit'" class="tab-content">
         <EditStory
           v-if="sensor_id"
@@ -137,7 +138,7 @@
           :geo="geo"
           @open-chart="activeTab = 'chart'"
         />
-      </div> -->
+      </div>
     </div>
   </div>
 </template>
@@ -148,8 +149,10 @@ import { useI18n } from "vue-i18n";
 import { useMap } from "@/composables/useMap";
 import { useSensors } from "@/composables/useSensors";
 import { useBookmarks } from "@/composables/useBookmarks";
+import { getStoriesForSensor, isStoryHidden } from "@/composables/useStories";
 import { getAvatar } from "@/utils/avatarGenerator";
 import { settings } from "@config";
+import { dayISO } from "@/utils/date";
 
 import Bookmark from "./tabs/Bookmark.vue";
 import Analytics from "./tabs/Analytics.vue";
@@ -182,14 +185,6 @@ const activeTab = ref("chart");
 // Проверяем, включен ли сервис accounts
 const isAccountsEnabled = computed(() => settings?.SERVICES?.accounts === true);
 
-const STORIES_KEY = "altruist_sensor_stories_v1";
-const SHOW_TEST_STORIES_KEY = "show_test_stories";
-const dismissedStoryKey = computed(() => {
-  const sid = sensor_id.value || "";
-  const d = mapState.currentDate?.value || "";
-  return `dismissed_story:${sid}:${d}`;
-});
-
 const ICON_COLORS = {
   heat: "#ff6b6b",
   cold: "#7ad9e8",
@@ -208,39 +203,40 @@ function iconColor(id) {
   return ICON_COLORS[id] || "currentColor";
 }
 
-function readStoriesForSensor(sensorId) {
-  try {
-    const raw = localStorage.getItem(STORIES_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    const list = parsed?.[sensorId];
-    return Array.isArray(list) ? list : [];
-  } catch {
-    return [];
-  }
-}
-
-const activeStory = computed(() => {
+const activeStories = computed(() => {
   const sid = sensor_id.value;
   const date = mapState.currentDate?.value;
-  if (!sid || !date) return null;
-  try {
-    if (sessionStorage.getItem(dismissedStoryKey.value) === "1") return null;
-  } catch {}
-  const list = readStoriesForSensor(sid);
-  let showTest = false;
-  try {
-    showTest = localStorage.getItem(SHOW_TEST_STORIES_KEY) === "1";
-  } catch {}
-  const visible = showTest ? list : list.filter((s) => s?.test !== true);
-  return visible.find((s) => s?.date === date) || null;
-});
+  if (!sid || !date) return [];
+  const list = getStoriesForSensor(sid);
+  const matchesDay = (s) => {
+    if (!s) return false;
+    // Prefer explicit `date` (event day). If missing, fall back to `timestamp` day.
+    // Note: `timestamp` is publish time, so this fallback is only meaningful for legacy records that didn't include `date` at all.
+    if (s?.date) return String(s.date) === String(date);
+    const ts = s?.timestamp != null ? Number(s.timestamp) : null;
+    if (ts == null || Number.isNaN(ts)) return false;
+    try {
+      const tsDay = dayISO(ts);
+      return tsDay === date;
+    } catch {
+      return false;
+    }
+  };
 
-function dismissStory() {
-  try {
-    sessionStorage.setItem(dismissedStoryKey.value, "1");
-  } catch {}
-}
+  const matches = (Array.isArray(list) ? list : []).filter(
+    (s) => matchesDay(s) && !isStoryHidden(s)
+  );
+  if (!matches.length) return [];
+
+  // If multiple stories exist for the same day, show the newest one.
+  matches.sort((a, b) => {
+    const at = a?.timestamp != null ? Number(a.timestamp) : new Date(a?.createdAt || 0).getTime();
+    const bt = b?.timestamp != null ? Number(b.timestamp) : new Date(b?.createdAt || 0).getTime();
+    return bt - at;
+  });
+
+  return matches.slice(0, 3);
+});
 
 // Порядок табов для навигации клавиатурой (edit только если accounts включен)
 const tabsOrder = computed(() => {
@@ -623,8 +619,6 @@ watch(
 
 .panel-button.active {
   color: var(--color-link);
-  /* border-color: var(--color-link) var(--color-link) var(--color-light) var(--color-link);
-  border-radius: 4px 4px 0 0; */
   border-bottom: 2px solid var(--color-link);
 }
 
@@ -647,14 +641,11 @@ watch(
 .story-day {
   display: flex;
   align-items: flex-start;
-  gap: calc(var(--gap) * 0.75);
-  padding: 10px 12px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 14px;
+  gap: calc(var(--gap) * 0.7);
   background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  margin-bottom: calc(var(--gap) * 0.85);
+  margin-bottom: calc(var(--gap) * 1.3);
 }
 
 .story-day-icon {
@@ -690,17 +681,42 @@ watch(
   word-break: break-word;
 }
 
-.story-day-close {
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  padding: 6px;
-  line-height: 1;
-  opacity: 0.7;
+.story-day-list {
+  display: grid;
+  gap: 6px;
 }
 
-.story-day-close:hover {
-  opacity: 1;
+.story-day-list.grid2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: calc(var(--gap) * 0.8);
+}
+
+.story-day-item {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  align-items: center;
+  gap: calc(var(--gap) * 0.5);
+}
+
+.story-day-item-body {
+  display: grid;
+  grid-template-columns: 10px 1fr;
+  align-items: center;
+  font-weight: 500;
+  gap: calc(var(--gap) * 0.5);
+}
+
+@media screen and (max-width: 520px) {
+  .story-day-list.grid2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.story-day-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 100%;
+  opacity: 0.9;
 }
 
 .stories-cta {

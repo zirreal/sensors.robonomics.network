@@ -1,4 +1,6 @@
 import { ref, computed } from "vue";
+import { IDBworkflow, IDBgetByKey, notifyDBChange } from "../utils/idb";
+import { checkAllDataHealth } from "../utils/calculations/sensor_stability_check";
 import { useRouter, useRoute } from "vue-router";
 
 import { useMap } from "@/composables/useMap";
@@ -15,6 +17,7 @@ import {
   saveAddressToCache,
   getCachedAddress,
   getSensorOwner,
+  getSensorData,
 } from "../utils/map/sensors/requests";
 import { getAddress } from "../utils/utils";
 import { hasValidCoordinates } from "../utils/utils";
@@ -947,5 +950,162 @@ export function useSensors(localeComputed) {
     clearSensors,
     clearSensorLogs,
     getSensorType,
+  };
+}
+
+// --- Data health (sensor log quality / stability) — kept here with sensor domain ---
+
+const DATA_HEALTH_DB_NAME = "Sensors";
+const DATA_HEALTH_STORE_NAME = "dataHealth";
+const HEALTH_CHECK_VERSION = 4;
+
+function shouldCheckHealth(existingHealth) {
+  if (!existingHealth || !existingHealth.lastChecked) {
+    return true;
+  }
+
+  if (existingHealth.version !== HEALTH_CHECK_VERSION) {
+    return true;
+  }
+
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const timeSinceLastCheck = now - existingHealth.lastChecked;
+
+  return timeSinceLastCheck >= ONE_DAY;
+}
+
+async function getRecentLogsForHealth(sensorId) {
+  const now = Math.floor(Date.now() / 1000);
+  const ONE_WEEK_AGO = now - 7 * 24 * 60 * 60;
+
+  try {
+    const logs = await getSensorData(sensorId, ONE_WEEK_AGO, now, "remote");
+    return Array.isArray(logs) ? logs : [];
+  } catch (error) {
+    console.error(`Error fetching logs for sensor ${sensorId}:`, error);
+    return [];
+  }
+}
+
+async function checkAndSaveDataHealth(sensorId, logs = null) {
+  try {
+    const recentLogs = await getRecentLogsForHealth(sensorId);
+    if (Array.isArray(logs) && logs.length > 0) {
+      const merged = [...logs, ...recentLogs];
+      const byTs = new Map();
+      for (const item of merged) {
+        const ts = item?.timestamp;
+        if (ts !== undefined && ts !== null) byTs.set(ts, item);
+      }
+      logs = Array.from(byTs.values()).sort((a, b) => a.timestamp - b.timestamp);
+    } else {
+      logs = recentLogs;
+    }
+
+    const healthData = checkAllDataHealth(logs);
+
+    return new Promise((resolve, reject) => {
+      IDBworkflow(DATA_HEALTH_DB_NAME, DATA_HEALTH_STORE_NAME, "readwrite", (store) => {
+        const record = {
+          sensorId,
+          ...healthData,
+          version: HEALTH_CHECK_VERSION,
+          lastChecked: Date.now(),
+        };
+        const request = store.put(record);
+        request.onsuccess = () => {
+          notifyDBChange(DATA_HEALTH_DB_NAME, DATA_HEALTH_STORE_NAME);
+          resolve(healthData);
+        };
+        request.onerror = (e) => {
+          reject(e);
+        };
+      });
+    });
+  } catch (error) {
+    console.error(`Error checking data health for sensor ${sensorId}:`, error);
+    return {
+      pm: { healthy: true, checks: {} },
+      climate: { healthy: true, checks: {} },
+      noise: { healthy: true, checks: {} },
+    };
+  }
+}
+
+async function getOrCheckDataHealth(sensorId, logs = null) {
+  const existingHealth = await IDBgetByKey(
+    DATA_HEALTH_DB_NAME,
+    DATA_HEALTH_STORE_NAME,
+    sensorId
+  );
+
+  if (shouldCheckHealth(existingHealth)) {
+    return await checkAndSaveDataHealth(sensorId, logs);
+  }
+
+  if (existingHealth) {
+    const { lastChecked, version, ...healthData } = existingHealth;
+    return healthData;
+  }
+
+  return await checkAndSaveDataHealth(sensorId, logs);
+}
+
+/**
+ * Reactive data-health state for a sensor (IndexedDB + weekly log window).
+ */
+export function useDataHealth() {
+  const dataHealth = ref(null);
+  const isLoading = ref(false);
+  const error = ref(null);
+
+  const loadDataHealth = async (sensorId, logs = null) => {
+    if (!sensorId) {
+      dataHealth.value = null;
+      return;
+    }
+
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      const health = await getOrCheckDataHealth(sensorId, logs);
+      dataHealth.value = health;
+    } catch (err) {
+      console.error("Error loading data health:", err);
+      error.value = err;
+      dataHealth.value = null;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const refreshDataHealth = async (sensorId, logs = null) => {
+    if (!sensorId) {
+      dataHealth.value = null;
+      return;
+    }
+
+    isLoading.value = true;
+    error.value = null;
+
+    try {
+      const health = await checkAndSaveDataHealth(sensorId, logs);
+      dataHealth.value = health;
+    } catch (err) {
+      console.error("Error refreshing data health:", err);
+      error.value = err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  return {
+    dataHealth,
+    isLoading,
+    error,
+    loadDataHealth,
+    refreshDataHealth,
   };
 }

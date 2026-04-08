@@ -27,7 +27,7 @@
     }
   },
   "SERVICES": {
-    "accounts": false,
+    "accounts": true,
     "messages": true
   },
   "DEFAULT_TYPE_PROVIDER": "remote",

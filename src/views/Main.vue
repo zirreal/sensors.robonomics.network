@@ -6,7 +6,7 @@
   />
   <Header />
 
-  <div class="below-header-stories" v-if="false">
+  <div class="below-header-stories">
     <Stories />
   </div>
 
@@ -50,6 +50,7 @@ import { unsubscribeRealtime, initProvider } from "../utils/map/sensors/requests
 import { hasValidCoordinates } from "../utils/utils";
 import { useSensors } from "../composables/useSensors";
 import { useMessages } from "../composables/useMessages";
+import { dayISO } from "@/utils/date";
 
 const mapState = useMap();
 const router = useRouter();
@@ -220,7 +221,28 @@ watch(
     const messageChanged = newQuery.message !== oldQuery?.message;
     const providerChanged = newQuery.provider !== oldQuery?.provider;
     const dateChanged = newQuery.date !== oldQuery?.date;
+    const timestampChanged = newQuery.timestamp !== oldQuery?.timestamp;
     const typeChanged = newQuery.type !== oldQuery?.type;
+
+    let derivedDayChanged = false;
+
+    // If a story link provides only a timestamp, derive the day locally
+    // (so URL stays clean without `date=...` but the app still navigates to that day).
+    if (timestampChanged && newQuery.timestamp && !newQuery.date) {
+      const ts = Number(newQuery.timestamp);
+      if (!Number.isNaN(ts) && Number.isFinite(ts) && ts > 0) {
+        try {
+          const derivedDay = dayISO(ts);
+          const prev = mapState.currentDate.value;
+          if (derivedDay && derivedDay !== prev) {
+            mapState.setCurrentDate(derivedDay);
+            derivedDayChanged = true;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
 
     // Сбрасываем timeline режим при смене сенсора (если был week или month)
     // Но не сбрасываем для realtime провайдера
@@ -245,8 +267,8 @@ watch(
       }
     }
 
-    // Перезагружаем данные сенсоров при изменении даты, провайдера
-    if (providerChanged || dateChanged) {
+    // Перезагружаем данные сенсоров при изменении даты (или timestamp-derived day), провайдера
+    if (providerChanged || dateChanged || derivedDayChanged) {
       // Отписываемся от realtime провайдера перед загрузкой новых данных
       if (unwatchRealtime) {
         unsubscribeRealtime(unwatchRealtime);

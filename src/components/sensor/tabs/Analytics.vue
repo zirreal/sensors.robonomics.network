@@ -91,8 +91,7 @@
 import { computed, ref, watch, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useMap } from "@/composables/useMap";
-import { useSensors } from "@/composables/useSensors";
-import { useDataHealth } from "@/composables/useDataHealth";
+import { useSensors, useDataHealth } from "@/composables/useSensors";
 import measurements from "../../../measurements";
 
 import AQI from "../widgets/AQI.vue";
