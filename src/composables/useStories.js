@@ -90,7 +90,9 @@ export const HIDDEN_FEED_STORIES = [
   { sensorId: "4CeniNTEEjUUE3PdzZpheMxTpm2C2yyBkAoyF4Wh9wc8jREw", timestamp: 1775478942491 },
   { sensorId: "4CeniNTEEjUUE3PdzZpheMxTpm2C2yyBkAoyF4Wh9wc8jREw", timestamp: 1775117846624 },
   { sensorId: "4CeniNTEEjUUE3PdzZpheMxTpm2C2yyBkAoyF4Wh9wc8jREw", timestamp: 1775544845364 },
-  { sensorId: "4CeniNTEEjUUE3PdzZpheMxTpm2C2yyBkAoyF4Wh9wc8jREw", timestamp: 1775546895559 }
+  { sensorId: "4CeniNTEEjUUE3PdzZpheMxTpm2C2yyBkAoyF4Wh9wc8jREw", timestamp: 1775546895559 },
+  { sensorId: "4CeniNTEEjUUE3PdzZpheMxTpm2C2yyBkAoyF4Wh9wc8jREw", timestamp: 1775635205828 },
+  { sensorId: "4H7Rrya6F86J7QRaqWfFwGwcS67aQxFdUuaSMCjT7U78HyHb", timestamp: 1775729752941 }
 ];
 
 // Global denylist for specific story instances (sensorId + timestamp).

@@ -133,6 +133,7 @@
 <script setup>
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { encodeAddress, decodeAddress } from "@polkadot/util-crypto";
 import { settings } from "@config";
 import { useAccounts } from "@/composables/useAccounts";
@@ -149,6 +150,8 @@ import {
   normalizeBackendStory,
   upsertStory,
 } from "@/composables/useStories";
+
+const { t: $t } = useI18n();
 
 const STORY_ICONS = [
   { id: "heat", title: "Heat wave", icon: "fa-solid fa-temperature-high" },

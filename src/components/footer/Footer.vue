@@ -25,7 +25,10 @@
           <HistoryImport />
         </section>
       </div>
-      <button class="popovercontrol button-round-outline button-round-outline-labeled" popovertarget="mapsettings">
+      <button
+        class="popovercontrol button-round-outline button-round-outline-labeled"
+        popovertarget="mapsettings"
+      >
         <font-awesome-icon icon="fa-solid fa-download" />
         <span>{{ $t("history.reports") }}</span>
       </button>
@@ -295,11 +298,11 @@ watch(
 watch(
   [wind, windAllowed],
   async ([enabled, allowed]) => {
-    const map = instanceMap();
-    if (!map) {
-      // На ранних стадиях компонента слой может быть недоступен —
-      // повторно инициализируем на `onMounted` (см. ниже).
-      console.warn("Wind layer: Map not initialized yet");
+    let map = null;
+    try {
+      map = instanceMap();
+    } catch {
+      // Map isn't ready yet (init happens in Map component). We'll retry on mount.
       return;
     }
 
