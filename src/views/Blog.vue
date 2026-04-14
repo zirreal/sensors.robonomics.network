@@ -69,7 +69,11 @@ const posts = computed(() => {
     const frontmatter = mod ?? {};
     const coverImageRaw = frontmatter.cover_image;
     const cover_image = coverImageRaw
-      ? new URL(coverImageRaw, new URL(p, import.meta.url)).href
+      ? (() => {
+          const normalized = coverImageRaw.startsWith("./") ? coverImageRaw.slice(2) : coverImageRaw;
+          if (import.meta.env.PROD && normalized.startsWith("images/")) return `/blog/${slug}/${normalized}`;
+          return new URL(coverImageRaw, new URL(p, import.meta.url)).href;
+        })()
       : "";
 
     const post = { slug, ...frontmatter, cover_image, default: mod?.default, _lang: lang };
