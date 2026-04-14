@@ -8,8 +8,24 @@ dotenv.config();
 
 const openai = new OpenAI({ apiKey: process.env.VITE_OPENAI_KEY });
 
+const TRANSLATE_INDEX_FILE = "src/translate/index.js";
+
+const loadLanguagesFromIndex = async () => {
+  try {
+    const filePath = path.resolve(TRANSLATE_INDEX_FILE);
+    if (!fs.existsSync(filePath)) return null;
+    const mod = await import(`file://${filePath}`);
+    const langs = mod?.languages;
+    if (!Array.isArray(langs)) return null;
+    const codes = langs.map((l) => l?.code).filter(Boolean);
+    return codes.length ? codes : null;
+  } catch {
+    return null;
+  }
+};
+
 // CONFIG
-const LANGUAGES = ["en", "ru"]; // Add/remove languages here
+const LANGUAGES_FALLBACK = ["en", "ru"];
 const SKIP_KEYS = []; // Add keys to skip here
 const PRESERVE_KEYS = [
   "Climate",
@@ -26,6 +42,14 @@ const PRESERVE_KEYS = [
   "Today",
   "Dust & Particles",
   "Noise",
+  "Open",
+  "Posted",
+  "Publish",
+  "Login",
+  "Stories",
+  "Accounts", 
+  "Account",
+  "Blog"
 ];
 const TRANSLATION_FILES_DIR = "src/translate";
 const CACHE_FILE = "src/scripts/openai-cache.json";
@@ -116,6 +140,7 @@ const saveLocaleFile = (lang, data) => {
 
 // Main function
 const run = async () => {
+  const LANGUAGES = (await loadLanguagesFromIndex()) || LANGUAGES_FALLBACK;
   const keys = await extractTranslationKeys();
   const cache = loadCache();
 

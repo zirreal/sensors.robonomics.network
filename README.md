@@ -17,7 +17,7 @@ For more details on connectivity and how to deploy your own map interface (or ev
 
 This section is intended for contributors working on the existing map and developers setting up their own map interface. For comprehensive instructions on configuring your own user interface, refer to the next sections.
 
-1️⃣ **Fork & Clone the Repository**  
+1️⃣ **Fork & Clone the Repository**
 
 If you plan to contribute or customize the project extensively, consider forking it first. Then clone the repository:
 
@@ -50,66 +50,68 @@ Then install the required dependencies:
 
 ---
 
-
 ## 🗺️ How to setup your own map (for experienced users)
 
 ### Steps to fork
 
 Follow these steps to deploy your own instance of **sensors.social** on GitHub Pages:
 
-1️⃣ **Fork the repository**  
-   - Click **Fork** on GitHub.  
-   - In your fork, go to **Settings → Actions → General → Workflow permissions** and enable **Read and write permissions**.
+1️⃣ **Fork the repository**
 
-2️⃣ **Adjust configuration**  
-   - Copy the template config to your own folder:  
-     ```sh
-     cp -r src/config/template src/config/my-map
-     ```  
-   - Edit the files inside `src/config/my-map/` (`config.json`, `agents.json`, `pinned_sensors.js`, etc).  
-     Any files missing in `my-map` will be loaded automatically from `src/config/default/`.  
-   - Set the environment variable in GitHub:  
-     ```
-     VITE_CONFIG_ENV=my-map
-     ```  
-     (Settings → Secrets and variables → Variables).
+- Click **Fork** on GitHub.
+- In your fork, go to **Settings → Actions → General → Workflow permissions** and enable **Read and write permissions**.
+
+2️⃣ **Adjust configuration**
+
+- Copy the template config to your own folder:
+  ```sh
+  cp -r src/config/template src/config/my-map
+  ```
+- Edit the files inside `src/config/my-map/` (`config.json`, `agents.json`, `pinned_sensors.js`, etc).  
+  Any files missing in `my-map` will be loaded automatically from `src/config/default/`.
+- Set the environment variable in GitHub:
+  ```
+  VITE_CONFIG_ENV=my-map
+  ```
+  (Settings → Secrets and variables → Variables).
 
 3️⃣ **Prepare for deployment**
 
-  - If you want to host the map **not at the root of a domain** (for example, the default GitHub Pages URL like `https://<username>.github.io/<repo>/`), set the base path to your repository name:
+- If you want to host the map **not at the root of a domain** (for example, the default GitHub Pages URL like `https://<username>.github.io/<repo>/`), set the base path to your repository name:
 
-      ```js
-      // vite.config.js
-      base: mode === "production" ? "/<repo>/" : "/",
-      ```
-
-      In this case, you do **not** need to set the `PAGES_CNAME` variable.
-
-  - If you want to host the map **at the root of a domain** (for example, when you configure a custom domain such as `https://example.com` or use the root Pages site of a user/organization), set the base path to `/`:
-
-      ```js
-      // vite.config.js
-      base: "/",
-      ```
-
-      And set the repository variable `PAGES_CNAME` to your domain:
-
-      ```sh
-      PAGES_CNAME=example.com
-      ```
-
-4️⃣ **Enable GitHub Actions**  
-   - A workflow file is already provided in `.github/workflows/`. It builds the project and pushes the `dist` folder into the `gh-pages` branch. The workflow runs on every push to `master` or `main`.
-   - Before the first deployment, create an empty `gh-pages` branch manually in your fork:
-
-  ```sh
-  git checkout --orphan gh-pages
-  git commit --allow-empty -m "Initialize gh-pages branch"
-  git push origin gh-pages
+  ```js
+  // vite.config.js
+  base: mode === "production" ? "/<repo>/" : "/",
   ```
 
-   - Go to **Settings → Pages → Build and deployment**.  
-   - Choose **Deploy from a branch**, set **Branch: gh-pages**, **Folder: /(root)**.  
+  In this case, you do **not** need to set the `PAGES_CNAME` variable.
+
+- If you want to host the map **at the root of a domain** (for example, when you configure a custom domain such as `https://example.com` or use the root Pages site of a user/organization), set the base path to `/`:
+
+  ```js
+  // vite.config.js
+  base: "/",
+  ```
+
+  And set the repository variable `PAGES_CNAME` to your domain:
+
+  ```sh
+  PAGES_CNAME=example.com
+  ```
+
+4️⃣ **Enable GitHub Actions**
+
+- A workflow file is already provided in `.github/workflows/`. It builds the project and pushes the `dist` folder into the `gh-pages` branch. The workflow runs on every push to `master` or `main`.
+- Before the first deployment, create an empty `gh-pages` branch manually in your fork:
+
+```sh
+git checkout --orphan gh-pages
+git commit --allow-empty -m "Initialize gh-pages branch"
+git push origin gh-pages
+```
+
+- Go to **Settings → Pages → Build and deployment**.
+- Choose **Deploy from a branch**, set **Branch: gh-pages**, **Folder: /(root)**.
 
 After the workflow completes, your map will be available at the GitHub Pages URL (or your custom domain if configured).
 
@@ -217,16 +219,17 @@ Note: If your provider returns a schema different from Nominatim JSON, adjust th
 
 You can configure map backgrounds using the following keys in `MAP.theme.light` or `MAP.theme.dark`:
 
-- **osm** – Classic OpenStreetMap tiles.  
-- **carto-light** – Light, minimalistic basemap from Carto.  
-- **carto-dark** – Dark variant from Carto.  
-- **opentopomap** – Topographic map with terrain and elevation (OSM + SRTM).  
-- **esri-imagery** – Satellite imagery (Esri, Maxar, Earthstar).  
-- **esri-topo** – Esri World Topo Map (streets + terrain).  
-- **cyclosm** – Bicycle-focused map with cycling routes and infrastructure.  
+- **osm** – Classic OpenStreetMap tiles.
+- **carto-light** – Light, minimalistic basemap from Carto.
+- **carto-dark** – Dark variant from Carto.
+- **opentopomap** – Topographic map with terrain and elevation (OSM + SRTM).
+- **esri-imagery** – Satellite imagery (Esri, Maxar, Earthstar).
+- **esri-topo** – Esri World Topo Map (streets + terrain).
+- **cyclosm** – Bicycle-focused map with cycling routes and infrastructure.
 
-If a theme key is missing or invalid:  
-- For **light** → falls back to OpenStreetMap (default style).  
+If a theme key is missing or invalid:
+
+- For **light** → falls back to OpenStreetMap (default style).
 - For **dark** → if `invertForDark: true`, the light theme is auto-inverted to create a dark variant.
 
 #### Adding custom themes
@@ -238,8 +241,8 @@ Each entry has a `url` and `options` (Leaflet `tileLayer` options like `subdomai
 export default {
   "my-custom-theme": {
     url: "https://{s}.example.com/tiles/{z}/{x}/{y}.png",
-    options: { subdomains: "abc", attribution: "© MyTiles" }
-  }
+    options: { subdomains: "abc", attribution: "© MyTiles" },
+  },
 };
 ```
 
@@ -282,87 +285,184 @@ You can set an icon and a website link for a specific sensor:
 
 **Example**: [pinned_sensors.js](https://github.com/airalab/sensors.social/blob/master/src/config/default/pinned_sensors.js)
 
+---
+
+## ✍️ Blog
+
+All blog posts are located in:
+
+```
+src/blog/<slug>/
+```
+
+Each post lives in its own folder, identified by a unique `<slug>` (e.g. `sensors-social-roadmap`).
+
+### 🚀 Adding a New Post
+
+Follow these steps to create and publish a new blog post.
+
+1. Create a new directory using your desired slug:
+
+```sh
+mkdir -p src/blog/my-post
+```
+
+> 💡 Choose a short, URL-friendly slug (lowercase, hyphen-separated).
+
+2. Create the Post File
+
+Inside your new folder, add an `index.md` file:
+
+```md
+---
+title: "My post title"
+date: 2026-04-08
+published: true
+locale: "en"
+tags: ["Announcements", "sensors.social"]
+cover_image: ./images/cover.webp
+description: "Short description used on the blog list page."
+abstract: "A short lede shown under the cover on the post page."
+---
+
+Markdown body here…
+```
+
+| Field         | Description                                        |
+| ------------- | -------------------------------------------------- |
+| `title`       | Title of the blog post (required)                  |
+| `date`        | Publication date (YYYY-MM-DD) (required)           |
+| `published`   | Controls visibility (`false` = draft) (required)   |
+| `locale`      | Language code (e.g. `en`, `ru`) (required)         |
+| `tags`        | List of categories or topics                       |
+| `cover_image` | Path to the main image (required)                  |
+| `description` | Short summary for blog listings (very recommended) |
+| `abstract`    | Intro text shown under the cover on the post page  |
+
+3. Add Images
+
+Create an `images/` folder inside your post directory:
+
+```
+src/blog/sensors-social-roadmap/images/cover.webp
+src/blog/sensors-social-roadmap/images/another-image.webp
+```
+
+**Guidelines:**
+
+- Use **relative paths**:
+  ```
+  ./images/cover.webp
+  ```
+- Prefer **optimized formats** like `.webp`
+- Use descriptive filenames
+
+### 📝 Drafts
+
+To keep a post hidden:
+
+```yaml
+published: false
+```
+
+Draft posts:
+
+- ❌ Won’t appear in blog listings
+- ❌ Won’t be accessible via direct URL
+
+### ✅ Publishing Checklist
+
+Before publishing, make sure:
+
+- [ ] Title and date are correct
+- [ ] `published: true` is set
+- [ ] Cover image exists and loads properly
+- [ ] Description is filled in
+- [ ] All images use relative paths
+- [ ] Content has been proofread
 
 ---
 
-
 ## 💬 Localization & Translations
 
-You can add a new language to the map by modifying the translation files located in `src/translate/`.  
+You can add a new language to the map by modifying the translation files located in `src/translate/`.
 
-### 📝 Adding a New Language  
+---
 
-1️⃣ **Create a new translation file** in `src/translate/`, e.g., `es.js`.  
+### 📝 Adding a New Language
 
-2️⃣ **Update `index.js`** in the same folder:  
-   - Import your newly created translation file:  
+1️⃣ **Create a new translation file** in `src/translate/`, e.g., `es.js`.
 
-   ```js
-   import es from "./es";
-   
-   export default { en, ru, es };
-   ```
+2️⃣ **Update `index.js`** in the same folder:
 
-  - Add the new language to the language list:
+- Import your newly created translation file:
 
-  ```js
-    export const languages = [
-      { code: "en", title: "English" },
-      { code: "ru", title: "Русский" },
-      { code: "es", title: "Español" },
-    ];
-  ```
-  
-  ### 📏 Translating Measurements  
+```js
+import es from "./es";
 
-  Measurement values are located in `src/measurements/`.  
-  To support multiple languages, update the relevant files in this folder.  
+export default { en, ru, es };
+```
 
-  #### Files to Update  
+- Add the new language to the language list:
 
-| Measurement Type        | File Name |
-|-------------------------|-----------|
-| Carbon Monoxide        | `co.js` |
-| Background Radiation   | `gs.js` |
-| Humidity              | `humidity.js` |
-| Ammonia (NH₃)         | `nh3.js` |
-| Nitrogen Dioxide (NO₂) | `no2.js` |
-| Noise Levels          | `noise.js`, `noiseavg.js`, `noisemax.js` |
-| PM10 Particulate Matter | `pm10.js` |
-| PM2.5 Particulate Matter | `pm25.js` |
-| Pressure              | `pressure.js` |
-| Temperature           | `temperature.js` |
+```js
+export const languages = [
+  { code: "en", title: "English" },
+  { code: "ru", title: "Русский" },
+  { code: "es", title: "Español" },
+];
+```
 
-#### Example Translation Update (`humidity.js`)  
+### 📏 Translating Measurements
 
-To add support for **Spanish (es)**, update the `name`, `nameshort`, and `zones` properties:  
+Measurement values are located in `src/measurements/`.  
+ To support multiple languages, update the relevant files in this folder.
+
+#### Files to Update
+
+| Measurement Type         | File Name                                |
+| ------------------------ | ---------------------------------------- |
+| Carbon Monoxide          | `co.js`                                  |
+| Background Radiation     | `gs.js`                                  |
+| Humidity                 | `humidity.js`                            |
+| Ammonia (NH₃)            | `nh3.js`                                 |
+| Nitrogen Dioxide (NO₂)   | `no2.js`                                 |
+| Noise Levels             | `noise.js`, `noiseavg.js`, `noisemax.js` |
+| PM10 Particulate Matter  | `pm10.js`                                |
+| PM2.5 Particulate Matter | `pm25.js`                                |
+| Pressure                 | `pressure.js`                            |
+| Temperature              | `temperature.js`                         |
+
+#### Example Translation Update (`humidity.js`)
+
+To add support for **Spanish (es)**, update the `name`, `nameshort`, and `zones` properties:
 
 ```js
 
-     name: {  
-       en: "Humidity",  
-       ru: "Влажность",  
-       es: "Humedad"  
-     },  
-     nameshort: {  
-       en: "Humidity",  
-       ru: "Влажность",  
-       es: "Humedad"  
-     },  
+     name: {
+       en: "Humidity",
+       ru: "Влажность",
+       es: "Humedad"
+     },
+     nameshort: {
+       en: "Humidity",
+       ru: "Влажность",
+       es: "Humedad"
+     },
 
-     zones: [  
-       {  
-         value: 30,  
-         color: "#ff4d00",  
-         label: {  
-           en: "Very dry",  
-           ru: "Очень сухо",  
-           es: "Muy seco"  
-         }  
-       }  
-     ]  
-  ```
-  
+     zones: [
+       {
+         value: 30,
+         color: "#ff4d00",
+         label: {
+           en: "Very dry",
+           ru: "Очень сухо",
+           es: "Muy seco"
+         }
+       }
+     ]
+```
+
 ### 🌍 Auto-Translation with OpenAI
 
 You can automatically translate interface strings using OpenAI's API. To enable this:
@@ -380,16 +480,16 @@ You can automatically translate interface strings using OpenAI's API. To enable 
    Use the `$t()` function in your code to mark strings for translation:
 
    ```js
-   $t('Geolocation');
+   $t("Geolocation");
    ```
 
 3. **Configure translation behavior**
 
    Modify the config in `src/scripts/translate.js`:
 
-   * **Languages**: Add/remove target languages in the `LANGUAGES` array.
-   * **Preserve specific keys**: Add keys to `PRESERVE_KEYS` to keep them even if not found in `$t()` calls.
-   * **Allow identifiers to be translated**: If certain keys look like code (e.g., `Model`, `Yes`) but should still be translated, add them to the `SHORT_LIST`.
+   - **Languages**: Add/remove target languages in the `LANGUAGES` array.
+   - **Preserve specific keys**: Add keys to `PRESERVE_KEYS` to keep them even if not found in `$t()` calls.
+   - **Allow identifiers to be translated**: If certain keys look like code (e.g., `Model`, `Yes`) but should still be translated, add them to the `SHORT_LIST`.
 
 4. **Run the translation script**
 
@@ -400,6 +500,60 @@ You can automatically translate interface strings using OpenAI's API. To enable 
    ```
 
    Once complete, your translations will be available in the appropriate language files in `src/translate`.
+
+### 🌍 Translating Blog Posts (Markdown)
+
+Blog posts can be translated into multiple languages using localized Markdown files.
+
+#### 📁 File Structure
+
+- **English source**:
+
+  ```
+  src/blog/<slug>/index.md
+  ```
+
+- **Localized file**:
+  ```
+  src/blog/<slug>/index.<lang>.md
+  ```
+  Example:
+  ```
+  src/blog/my-post/index.ru.md
+  ```
+
+1. ⚙️ Setup
+
+Before running translations, set your OpenAI API key:
+
+```env
+VITE_OPENAI_KEY=your-openai-api-key
+```
+
+2. 🚀 Run Translation Script
+
+```bash
+npm run autotranslate:md
+```
+
+🤖 What the Script Does
+
+- Translates frontmatter fields:
+  - `title`
+  - `description`
+  - `abstract`
+- Translates the Markdown body:
+  - Preserves formatting (headings, links, code blocks, etc.)
+  - Best-effort accuracy depending on content complexity
+- Uses a cache file to avoid re-translating unchanged content:
+  ```
+  src/scripts/openai-cache.json
+  ```
+
+🌐 How locale is chosen at runtime:
+
+- UI locale `ru` loads `index.ru.md` when present
+- Fallback order: exact locale → short locale → `en`
 
 ---
 

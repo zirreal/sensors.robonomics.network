@@ -37,8 +37,12 @@
       </div>
 
       <div class="flexline">
-
-        <a href="https://x.com/sensorssocial" target="_blank" rel="noopener" class="button button-outlined">
+        <a
+          href="https://x.com/sensorssocial"
+          target="_blank"
+          rel="noopener"
+          class="button button-outlined"
+        >
           <font-awesome-icon icon="fa-brands fa-x-twitter" aria-hidden="true" />
           <span>Latest updates</span>
         </a>
@@ -97,6 +101,10 @@
             <router-link class="navtile" to="/construction-monitoring/">
               <font-awesome-icon class="navfa" icon="fa-solid fa-helmet-safety" />
               <span>{{ $t("Construction monitoring") }}</span>
+            </router-link>
+            <router-link class="navtile" to="/blog/">
+              <font-awesome-icon class="navfa" icon="fa-regular fa-newspaper" />
+              <span>{{ $t("Blog") }}</span>
             </router-link>
             <router-link class="navtile" to="/privacy-policy/">
               <font-awesome-icon class="navfa" icon="fa-regular fa-file-lines" />
@@ -317,6 +325,7 @@ header > * {
   display: grid;
   gap: calc(var(--gap) * 0.55);
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
 }
 
 .navlinks a.navtile {
@@ -331,6 +340,8 @@ header > * {
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 8px;
   font-size: calc(var(--font-size) * 1.1);
+  min-height: 3.1rem;
+  height: 100%;
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease,
     box-shadow 0.15s ease;
 }
@@ -344,6 +355,7 @@ header > * {
 
 .navlinks a.navtile span {
   line-height: 1.15;
+  flex: 1 1 auto;
 }
 
 .navlinks a.navtile .navfa {
@@ -482,6 +494,7 @@ header > * {
   .navlinks a.navtile {
     font-size: calc(var(--font-size) * 1.2);
     padding: calc(var(--gap) * 1.5) calc(var(--gap) * 0.8);
+    min-height: 3.8rem;
   }
 }
 /* - bookmarks button */

@@ -511,4 +511,10 @@ export default {
   "probably something happened with your sensor": "probably something happened with your sensor",
   "Show data anyway": "Show data anyway",
   "Add a short story about an unusual day — or browse recent stories for this sensor.": "Add a short story about an unusual day — or browse recent stories for this sensor.",
+  "\\n": "\\n",
+  "Curious about your environmental insights? So are we.Measure it, test it, and have fun discovering what’s floating around you.": "Curious about your environmental insights? So are we.Measure it, test it, and have fun discovering what’s floating around you.",
+  "Curious about your environmental insights? So are we. Measure it, test it, and have fun discovering what’s floating around you.": "Curious about your environmental insights? So are we. Measure it, test it, and have fun discovering what’s floating around you.",
+  "← Back to Blog": "← Back to Blog",
+  "Post not found": "Post not found",
+  "Blog": "Blog"
 };

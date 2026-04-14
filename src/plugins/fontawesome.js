@@ -56,6 +56,7 @@ import {
 import {
   faBookmark as faBookmarkRegular,
   faComment as faCommentRegular,
+  faNewspaper,
   faMap as faMapRegular,
   faCopy as faCopyRegular,
   faFileLines,
@@ -119,6 +120,7 @@ library.add(
   faWind,
   faXmark,
   faShareFromSquare,
+  faNewspaper,
   faFileLines,
   faPenToSquare,
   faTrash,

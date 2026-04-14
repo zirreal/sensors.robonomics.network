@@ -7,6 +7,7 @@
     "dev": "vite --host",
     "build": "vite build",
     "autotranslate": "node src/scripts/translate.js",
+    "autotranslate:md": "node src/scripts/translate-md.js",
     "preview": "npx kill-port 4173 && vite preview --port 4173",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
     "release": "release-it",
@@ -72,6 +73,7 @@
     "prettier": "^2.7.1",
     "release-it": "^19.0.1",
     "robonomics-api-augment": "^0.3.0",
+    "unplugin-vue-markdown": "^30.0.0",
     "vite": "^4.5.14"
   }
 }

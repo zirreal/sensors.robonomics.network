@@ -4,13 +4,28 @@ import prerender from "@prerenderer/rollup-plugin";
 import vue from "@vitejs/plugin-vue";
 import { defineConfig } from "vite";
 
+// for blog
+import Markdown from 'unplugin-vue-markdown/vite'
+import fs from "fs"
+import path from "path"
+
+function getBlogRoutes() {
+  const postsDir = path.resolve(__dirname, "src/blog")
+
+  return fs
+    .readdirSync(postsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .filter((entry) => fs.existsSync(path.join(postsDir, entry.name, "index.md")))
+    .map((entry) => `/blog/${entry.name}`)
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
     base: "/",
     // server: { https: true },
     plugins: [
-      vue(),
+      vue({include: [/\.vue$/, /\.md$/]}),
       prerender({
         routes: [
           "/",
@@ -23,9 +38,15 @@ export default defineConfig(() => {
           "/altruist-setup",
           "/construction-monitoring",
           "/noise-data-real-estate",
+          "/blog",
+          // auto-generated blog routes
+          ...getBlogRoutes()
         ],
         renderer: "@prerenderer/renderer-puppeteer",
       }),
+        Markdown({
+        frontmatter: true
+      })
     ],
     resolve: {
       alias: {

@@ -512,4 +512,17 @@ export default {
   "Altruist Urban": "Альтруистический город",
   "Altruist Insight": "Альтруистический взгляд",
   "Add a short story about an unusual day — or browse recent stories for this sensor.": "Добавьте ваш инсайт о необычном дне — или просмотрите недавние истории для этого датчика.",
+  "\\n": "Вы не предоставили предложение для перевода. Пожалуйста, предоставьте предложение для перевода.",
+  "Curious about your environmental insights? So are we.Measure it, test it, and have fun discovering what’s floating around you.": "Любопытно узнать больше о состоянии окружающей среды? Нам тоже. Измеряйте, проверяйте и с удовольствием узнавайте, что находится вокруг вас в воздухе.",
+  "Curious about your environmental insights? So are we. Measure it, test it, and have fun discovering what’s floating around you.": "Любопытно узнать больше о состоянии окружающей среды? Нам тоже. Измеряйте, проверяйте и с удовольствием узнавайте, что находится вокруг вас в воздухе.",
+  "← Back to Blog": "← Назад к блогу",
+  "Post not found": "Пост не найден",
+  "Open": "Открыть",
+  "Posted": "Опубликовано",
+  "Publish": "Опубликовать",
+  "Login": "Войти",
+  "Stories": "Истории",
+  "Accounts": "Аккаунты",
+  "account": "aккаунт",
+  "Blog": "Блог"
 };
