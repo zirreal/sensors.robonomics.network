@@ -2,7 +2,7 @@
   <MetaInfo pageTitle="Login" pageImage="/og-login.webp" />
 
   <PageTextLayout>
-    <section class="login-page" v-if="false">
+    <section class="login-page">
       <header class="hero">
         <h3>{{ $t("Accounts") }}</h3>
         <p class="subtitle">
@@ -176,8 +176,164 @@ import MetaInfo from "../components/MetaInfo.vue";
 import PageTextLayout from "../components/layouts/PageText.vue";
 import Copy from "@/components/controls/Copy.vue";
 
-const accountStore = useAccounts(); // kept for future re-enable
+const accountStore = useAccounts();
 const router = useRouter();
+
+const passPhrase = ref("");
+const keepSigned = ref(false);
+const error = ref("");
+const keyType = ref("ed25519");
+const loginStatus = ref("idle");
+const lastAddress = ref("");
+
+const isLoggedIn = computed(() => (accountStore.accounts?.value?.length || 0) > 0);
+const accounts = computed(() => accountStore.accounts?.value || []);
+const accountsCount = computed(() => accounts.value.length);
+const showAddAnother = ref(false);
+
+const sensorsByAddr = ref({});
+const sensorsLoadingByAddr = ref({});
+const avatarsByAddr = ref({});
+
+onMounted(() => {
+  accountStore.getAccounts();
+});
+
+watch(
+  () => accounts.value.map((a) => a.address).join(","),
+  async () => {
+    try {
+      const entries = await Promise.all(
+        accounts.value
+          .map((a) => a?.address)
+          .filter(Boolean)
+          .map(async (addr) => [addr, await generateAvatar(addr, 34)])
+      );
+      avatarsByAddr.value = Object.fromEntries(entries.filter(([, v]) => !!v));
+    } catch {
+      // ignore
+    }
+  },
+  { immediate: true }
+);
+
+const canKeepSigned = computed(
+  () => !!(window.crypto?.subtle || window.crypto?.webkitSubtle) && !!window.indexedDB
+);
+
+const account = computed(() => {
+  const phrase = passPhrase.value.trim();
+  if (phrase.split(/\s+/).length !== 12) return "";
+  if (!mnemonicValidate(phrase)) return "";
+  try {
+    const keyring = new Keyring({ type: keyType.value });
+    const pair = keyring.addFromMnemonic(phrase);
+    return encodeAddress(pair.publicKey, 32);
+  } catch {
+    return "";
+  }
+});
+
+function formatAddress(addr) {
+  if (!addr) return "";
+  if (addr.length <= 16) return addr;
+  return addr.slice(0, 6) + "..." + addr.slice(-6);
+}
+
+function getRobonomicsAddressByType(phrase, type) {
+  const keyring = new Keyring({ type });
+  const pair = keyring.addFromMnemonic(phrase);
+  const address = encodeAddress(pair.publicKey, 32);
+  return { address, type, publicKey: pair.publicKey };
+}
+
+function resetStatus() {
+  loginStatus.value = "idle";
+  error.value = "";
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  error.value = "";
+  loginStatus.value = "idle";
+
+  const phrase = passPhrase.value.trim();
+
+  if (phrase.split(/\s+/).length !== 12) {
+    error.value = "Passphrase must be 12 words";
+    loginStatus.value = "error";
+    return;
+  }
+  if (!mnemonicValidate(phrase)) {
+    error.value = "Invalid mnemonic";
+    loginStatus.value = "error";
+    return;
+  }
+
+  let accountData;
+  try {
+    accountData = getRobonomicsAddressByType(phrase, keyType.value);
+  } catch (e) {
+    error.value = e.message || "Cannot create Robonomics account";
+    loginStatus.value = "error";
+    return;
+  }
+
+  const { address, type } = accountData;
+
+  try {
+    if (keepSigned.value) {
+      await accountStore.addAccount(
+        { phrase, address, type, devices: [], ts: Date.now() },
+        { persist: true }
+      );
+    } else {
+      await accountStore.removeAccounts(address);
+      await accountStore.addAccount(
+        { phrase, address, type, devices: [], ts: Date.now() },
+        { persist: false }
+      );
+    }
+  } catch (e) {
+    error.value = e?.message || "Cannot save account";
+    loginStatus.value = "error";
+    return;
+  }
+
+  lastAddress.value = address;
+  passPhrase.value = "";
+  loginStatus.value = "success";
+  showAddAnother.value = false;
+  await router.push({ name: "main" });
+}
+
+async function handleLogoutAll() {
+  const list = accounts.value || [];
+  const addresses = list.map((a) => a.address).filter(Boolean);
+  await accountStore.removeAccounts(addresses);
+  resetStatus();
+  showAddAnother.value = false;
+}
+
+async function removeOne(acc) {
+  const addr = acc?.address;
+  if (!addr) return;
+  await accountStore.removeAccounts(addr);
+}
+
+function getSensorLink(sensor) {
+  return {
+    name: "main",
+    query: {
+      provider: "remote",
+      type: config.MAP.measure,
+      zoom: config.MAP.zoom,
+      lat: config.MAP.position.lat,
+      lng: config.MAP.position.lng,
+      sensor: sensor,
+    },
+  };
+}
 
 async function onSensorsToggle(acc, event) {
   const open = event?.target?.open === true;
@@ -390,7 +546,7 @@ h3 {
 
 .field {
   display: grid;
-  gap: 0.5rem;
+  gap: calc(var(--gap) * 0.7);
 }
 
 .field-label {
@@ -411,7 +567,7 @@ select {
   padding: var(--pad-sm) var(--pad-md);
   background: rgba(0, 0, 0, 0.015);
   display: grid;
-  gap: 8px;
+  gap: calc(var(--gap) * 0.7);
 }
 
 .addr {
@@ -437,7 +593,7 @@ select {
   padding: 10px 12px;
   border-radius: 12px;
   background: rgba(40, 170, 85, 0.12);
-  color: #1f7b44;
+  color: var(--color-green);
 }
 
 .error {
@@ -447,6 +603,6 @@ select {
   padding: 10px 12px;
   border-radius: 12px;
   background: rgba(220, 70, 70, 0.1);
-  color: #a92b2b;
+  color: var(--color-red);
 }
 </style>

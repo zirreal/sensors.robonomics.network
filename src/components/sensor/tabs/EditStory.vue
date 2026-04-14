@@ -1,12 +1,12 @@
 <template>
-  <section class="story-editor" v-if="false">
+  <section class="story-editor">
     <header class="story-hero">
       <h3>{{ $t("Stories") }}</h3>
       <p class="owner-hint" v-if="!isOwnerLoggedIn">
         {{ $t("Only sensor owner can add stories for this sensor.") }}
       </p>
       <p class="owner-hint" v-else>
-        {{ $t("Share you thoughts with the users!") }}
+        {{ $t("Share your insights with the community!") }}
       </p>
     </header>
 
@@ -18,7 +18,6 @@
 
     <template v-else-if="!hasAnyLoggedAccounts">
       <div>
-        <div class="card-title">{{ $t("Not available") }}</div>
         <p class="owner-hint">{{ $t("Please login first.") }}</p>
         <div class="actions">
           <router-link to="/login/" class="button">{{ $t("Login") }}</router-link>
@@ -36,7 +35,7 @@
     </button>
 
     <form v-if="step === 'form'" class="card stack story-form" @submit.prevent="saveStory">
-      <div class="card-title">{{ $t("Add a story") }}</div>
+      <h4 class="card-title">{{ $t("Add a story") }}</h4>
 
       <label class="field">
         <div class="field-head">
@@ -49,17 +48,17 @@
       <label class="field">
         <div class="field-head">
           <span class="field-title">{{ $t("Short comment") }}</span>
-          <span class="field-meta">{{ storyComment.length }}/200</span>
+          <span class="field-meta">{{ storyComment.length }}/280</span>
         </div>
         <textarea
           v-model.trim="storyComment"
           rows="3"
-          maxlength="200"
+          maxlength="280"
           placeholder="E.g. “Dust storm — PM10 was off the charts.”"
         ></textarea>
       </label>
 
-      <div>
+      <div class="icon-wrapper">
         <div class="field-title">{{ $t("Pick an icon") }}</div>
         <div class="image-grid">
           <label
@@ -96,7 +95,7 @@
     </form>
 
     <div v-if="visibleStories.length" class="stories-list">
-      <h4>{{ $t("Stories for this sensor") }}</h4>
+      <h4 class="card-title">{{ $t("Stories for this sensor") }}</h4>
       <article v-for="story in visibleStories" :key="story.id" class="story-card">
         <div
           v-if="story.icon"
@@ -134,6 +133,7 @@
 <script setup>
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { encodeAddress, decodeAddress } from "@polkadot/util-crypto";
 import { settings } from "@config";
 import { useAccounts } from "@/composables/useAccounts";
@@ -141,9 +141,17 @@ import { useMap } from "@/composables/useMap";
 import { usePolkadotApi } from "robonomics-interface-vue";
 import Keyring from "@polkadot/keyring";
 import { datalog } from "robonomics-interface";
-import { getStoriesForSensor, shouldShowTestStories, upsertStory } from "@/utils/storiesLocal";
+import { dayISO } from "@/utils/date";
+import {
+  fetchStoryList,
+  getStoriesForSensor,
+  isStoryHidden,
+  preferredUnitByStoryIcon,
+  normalizeBackendStory,
+  upsertStory,
+} from "@/composables/useStories";
 
-const IS_TEST_STORY = true;
+const { t: $t } = useI18n();
 
 const STORY_ICONS = [
   { id: "heat", title: "Heat wave", icon: "fa-solid fa-temperature-high" },
@@ -220,10 +228,11 @@ const isCheckingAuth = ref(false);
 const isSubmitting = ref(false);
 const lastTxHash = ref("");
 
-const visibleStories = computed(() => {
-  const list = Array.isArray(stories.value) ? stories.value : [];
-  return shouldShowTestStories() ? list : list.filter((s) => s?.test !== true);
-});
+let lastStoryTimestampMs = 0;
+
+const visibleStories = computed(() =>
+  (Array.isArray(stories.value) ? stories.value : []).filter((s) => !isStoryHidden(s))
+);
 
 const accountStore = useAccounts();
 const mapState = useMap();
@@ -249,6 +258,7 @@ watch(
     resetFlow();
     loadStories();
     refreshBackendStory();
+    refreshBackendStoriesList();
     refreshAuthState();
   },
   { immediate: true }
@@ -318,6 +328,58 @@ async function fetchLastStoryFromBackend(sensorId) {
   return data;
 }
 
+async function refreshBackendStoriesList() {
+  const sid = props.sensorId;
+  if (!sid) return false;
+
+  try {
+    const { list } = await fetchStoryList({ limit: 50, page: 1 });
+    const records = Array.isArray(list) ? list : [];
+
+    let mergedAny = false;
+    for (const rec of records) {
+      const sensorId = rec?.sensor_id || rec?.sensorId;
+      if (sensorId !== sid) continue;
+
+      const normalized = normalizeBackendStory(rec);
+      if (!normalized) continue;
+
+      const iconObj =
+        STORY_ICONS.find((i) => i.id === normalized.iconId) || STORY_ICONS[STORY_ICONS.length - 1];
+
+      const backendStory = {
+        id: normalized.id,
+        backendKey: normalized.backendKey,
+        sensorId: normalized.sensorId,
+        owner: normalized.owner || ownerAddress.value,
+        geo: props.geo ? { lat: props.geo.lat, lng: props.geo.lng } : null,
+        date: normalized.date || "",
+        timestamp: normalized.timestamp,
+        message: normalized.message || "",
+        comment: normalized.message || "",
+        iconId: iconObj.id,
+        iconTitle: iconObj.title,
+        icon: iconObj.icon,
+        createdAt: normalized.createdAt,
+        test: false,
+        source: "backend",
+      };
+
+      const merged = upsertStory(sid, backendStory, { dedupeKey: backendStory.backendKey });
+      if (merged) mergedAny = true;
+    }
+
+    if (mergedAny) {
+      loadStories();
+      return true;
+    }
+  } catch {
+    // silent
+  }
+
+  return false;
+}
+
 async function refreshBackendStory() {
   const sid = props.sensorId;
   if (!sid) return;
@@ -326,8 +388,8 @@ async function refreshBackendStory() {
     const record = raw?.result || raw?.story || raw;
     if (!record) return;
 
+    const backendAuthor = record?.author || record?.owner || "";
     const message = record?.message || record?.comment || "";
-    const isTest = record?.t === true || record?.test === true || record?.isTest === true;
     const recordTs =
       record?.timestamp != null && !Number.isNaN(Number(record.timestamp))
         ? Number(record.timestamp)
@@ -339,13 +401,13 @@ async function refreshBackendStory() {
       null;
 
     const date = record?.d || record?.date || "";
-    const rawIcon = record?.i || record?.iconId || record?.icon_id || "note";
+    const rawIcon = record?.i || record?.icon || record?.iconId || record?.icon_id || "note";
     const iconId = ICON_ID_BY_CODE[rawIcon] || rawIcon;
     const iconObj = STORY_ICONS.find((i) => i.id === iconId) || STORY_ICONS[STORY_ICONS.length - 1];
 
-    // Prefer backend-provided id/timestamp; otherwise fall back to a content fingerprint.
     const backendKey =
       (record?.id ? `id:${record.id}` : "") ||
+      (recordTs && backendAuthor ? `bk:${backendAuthor}:${sid}:${recordTs}` : "") ||
       (recordTs ? `ts:${recordTs}` : "") ||
       `fp:${sid}|${String(createdAt || "").slice(0, 19)}|${iconObj.id}|${String(message).slice(
         0,
@@ -356,16 +418,16 @@ async function refreshBackendStory() {
       id: backendKey,
       backendKey,
       sensorId: sid,
-      owner: ownerAddress.value,
+      owner: backendAuthor || ownerAddress.value,
       geo: props.geo ? { lat: props.geo.lat, lng: props.geo.lng } : null,
       date,
+      timestamp: recordTs,
       message,
       comment: message,
       iconId: iconObj.id,
       iconTitle: iconObj.title,
       icon: iconObj.icon,
       createdAt: createdAt || new Date().toISOString(),
-      test: isTest,
       source: "backend",
     };
 
@@ -384,7 +446,7 @@ async function waitForBackendIndexing({ sensorId, timeoutMs = 45000 }) {
   const start = Date.now();
   let delay = 1500;
   while (Date.now() - start < timeoutMs) {
-    const merged = await refreshBackendStory();
+    const merged = (await refreshBackendStory()) || (await refreshBackendStoriesList());
     if (merged) return true;
     await new Promise((r) => setTimeout(r, delay));
     delay = Math.min(7000, Math.floor(delay * 1.4));
@@ -400,6 +462,9 @@ async function saveStory() {
     STORY_ICONS.find((item) => item.id === selectedIconId.value) || STORY_ICONS[0];
   const date = storyDate.value || mapState.currentDate?.value || "";
   const message = storyComment.value;
+  let ts = Date.now();
+  if (ts <= lastStoryTimestampMs) ts = lastStoryTimestampMs + 1;
+  lastStoryTimestampMs = ts;
 
   const owner = ownerAddress.value;
   const ownerAcc = accountsList.value.find((acc) => normalizeAddress(acc?.address) === owner);
@@ -407,19 +472,19 @@ async function saveStory() {
 
   if (!phrase) {
     statusType.value = "error";
-    statusMessage.value = "Missing account secret phrase for signing.";
+    statusMessage.value = $t("Missing account secret phrase for signing.");
     return;
   }
 
   statusType.value = "info";
-  statusMessage.value = "Sending story…";
+  statusMessage.value = $t("Sending story…");
   isSubmitting.value = true;
   lastTxHash.value = "";
 
   const ownerSensors = await accountStore.getUserSensors(owner);
   if (!Array.isArray(ownerSensors) || !ownerSensors.includes(props.sensorId)) {
     statusType.value = "error";
-    statusMessage.value = "This account has no subscription for this sensor.";
+    statusMessage.value = $t("This account has no subscription for this sensor.");
     isSubmitting.value = false;
     return;
   }
@@ -443,10 +508,9 @@ async function saveStory() {
         message,
         sensor: props.sensorId,
         model: 5,
-        timestamp: Date.now(),
-        d: date,
+        timestamp: ts,
+        date, // explicit (YYYY-MM-DD) for linking
         i: ICON_CODE_BY_ID[selectedIcon.id] || selectedIcon.id,
-        t: IS_TEST_STORY,
       })
     );
 
@@ -461,38 +525,39 @@ async function saveStory() {
   }
 
   const newStory = {
-    id: `${props.sensorId}-${Date.now()}`,
+    id: `bk:${owner}:${props.sensorId}:${ts}`,
+    backendKey: `bk:${owner}:${props.sensorId}:${ts}`,
     sensorId: props.sensorId,
     owner: ownerAddress.value,
     geo: props.geo ? { lat: props.geo.lat, lng: props.geo.lng } : null,
     date,
+    timestamp: ts,
     message,
     comment: message,
     iconId: selectedIcon.id,
     iconTitle: selectedIcon.title,
     icon: selectedIcon.icon,
-    createdAt: new Date().toISOString(),
-    test: IS_TEST_STORY,
+    createdAt: new Date(ts).toISOString(),
     source: "local",
   };
-  upsertStory(props.sensorId, newStory);
+  upsertStory(props.sensorId, newStory, { dedupeKey: newStory.backendKey });
   loadStories();
 
   statusType.value = "success";
   statusMessage.value = lastTxHash.value
-    ? `Story sent (tx: ${lastTxHash.value}). Waiting for indexing…`
-    : "Story sent. Waiting for indexing…";
+    ? `${$t("Story sent")} (tx: ${lastTxHash.value}). ${$t("Waiting for indexing…")}`
+    : $t("Story sent. Waiting for indexing…");
   resetFlow(false);
 
   const merged = await waitForBackendIndexing({ sensorId: props.sensorId });
   if (merged) {
     statusType.value = "success";
-    statusMessage.value = "Story added successfully.";
+    statusMessage.value = $t("Story added successfully.");
   } else {
     statusType.value = "info";
     statusMessage.value = lastTxHash.value
-      ? `Story sent (tx: ${lastTxHash.value}). Indexing may take a minute.`
-      : "Story sent. Indexing may take a minute.";
+      ? `${$t("Story sent")} (tx: ${lastTxHash.value}). ${$t("Indexing may take a minute.")}`
+      : $t("Story sent. Indexing may take a minute.");
   }
   isSubmitting.value = false;
 }
@@ -506,16 +571,21 @@ function storyLink(story) {
   const lat = geo?.lat ?? settings.MAP.position.lat;
   const lng = geo?.lng ?? settings.MAP.position.lng;
   const zoom = geo?.lat != null && geo?.lng != null ? 18 : settings.MAP.zoom;
-  const provider = mapState.currentProvider?.value || "remote";
-  const type = mapState.currentUnit?.value || settings.MAP.measure;
-  const date = story?.date || mapState.currentDate?.value;
+  // Stories always point to historical data, which is only available in `remote`.
+  const provider = "remote";
+  const suggestedType = preferredUnitByStoryIcon(story?.iconId);
+  const type = suggestedType || mapState.currentUnit?.value || settings.MAP.measure;
+  const ts = story?.timestamp;
+  const derivedDay =
+    story?.date || (ts != null && !Number.isNaN(Number(ts)) ? dayISO(Number(ts)) : null);
 
   return {
     name: "main",
     query: {
       provider,
       type,
-      ...(date ? { date } : {}),
+      ...(derivedDay ? { date: derivedDay } : {}),
+      ...(ts != null ? { timestamp: String(ts) } : {}),
       zoom,
       lat,
       lng,
@@ -548,11 +618,6 @@ function formatDate(value) {
   gap: calc(var(--gap) * 0.7);
 }
 
-.story-hero {
-  display: grid;
-  gap: 4px;
-}
-
 .story-hero h3 {
   margin: 0;
 }
@@ -564,7 +629,7 @@ function formatDate(value) {
 }
 
 .story-jump {
-  margin-left: 0.5em;
+  margin-left: calc(var(--gap) * 0.4);
   font-weight: 800;
   text-decoration: none;
   color: var(--color-blue);
@@ -585,7 +650,15 @@ function formatDate(value) {
 
 .card-title {
   font-weight: 900;
-  margin-bottom: 6px;
+  margin: 0;
+  padding-bottom: calc(var(--gap) * 0.5);
+  margin-bottom: calc(var(--gap) * 0.7);
+  text-transform: uppercase;
+  border-bottom: 1px solid #333;
+}
+
+.story-form {
+  margin-bottom: calc(var(--gap) * 2);
 }
 
 .stack {
@@ -595,11 +668,12 @@ function formatDate(value) {
 
 .field {
   display: grid;
-  gap: 0.4rem;
+  gap: calc(var(--gap) * 0.5);
 }
 
 textarea {
   resize: vertical;
+  resize: none;
 }
 
 .field-title {
@@ -611,7 +685,7 @@ textarea {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 10px;
+  gap: calc(var(--gap) * 0.35);
 }
 
 .field-meta {
@@ -624,8 +698,6 @@ textarea {
   font-size: calc(var(--font-size) * 1.02);
   opacity: 0.7;
 }
-
-/* removed: two-column form layout (single column feels better here) */
 
 textarea {
   border: 1px solid rgba(0, 0, 0, 0.14);
@@ -657,54 +729,79 @@ textarea:focus {
 
 .status.success {
   background: rgba(40, 170, 85, 0.12);
-  color: #1f7b44;
+  color: var(--color-green);
 }
 
 .status.error,
 .error {
   background: rgba(220, 70, 70, 0.1);
-  color: #a92b2b;
+  color: var(--color-red);
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
 }
 
+.icon-wrapper {
+  margin-bottom: var(--gap);
+}
+
 .image-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-  gap: calc(var(--gap) * 0.5);
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: calc(var(--gap) * 0.6);
 }
 
 .image-option {
+  aspect-ratio: 1 / 1;
   display: grid;
-  place-items: center;
-  text-align: center;
-  gap: 0.35rem;
-  border: 1px solid #ddd;
-  border-radius: 0.5rem;
-  padding: 0.5rem;
+  grid-template-rows: auto 1fr auto;
+  align-items: center;
+  justify-items: center;
+  padding: calc(var(--gap) * 0.6) calc(var(--gap) * 0.5);
+  border-radius: 15px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--color-light);
   cursor: pointer;
-  background: rgba(0, 0, 0, 0.01);
-  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  position: relative;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease,
+    background 0.12s ease;
+}
+
+.image-option:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.image-option:active {
+  transform: scale(0.96);
 }
 
 .image-option.selected {
   border-color: var(--color-blue);
   background: rgba(80, 120, 255, 0.08);
-}
-
-.image-option:hover {
-  transform: translateY(-1px);
-  background: rgba(0, 0, 0, 0.03);
-  border-color: rgba(0, 0, 0, 0.22);
+  box-shadow: 0 0 0 1px var(--color-blue);
 }
 
 .image-option input {
-  accent-color: var(--color-blue);
+  display: none;
 }
 
-.image-option img {
-  width: 42px;
-  height: 42px;
+.image-option span {
+  font-size: calc(var(--font-size) * 0.8);
+  line-height: 1.2;
+  color: var(--color-gray);
+  text-align: center;
+  margin-top: calc(var(--gap) * 0.4);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.image-option .story-icon {
+  opacity: 0.55;
+}
+
+.image-option.selected .story-icon {
+  opacity: 1;
 }
 
 .story-icon {
@@ -718,13 +815,18 @@ textarea:focus {
 }
 
 .story-icon-badge {
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
+  width: 70px;
+  height: 70px;
+  border-radius: 100%;
   display: grid;
   place-items: center;
   background: color-mix(in srgb, var(--badge-color) 14%, transparent);
-  border: 1px solid color-mix(in srgb, var(--badge-color) 28%, rgba(0, 0, 0, 0.08));
+}
+
+.stories-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
 }
 
 .stories-list h4 {
@@ -735,12 +837,12 @@ textarea:focus {
 
 .story-card {
   display: grid;
-  grid-template-columns: 40px 1fr auto;
+  grid-template-columns: 70px 1fr auto;
   gap: var(--gap);
-  align-items: start;
+  align-items: center;
   border: 1px solid #ddd;
   border-radius: 0.5rem;
-  padding: 0.6rem;
+  padding: calc(var(--gap) * 0.7);
   background: #fff;
 }
 
@@ -750,20 +852,7 @@ textarea:focus {
 }
 
 .story-card p {
+  font-weight: 600;
   margin: 0 0 0.35rem 0;
-}
-
-.story-delete {
-  align-self: start;
-  opacity: 0.75;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  padding: 0.25rem;
-  line-height: 1;
-}
-
-.story-delete:hover {
-  opacity: 1;
 }
 </style>

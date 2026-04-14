@@ -76,19 +76,24 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue";
 import { settings } from "@config";
 import { useMap } from "@/composables/useMap";
+import { dayISO } from "@/utils/date";
 import {
+  fetchStoryList,
   getAllStoriesFlat,
+  isStoryHidden,
+  normalizeBackendStory,
+  preferredUnitByStoryIcon,
+  upsertStory,
   readSeenSet,
-  shouldShowTestStories,
   storiesLocalKeys,
   writeSeenSet,
-} from "@/utils/storiesLocal";
+} from "@/composables/useStories";
 
 const STORY_NAV_FLAG = "story_nav_set_date";
 
 const mapState = useMap();
 const scroller = ref(null);
-const nowTick = ref(0);
+const remoteStories = ref([]);
 const isOverflowing = ref(false);
 const canScrollLeft = ref(false);
 const canScrollRight = ref(false);
@@ -148,14 +153,51 @@ function markStoryNavigation(story) {
 
 const unseenCount = computed(() => stories.value.filter((s) => !isStorySeen(s)).length);
 
+async function refreshRemoteStories() {
+  try {
+    // Backend is the source-of-truth for the global feed.
+    // We still merge in local cache below so freshly published stories can appear immediately
+    // even before the indexer catches up.
+    const { list } = await fetchStoryList({ limit: 50, page: 1 });
+    const normalized = (list || []).map((r) => normalizeBackendStory(r)).filter(Boolean);
+    remoteStories.value = normalized;
+
+    // Persist backend stories into the per-sensor cache as well.
+    // The sensor popup/banner reads from `getStoriesForSensor()` (localStorage),
+    // so without this, clicking a feed story may navigate correctly but still show “no story”.
+    for (const s of normalized) {
+      if (!s?.sensorId) continue;
+      upsertStory(s.sensorId, s, { dedupeKey: s.backendKey || s.id });
+    }
+  } catch {
+    // silent: header should still work with local cached stories if backend is down
+    remoteStories.value = remoteStories.value || [];
+  }
+}
+
 const stories = computed(() => {
-  // `nowTick` makes it reactive to storage events (see listeners below)
-  nowTick.value;
-  const all = getAllStoriesFlat();
+  const remote = Array.isArray(remoteStories.value) ? remoteStories.value : [];
+  const local = getAllStoriesFlat();
+
+  // De-dupe backend/local copies of the same story.
+  // `backendKey` is designed to be stable across sources (ideally: author+sensor+timestamp).
+  const byKey = new Map();
+  for (const s of [...remote, ...local]) {
+    if (!s) continue;
+    const key = String(s.backendKey || s.id || "");
+    if (!key) continue;
+    if (!byKey.has(key)) byKey.set(key, s);
+  }
+
+  const all = Array.from(byKey.values());
   if (!all.length) return [];
-  const filtered = shouldShowTestStories() ? all : all.filter((s) => s?.test !== true);
-  filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  return filtered.slice(0, 8);
+
+  // Hard hide list for “do not show in feed” items (by sensorId+timestamp pair).
+  const visible = all.filter((s) => !isStoryHidden(s));
+  if (!visible.length) return [];
+
+  visible.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return visible.slice(0, 8);
 });
 
 watch(
@@ -167,27 +209,27 @@ watch(
   { immediate: true }
 );
 
-function collapse(id) {
-  const s = String(id || "");
-  if (s.length <= 14) return s;
-  return `${s.slice(0, 6)}...${s.slice(-6)}`;
-}
-
 function storyLink(story) {
   const geo = story.geo || null;
   const lat = geo?.lat ?? settings.MAP.position.lat;
   const lng = geo?.lng ?? settings.MAP.position.lng;
   const zoom = geo?.lat != null && geo?.lng != null ? 18 : settings.MAP.zoom;
-  const provider = mapState.currentProvider?.value || "remote";
-  const type = mapState.currentUnit?.value || settings.MAP.measure;
-  const date = story?.date || mapState.currentDate?.value;
+  // Stories always point to historical data, which is only available in `remote`.
+  const provider = "remote";
+  const suggestedType = preferredUnitByStoryIcon(story?.iconId);
+  const type = suggestedType || mapState.currentUnit?.value || settings.MAP.measure;
+  const ts = story?.timestamp;
+  const derivedDay =
+    story?.date ||
+    (ts != null && !Number.isNaN(Number(ts)) ? dayISO(Number(ts)) : null);
 
   return {
     name: "main",
     query: {
       provider,
       type,
-      ...(date ? { date } : {}),
+      ...(derivedDay ? { date: derivedDay } : {}),
+      ...(ts != null ? { timestamp: String(ts) } : {}),
       zoom,
       lat,
       lng,
@@ -200,6 +242,20 @@ function scrollBy(dir) {
   const el = scroller.value;
   if (!el) return;
   const step = Math.max(220, Math.floor(el.clientWidth * 0.7));
+  // If we're close to an edge, snap to it to avoid half-visible bubbles.
+  const leftNow = el.scrollLeft;
+  const maxLeft = Math.max(0, el.scrollWidth - el.clientWidth);
+  const edgeSlack = 12; // px threshold where we treat as "at edge"
+
+  if (dir < 0 && leftNow <= step + edgeSlack) {
+    el.scrollTo({ left: 0, behavior: "smooth" });
+    return;
+  }
+  if (dir > 0 && maxLeft - leftNow <= step + edgeSlack) {
+    el.scrollTo({ left: maxLeft, behavior: "smooth" });
+    return;
+  }
+
   el.scrollBy({ left: dir * step, behavior: "smooth" });
 }
 
@@ -212,8 +268,11 @@ function updateOverflow() {
     return;
   }
   isOverflowing.value = el.scrollWidth > el.clientWidth + 2;
-  canScrollLeft.value = el.scrollLeft > 1;
-  canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+  const leftNow = el.scrollLeft;
+  const maxLeft = Math.max(0, el.scrollWidth - el.clientWidth);
+  const edgeSlack = 12;
+  canScrollLeft.value = leftNow > edgeSlack;
+  canScrollRight.value = maxLeft - leftNow > edgeSlack;
 }
 
 const scrollerMaskStyle = computed(() => {
@@ -243,12 +302,13 @@ const scrollerMaskStyle = computed(() => {
 });
 
 function bump() {
-  nowTick.value++;
+  refreshRemoteStories();
   updateOverflow();
 }
 
 onMounted(() => {
   loadSeen();
+  refreshRemoteStories();
   window.addEventListener("storage", bump);
   window.addEventListener(storiesLocalKeys.STORIES_UPDATED_EVENT, bump);
   updateOverflow();
@@ -277,7 +337,7 @@ onBeforeUnmount(() => {
   max-width: 100%;
   min-width: 0;
   overflow: hidden;
-  padding: 8px 10px;
+  padding: calc(var(--gap) * 0.5) calc(var(--gap) * 0.8);
   border-radius: 0;
   background: rgba(255, 255, 255, 0.22);
   border: 1px solid rgba(0, 0, 0, 0.07);
@@ -287,9 +347,9 @@ onBeforeUnmount(() => {
 .stories-meta {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: calc(var(--gap) * 0.7);
   flex: 0 0 auto;
-  padding-right: 6px;
+  padding-right: calc(var(--gap) * 0.3);
 }
 
 .stories-dot {
@@ -354,20 +414,10 @@ onBeforeUnmount(() => {
   display: none;
 }
 
-.story-bubble {
-  display: grid;
-  gap: 6px;
-  justify-items: center;
-  scroll-snap-align: start;
-  text-decoration: none;
-  color: inherit;
-}
-
 .bubble-ring {
   width: 54px;
   height: 54px;
-  border-radius: 50%;
-  padding: 2px;
+  border-radius: 100%;
   background: transparent;
   border: 2px solid var(--color-blue);
   position: relative;
@@ -380,7 +430,7 @@ onBeforeUnmount(() => {
 .bubble {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
+  border-radius: 100%;
   background: var(--color-light);
   display: grid;
   place-items: center;
@@ -405,11 +455,10 @@ onBeforeUnmount(() => {
 .story-icon-badge {
   width: 34px;
   height: 34px;
-  border-radius: 999px;
+  border-radius: 100%;
   display: grid;
   place-items: center;
   background: color-mix(in srgb, var(--badge-color) 14%, transparent);
-  border: 1px solid color-mix(in srgb, var(--badge-color) 28%, rgba(0, 0, 0, 0.08));
 }
 
 @media (prefers-color-scheme: dark) {

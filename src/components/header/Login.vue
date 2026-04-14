@@ -1,15 +1,19 @@
 <template>
   <button
+    v-if="!isReady"
     class="popovercontrol button-round-outline"
     type="button"
     aria-label="Account"
     disabled
-    v-if="false"
     style="opacity: 0.7"
   >
     <font-awesome-icon icon="fa-solid fa-user" />
   </button>
-  <template v-if="false">
+
+  <router-link v-else-if="accounts.length === 0" to="/login/" class="button">
+    {{ $t("Login ") }}</router-link
+  >
+  <template v-else>
     <div id="accounts" class="popover popover-top-right accounts-popover" popover>
       <div class="accounts-title">{{ $t("Accounts") }}</div>
 

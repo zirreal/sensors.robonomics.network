@@ -12,6 +12,10 @@ import Main from "./views/Main.vue";
 import PrivacyPolicy from "./views/PrivacyPolicy.vue";
 // import SensorEmbed from "./views/SensorEmbed.vue";
 
+// blog
+import Blog from './views//Blog.vue';
+import BlogPost from './components/blog/BlogPost.vue';
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   scrollBehavior(to) {
@@ -76,6 +80,16 @@ const router = createRouter({
       name: "login",
       component: Login,
     },
+      {
+      path: "/blog",
+      name: "blog",
+      component: Blog
+    },
+    {
+      path: "/blog/:slug",
+      name: "blog-post",
+      component: BlogPost
+    }
     // {
     //   path: "/embed/sensor/:id/",
     //   name: "sensor-embed",
