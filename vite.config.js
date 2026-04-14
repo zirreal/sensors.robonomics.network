@@ -8,6 +8,8 @@ import { defineConfig } from "vite";
 import Markdown from 'unplugin-vue-markdown/vite'
 import fs from "fs"
 import path from "path"
+import fsp from "fs/promises";
+import fg from "fast-glob";
 
 function getBlogRoutes() {
   const postsDir = path.resolve(__dirname, "src/blog")
@@ -26,6 +28,30 @@ export default defineConfig(() => {
     // server: { https: true },
     plugins: [
       vue({include: [/\.vue$/, /\.md$/]}),
+      {
+        name: "copy-blog-images",
+        apply: "build",
+        async writeBundle() {
+          const blogDir = path.resolve(__dirname, "src/blog");
+          const outDir = path.resolve(__dirname, "dist");
+
+          const files = await fg(["**/images/**/*"], {
+            cwd: blogDir,
+            onlyFiles: true,
+            dot: false,
+            followSymbolicLinks: true,
+          });
+
+          await Promise.all(
+            files.map(async (rel) => {
+              const src = path.join(blogDir, rel);
+              const dst = path.join(outDir, "blog", rel);
+              await fsp.mkdir(path.dirname(dst), { recursive: true });
+              await fsp.copyFile(src, dst);
+            })
+          );
+        },
+      },
       prerender({
         routes: [
           "/",

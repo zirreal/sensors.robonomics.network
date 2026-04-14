@@ -99,6 +99,16 @@ const coverUrl = computed(() => {
   const path = matchedEntry.value?.path;
   if (!raw || !path) return "";
 
+  if (import.meta.env.PROD) {
+    const slug = route.params.slug;
+    if (typeof slug === "string") {
+      const normalized = raw.startsWith("./") ? raw.slice(2) : raw;
+      if (normalized.startsWith("images/")) {
+        return `/blog/${slug}/${normalized}`;
+      }
+    }
+  }
+
   return new URL(raw, new URL(path, import.meta.url)).href;
 });
 
@@ -116,9 +126,34 @@ function applyExternalLinkTargets() {
   }
 }
 
+function applyBlogImagePaths() {
+  if (!import.meta.env.PROD) return;
+
+  const slug = route.params.slug;
+  if (typeof slug !== "string") return;
+
+  const root = document.querySelector(".blog-post__content");
+  if (!root) return;
+
+  const imgs = root.querySelectorAll("img[src]");
+  for (const img of imgs) {
+    const src = img.getAttribute("src") || "";
+    if (!src) continue;
+    if (/^(https?:)?\/\//i.test(src)) continue;
+    if (src.startsWith("data:")) continue;
+    if (src.startsWith("/")) continue;
+
+    const normalized = src.startsWith("./") ? src.slice(2) : src;
+    if (!normalized.startsWith("images/")) continue;
+
+    img.setAttribute("src", `/blog/${slug}/${normalized}`);
+  }
+}
+
 onMounted(async () => {
   await nextTick();
   applyExternalLinkTargets();
+  applyBlogImagePaths();
 });
 
 watch(
@@ -126,6 +161,7 @@ watch(
   async () => {
     await nextTick();
     applyExternalLinkTargets();
+    applyBlogImagePaths();
   }
 );
 </script>
