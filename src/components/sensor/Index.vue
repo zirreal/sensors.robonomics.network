@@ -38,30 +38,6 @@
         <font-awesome-icon icon="fa-solid fa-chart-line" />
       </button>
       <button
-        class="panel-button"
-        :class="{ active: activeTab === 'info' }"
-        @click.prevent="activeTab = 'info'"
-        :title="t('sensorpopup.infotitle')"
-      >
-        <font-awesome-icon icon="fa-regular fa-file-lines" />
-      </button>
-      <button
-        class="panel-button"
-        :class="{ active: activeTab === 'sharelink' }"
-        @click.prevent="activeTab = 'sharelink'"
-        :title="t('sensorpopup.sharedefault')"
-      >
-        <font-awesome-icon icon="fa-solid fa-link" />
-      </button>
-      <button
-        class="panel-button"
-        :class="{ active: activeTab === 'bookmarks' }"
-        @click.prevent="activeTab = 'bookmarks'"
-        :title="t('sensorpopup.bookmarkbutton')"
-      >
-        <font-awesome-icon icon="fa-regular fa-bookmark" />
-      </button>
-      <button
         v-if="isAccountsEnabled"
         class="panel-button"
         :class="{ active: activeTab === 'edit' }"
@@ -70,13 +46,21 @@
       >
         <font-awesome-icon icon="fa-regular fa-pen-to-square" />
       </button>
+      <button
+        class="panel-button"
+        :class="{ active: activeTab === 'details' }"
+        @click.prevent="activeTab = 'details'"
+        :title="t('sensorpopup.infotitle') || 'Details'"
+      >
+        <font-awesome-icon icon="fa-regular fa-file-lines" />
+      </button>
     </div>
 
     <div class="scrollable-y">
       <div v-show="activeTab === 'chart'" class="tab-content chart-tab">
         <div v-if="activeStories.length" class="story-day">
           <div class="story-day-body">
-            <div class="story-day-title">Stories for this day</div>
+            <div class="story-day-title">{{ $t("Stories for this day") }}</div>
 
             <div class="story-day-list" :class="{ grid2: activeStories.length > 1 }">
               <div v-for="s in activeStories" :key="s.id" class="story-day-item">
@@ -117,17 +101,38 @@
         <Analytics :point="point" :log="log" />
       </div>
 
-      <div v-show="activeTab === 'info'" class="tab-content">
-        <Info :sensor-id="sensor_id" :owner="owner" :geo="geo" />
-      </div>
+      <div v-show="activeTab === 'details'" class="tab-content details-tab">
+        <div class="details-stack">
+          <Accordion :defaultOpen="true">
+            <template #title>
+              <span class="details-title">
+                <font-awesome-icon icon="fa-regular fa-bookmark" />
+                <span>{{ t("sensorpopup.bookmarkbutton") || "Bookmark" }}</span>
+              </span>
+            </template>
+            <Bookmark v-if="sensor_id" :id="sensor_id" :address="point?.address" :geo="geo" />
+          </Accordion>
 
-      <div v-show="activeTab === 'sharelink'" class="tab-content">
-        <ShareLink :log="log" :point="point" />
-      </div>
+          <Accordion>
+            <template #title>
+              <span class="details-title">
+                <font-awesome-icon icon="fa-regular fa-file-lines" />
+                <span>{{ t("sensorpopup.infotitle") || "Info" }}</span>
+              </span>
+            </template>
+            <Info :sensor-id="sensor_id" :owner="owner" :geo="geo" />
+          </Accordion>
 
-      <!-- Bookmarks Tab -->
-      <div v-show="activeTab === 'bookmarks'" class="tab-content">
-        <Bookmark v-if="sensor_id" :id="sensor_id" :address="point?.address" :geo="geo" />
+          <Accordion>
+            <template #title>
+              <span class="details-title">
+                <font-awesome-icon icon="fa-solid fa-link" />
+                <span>{{ t("sensorpopup.sharedefault") || "Share" }}</span>
+              </span>
+            </template>
+            <ShareLink :log="log" :point="point" />
+          </Accordion>
+        </div>
       </div>
 
       <div v-if="isAccountsEnabled && activeTab === 'edit'" class="tab-content">
@@ -148,7 +153,6 @@ import { computed, ref, watch, onMounted, onBeforeUnmount } from "vue";
 import { useI18n } from "vue-i18n";
 import { useMap } from "@/composables/useMap";
 import { useSensors } from "@/composables/useSensors";
-import { useBookmarks } from "@/composables/useBookmarks";
 import { getStoriesForSensor, isStoryHidden } from "@/composables/useStories";
 import { getAvatar } from "@/utils/avatarGenerator";
 import { settings } from "@config";
@@ -159,6 +163,7 @@ import Analytics from "./tabs/Analytics.vue";
 import Info from "./tabs/Info.vue";
 import ShareLink from "./tabs/ShareLink.vue";
 import EditStory from "./tabs/EditStory.vue";
+import Accordion from "../controls/Accordion.vue";
 
 // Импортируем изображения типов сенсоров
 import diyIcon from "@/assets/images/sensorTypes/DIY.svg";
@@ -174,7 +179,6 @@ const emit = defineEmits(["close"]);
 
 const { t, locale } = useI18n();
 const mapState = useMap();
-const { idbBookmarks } = useBookmarks();
 
 const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
 const sensorsUI = useSensors(localeComputed);
@@ -240,17 +244,22 @@ const activeStories = computed(() => {
 
 // Порядок табов для навигации клавиатурой (edit только если accounts включен)
 const tabsOrder = computed(() => {
-  const base = ["chart", "info", "sharelink", "bookmarks"];
-  if (isAccountsEnabled.value) {
-    base.push("edit");
-  }
-  return base;
+  if (isAccountsEnabled.value) return ["chart", "edit", "details"];
+  return ["chart", "details"];
 });
 
 // Функция для переключения табов клавиатурой
 const handleKeydown = (event) => {
+  const target = event?.target;
+  const tag = target?.tagName ? String(target.tagName).toLowerCase() : "";
+  const isTypingTarget =
+    tag === "input" || tag === "textarea" || tag === "select" || target?.isContentEditable === true;
+
   // Проверяем, что нажата стрелка влево или вправо
   if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+    // Don't hijack arrows while the user types/edits text.
+    if (isTypingTarget || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+
     // Предотвращаем стандартное поведение (прокрутку страницы)
     event.preventDefault();
 
@@ -305,12 +314,6 @@ const geo = computed(() => {
 
 const owner = computed(() => props.point?.owner || null);
 
-// Проверяем, добавлен ли сенсор в закладки
-const isBookmarked = computed(() => {
-  if (!sensor_id.value) return false;
-  return idbBookmarks.value?.some((bookmark) => bookmark.id === sensor_id.value) || false;
-});
-
 // Гарантируем, что logs всегда массив
 const log = computed(() => (Array.isArray(props.point?.logs) ? props.point.logs : null));
 
@@ -345,27 +348,6 @@ const closesensor = () => {
   // Просто эмитим событие закрытия - всю логику обрабатывает Main.vue
   emit("close");
 };
-
-/**
- * Генерирует ссылку на карту в зависимости от устройства
- * @param {number} lat - Широта
- * @param {number} lon - Долгота
- * @param {string} [label="Sensor"] - Подпись для метки
- * @returns {string} URL ссылки на карту
- */
-function getMapLink(lat, lon, label = "Sensor") {
-  const ua = navigator.userAgent || "";
-  const isIOS = /iPad|iPhone|iPod/.test(ua);
-  const isAndroid = /Android/.test(ua);
-
-  if (isIOS) {
-    return `https://maps.apple.com/?ll=${lat},${lon}&q=${encodeURIComponent(label)}`;
-  }
-  if (isAndroid) {
-    return `geo:${lat},${lon}?q=${lat},${lon}(${encodeURIComponent(label)})`;
-  }
-  return `https://www.google.com/maps?q=${lat},${lon}`;
-}
 
 onMounted(() => {
   // Инициализация компонента
@@ -437,7 +419,10 @@ watch(
 }
 
 .scrollable-y {
-  max-height: 85%;
+  max-height: 90%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: calc(var(--gap) * 2 + env(safe-area-inset-bottom, 0px));
 }
 
 /* Стили скелетона для заглушки графика */
@@ -494,6 +479,11 @@ watch(
     left: 0;
     width: 100%;
     top: 0;
+  }
+
+  .scrollable-y {
+    max-height: calc(100dvh - 170px);
+    padding-bottom: calc(var(--gap) * 3 + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -634,6 +624,32 @@ watch(
   position: relative;
 }
 
+.details-stack {
+  display: grid;
+  gap: calc(var(--gap) * 0.9);
+}
+
+.details-title {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--gap) * 0.6);
+  font-weight: 900;
+}
+
+.details-tab :deep(.accordion) {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.details-tab :deep(.accordion__header) {
+  padding: calc(var(--gap) * 0.85) calc(var(--gap) * 1.2);
+}
+
+.details-tab :deep(.accordion__body) {
+  padding: calc(var(--gap) * 0.9) calc(var(--gap) * 1.2);
+  background: rgba(0, 0, 0, 0.015);
+}
+
 .chart-tab {
   padding-top: calc(var(--tab-offset-y) * 0.65);
 }
@@ -672,18 +688,18 @@ watch(
 
 .story-day-title {
   font-weight: 900;
-  margin-bottom: 2px;
+  margin-bottom: var(--gap);
 }
 
 .story-day-text {
-  opacity: 0.9;
+  opacity: 0.7;
   line-height: 1.25;
   word-break: break-word;
 }
 
 .story-day-list {
   display: grid;
-  gap: 6px;
+  gap: calc(var(--gap) * 0.8);
 }
 
 .story-day-list.grid2 {
@@ -707,6 +723,10 @@ watch(
 }
 
 @media screen and (max-width: 520px) {
+  .story-day {
+    margin-bottom: calc(var(--gap) * 3);
+  }
+
   .story-day-list.grid2 {
     grid-template-columns: 1fr;
   }

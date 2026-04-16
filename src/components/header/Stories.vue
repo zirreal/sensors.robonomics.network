@@ -6,7 +6,7 @@
         <div class="stories-meta-title">Stories</div>
         <div class="stories-meta-sub">
           <template v-if="unseenCount > 0">{{ unseenCount }} new</template>
-          <template v-else>All seen</template>
+          <template v-else>{{ $t("All seen") }}</template>
         </div>
       </div>
     </div>
@@ -220,8 +220,7 @@ function storyLink(story) {
   const type = suggestedType || mapState.currentUnit?.value || settings.MAP.measure;
   const ts = story?.timestamp;
   const derivedDay =
-    story?.date ||
-    (ts != null && !Number.isNaN(Number(ts)) ? dayISO(Number(ts)) : null);
+    story?.date || (ts != null && !Number.isNaN(Number(ts)) ? dayISO(Number(ts)) : null);
 
   return {
     name: "main",

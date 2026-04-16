@@ -1,6 +1,6 @@
 <template>
   <section class="sharelink">
-    <h4>Copy link to share</h4>
+    <h4>{{ $t("Copy link to share") }}</h4>
 
     <div class="sharelink-copy">
       <Copy
@@ -28,50 +28,75 @@
   </Accordion>
 
   <Accordion>
-    <template #title>Advanced sharing</template>
-    <div class="sharelink-settings">
-      <div class="sharelink-settings-item">
-        <div>
-          <label>
-            <input type="checkbox" v-model="includeProvider" />
-            {{ t("sensorpopup.provider") || "Provider" }}
-          </label>
-        </div>
-        <select v-model="selectedProvider" :disabled="!includeProvider">
-          <option value="realtime">Realtime</option>
-          <option value="remote">Remote</option>
-        </select>
+    <template #title>{{ $t("Advanced sharing") }}</template>
+    <div class="sharelink-advanced">
+      <div class="sharelink-presets" role="group" aria-label="Sharing presets">
+        <button
+          type="button"
+          class="chip"
+          :class="{ active: activePreset === 'realtime-now' }"
+          @click="applyPreset('realtime-now')"
+        >
+          <span>Realtime</span>
+        </button>
+        <button
+          type="button"
+          class="chip"
+          :class="{ active: activePreset === 'remote-day' }"
+          @click="applyPreset('remote-day')"
+        >
+          <span>Remote</span>
+        </button>
       </div>
 
-      <div class="sharelink-settings-item">
-        <div>
-          <label>
-            <input type="checkbox" v-model="includeType" />
-            {{ t("sensorpopup.type") || "Measurement Type" }}
-          </label>
+      <div class="sharelink-settings">
+        <div class="sharelink-settings-item">
+          <div>
+            <label>
+              <input type="checkbox" v-model="includeProvider" />
+              {{ t("sensorpopup.provider") || "Provider" }}
+            </label>
+          </div>
+          <select v-model="selectedProvider" :disabled="!includeProvider">
+            <option value="realtime">Realtime</option>
+            <option value="remote">Remote</option>
+          </select>
         </div>
-        <select v-model="selectedType" :disabled="!includeType">
-          <option v-for="option in typeOptions" :key="option.value" :value="option.value">
-            {{ option.name }}
-          </option>
-        </select>
-      </div>
 
-      <div class="sharelink-settings-item" v-if="selectedProvider !== 'realtime'">
-        <div>
-          <label>
-            <input type="checkbox" v-model="includeDate" />
-            {{ t("sensorpopup.date") || "Date" }}
-          </label>
+        <div class="sharelink-settings-item">
+          <div>
+            <label>
+              <input type="checkbox" v-model="includeType" />
+              {{ t("sensorpopup.type") || "Measurement Type" }}
+            </label>
+          </div>
+          <select v-model="selectedType" :disabled="!includeType">
+            <option v-for="option in typeOptions" :key="option.value" :value="option.value">
+              {{ option.name }}
+            </option>
+          </select>
         </div>
-        <input type="date" v-model="selectedDate" :max="maxDate" :disabled="!includeDate" />
-      </div>
 
-      <button @click.prevent="handleShareLink" class="button" :title="t('sensorpopup.sharelink')">
-        <font-awesome-icon icon="fa-solid fa-link" v-if="!state.shareLinkCopied" />
-        <font-awesome-icon icon="fa-solid fa-check" v-else />
-        <span class="sharelink-label">{{ t("sensorpopup.copyLink") || "Copy Link" }}</span>
-      </button>
+        <div class="sharelink-settings-item" v-if="selectedProvider !== 'realtime'">
+          <div>
+            <label>
+              <input type="checkbox" v-model="includeDate" />
+              {{ t("sensorpopup.date") || "Date" }}
+            </label>
+          </div>
+          <input type="date" v-model="selectedDate" :max="maxDate" :disabled="!includeDate" />
+        </div>
+
+        <button
+          @click.prevent="handleShareLink"
+          class="button sharelink-action"
+          :title="t('sensorpopup.sharelink')"
+        >
+          <font-awesome-icon icon="fa-solid fa-link" v-if="!state.shareLinkCopied" />
+          <font-awesome-icon icon="fa-solid fa-check" v-else />
+          <span class="sharelink-label">{{ t("sensorpopup.copyLink") || "Copy Link" }}</span>
+        </button>
+      </div>
     </div>
   </Accordion>
 </template>
@@ -116,6 +141,8 @@ const selectedDate = ref(route.query.date || dayISO());
 const includeProvider = ref(!!route.query.provider);
 const includeType = ref(!!route.query.type);
 const includeDate = ref(!!route.query.date);
+
+const activePreset = ref(null);
 
 // Получаем доступные типы из данных сенсора
 const availableTypes = computed(() => {
@@ -237,6 +264,56 @@ const generatedLink = computed(() => {
   const queryString = queryParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 });
+
+function applyPreset(id) {
+  activePreset.value = id;
+  if (id === "realtime-now") {
+    includeProvider.value = true;
+    selectedProvider.value = "realtime";
+    includeType.value = false;
+    includeDate.value = false;
+    return;
+  }
+  if (id === "remote-day") {
+    includeProvider.value = true;
+    selectedProvider.value = "remote";
+    includeDate.value = true;
+    selectedDate.value = dayISO();
+    includeType.value = true;
+    if (typeOptions.value.length > 0) {
+      selectedType.value = typeOptions.value[0].value;
+    }
+    return;
+  }
+}
+
+const derivedPreset = computed(() => {
+  const today = dayISO();
+  const isRealtimeNow =
+    includeProvider.value === true &&
+    selectedProvider.value === "realtime" &&
+    includeType.value === false &&
+    includeDate.value === false;
+  if (isRealtimeNow) return "realtime-now";
+
+  const isRemoteDay =
+    includeProvider.value === true &&
+    selectedProvider.value === "remote" &&
+    includeDate.value === true &&
+    selectedDate.value === today &&
+    includeType.value === true;
+  if (isRemoteDay) return "remote-day";
+
+  return null;
+});
+
+watch(
+  derivedPreset,
+  (next) => {
+    activePreset.value = next;
+  },
+  { immediate: true }
+);
 
 // Данные для превью Open Graph
 const ogPreviewData = computed(() => {
@@ -422,13 +499,16 @@ onBeforeUnmount(() => {
 }
 
 .sharelink-settings {
-  display: flex;
-  gap: calc(var(--gap) * 3);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr)) auto;
+  gap: calc(var(--gap) * 2);
+  align-items: end;
 }
 
 @media screen and (width < 950px) {
   .sharelink-settings {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    align-items: stretch;
     gap: calc(var(--gap) * 2);
   }
 }
@@ -437,6 +517,62 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: calc(var(--gap) * 0.5);
+}
+
+.sharelink-advanced {
+  display: grid;
+  gap: calc(var(--gap) * 1.2);
+}
+
+.sharelink-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--gap) * 0.5);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.chip:hover {
+  background: rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
+
+.chip.active {
+  border-color: rgba(80, 120, 255, 0.55);
+  background: rgba(80, 120, 255, 0.1);
+  box-shadow: 0 0 0 1px rgba(80, 120, 255, 0.2);
+}
+
+.sharelink-action {
+  white-space: nowrap;
+  height: 44px;
+  align-self: end;
+  padding-left: calc(var(--gap) * 1);
+  padding-right: calc(var(--gap) * 1);
+}
+
+.sharelink-label {
+  margin-left: calc(var(--gap) * 0.45);
+}
+
+@media screen and (width < 950px) {
+  .sharelink-action {
+    width: fit-content;
+    justify-self: start;
+    align-self: start;
+  }
 }
 
 .sharelink-settings-item label {

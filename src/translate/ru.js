@@ -524,5 +524,16 @@ export default {
   "Stories": "Истории",
   "Accounts": "Аккаунты",
   "account": "aккаунт",
-  "Blog": "Блог"
+  "Blog": "Блог",
+  "Stories for this day": "Истории на этот день",
+  "Not saved": "Не сохранено",
+  "realtime-now": "в реальном времени сейчас",
+  "remote-day": "удаленный день",
+  "Name": "Название",
+  "Optional": "Необязательно",
+  "Save": "Сохранить",
+  "Latest updates": "Последние обновления",
+  "All seen": "Просмотрено",
+  "Copy link to share": "Скопировать ссылку для обмена",
+  "Advanced sharing": "Расширенные возможности обмена ссылками"
 };

@@ -1,54 +1,92 @@
 <template>
-  <!-- <h4>{{ t('sensorpopup.bookmarkbutton') }}</h4> -->
+  <section class="bookmark-card">
+    <div class="bookmark-head">
+      <div class="bookmark-meta">
+        <div class="bookmark-sub">
+          <span v-if="IsBookmarked" class="badge badge-saved">{{ $t("Saved") || "Saved" }}</span>
+          <span v-else class="badge badge-empty">{{ $t("Not saved") || "Not saved" }}</span>
+          <span v-if="bookmarkname && IsBookmarked" class="bookmark-name"
+            >“{{ bookmarkname }}”</span
+          >
+        </div>
+      </div>
 
-  <form class="flexline" @submit.prevent="handleSubmit">
-    <input
-      type="text"
-      v-model="bookmarkname"
-      :placeholder="t('sensorpopup.bookmarkplaceholder')"
-      :disabled="IsBookmarked && !isEditing"
-    />
-    <button
-      v-if="!IsBookmarked"
-      type="submit"
-      class="button"
-      :area-label="t('sensorpopup.bookmarkbutton')"
-      :title="t('sensorpopup.bookmarkbutton')"
-    >
-      <font-awesome-icon icon="fa-solid fa-bookmark" />
-    </button>
-    <button
-      v-if="IsBookmarked && !isEditing"
-      type="button"
-      class="button"
-      @click.prevent="startEditing"
-      :area-label="t('sensorpopup.editbookmark') || 'Edit bookmark'"
-      :title="t('sensorpopup.editbookmark') || 'Edit bookmark'"
-    >
-      <font-awesome-icon icon="fa-solid fa-pencil" />
-    </button>
-    <button
-      v-if="isEditing"
-      type="submit"
-      :class="['button', { 'button-green': !hasUnsavedChanges }]"
-      :disabled="!hasUnsavedChanges"
-      :area-label="t('sensorpopup.savebookmark') || 'Save bookmark'"
-      :title="t('sensorpopup.savebookmark') || 'Save bookmark'"
-    >
-      <font-awesome-icon v-if="hasUnsavedChanges" icon="fa-solid fa-floppy-disk" />
-      <font-awesome-icon v-else icon="fa-solid fa-check" />
-    </button>
-    <button
-      v-if="IsBookmarked"
-      type="button"
-      class="button button-red"
-      @click.prevent="deletebookmark"
-      :area-label="t('sensorpopup.deletebookmark') || 'Delete bookmark'"
-      :title="t('sensorpopup.deletebookmark') || 'Delete bookmark'"
-    >
-      <font-awesome-icon icon="fa-solid fa-trash" />
-    </button>
-  </form>
+      <div class="bookmark-actions">
+        <button
+          v-if="!IsBookmarked"
+          type="button"
+          class="button bookmark-primary"
+          @click.prevent="addbookmark"
+          :aria-label="t('sensorpopup.bookmarkbutton')"
+          :title="t('sensorpopup.bookmarkbutton')"
+        >
+          <font-awesome-icon icon="fa-solid fa-bookmark" />
+          <span>{{ $t("Save") || "Save" }}</span>
+        </button>
+
+        <template v-else>
+          <button
+            v-if="!isEditing"
+            type="button"
+            class="button button-round-outline"
+            @click.prevent="startEditing"
+            :aria-label="t('sensorpopup.editbookmark') || 'Rename bookmark'"
+            :title="t('sensorpopup.editbookmark') || 'Rename bookmark'"
+          >
+            <font-awesome-icon icon="fa-solid fa-pencil" />
+          </button>
+
+          <button
+            type="button"
+            class="button button-round-outline bookmark-danger"
+            @click.prevent="deletebookmark"
+            :aria-label="t('sensorpopup.deletebookmark') || 'Remove bookmark'"
+            :title="t('sensorpopup.deletebookmark') || 'Remove bookmark'"
+          >
+            <font-awesome-icon icon="fa-solid fa-trash" />
+          </button>
+        </template>
+      </div>
+    </div>
+
+    <form class="bookmark-form" @submit.prevent="handleSubmit">
+      <label class="bookmark-field">
+        <div class="bookmark-field-head">
+          <span class="bookmark-field-title">{{ $t("Name") || "Name" }}</span>
+          <span class="bookmark-field-hint">{{ $t("Optional") || "Optional" }}</span>
+        </div>
+
+        <input
+          type="text"
+          v-model="bookmarkname"
+          :placeholder="t('sensorpopup.bookmarkplaceholder')"
+          :disabled="IsBookmarked && !isEditing"
+        />
+      </label>
+
+      <div v-if="isEditing" class="bookmark-form-actions">
+        <button
+          type="submit"
+          class="button"
+          :disabled="!hasUnsavedChanges"
+          :aria-label="t('sensorpopup.savebookmark') || 'Save bookmark'"
+          :title="t('sensorpopup.savebookmark') || 'Save bookmark'"
+        >
+          <font-awesome-icon icon="fa-solid fa-floppy-disk" />
+          <span>{{ $t("Save") || "Save" }}</span>
+        </button>
+        <button
+          type="button"
+          class="button button-round-outline"
+          @click.prevent="cancelEditing"
+          aria-label="Cancel"
+          title="Cancel"
+        >
+          <font-awesome-icon icon="fa-solid fa-xmark" />
+        </button>
+      </div>
+    </form>
+  </section>
 </template>
 
 <script>
@@ -97,11 +135,19 @@ export default {
       this.isEditing = true;
     },
 
+    cancelEditing() {
+      this.bookmarkname = this.savedBookmarkname;
+      this.isEditing = false;
+    },
+
     handleSubmit() {
       this.addbookmark();
     },
 
     async addbookmark() {
+      if (!this.bookmarkname) {
+        this.bookmarkname = (this.$props.address || this.$props.id || "").toString().trim();
+      }
       const bookmark = await this.findbookmark();
       const sensorElement = document.querySelector(`[data-id="${this.$props.id}"]`);
 
@@ -168,6 +214,7 @@ export default {
         this.bookmarkid = null;
         this.bookmarkname = "";
         this.isEditing = false;
+        this.savedBookmarkname = "";
         notifyDBChange(DB_NAME, STORE);
       } catch (error) {
         console.error("Error deleting bookmark:", error);
@@ -189,13 +236,121 @@ export default {
 </script>
 
 <style scoped>
-form {
-  width: fit-content;
-  margin: 0 auto;
+.bookmark-card {
+  display: grid;
+  gap: calc(var(--gap) * 0.9);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
-button {
-  padding-right: calc(var(--app-inputpadding) * 2);
-  padding-left: calc(var(--app-inputpadding) * 2);
+.bookmark-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: calc(var(--gap) * 0.8);
+}
+
+.bookmark-sub {
+  display: flex;
+  gap: calc(var(--gap) * 0.5);
+  align-items: center;
+  flex-wrap: wrap;
+  opacity: 0.85;
+}
+
+.bookmark-name {
+  font-weight: 700;
+}
+
+.badge {
+  font-size: 0.78em;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.badge-saved {
+  border-color: rgba(40, 170, 85, 0.35);
+  background: rgba(40, 170, 85, 0.08);
+  color: var(--color-green);
+}
+
+.badge-empty {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.bookmark-actions {
+  display: inline-flex;
+  gap: calc(var(--gap) * 0.5);
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.bookmark-primary {
+  white-space: nowrap;
+}
+
+.bookmark-danger {
+  border-color: rgba(220, 70, 70, 0.35);
+}
+
+.bookmark-danger:hover {
+  color: var(--color-red);
+}
+
+.bookmark-form {
+  display: grid;
+  gap: calc(var(--gap) * 0.6);
+}
+
+.bookmark-form input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bookmark-field {
+  display: grid;
+  gap: calc(var(--gap) * 0.45);
+}
+
+.bookmark-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: calc(var(--gap) * 0.5);
+}
+
+.bookmark-field-title {
+  font-weight: 800;
+}
+
+.bookmark-field-hint {
+  opacity: 0.6;
+  font-size: 0.9em;
+  font-weight: 700;
+}
+
+.bookmark-form-actions {
+  display: flex;
+  gap: calc(var(--gap) * 0.5);
+  flex-wrap: wrap;
+}
+
+@media screen and (max-width: 520px) {
+  .bookmark-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bookmark-actions {
+    justify-content: flex-start;
+  }
 }
 </style>

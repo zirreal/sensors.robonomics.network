@@ -305,6 +305,7 @@ async function refreshAuthState() {
   try {
     await accountStore.getAccounts();
   } catch {
+    // silent
   } finally {
     isCheckingAuth.value = false;
   }
@@ -442,7 +443,7 @@ async function refreshBackendStory() {
   return false;
 }
 
-async function waitForBackendIndexing({ sensorId, timeoutMs = 45000 }) {
+async function waitForBackendIndexing({ timeoutMs = 45000 }) {
   const start = Date.now();
   let delay = 1500;
   while (Date.now() - start < timeoutMs) {
@@ -597,7 +598,9 @@ function storyLink(story) {
 async function openStoryDate(story) {
   try {
     sessionStorage.setItem("story_nav_set_date", "1");
-  } catch {}
+  } catch {
+    // silent
+  }
   await router.push(storyLink(story));
   // Ensure user immediately sees the date change in the chart.
   emit("open-chart");
@@ -616,6 +619,7 @@ function formatDate(value) {
 .story-editor {
   display: grid;
   gap: calc(var(--gap) * 0.7);
+  padding-bottom: calc(var(--gap) * 2 + env(safe-area-inset-bottom, 0px));
 }
 
 .story-hero h3 {

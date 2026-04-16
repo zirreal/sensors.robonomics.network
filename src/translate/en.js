@@ -516,5 +516,13 @@ export default {
   "Curious about your environmental insights? So are we. Measure it, test it, and have fun discovering what’s floating around you.": "Curious about your environmental insights? So are we. Measure it, test it, and have fun discovering what’s floating around you.",
   "← Back to Blog": "← Back to Blog",
   "Post not found": "Post not found",
-  "Blog": "Blog"
+  "Blog": "Blog",
+  "Stories for this day": "Stories for this day",
+  "Not saved": "Not saved",
+  "realtime-now": "realtime-now",
+  "remote-day": "remote-day",
+  "Latest updates": "Latest updates",
+  "All seen": "All seen",
+  "Copy link to share": "Copy link to share",
+  "Advanced sharing": "Advanced sharing"
 };

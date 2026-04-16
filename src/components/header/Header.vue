@@ -41,10 +41,10 @@
           href="https://x.com/sensorssocial"
           target="_blank"
           rel="noopener"
-          class="button button-outlined"
+          class="button button-outlined latest-updates"
         >
           <font-awesome-icon icon="fa-brands fa-x-twitter" aria-hidden="true" />
-          <span>Latest updates</span>
+          <span>{{ $t("Latest updates") }}</span>
         </a>
 
         <div id="about" class="popover popover-top-right" popover>
@@ -285,6 +285,19 @@ header > * {
 .header-content {
   padding: calc(var(--gap) / 2) var(--gap);
   background-color: var(--app-bodybg);
+}
+
+@media screen and (max-width: 460px) {
+  .latest-updates span {
+    display: none;
+  }
+
+  .latest-updates {
+    padding-left: calc(var(--gap) * 0.75);
+    padding-right: calc(var(--gap) * 0.75);
+    min-width: 2.6rem;
+    justify-content: center;
+  }
 }
 
 .appicon {

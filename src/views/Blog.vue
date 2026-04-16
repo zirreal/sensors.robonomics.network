@@ -70,8 +70,11 @@ const posts = computed(() => {
     const coverImageRaw = frontmatter.cover_image;
     const cover_image = coverImageRaw
       ? (() => {
-          const normalized = coverImageRaw.startsWith("./") ? coverImageRaw.slice(2) : coverImageRaw;
-          if (import.meta.env.PROD && normalized.startsWith("images/")) return `/blog/${slug}/${normalized}`;
+          const normalized = coverImageRaw.startsWith("./")
+            ? coverImageRaw.slice(2)
+            : coverImageRaw;
+          if (import.meta.env.PROD && normalized.startsWith("images/"))
+            return `/blog/${slug}/${normalized}`;
           return new URL(coverImageRaw, new URL(p, import.meta.url)).href;
         })()
       : "";
