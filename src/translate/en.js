@@ -509,7 +509,12 @@ export default {
   "open-chart": "open-chart",
   "seems to be wrong measured": "seems to be wrong measured",
   "probably something happened with your sensor": "probably something happened with your sensor",
-  "Show data anyway": "Show data anyway",
+  "logs_health_unhealthy_period":
+    "{groups} for the selected period could be measured wrong. This can be due to the sensor malfunctioning or incorrect device setup.",
+  "logs_health_device_hid_warnings": "This device shows wrong measurements.",
+  "logs_health_show_warnings_for_period": "Show warnings for selected period",
+  "Don't show any data warnings for this device": "Don't show any data warnings for this device",
+  "Show data warnings again": "Show data warnings again",
   "Add a short story about an unusual day — or browse recent stories for this sensor.": "Add a short story about an unusual day — or browse recent stories for this sensor.",
   "\\n": "\\n",
   "Curious about your environmental insights? So are we.Measure it, test it, and have fun discovering what’s floating around you.": "Curious about your environmental insights? So are we.Measure it, test it, and have fun discovering what’s floating around you.",

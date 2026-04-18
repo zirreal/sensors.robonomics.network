@@ -508,7 +508,12 @@ export default {
   "open-chart": "открытая диаграмма",
   "seems to be wrong measured": "кажется, измерено неверно",
   "probably something happened with your sensor": "вероятно, что-то случилось с вашим датчиком",
-  "Show data anyway": "Показать данные в любом случае",
+  "logs_health_unhealthy_period":
+    "{groups}: за выбранный период данные могут измеряться неверно. Это может быть из-за неполадки датчика или неправильной настройки устройства.",
+  "logs_health_device_hid_warnings": "Этот датчик отображает измерения как некорректные.",
+  "logs_health_show_warnings_for_period": "Показать предупреждения для выбранного периода",
+  "Don't show any data warnings for this device": "Не показывать предупреждения о данных для этого устройства",
+  "Show data warnings again": "Снова показывать предупреждения о данных",
   "Altruist Urban": "Альтруистический город",
   "Altruist Insight": "Альтруистический взгляд",
   "Add a short story about an unusual day — or browse recent stories for this sensor.": "Добавьте ваш инсайт о необычном дне — или просмотрите недавние истории для этого датчика.",

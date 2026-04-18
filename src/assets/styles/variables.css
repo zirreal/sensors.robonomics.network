@@ -33,14 +33,9 @@
   --font-family--normal: "Noto Sans", sans-serif;
   --font-size: 0.9rem;
 
-  /* Some common styles for stories */
-  --surface-bg-soft: rgba(0, 0, 0, 0.02);
-  --surface-border: rgba(0, 0, 0, 0.12);
-  --surface-border-soft: rgba(0, 0, 0, 0.08);
+  --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 16px;
-  --pad-sm: 0.625rem;
-  --pad-md: 0.75rem;
 
   --gap: 1rem;
 
@@ -66,6 +61,13 @@
   --app-tableborder: #ddd;
 
   --app-controlsgap: calc(var(--gap) * 2);
+
+  /* stories */
+  --surface-bg-soft: rgba(0, 0, 0, 0.02);
+  --surface-border: rgba(0, 0, 0, 0.12);
+  --surface-border-soft: rgba(0, 0, 0, 0.08);
+  --pad-sm: 0.625rem;
+  --pad-md: 0.75rem;
 }
 
 @media screen and (max-width: 500px) {

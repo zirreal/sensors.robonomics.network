@@ -63,11 +63,22 @@ export function IDBworkflow(dbname, dbtable, mode, onsuccess) {
       });
       const store = tx.objectStore(dbtable);
       onsuccess(store);
+    } else {
+      console.warn(
+        `[idb] object store "${dbtable}" is missing in "${dbname}". Bump dbversion in idb-schemas or fix the schema.`
+      );
     }
   });
 
   DBOpenReq.addEventListener("upgradeneeded", (e) => {
     db = e.target.result;
+    const configuredStores = new Set(Object.keys(dbconf.stores));
+    // Удаляем objectStore, которых больше нет в схеме (например переименование стора)
+    Array.from(db.objectStoreNames).forEach((name) => {
+      if (!configuredStores.has(name)) {
+        db.deleteObjectStore(name);
+      }
+    });
     // создаёт или пересоздаёт все objectStore согласно конфигу для выбранной БД
     Object.entries(dbconf.stores).forEach(([storeName, { keyPath, autoIncrement }]) => {
       if (db.objectStoreNames.contains(storeName)) {
@@ -106,7 +117,7 @@ export function IDBgettable(dbname, dbtable) {
     Получает одну запись по ключу из выбранной БД/objectStore.
     Возвращает Promise с записью или null если не найдено.
     Пример:
-        IDBgetByKey('Sensors', 'dataHealth', 'sensor123').then(record => ...)
+        IDBgetByKey('Sensors', 'logsHealth', 'sensor123').then(record => ...)
 */
 export function IDBgetByKey(dbname, dbtable, key) {
   return new Promise((resolve) => {
