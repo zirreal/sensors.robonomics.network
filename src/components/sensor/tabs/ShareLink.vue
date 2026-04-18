@@ -444,7 +444,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: calc(var(--gap) * 0.5);
   font-size: 0.9em;
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
 }
 

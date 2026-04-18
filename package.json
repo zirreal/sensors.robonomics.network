@@ -14,10 +14,12 @@
     "release:patch": "release-it patch --ci",
     "release:minor": "release-it minor --ci",
     "release:major": "release-it major --ci",
-    "release:dry-run": "release-it --dry-run"
+    "release:dry-run": "release-it --dry-run",
+    "fonts:convert": "node scripts/convert-fonts.mjs"
   },
   "dependencies": {
     "@chainsafe/libp2p-noise": "^13.0.1",
+    "@fontsource/noto-sans": "^5.2.10",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^6.7.2",
@@ -73,6 +75,8 @@
     "prettier": "^2.7.1",
     "release-it": "^19.0.1",
     "robonomics-api-augment": "^0.3.0",
+    "ttf2woff": "^3.0.0",
+    "ttf2woff2": "^8.0.1",
     "unplugin-vue-markdown": "^30.0.0",
     "vite": "^4.5.14"
   }

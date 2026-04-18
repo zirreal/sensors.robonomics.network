@@ -702,7 +702,7 @@ watch(
   display: grid;
   grid-template-columns: 10px 1fr;
   align-items: center;
-  font-weight: 500;
+  font-weight: 700;
   gap: calc(var(--gap) * 0.5);
 }
 
