@@ -1,6 +1,6 @@
 <template>
-  <div v-if="aqiValue !== null" class="aqi-container">
-    <div class="aqi" :style="aqiStyle">
+  <div v-if="aqiValue !== null" class="aqi-container" :style="aqiStyle">
+    <div class="aqi">
       <div class="aqi-badge">
         <div class="aqi-box">
           <span class="aqi-value">{{ aqiValue }}</span>
@@ -126,14 +126,19 @@ watch(
 .aqi-container {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: var(--gap);
+  padding: var(--gap);
+  border-radius: 0.2rem;
 }
 
-.aqi {
-  height: 40px;
-  border-radius: 4px;
-  padding: 8px 15px;
+.aqi-container select {
+  --app-inputpadding: 0.6rem;
+  padding-top: 0;
+  padding-bottom: 0;
+  background-color: rgba(255, 255, 255, 0.4);
 }
+
 .aqi-badge {
   display: flex;
   align-items: center;

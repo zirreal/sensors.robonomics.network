@@ -1,9 +1,9 @@
 :root {
   --color-light: #fff;
   --color-dark: #000;
-  --color-gray: #4e4e4f;
-  --color-middle-gray: #b6bdc4;
-  --color-light-gray: #d5d3d3;
+  --color-gray: #b7b7bc;
+  --color-middle-gray: #d7d7e3;
+  --color-light-gray: #f3f3f9;
   --color-blue: #007bff;
   --color-teal: #12bfcc;
   --color-green: #60bc2a;
@@ -70,7 +70,7 @@
   --pad-md: 0.75rem;
 }
 
-@media screen and (max-width: 500px) {
+@media screen and (max-width: 920px) {
   :root {
     --font-size: 0.8rem;
     --gap: 0.5rem;
@@ -85,13 +85,13 @@
   :root {
     --app-bodybg: #1b1b1b;
     --app-textcolor: #fff;
-    --app-bordercolor: var(--color-gray);
+    /* --app-bordercolor: var(--color-gray); */
     --app-tablerow: hsl(220, 23%, 18%);
     --app-tableborder: #ddd;
     --app-controlsgap: calc(var(--gap) * 0.5);
     --app-buttoncolor: hsl(219, 100%, 60%);
     --app-buttoncolor-hover: hsl(219, 100%, 50%);
-    --color-light-gray: #6d6d6d;
+    /* --color-light-gray: #6d6d6d; */
     --color-green-bright: hsl(83, 64%, 29%);
     --color-bright-green-dim: hsla(83, 64%, 29%, 0.55);
   }

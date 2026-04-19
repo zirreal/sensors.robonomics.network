@@ -1,6 +1,6 @@
 <template>
   <div class="mapcontrols">
-    <div class="flexline">
+    <div class="flexline footercontrol-wide">
       <ToggleButton
         v-if="settings.WIND_PROVIDER"
         :model-value="wind"
@@ -19,7 +19,7 @@
         :label="$t('layer.messages')"
       />
 
-      <div id="mapsettings" class="popover-bottom-left popover" popover>
+      <div id="historyimport" class="popover-bottom-left popover" popover>
         <section>
           <h3>{{ $t("history.title") }}</h3>
           <HistoryImport />
@@ -27,14 +27,14 @@
       </div>
       <button
         class="popovercontrol button-round-outline button-round-outline-labeled"
-        popovertarget="mapsettings"
+        popovertarget="historyimport"
       >
         <font-awesome-icon icon="fa-solid fa-download" />
         <span>{{ $t("history.reports") }}</span>
       </button>
     </div>
 
-    <div class="flexline">
+    <div class="flexline footercontrol-wide">
       <ProviderType />
 
       <!-- выбор даты -->
@@ -46,6 +46,59 @@
           {{ opt.name }}
         </option>
       </select>
+    </div>
+
+    <div class="footercontrol-narrow">
+      <div id="mapsettings" class="popover-bottom-left popover" popover>
+        <section>
+          <h3>Map settings</h3>
+
+          <div class="mapsettings-content">
+
+            <!-- выбор даты -->
+            <input type="date" v-model="start" :max="maxDate" :disabled="realtime" />
+
+            <div class="flexline">
+              <ProviderType />
+
+              <!-- выбор измерения -->
+              <select v-model="type" v-if="sensorsUI.sensors.length > 0 && availableOptions?.length > 0">
+                <option v-for="opt in availableOptions" :key="opt.value" :value="opt.value">
+                  {{ opt.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="flexline">
+              <ToggleButton
+                v-if="settings.WIND_PROVIDER"
+                :model-value="wind"
+                @update:modelValue="onWindToggle"
+                icon-class="fa-solid fa-wind"
+                class="wind-toggle"
+                :disabled="!windAllowed"
+                :label="$t('layer.wind')"
+              />
+
+              <ToggleButton
+                v-if="hasMessagesData"
+                v-model="messages"
+                :icon-class="messages ? 'fa-solid fa-comment' : 'fa-regular fa-comment'"
+                class="messages-toggle"
+                :label="$t('layer.messages')"
+              />
+            </div>
+
+            <Accordion>
+              <template #title>{{ $t("history.title") }}</template>
+              <HistoryImport />
+            </Accordion>
+          </div>
+        </section>
+      </div>
+      <button class="button-round-outline popovercontrol" popovertarget="mapsettings">
+        <font-awesome-icon icon="fa-solid fa-gear" />
+      </button>
     </div>
 
     <div class="flexline">
@@ -103,7 +156,7 @@ import { dayISO, dayBoundsUnix, parseInputDate } from "@/utils/date";
 import { settings } from "@config";
 import HistoryImport from "./HistoryImport.vue";
 import ToggleButton from "../controls/ToggleButton.vue";
-import { instanceMap, setTheme } from "../../utils/map/map";
+import { instanceMap } from "../../utils/map/map";
 import { initWindLayer, switchWindLayer, destroyWindLayer } from "../../utils/map/wind";
 import measurements from "../../measurements";
 // import { getTypeProvider } from "../../utils/utils"; // deprecated
@@ -114,6 +167,7 @@ import ProviderType from "../ProviderType.vue";
 import { useMap } from "@/composables/useMap";
 import { useMessages } from "../../composables/useMessages";
 import { useSensors } from "../../composables/useSensors";
+import Accordion from "../controls/Accordion.vue";
 
 // Переменные для геолокации (должны быть объявлены рано для CSS v-bind)
 const geomsg = ref("");
@@ -583,19 +637,6 @@ defineExpose({
   left: var(--app-controlsgap);
 }
 
-#mapsettings {
-  min-width: 20vw;
-}
-
-@media screen and (max-width: 820px) {
-  .mapcontrols,
-  .mapcontrols .flexline {
-    flex-direction: column;
-    gap: var(--gap);
-    align-items: end;
-  }
-}
-
 .geolocation {
   position: relative;
 }
@@ -675,15 +716,43 @@ input[type="date"][disabled] {
   cursor: not-allowed;
 }
 
+.footercontrol-narrow {
+  display: none;
+}
+
+
+#mapsettings {
+  min-width: 20vw;
+}
+
+.mapsettings-content {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) * 3);
+  max-height: 80svh;
+  overflow-y: auto;
+}
+
 @media screen and (width < 820px) {
+  .footercontrol-narrow {
+    display: block;
+  }
+
+  .footercontrol-wide {
+    display: none;
+  }
+
   .mapcontrols-geo {
-    margin-top: calc(var(--gap) * 3);
     padding: calc(var(--gap) * 1) calc(var(--gap) * 3);
     gap: calc(var(--gap) * 3);
   }
 
   .mapcontrols-geo button {
     font-size: 1.4em;
+  }
+
+  .button-round-outline {
+    padding: calc(var(--gap) * 2.5);
   }
 }
 </style>

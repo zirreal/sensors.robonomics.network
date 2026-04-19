@@ -221,10 +221,11 @@ export function normalizeBackendStory(record) {
 }
 
 export async function fetchStoryList({ limit = 50, page = 1, start, end } = {}) {
-  const base = String(settings?.REMOTE_PROVIDER || "https://roseman.airalab.org/").replace(
-    /\/+$/,
-    ""
-  );
+  const raw = settings?.REMOTE_PROVIDER;
+  if (raw == null || String(raw).trim() === "") {
+    return { totalPages: 0, list: [] };
+  }
+  const base = String(raw).replace(/\/+$/, "");
   const url = new URL(`${base}/api/v2/story/list`);
   url.searchParams.set("limit", String(Math.min(50, Math.max(1, Number(limit) || 50))));
   url.searchParams.set("page", String(Math.max(1, Number(page) || 1)));

@@ -93,7 +93,7 @@ li {
 
   p,
   li {
-    font-size: calc(var(--font-size) * 0.8);
+    font-size: calc(var(--font-size) * 0.9);
   }
 }
 
@@ -231,6 +231,7 @@ input:disabled {
   background-color: var(--color-light-gray);
   border-color: var(--color-light-gray);
   opacity: 0.5;
+  pointer-events: none;
 }
 
 .button-outlined {
@@ -242,7 +243,12 @@ input:disabled {
   color: var(--app-inputtextcolor);
   font-size: var(--font-size);
   font-weight: bold;
-  background-color: transparent;
+  background-color: var(--app-inputbg);
+}
+
+.button-round-outline.disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .button-outlined:hover {
@@ -266,6 +272,7 @@ input:disabled {
   color: var(--app-inputtextcolor);
   font-size: var(--font-size);
   transition: all 0.2s linear;
+  position: relative;
 }
 
 .button-round-outline-labeled, .button-round-outline-labeled:hover {
@@ -275,7 +282,7 @@ input:disabled {
 }
 
 .button-round-outline-labeled span {
-  font-size: calc(var(--font-size) * 0.8);
+  /* font-size: calc(var(--font-size) * 0.8); */
   font-weight: bold;
   line-height: 1;
   white-space: nowrap;
@@ -284,6 +291,32 @@ input:disabled {
 
 .button-round-outline .svg-inline--fa path {
   fill: var(--app-inputtextcolor);
+}
+
+.button-round-outline__badge {
+  font-size: 75%;
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: var(--color-orange);
+  border-radius: 50%;
+  color: var(--color-light);
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: pulse 2s infinite;
+}
+
+.button-round-outline__badge.blue {
+  background-color: var(--color-blue);
+}
+
+.button-round-outline > *:not(:last-child) {
+  margin-right: 0;
 }
 
 /* .button-round-outline:hover {
@@ -377,17 +410,6 @@ label {
 
 .flexline-i-right {
   margin-left: auto;
-}
-
-@media screen and (max-width: 960px) {
-  .flexline-mobile-column .flexline {
-    flex-wrap: wrap;
-    align-items: flex-start;
-  }
-
-  .flexline-mobile-column .flexline-i-right {
-    margin-left: initial;
-  }
 }
 /* - FLEX */
 
@@ -880,3 +902,9 @@ table img {
   }
 }
 /* - popover */
+
+@media screen and (width < 500px) {
+  .narrow-hide {
+    display: none;
+  }
+}

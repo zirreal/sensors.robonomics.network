@@ -71,6 +71,10 @@ import { getPeriodBounds } from "@/utils/date";
 
 stockInit(Highcharts);
 
+Highcharts.setOptions({
+  accessibility: { enabled: false },
+});
+
 const props = defineProps({
   log: { type: Array, default: () => [] },
 });
@@ -427,6 +431,7 @@ const chartOptions = computed(() => ({
     height: 400,
   },
   rangeSelector: { enabled: false },
+  scrollbar: { enabled: false },
   legend: { enabled: false },
   title: { text: "" },
   time: {
@@ -1266,6 +1271,7 @@ onMounted(async () => {
   position: absolute;
   top: 0;
   left: 0;
+  bottom: 2rem;
   overflow-wrap: break-word;
   z-index: 1;
   background: #f2f2f2;
@@ -1274,6 +1280,8 @@ onMounted(async () => {
   font-size: calc(var(--font-size) * 0.8);
   font-weight: bold;
   cursor: pointer;
+  border-radius: 0.2rem;
+  overflow: hidden;
 }
 
 .chart-unit-symbol {
@@ -1313,6 +1321,7 @@ onMounted(async () => {
 
 .chart-unit {
   position: relative;
+  height: 100%;
 }
 
 .chart-unit:not(:last-child) {

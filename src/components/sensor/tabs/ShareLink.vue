@@ -13,21 +13,6 @@
   </section>
 
   <Accordion>
-    <template #title>{{ t("sensorpopup.linkPreview") || "Link Preview" }}</template>
-    <div class="og-preview-card" v-if="ogPreviewData">
-      <div class="og-preview-image">
-        <img :src="ogImageUrl" :alt="ogPreviewData.title" @error="handleImageError" />
-      </div>
-      <div class="og-preview-content">
-        <div class="og-preview-site">{{ ogPreviewData.siteName }}</div>
-        <div class="og-preview-title">{{ ogPreviewData.title }}</div>
-        <div class="og-preview-description">{{ ogPreviewData.description }}</div>
-        <div class="og-preview-url">{{ ogPreviewData.url }}</div>
-      </div>
-    </div>
-  </Accordion>
-
-  <Accordion>
     <template #title>Advanced sharing</template>
     <div class="sharelink-settings">
       <div class="sharelink-settings-item">
@@ -74,6 +59,18 @@
       </button>
     </div>
   </Accordion>
+
+  <div class="og-preview-card" v-if="ogPreviewData">
+      <div class="og-preview-image">
+        <img :src="ogPreviewData.image" :alt="ogPreviewData.title" />
+      </div>
+      <div class="og-preview-content">
+        <div class="og-preview-site">{{ ogPreviewData.siteName }}</div>
+        <div class="og-preview-title">{{ ogPreviewData.title }}</div>
+        <div class="og-preview-description">{{ ogPreviewData.description }}</div>
+        <div class="og-preview-url">{{ ogPreviewData.url }}</div>
+      </div>
+    </div>
 </template>
 
 <script setup>
@@ -249,10 +246,9 @@ const ogPreviewData = computed(() => {
   // Сокращаем ID датчика используя фильтр collapse (как в Info.vue)
   const collapsedSensorId = filters?.collapse ? filters.collapse(sensorId) : sensorId;
 
-  // Формируем URL для OG изображения
+  // Превью в UI: стабильный ассет из public (per-sensor PNG в /og-images/ может отсутствовать локально)
   const baseUrl = window.location.origin;
-  const ogImagePath = `/og-images/${sensorId}.png`;
-  const imageUrl = `${baseUrl}${ogImagePath}`;
+  const imageUrl = `${baseUrl}/og-default.webp`;
 
   // Получаем название типа измерения
   const typeName =
@@ -274,25 +270,6 @@ const ogPreviewData = computed(() => {
     image: imageUrl,
     url: generatedLink.value,
   };
-});
-
-// Обработчик ошибки загрузки изображения
-const ogImageError = ref(new Set());
-
-const handleImageError = (event) => {
-  const imgSrc = event.target.src;
-  ogImageError.value.add(imgSrc);
-};
-
-// Получаем URL изображения с учетом ошибок
-const ogImageUrl = computed(() => {
-  if (!ogPreviewData.value) return null;
-  const imageUrl = ogPreviewData.value.image;
-  if (ogImageError.value.has(imageUrl)) {
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/og-default.webp`;
-  }
-  return imageUrl;
 });
 
 const resetState = (delay = 2000) => {
@@ -362,7 +339,6 @@ onBeforeUnmount(() => {
   overflow: hidden;
   background-color: var(--color-light, #fff);
   max-width: 100%;
-  margin: calc(var(--gap) * 3);
 }
 
 .og-preview-image {

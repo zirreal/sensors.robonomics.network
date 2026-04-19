@@ -42,7 +42,7 @@ export async function initWindLayer() {
       data,
       maxVelocity: 15, // Максимальная скорость ветра для нормализации (м/с)
       velocityScale: 0.01, // Уменьшаем скорость анимации для спокойной визуализации
-      colorScale: ["rgb(60,157,194)", "rgb(128,205,193)", "rgb(250,112,52)", "rgb(245,64,32)"],
+      colorScale: ["rgb(187, 209, 255)", "rgb(146, 180, 253)", "rgb(78, 132, 248)", "rgb(0, 81, 255)"],
       particleAge: 20, // Короткое время жизни частиц
       particleMultiplier: 0.001, // Мало частиц
       frameRate: 10, // Малый FPS

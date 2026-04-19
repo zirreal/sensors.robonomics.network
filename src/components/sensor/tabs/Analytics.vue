@@ -1,21 +1,22 @@
 <template>
   <div class="analytics-tab">
     <Timeline :log="log" :point="point">
-      <template #actions>
+      <!-- <template #actions>
         <NativeShare />
-      </template>
+      </template> -->
     </Timeline>
 
-    <section class="flexline-mobile-column">
-      <div class="flexline">
-        <AQI 
-          v-if="mapState.currentProvider.value !== 'realtime' && isPMHealthy" 
-          :logs="log" 
-        />
-      </div>
+    <section
+      v-if="
+        mapState.currentProvider.value !== 'realtime' &&
+        mapState.timelineMode.value === 'day' &&
+        isPMHealthy
+      "
+    >
+      <AQI :logs="log" />
     </section>
 
-    <section>
+    <section class="chart-wrap">
       <div v-if="showLogsProgress" class="logs-progress">
         <div class="logs-progress-bar">
           <span :style="{ width: `${logsProgressPercent}%` }"></span>
@@ -36,7 +37,7 @@
 
         <button 
           type="button" 
-          class="button button-outlined" 
+          class="button button-round-outline" 
           @click="onLogsHealthShowDataAnyway">
           <font-awesome-icon icon="fa-solid fa-xmark" />
         </button>
@@ -56,55 +57,63 @@
       <div v-else-if="!chartHasData" class="chart-skeleton"></div>
     </section>
 
-    <Accordion v-if="units && scales && scales.length > 0">
-      <template #title>{{ t("scales.title") }}</template>
-      <div class="scalegrid">
-        <div v-for="item in scales" :key="item.label">
-          <template v-if="item?.zones && (item.name || item.label)">
-            <p>
-              <b v-if="item.name">
-                {{ item.nameshort[localeComputed] }}
-              </b>
-              <b v-else>{{ item.label }}</b>
-              <template v-if="item.unit && item.unit !== ''"> ({{ item.unit }}) </template>
-            </p>
-            <template v-for="zone in item.zones" :key="zone.color">
-              <div
-                class="scales-color"
-                v-if="zone.color && zone.label"
-                :style="`--color: ${zone.color}`"
-              >
-                <b>
-                  {{ zone.label[localeComputed] ? zone.label[localeComputed] : zone.label.en }}
+    <section class="info-wrap">
+      <Accordion v-if="units && scales && scales.length > 0">
+        <template #title>{{ t("scales.title") }}</template>
+        <div class="scalegrid">
+          <div v-for="item in scales" :key="item.label">
+            <template v-if="item?.zones && (item.name || item.label)">
+              <p>
+                <b v-if="item.name">
+                  {{ item.nameshort[localeComputed] }}
                 </b>
-                (<template v-if="typeof zone.valueMax === 'number'">
-                  {{ t("scales.upto") }} {{ zone.valueMax }}
-                </template>
-                <template v-else>{{ t("scales.above") }}</template
-                >)
-              </div>
+                <b v-else>{{ item.label }}</b>
+                <template v-if="item.unit && item.unit !== ''"> ({{ item.unit }}) </template>
+              </p>
+              <template v-for="zone in item.zones" :key="zone.color">
+                <div
+                  class="scales-color"
+                  v-if="zone.color && zone.label"
+                  :style="`--color: ${zone.color}`"
+                >
+                  <b>
+                    {{ zone.label[localeComputed] ? zone.label[localeComputed] : zone.label.en }}
+                  </b>
+                  (<template v-if="typeof zone.valueMax === 'number'">
+                    {{ t("scales.upto") }} {{ zone.valueMax }}
+                  </template>
+                  <template v-else>{{ t("scales.above") }}</template
+                  >)
+                </div>
+              </template>
             </template>
-          </template>
+          </div>
+        </div>
+      </Accordion>
+
+      <section>
+        <Bookmark v-if="point?.sensor_id" :point="point" />
+      </section>
+
+      <div
+        v-if="showLogsHealthUserhideNotice"
+        class="logs-health-warning-banner logs-health-userhide-notice"
+      >
+        <div>
+          {{ t("logs_health_device_hid_warnings") }}
+          <a href="#" role="button" @click.prevent="onShowSensorWarningsAgain">
+            {{ t("logs_health_show_warnings_for_period") }}
+          </a>
         </div>
       </div>
-    </Accordion>
 
-    <div
-      v-if="showLogsHealthUserhideNotice"
-      class="logs-health-warning-banner logs-health-userhide-notice"
-    >
-      <div>
-        {{ t("logs_health_device_hid_warnings") }}
-        <a href="#" role="button" @click.prevent="onShowSensorWarningsAgain">
-          {{ t("logs_health_show_warnings_for_period") }}
-        </a>
-      </div>
-    </div>
+      <p class="textsmall" v-if="hasLogs">
+        <template v-if="isRussia">{{ t("notice_with_fz") }}</template>
+        <template v-else>{{ t("notice_without_fz") }}</template>
+      </p>
+    </section>
 
-    <p class="textsmall" v-if="hasLogs">
-      <template v-if="isRussia">{{ t("notice_with_fz") }}</template>
-      <template v-else>{{ t("notice_without_fz") }}</template>
-    </p>
+    
   </div>
 </template>
 
@@ -126,8 +135,9 @@ import measurements from "../../../measurements";
 import AQI from "../widgets/AQI.vue";
 import Chart from "../widgets/Chart.vue";
 import Timeline from "../widgets/Timeline.vue";
-import NativeShare from "../widgets/NativeShare.vue";
+// import NativeShare from "../widgets/NativeShare.vue";
 import Accordion from "../../controls/Accordion.vue";
+import Bookmark from "../widgets/Bookmark.vue";
 
 const props = defineProps({
   point: Object,
@@ -429,6 +439,10 @@ watch(
   align-items: start;
 }
 
+.logs-health-warning-banner .button-round-outline {
+  background-color: transparent;
+}
+
 .logs-health-warning-banner a {
   text-decoration: none;
   border-bottom: 1px dashed var(--color-red);
@@ -450,5 +464,19 @@ watch(
 
 .bugged-sensor h3 {
   margin-bottom: 0.2rem;
+}
+
+.info-wrap {
+  margin-top: calc(var(--gap) * 3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+@media screen and (width < 500px) {
+  .info-wrap {
+    margin-top: calc(var(--gap) * 5);
+    gap: calc(var(--gap) * 2);
+  }
 }
 </style>

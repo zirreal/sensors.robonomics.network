@@ -41,7 +41,7 @@
           href="https://x.com/sensorssocial"
           target="_blank"
           rel="noopener"
-          class="button button-outlined"
+          class="button button-outlined narrow-hide"
         >
           <font-awesome-icon icon="fa-brands fa-x-twitter" aria-hidden="true" />
           <span>Latest updates</span>
@@ -139,10 +139,11 @@
           :class="{ active: bookmarksCount > 0 }"
           popovertarget="bookmarks"
         >
-          <font-awesome-icon
+        <font-awesome-icon icon="fa-solid fa-bookmark"/>
+          <!-- <font-awesome-icon
             :icon="bookmarksCount > 0 ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'"
-          />
-          <b v-if="bookmarksCount > 0">{{ bookmarksCount }}</b>
+          /> -->
+          <span class="button-round-outline__badge" v-if="bookmarksCount > 0">{{ bookmarksCount }}</span>
         </button>
 
         <Login v-if="settings.SERVICES.accounts" />
@@ -400,28 +401,6 @@ header > * {
 /* - sensors list */
 
 /* - bookmarks button */
-.bookmarksbutton {
-  position: relative;
-}
-
-.bookmarksbutton b {
-  font-size: 75%;
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background-color: var(--color-orange);
-  border-radius: 50%;
-  color: var(--color-light);
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  animation: pulse 2s infinite;
-}
-
 .bookmarksbutton.active {
   color: var(--color-orange);
 }
@@ -499,7 +478,11 @@ header > * {
 }
 /* - bookmarks button */
 
-@media screen and (max-width: 600px) {
+@media screen and (width < 600px) {
+  .flexline {
+    gap: calc(var(--gap) * 2);
+  }
+
   .hidemobiles {
     display: none;
   }

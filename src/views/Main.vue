@@ -6,9 +6,7 @@
   />
   <Header />
 
-  <div class="below-header-stories">
-    <Stories />
-  </div>
+  <Stories />
 
   <Sensor
     v-if="sensorsUI.isSensor"
@@ -346,26 +344,3 @@ watch(
 //   }
 // );
 </script>
-
-<style scoped>
-.below-header-stories {
-  position: sticky;
-  width: 100vw;
-  top: calc(40px + var(--gap)); /* roughly below header controls */
-  z-index: 98;
-  left: 0;
-  margin-top: 0;
-  pointer-events: none;
-}
-
-.below-header-stories :deep(.stories-bar) {
-  pointer-events: all;
-  width: 100%;
-}
-
-@media screen and (max-width: 500px) {
-  .below-header-stories {
-    top: calc(36px + var(--gap));
-  }
-}
-</style>
