@@ -1,16 +1,5 @@
 <template>
-  <section v-if="stories.length" class="stories-bar" aria-label="Recent stories">
-    <div class="stories-meta" aria-hidden="true">
-      <div class="stories-dot"></div>
-      <div class="stories-meta-text">
-        <div class="stories-meta-title">Stories</div>
-        <div class="stories-meta-sub">
-          <template v-if="unseenCount > 0">{{ unseenCount }} new</template>
-          <template v-else>{{ $t("All seen") }}</template>
-        </div>
-      </div>
-    </div>
-
+  <div v-if="stories.length" class="stories-bar" aria-label="Recent stories">
     <button
       v-if="isOverflowing"
       class="stories-nav button-round-outline"
@@ -38,24 +27,15 @@
         :to="storyLink(story)"
         :title="story.message || story.comment"
         @click="markStoryNavigation(story)"
+        :style="{ '--badge-color': iconColor(story.iconId) }"
       >
-        <div class="bubble-ring">
-          <div class="bubble">
-            <div
-              class="story-icon-badge"
-              :style="{ '--badge-color': iconColor(story.iconId) }"
-              aria-hidden="true"
-            >
-              <font-awesome-icon
-                v-if="story.icon"
-                :icon="story.icon"
-                class="story-icon"
-                :style="{ color: iconColor(story.iconId) }"
-              />
-              <font-awesome-icon v-else icon="fa-solid fa-comment" class="story-icon" />
-            </div>
-          </div>
-        </div>
+        <font-awesome-icon
+          v-if="story.icon"
+          :icon="story.icon"
+          class="story-icon"
+          :style="{ color: iconColor(story.iconId) }"
+        />
+        <font-awesome-icon v-else icon="fa-solid fa-comment" class="story-icon" />
       </router-link>
     </div>
 
@@ -69,7 +49,7 @@
     >
       <font-awesome-icon icon="fa-solid fa-caret-right" />
     </button>
-  </section>
+  </div>
 </template>
 
 <script setup>
@@ -100,17 +80,17 @@ const canScrollRight = ref(false);
 let ro = null;
 
 const ICON_COLORS = {
-  heat: "#ff6b6b",
-  cold: "#7ad9e8",
-  smog: "#9aa7b1",
+  heat: "#f01c1c",
+  cold: "#01bbd9",
+  smog: "#70787e",
   wind: "#76a7ff",
-  noise: "#c58bff",
-  storm: "#b39ddb",
-  rain: "#7fbfff",
-  sun: "#ffd36e",
-  fire: "#ffb26b",
-  co2: "#b08a7a",
-  note: "#7fcf9a",
+  noise: "#9e59e3",
+  storm: "#174595",
+  rain: "#047ab4",
+  sun: "#ffb26b",
+  fire: "#ff0000",
+  co2: "#be8c77",
+  note: "#4ccd17",
 };
 
 function iconColor(id) {
@@ -329,50 +309,13 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .stories-bar {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--gap) / 2);
-  width: min(760px, 100%);
-  max-width: 100%;
-  min-width: 0;
-  overflow: hidden;
-  padding: calc(var(--gap) * 0.5) calc(var(--gap) * 0.8);
-  border-radius: 0;
-  background: rgba(255, 255, 255, 0.22);
-  border: 1px solid rgba(0, 0, 0, 0.07);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
-}
-
-.stories-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: calc(var(--gap) * 0.7);
-  flex: 0 0 auto;
-  padding-right: calc(var(--gap) * 0.3);
-}
-
-.stories-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--color-blue);
-  box-shadow: 0 0 0 6px rgba(0, 123, 255, 0.12);
-}
-
-.stories-meta-text {
-  display: grid;
-  line-height: 1.05;
-}
-
-.stories-meta-title {
-  font-weight: 900;
-  font-size: calc(var(--font-size) * 1.05);
-}
-
-.stories-meta-sub {
-  opacity: 0.7;
-  font-weight: 800;
-  font-size: calc(var(--font-size) * 0.95);
+  position: sticky;
+  top: calc(var(--app-inputheight) + var(--gap));
+  z-index: 98;
+  left: 0;
+  width: fit-content;
+  max-width: 100svw;
+  padding: var(--gap);
 }
 
 .stories-nav {
@@ -385,103 +328,53 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
-@media screen and (max-width: 460px) {
-  .stories-nav {
-    display: none;
-  }
-
-  .stories-scroller {
-    scroll-snap-type: x proximity;
-    padding-left: 2px;
-    padding-right: 2px;
-  }
-}
-
 .stories-scroller {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 70px;
-  gap: calc(var(--gap) / 1.25);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding: 2px 6px;
   scrollbar-width: none;
   min-width: 0;
+  display: flex;
+  gap: var(--gap);
 }
 
 .stories-scroller::-webkit-scrollbar {
   display: none;
 }
 
-.bubble-ring {
-  width: 54px;
-  height: 54px;
-  border-radius: 100%;
-  background: transparent;
-  border: 2px solid var(--color-blue);
-  position: relative;
-}
-
-.story-bubble.seen .bubble-ring {
-  border-color: rgba(0, 0, 0, 0.18);
-}
-
-.bubble {
-  width: 100%;
-  height: 100%;
-  border-radius: 100%;
-  background: var(--color-light);
+.story-bubble {
+  --badge-size: 3rem;
+  --badge-border-color: var(--color-blue);
+  width: var(--badge-size);
+  height: var(--badge-size);
+  border-radius: 50%;
+  border: 2px solid var(--badge-border-color);
   display: grid;
   place-items: center;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  transition: border 0.2s ease, transform 0.2s ease;
+  background: color-mix(in srgb, var(--badge-color) 20%, #fff 70%);
 }
 
-.story-bubble:focus-visible .bubble,
-.story-bubble:hover .bubble {
-  transform: translateY(-1px);
-}
-
-.story-bubble:hover .bubble {
-  border-color: rgba(0, 0, 0, 0.18);
+.story-bubble.seen {
+  --badge-border-color: var(--color-middle-gray);
 }
 
 .story-icon {
-  width: 24px;
-  height: 24px;
+  width: 50%;
+  height: 50%;
 }
 
-.story-icon-badge {
-  width: 34px;
-  height: 34px;
-  border-radius: 100%;
-  display: grid;
-  place-items: center;
-  background: color-mix(in srgb, var(--badge-color) 14%, transparent);
-}
+@media screen and (max-width: 460px) {
+  .stories-nav {
+    display: none;
+  }
 
-@media (prefers-color-scheme: dark) {
   .stories-bar {
-    background: rgba(20, 20, 20, 0.22);
-    border-color: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+    width: 100%;
+    padding: calc(var(--gap) * 2) var(--gap);
   }
 
-  .bubble {
-    border-color: rgba(255, 255, 255, 0.14);
-  }
-
-  .story-bubble:hover .bubble {
-    border-color: rgba(255, 255, 255, 0.22);
-  }
-
-  .story-bubble.seen .bubble-ring {
-    border-color: rgba(255, 255, 255, 0.22);
-  }
-
-  .story-icon-badge {
-    background: color-mix(in srgb, var(--badge-color) 18%, transparent);
-    border-color: color-mix(in srgb, var(--badge-color) 30%, rgba(255, 255, 255, 0.12));
+  .stories-scroller {
+    scroll-snap-type: x proximity;
+    gap: calc(var(--gap) * 2);
   }
 }
 </style>

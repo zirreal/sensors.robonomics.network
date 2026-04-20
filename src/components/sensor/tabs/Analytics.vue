@@ -1,21 +1,22 @@
 <template>
   <div class="analytics-tab">
     <Timeline :log="log" :point="point">
-      <template #actions>
+      <!-- <template #actions>
         <NativeShare />
-      </template>
+      </template> -->
     </Timeline>
 
-    <section class="flexline-mobile-column">
-      <div class="flexline mb">
-        <AQI 
-          v-if="mapState.currentProvider.value !== 'realtime' && isPMHealthy" 
-          :logs="log" 
-        />
-      </div>
+    <section
+      v-if="
+        mapState.currentProvider.value !== 'realtime' &&
+        mapState.timelineMode.value === 'day' &&
+        isPMHealthy
+      "
+    >
+      <AQI :logs="log" />
     </section>
 
-    <section>
+    <section class="chart-wrap">
       <div v-if="showLogsProgress" class="logs-progress">
         <div class="logs-progress-bar">
           <span :style="{ width: `${logsProgressPercent}%` }"></span>
@@ -26,79 +27,117 @@
         </div>
       </div>
 
+      <div v-if="showLogsHealthWarningBanner" class="logs-health-warning-banner">
+        <div>
+          {{ $t("logs_health_unhealthy_period", { groups: unhealthyGroupsListDisplay }) }}
+          <a href="#" @click.prevent="onLogsHealthDontShowWarningsForSensor">
+            {{ t("Don't show any data warnings for this device") }}
+          </a>
+        </div>
+
+        <button 
+          type="button" 
+          class="button button-round-outline" 
+          @click="onLogsHealthShowDataAnyway">
+          <font-awesome-icon icon="fa-solid fa-xmark" />
+        </button>
+        
+      </div>
 
       <Chart 
-        v-if="Array.isArray(point?.logs) && point?.logs.length > 0" 
+        v-if="chartHasData" 
         :log="log" 
-        :dataHealth="dataHealth"
-        :hiddenOverlays="hiddenOverlays"
-        @hide-overlay="handleHideOverlay"
       />
       <div
-        v-else-if="
-          mapState.currentProvider.value === 'remote' &&
-          Array.isArray(point?.logs) &&
-          point?.logs.length === 0
-        "
+        v-else-if="showNoDataMessage"
         class="no-data-message"
       >
         {{ $t("No data available") }}
       </div>
-      <div v-else class="chart-skeleton"></div>
+      <div v-else-if="!chartHasData" class="chart-skeleton"></div>
     </section>
 
-    <Accordion v-if="units && scales && scales.length > 0">
-      <template #title>{{ t("scales.title") }}</template>
-      <div class="scalegrid">
-        <div v-for="item in scales" :key="item.label">
-          <template v-if="item?.zones && (item.name || item.label)">
-            <p>
-              <b v-if="item.name">
-                {{ item.nameshort[localeComputed] }}
-              </b>
-              <b v-else>{{ item.label }}</b>
-              <template v-if="item.unit && item.unit !== ''"> ({{ item.unit }}) </template>
-            </p>
-            <template v-for="zone in item.zones" :key="zone.color">
-              <div
-                class="scales-color"
-                v-if="zone.color && zone.label"
-                :style="`--color: ${zone.color}`"
-              >
-                <b>
-                  {{ zone.label[localeComputed] ? zone.label[localeComputed] : zone.label.en }}
+    <section class="info-wrap">
+      <Accordion v-if="units && scales && scales.length > 0">
+        <template #title>{{ t("scales.title") }}</template>
+        <div class="scalegrid">
+          <div v-for="item in scales" :key="item.label">
+            <template v-if="item?.zones && (item.name || item.label)">
+              <p>
+                <b v-if="item.name">
+                  {{ item.nameshort[localeComputed] }}
                 </b>
-                (<template v-if="typeof zone.valueMax === 'number'">
-                  {{ t("scales.upto") }} {{ zone.valueMax }}
-                </template>
-                <template v-else>{{ t("scales.above") }}</template
-                >)
-              </div>
+                <b v-else>{{ item.label }}</b>
+                <template v-if="item.unit && item.unit !== ''"> ({{ item.unit }}) </template>
+              </p>
+              <template v-for="zone in item.zones" :key="zone.color">
+                <div
+                  class="scales-color"
+                  v-if="zone.color && zone.label"
+                  :style="`--color: ${zone.color}`"
+                >
+                  <b>
+                    {{ zone.label[localeComputed] ? zone.label[localeComputed] : zone.label.en }}
+                  </b>
+                  (<template v-if="typeof zone.valueMax === 'number'">
+                    {{ t("scales.upto") }} {{ zone.valueMax }}
+                  </template>
+                  <template v-else>{{ t("scales.above") }}</template
+                  >)
+                </div>
+              </template>
             </template>
-          </template>
+          </div>
+        </div>
+      </Accordion>
+
+      <section>
+        <Bookmark v-if="point?.sensor_id" :point="point" />
+      </section>
+
+      <div
+        v-if="showLogsHealthUserhideNotice"
+        class="logs-health-warning-banner logs-health-userhide-notice"
+      >
+        <div>
+          {{ t("logs_health_device_hid_warnings") }}
+          <a href="#" role="button" @click.prevent="onShowSensorWarningsAgain">
+            {{ t("logs_health_show_warnings_for_period") }}
+          </a>
         </div>
       </div>
-    </Accordion>
 
-    <p class="textsmall" v-if="hasLogs">
-      <template v-if="isRussia">{{ t("notice_with_fz") }}</template>
-      <template v-else>{{ t("notice_without_fz") }}</template>
-    </p>
+      <p class="textsmall" v-if="hasLogs">
+        <template v-if="isRussia">{{ t("notice_with_fz") }}</template>
+        <template v-else>{{ t("notice_without_fz") }}</template>
+      </p>
+    </section>
+
+    
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useMap } from "@/composables/useMap";
-import { useSensors, useDataHealth } from "@/composables/useSensors";
+import { useSensors } from "@/composables/useSensors";
+import {
+  clearAllLogsHealthUserHide,
+  loadLogsHealth,
+  setLogsHealthDayUserHide,
+  setLogsHealthSensorUserHide,
+  useLogsHealth,
+} from "@/utils/calculations/sensor/logs_health.js";
+import { enumeratePeriodDates } from "@/utils/date";
 import measurements from "../../../measurements";
 
 import AQI from "../widgets/AQI.vue";
 import Chart from "../widgets/Chart.vue";
 import Timeline from "../widgets/Timeline.vue";
-import NativeShare from "../widgets/NativeShare.vue";
+// import NativeShare from "../widgets/NativeShare.vue";
 import Accordion from "../../controls/Accordion.vue";
+import Bookmark from "../widgets/Bookmark.vue";
 
 const props = defineProps({
   point: Object,
@@ -108,38 +147,104 @@ const props = defineProps({
 const { t } = useI18n();
 const mapState = useMap();
 const localeComputed = computed(() => localStorage.getItem("locale") || "en");
-const sensorsUI = useSensors(localeComputed);
-const { dataHealth, loadDataHealth: loadDataHealthComposable } = useDataHealth();
-const hiddenOverlays = ref([]); // Массив категорий, для которых скрыт оверлей
+const { logsProgress, runLogsHealth } = useSensors(localeComputed);
+const { logsHealth, logsHealthMeta } = useLogsHealth();
+
+const chartLogsHealthUi = computed(() => (runLogsHealth.value ? logsHealth.value : null));
+
+/** Подписи категорий (pm / climate / noise), у которых за видимый период healthy === false */
+const unhealthyGroupLabels = computed(() => {
+  const lh = chartLogsHealthUi.value;
+  if (!lh) return [];
+  const rows = [
+    { cat: "pm", labelKey: "Dust & Particles" },
+    { cat: "climate", labelKey: "Climate" },
+    { cat: "noise", labelKey: "Noise" },
+  ];
+  return rows
+    .filter(({ cat }) => lh[cat]?.healthy === false)
+    .map(({ labelKey }) => t(labelKey));
+});
+
+const unhealthyGroupsListDisplay = computed(() => unhealthyGroupLabels.value.join(", "));
+
+const logsHealthSensorUserHide = computed(
+  () =>
+    Boolean(
+      logsHealthMeta.value?.userhide &&
+      logsHealthMeta.value?.sensorId != null &&
+      String(logsHealthMeta.value.sensorId) === String(props.point?.sensor_id)
+    )
+);
+
+const logsHealthReloadContext = () => ({
+  currentDate: mapState.currentDate.value,
+  timelineMode: mapState.timelineMode.value,
+});
+
+const onShowSensorWarningsAgain = async () => {
+  const id = props.point?.sensor_id;
+  if (!id || !runLogsHealth.value) return;
+  await clearAllLogsHealthUserHide(id);
+  await loadLogsHealth(id, props.log, logsHealthReloadContext());
+};
+
+/** Как бывший оверлей Chart: скрыть предупреждения по дням выбранного периода */
+const onLogsHealthShowDataAnyway = async () => {
+  const id = props.point?.sensor_id;
+  if (!id || !runLogsHealth.value) return;
+  const mode = mapState.timelineMode.value;
+  const dates = enumeratePeriodDates(mapState.currentDate.value, mode);
+  for (const dayIso of dates) {
+    await setLogsHealthDayUserHide(id, dayIso, true);
+  }
+  await loadLogsHealth(id, props.log, logsHealthReloadContext());
+};
+
+const onLogsHealthDontShowWarningsForSensor = async () => {
+  const id = props.point?.sensor_id;
+  if (!id || !runLogsHealth.value) return;
+  await setLogsHealthSensorUserHide(id, true);
+  await loadLogsHealth(id, props.log, logsHealthReloadContext());
+};
 
 const hasLogs = computed(() => Array.isArray(props.log) && props.log.length > 0);
 
+const chartHasData = computed(
+  () => Array.isArray(props.point?.logs) && props.point.logs.length > 0
+);
+
+const showLogsHealthWarningBanner = computed(
+  () =>
+    runLogsHealth.value &&
+    hasLogs.value &&
+    chartHasData.value &&
+    unhealthyGroupLabels.value.length > 0 &&
+    !logsHealthSensorUserHide.value
+);
+
+/** Только глобальный userhide по сенсору (record.userhide). Ссылка по-прежнему снимает все userhide (дни + корень). */
+const showLogsHealthUserhideNotice = computed(
+  () =>
+    runLogsHealth.value &&
+    hasLogs.value &&
+    chartHasData.value &&
+    logsHealthSensorUserHide.value
+);
+
+const showNoDataMessage = computed(
+  () =>
+    mapState.currentProvider.value === "remote" &&
+    Array.isArray(props.point?.logs) &&
+    props.point.logs.length === 0
+);
+
 // Проверяем, здоровы ли данные PM (для отображения AQI)
 const isPMHealthy = computed(() => {
-  if (!dataHealth.value) return true; // Если данных нет, считаем здоровым
-  return dataHealth.value.pm?.healthy !== false;
+  if (!runLogsHealth.value) return true;
+  if (!logsHealth.value) return true;
+  return logsHealth.value.pm?.healthy !== false;
 });
-
-// Проверяем, есть ли нездоровые данные
-const hasUnhealthyData = computed(() => {
-  if (!dataHealth.value) return false;
-  
-  // Проверяем каждую категорию
-  const pmUnhealthy = dataHealth.value.pm?.healthy === false;
-  const climateUnhealthy = dataHealth.value.climate?.healthy === false;
-  const noiseUnhealthy = dataHealth.value.noise?.healthy === false;
-  
-  return pmUnhealthy || climateUnhealthy || noiseUnhealthy;
-});
-
-// Обработчик скрытия оверлея
-const handleHideOverlay = (categoryKey) => {
-  if (!hiddenOverlays.value.includes(categoryKey)) {
-    hiddenOverlays.value.push(categoryKey);
-  }
-};
-
-const logsProgress = sensorsUI.logsProgress;
 
 const showLogsProgress = computed(() => {
   const progress = logsProgress.value;
@@ -211,12 +316,6 @@ function buildUnitsList() {
   return Array.from(set).sort();
 }
 
-// Загрузка и проверка dataHealth
-const loadDataHealth = () => {
-  const sensorId = props.point?.sensor_id;
-  loadDataHealthComposable(sensorId, props.log);
-};
-
 // Обновляем units при изменении логов
 watch(
   () => props.log,
@@ -235,18 +334,6 @@ watch(
   { immediate: true }
 );
 
-// Загружаем dataHealth при монтировании и при изменении sensor_id
-watch(
-  () => props.point?.sensor_id,
-  () => {
-    loadDataHealth();
-  },
-  { immediate: true }
-);
-
-onMounted(() => {
-  loadDataHealth();
-});
 </script>
 
 <style scoped>
@@ -340,6 +427,33 @@ onMounted(() => {
   color: var(--color-dark);
 }
 
+.logs-health-warning-banner {
+  padding: var(--gap);
+  border-radius: var(--radius-sm);
+  background-color: color-mix(in srgb, var(--color-orange) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-orange) 45%, transparent);
+  margin-bottom: var(--gap);
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: var(--gap);
+  align-items: start;
+}
+
+.logs-health-warning-banner .button-round-outline {
+  background-color: transparent;
+}
+
+.logs-health-warning-banner a {
+  text-decoration: none;
+  border-bottom: 1px dashed var(--color-red);
+  color: var(--color-red);
+  font-weight: bold;
+}
+
+.logs-health-userhide-notice {
+  grid-template-columns: 1fr;
+}
+
 .bugged-sensor {
   flex-direction: column;
 }
@@ -350,5 +464,19 @@ onMounted(() => {
 
 .bugged-sensor h3 {
   margin-bottom: 0.2rem;
+}
+
+.info-wrap {
+  margin-top: calc(var(--gap) * 3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+@media screen and (width < 500px) {
+  .info-wrap {
+    margin-top: calc(var(--gap) * 5);
+    gap: calc(var(--gap) * 2);
+  }
 }
 </style>

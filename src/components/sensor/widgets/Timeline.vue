@@ -1,7 +1,7 @@
 <template>
   <div class="sensor-timeline">
     <div class="sensor-timeline-top">
-      <div class="sensor-timeline-left" aria-hidden="true"></div>
+      <!-- <div class="sensor-timeline-left" aria-hidden="true"></div> -->
       <div class="sensor-timeline-tabs">
         <button
           :class="{ active: timelineMode === 'realtime' }"
@@ -28,10 +28,10 @@
           Month
         </button>
       </div>
-
+<!-- 
       <div class="sensor-timeline-actions">
         <slot name="actions" />
-      </div>
+      </div> -->
     </div>
 
     <div class="sensor-timeline-span">
@@ -285,36 +285,39 @@ watch(
 }
 
 .sensor-timeline-top {
-  display: grid;
+  /* display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: calc(var(--gap) * 0.5);
+  gap: calc(var(--gap) * 0.5); */
+  text-align: center;
 }
 
-.sensor-timeline-left {
+/* .sensor-timeline-left {
   min-width: var(--app-inputheight);
-}
+} */
 
-.sensor-timeline-actions {
+/* .sensor-timeline-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   flex: 0 0 auto;
-}
+} */
 
 .sensor-timeline-tabs {
   display: inline-flex;
-  border: 1px solid #ccc;
-  background-color: #f2f2f2;
+  border: 1px solid var(--color-middle-gray);
+  background-color: var(--color-light-gray);
   border-radius: 20px;
+  width: fit-content;
 }
 
 .sensor-timeline-tabs button {
-  padding: 0.2rem 0.8rem;
+  padding: 0.5rem 1.4rem;
   color: var(--color-dark);
   font-weight: bold;
   border: 0;
   cursor: pointer;
+  font-size: var(--font-size);
 }
 
 .sensor-timeline-tabs button.active {
@@ -325,6 +328,7 @@ watch(
 
 .sensor-timeline-span {
   margin-bottom: calc(var(--gap) * 0.4);
+  text-align: center;
 }
 
 .realtime-info {
@@ -377,7 +381,7 @@ watch(
 }
 
 .range-controls {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 }

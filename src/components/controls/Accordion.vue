@@ -39,9 +39,9 @@ const toggle = () => {
 <style scoped>
 .accordion {
   border-radius: var(--border-radius, 6px);
-  background: var(--color-light, #fff);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--color-dark);
+  background: var(--color-light-gray);
+  /* box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); */
+  border: 1px solid var(--color-middle-gray);
   overflow: hidden;
 }
 
@@ -63,6 +63,7 @@ const toggle = () => {
 .accordion__body {
   padding: calc(var(--gap) * 0.75) calc(var(--gap) * 1.2);
   border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: var(--color-light, #fff);
 }
 
 .accordion-collapse-enter-active,

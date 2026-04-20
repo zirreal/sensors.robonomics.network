@@ -26,6 +26,10 @@
       "invertForDark": false
     }
   },
+  "SENSOR": {
+    "warmUpTime": 1800,
+    "checkLogsHealth": true
+  },
   "SERVICES": {
     "accounts": true,
     "messages": true

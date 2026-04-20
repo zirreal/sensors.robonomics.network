@@ -84,18 +84,44 @@ export function getPeriodBounds(isoDate, mode = "day") {
   };
 }
 
+/**
+ * Список календарных дат YYYY-MM-DD в периоде (локальные границы как у getPeriodBounds).
+ * Для realtime возвращает один день по выбранной дате (как day).
+ */
+export function enumeratePeriodDates(isoDate, mode = "day") {
+  if (!isoDate) return [];
+  const m = mode === "realtime" ? "day" : mode;
+  const { start, end } = getPeriodBounds(isoDate, m);
+  const startDay = dayISO(start * 1000);
+  const endDay = dayISO(end * 1000);
+  const out = [];
+  let d = startDay;
+  for (let i = 0; i < 400; i++) {
+    out.push(d);
+    if (d >= endDay) break;
+    d = addDaysISO(d, 1);
+  }
+  return out;
+}
+
 export function addDaysISO(isoDate, deltaDays) {
   const [y, m, d] = String(isoDate).split("-").map(Number);
   const dt = new Date(y, m - 1, d);
   dt.setDate(dt.getDate() + Number(deltaDays || 0));
-  return dt.toISOString().slice(0, 10);
+  const year = dt.getFullYear();
+  const month = String(dt.getMonth() + 1).padStart(2, "0");
+  const day = String(dt.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function addMonthsISO(isoDate, deltaMonths) {
   const [y, m, d] = String(isoDate).split("-").map(Number);
   const dt = new Date(y, m - 1, d);
   dt.setMonth(dt.getMonth() + Number(deltaMonths || 0));
-  return dt.toISOString().slice(0, 10);
+  const year = dt.getFullYear();
+  const month = String(dt.getMonth() + 1).padStart(2, "0");
+  const day = String(dt.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function unixToISODate(unixSeconds) {

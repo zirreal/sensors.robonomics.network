@@ -80,7 +80,6 @@ const toggleValue = () => {
 }
 
 .toggle-label {
-  font-size: calc(var(--font-size) * 0.8);
   font-weight: bold;
   line-height: 1;
   white-space: nowrap;

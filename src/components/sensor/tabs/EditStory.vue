@@ -317,10 +317,11 @@ function loadStories() {
 }
 
 async function fetchLastStoryFromBackend(sensorId) {
-  const base = String(settings?.REMOTE_PROVIDER || "https://roseman.airalab.org/").replace(
-    /\/+$/,
-    ""
-  );
+  const raw = settings?.REMOTE_PROVIDER;
+  if (raw == null || String(raw).trim() === "") {
+    return null;
+  }
+  const base = String(raw).replace(/\/+$/, "");
   const url = `${base}/api/v2/story/last/${encodeURIComponent(sensorId)}`;
   const resp = await fetch(url);
   if (!resp.ok) return null;

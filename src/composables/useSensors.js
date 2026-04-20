@@ -1,12 +1,10 @@
 import { ref, computed } from "vue";
-import { IDBworkflow, IDBgetByKey, notifyDBChange } from "../utils/idb";
-import { checkAllDataHealth } from "../utils/calculations/sensor_stability_check";
 import { useRouter, useRoute } from "vue-router";
 
 import { useMap } from "@/composables/useMap";
 import { useBookmarks } from "@/composables/useBookmarks";
 
-import { pinned_sensors, excluded_sensors } from "@config";
+import { pinned_sensors, excluded_sensors, settings } from "@config";
 import * as sensorsUtils from "../utils/map/sensors";
 import { clearActiveMarker, setActiveMarker } from "../utils/map/markers";
 import {
@@ -23,6 +21,41 @@ import {
 import { getAddress } from "../utils/utils";
 import { hasValidCoordinates } from "../utils/utils";
 import { dayISO, dayBoundsUnix, getPeriodBounds } from "@/utils/date";
+import { loadLogsHealth } from "../utils/calculations/sensor/logs_health.js";
+
+/** API отдаёт -1 для pm25/pm10 как «нет значения» — убираем поле из точки лога. */
+const PM_LOG_KEYS = ["pm25", "pm10"];
+
+function pmValueMeansMissing(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n === -1;
+}
+
+function sanitizePmFieldsInData(data) {
+  if (!data || typeof data !== "object") return data;
+  let next = data;
+  let copied = false;
+  for (const key of PM_LOG_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(data, key)) continue;
+    if (!pmValueMeansMissing(data[key])) continue;
+    if (!copied) {
+      next = { ...data };
+      copied = true;
+    }
+    delete next[key];
+  }
+  return next;
+}
+
+function sanitizeSensorLogsPmSentinels(logs) {
+  if (!Array.isArray(logs)) return logs;
+  return logs.map((item) => {
+    if (!item || typeof item !== "object") return item;
+    const nextData = sanitizePmFieldsInData(item.data);
+    if (nextData === item.data) return item;
+    return { ...item, data: nextData };
+  });
+}
 
 const COORDINATE_TOLERANCE = 0.001; // Минимальное значение координат - маркеры с координатами меньше этого значения считаются невалидными
 const DEFAULT_SENSOR_MODEL = 2; // ID модели сенсора по умолчанию, если модель не указана
@@ -54,6 +87,7 @@ const sensorPoint = ref(null);
 
 export function useSensors(localeComputed) {
   const mapState = useMap();
+  
   const { idbBookmarks } = useBookmarks();
   const router = useRouter();
   const route = useRoute();
@@ -61,9 +95,49 @@ export function useSensors(localeComputed) {
   // Локальное состояние компонента
   const recentlyClosed = ref({ id: null, until: 0 });
 
+  const isSensorNew = () => {
+    const logs = sensorPoint.value?.logs || null;
+    if (!Array.isArray(logs) || logs.length < 2) return false;
+
+    const warmUpSec = settings?.SENSOR?.warmUpTime;
+    if (typeof warmUpSec !== "number" || !Number.isFinite(warmUpSec) || warmUpSec <= 0) {
+      return false;
+    }
+
+    const timestamps = [];
+    for (const item of logs) {
+      const ts = item?.timestamp;
+      if (typeof ts !== "number" || !Number.isFinite(ts)) continue;
+      const d = new Date(ts * 1000);
+      if (
+        d.getUTCHours() === 0 &&
+        d.getUTCMinutes() === 0 &&
+        d.getUTCSeconds() === 0 &&
+        d.getUTCMilliseconds() === 0
+      ) {
+        continue;
+      }
+      timestamps.push(ts);
+    }
+    if (timestamps.length < 2) return false;
+
+    const minTs = Math.min(...timestamps);
+    const nowSec = Math.floor(Date.now() / 1000);
+    return nowSec - minTs <= warmUpSec;
+  };
+
+  /** Проверка / мерж logsHealth и оверлеи — только при remote, SENSOR.checkLogsHealth и не isSensorNew. */
+  const runLogsHealth = computed(
+    () =>
+      settings?.SENSOR?.checkLogsHealth === true &&
+      mapState.currentProvider.value === "remote" &&
+      !isSensorNew()
+  );
+  
   const resetLogsProgress = () => {
     logsProgress.value = createDefaultLogsProgress();
   };
+
   const isUpdatingPopup = ref(false); // Флаг для предотвращения повторных вызовов updateSensorPopup
   const ownerPromises = new Map();
 
@@ -190,6 +264,15 @@ export function useSensors(localeComputed) {
       if (Array.isArray(currentLogs)) {
         // Логи уже загружены для remote - не делаем повторный запрос
         resetLogsProgress();
+        const cleanLogs = sanitizeSensorLogsPmSentinels(currentLogs);
+        sensorPoint.value = { ...sensorPoint.value, logs: cleanLogs };
+        setSensorData(sensorId, { logs: cleanLogs });
+        if (runLogsHealth.value) {
+          void loadLogsHealth(sensorId, cleanLogs, {
+            currentDate: mapState.currentDate.value,
+            timelineMode: mapState.timelineMode.value,
+          });
+        }
         return;
       }
     }
@@ -292,13 +375,21 @@ export function useSensors(localeComputed) {
         sensorPoint.value = { ...sensorPoint.value, logs: sensorPoint.value?.logs ?? null };
         resetLogsProgress();
       } else if (Array.isArray(logArray)) {
-        // Данные загружены (даже если пустой массив)
-        sensorPoint.value = { ...sensorPoint.value, logs: [...logArray] };
+        // Данные загружены (даже если пустой массив); -1 в PM = «нет данных»
+        const cleanLogs = sanitizeSensorLogsPmSentinels(logArray);
+        sensorPoint.value = { ...sensorPoint.value, logs: cleanLogs };
 
         // Сохраняем логи
         setSensorData(sensorId, {
-          logs: logArray,
+          logs: cleanLogs,
         });
+
+        if (runLogsHealth.value) {
+          void loadLogsHealth(sensorId, cleanLogs, {
+            currentDate: mapState.currentDate.value,
+            timelineMode: mapState.timelineMode.value,
+          });
+        }
 
         if (["week", "month"].includes(mapState.timelineMode.value)) {
           logsProgress.value = {
@@ -747,7 +838,9 @@ export function useSensors(localeComputed) {
       owner: basePoint.owner || null,
       kind: basePoint.kind || null,
       isBookmarked: basePoint.isBookmarked || false,
-      logs: basePoint.logs ?? null,
+      logs: Array.isArray(basePoint.logs)
+        ? sanitizeSensorLogsPmSentinels(basePoint.logs)
+        : basePoint.logs ?? null,
       iconLocal: pinned_sensors[basePoint.sensor_id]?.icon || null,
       // Optional bundle for multi-sensor (urban/insight) view
       bundle: basePoint.bundle || null,
@@ -1203,9 +1296,11 @@ export function useSensors(localeComputed) {
 
     // Computed
     isSensor,
+    runLogsHealth,
 
     // Functions
     isSensorOpen,
+    isSensorNew,
     setSensorData,
     updateSensorLogs,
     updateSensorPopup,
@@ -1224,162 +1319,5 @@ export function useSensors(localeComputed) {
     ensureBundleLogs,
     setBundleLayerSensor,
     ensureBundleDataKey,
-  };
-}
-
-// --- Data health (sensor log quality / stability) — kept here with sensor domain ---
-
-const DATA_HEALTH_DB_NAME = "Sensors";
-const DATA_HEALTH_STORE_NAME = "dataHealth";
-const HEALTH_CHECK_VERSION = 4;
-
-function shouldCheckHealth(existingHealth) {
-  if (!existingHealth || !existingHealth.lastChecked) {
-    return true;
-  }
-
-  if (existingHealth.version !== HEALTH_CHECK_VERSION) {
-    return true;
-  }
-
-  const ONE_DAY = 24 * 60 * 60 * 1000;
-  const now = Date.now();
-  const timeSinceLastCheck = now - existingHealth.lastChecked;
-
-  return timeSinceLastCheck >= ONE_DAY;
-}
-
-async function getRecentLogsForHealth(sensorId) {
-  const now = Math.floor(Date.now() / 1000);
-  const ONE_WEEK_AGO = now - 7 * 24 * 60 * 60;
-
-  try {
-    const logs = await getSensorData(sensorId, ONE_WEEK_AGO, now, "remote");
-    return Array.isArray(logs) ? logs : [];
-  } catch (error) {
-    console.error(`Error fetching logs for sensor ${sensorId}:`, error);
-    return [];
-  }
-}
-
-async function checkAndSaveDataHealth(sensorId, logs = null) {
-  try {
-    const recentLogs = await getRecentLogsForHealth(sensorId);
-    if (Array.isArray(logs) && logs.length > 0) {
-      const merged = [...logs, ...recentLogs];
-      const byTs = new Map();
-      for (const item of merged) {
-        const ts = item?.timestamp;
-        if (ts !== undefined && ts !== null) byTs.set(ts, item);
-      }
-      logs = Array.from(byTs.values()).sort((a, b) => a.timestamp - b.timestamp);
-    } else {
-      logs = recentLogs;
-    }
-
-    const healthData = checkAllDataHealth(logs);
-
-    return new Promise((resolve, reject) => {
-      IDBworkflow(DATA_HEALTH_DB_NAME, DATA_HEALTH_STORE_NAME, "readwrite", (store) => {
-        const record = {
-          sensorId,
-          ...healthData,
-          version: HEALTH_CHECK_VERSION,
-          lastChecked: Date.now(),
-        };
-        const request = store.put(record);
-        request.onsuccess = () => {
-          notifyDBChange(DATA_HEALTH_DB_NAME, DATA_HEALTH_STORE_NAME);
-          resolve(healthData);
-        };
-        request.onerror = (e) => {
-          reject(e);
-        };
-      });
-    });
-  } catch (error) {
-    console.error(`Error checking data health for sensor ${sensorId}:`, error);
-    return {
-      pm: { healthy: true, checks: {} },
-      climate: { healthy: true, checks: {} },
-      noise: { healthy: true, checks: {} },
-    };
-  }
-}
-
-async function getOrCheckDataHealth(sensorId, logs = null) {
-  const existingHealth = await IDBgetByKey(
-    DATA_HEALTH_DB_NAME,
-    DATA_HEALTH_STORE_NAME,
-    sensorId
-  );
-
-  if (shouldCheckHealth(existingHealth)) {
-    return await checkAndSaveDataHealth(sensorId, logs);
-  }
-
-  if (existingHealth) {
-    const { lastChecked, version, ...healthData } = existingHealth;
-    return healthData;
-  }
-
-  return await checkAndSaveDataHealth(sensorId, logs);
-}
-
-/**
- * Reactive data-health state for a sensor (IndexedDB + weekly log window).
- */
-export function useDataHealth() {
-  const dataHealth = ref(null);
-  const isLoading = ref(false);
-  const error = ref(null);
-
-  const loadDataHealth = async (sensorId, logs = null) => {
-    if (!sensorId) {
-      dataHealth.value = null;
-      return;
-    }
-
-    isLoading.value = true;
-    error.value = null;
-
-    try {
-      const health = await getOrCheckDataHealth(sensorId, logs);
-      dataHealth.value = health;
-    } catch (err) {
-      console.error("Error loading data health:", err);
-      error.value = err;
-      dataHealth.value = null;
-    } finally {
-      isLoading.value = false;
-    }
-  };
-
-  const refreshDataHealth = async (sensorId, logs = null) => {
-    if (!sensorId) {
-      dataHealth.value = null;
-      return;
-    }
-
-    isLoading.value = true;
-    error.value = null;
-
-    try {
-      const health = await checkAndSaveDataHealth(sensorId, logs);
-      dataHealth.value = health;
-    } catch (err) {
-      console.error("Error refreshing data health:", err);
-      error.value = err;
-    } finally {
-      isLoading.value = false;
-    }
-  };
-
-  return {
-    dataHealth,
-    isLoading,
-    error,
-    loadDataHealth,
-    refreshDataHealth,
   };
 }

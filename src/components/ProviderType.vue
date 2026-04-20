@@ -7,7 +7,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { settings } from "@config";
 import { useMap } from "@/composables/useMap";

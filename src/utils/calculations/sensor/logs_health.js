@@ -1,3 +1,9 @@
+import { ref } from "vue";
+import { IDBworkflow, IDBgetByKey, notifyDBChange } from "../../idb.js";
+import { getSensorData } from "../../map/sensors/requests.js";
+import { dayISO, enumeratePeriodDates, getPeriodBounds } from "../../date.js";
+import { idbschemas } from "@config";
+
 // Проверка датчиков на стабильную работу
 
 // Воздух
@@ -577,36 +583,484 @@ export function checkNoiseStability(logArr) {
   };
 }
 
+/** Порядок категорий в UI (агрегат), в записи дня IDB и в объекте дня. */
+const HEALTH_DAY_KEYS = ["pm", "climate", "noise"];
+
+/** Сырые проверки по категории (до categoryHealthFromChecks / dayCategoryFromChecks). */
+const HEALTH_CHECKS_BY_CATEGORY = {
+  pm: checkStability,
+  climate: checkClimateStability,
+  noise: checkNoiseStability,
+};
+
+/** Для UI: объект проверок + флаг healthy (ни один boolean-check не true). */
+function categoryHealthFromChecks(checks) {
+  return {
+    healthy: !Object.values(checks).some((v) => v === true),
+    checks,
+  };
+}
+
+/** Для IDB по дню: те же checks + isHealthy для совместимости с aggregateLogsHealthForVisible. */
+function dayCategoryFromChecks(checks) {
+  return { isHealthy: !Object.values(checks).some(Boolean), ...checks };
+}
+
+function allCategoriesEmptyUiHealth() {
+  return Object.fromEntries(
+    HEALTH_DAY_KEYS.map((key) => [key, { healthy: true, checks: {} }])
+  );
+}
+
 /**
- * Проверяет стабильность всех типов данных и возвращает dataHealth для каждой категории
+ * Проверяет стабильность всех типов данных и возвращает агрегат logsHealth по категориям
  * @param {Array} logArr - массив логов с timestamp и data
- * @returns {Object} - объект с dataHealth для каждой категории (pm, climate, noise)
+ * @returns {Object} - объект с healthy/checks для pm, climate, noise
  */
-export function checkAllDataHealth(logArr) {
+export function checkAllLogsHealth(logArr) {
   if (!logArr || logArr.length < 2) {
-    return {
-      pm: { healthy: true, checks: {} },
-      climate: { healthy: true, checks: {} },
-      noise: { healthy: true, checks: {} }
-    };
+    return allCategoriesEmptyUiHealth();
   }
 
-  const pmChecks = checkStability(logArr);
-  const climateChecks = checkClimateStability(logArr);
-  const noiseChecks = checkNoiseStability(logArr);
+  return Object.fromEntries(
+    HEALTH_DAY_KEYS.map((key) => [
+      key,
+      categoryHealthFromChecks(HEALTH_CHECKS_BY_CATEGORY[key](logArr)),
+    ])
+  );
+}
 
-  return {
-    pm: {
-      healthy: !Object.values(pmChecks).some(v => v === true),
-      checks: pmChecks
-    },
-    climate: {
-      healthy: !Object.values(climateChecks).some(v => v === true),
-      checks: climateChecks
-    },
-    noise: {
-      healthy: !Object.values(noiseChecks).some(v => v === true),
-      checks: noiseChecks
+// --- logsHealth: схема записи в IndexedDB, мерж по дням, агрегат для UI ---
+
+const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function isDateKey(k) {
+  return DATE_KEY_RE.test(String(k));
+}
+
+/** id + userhide + lastChecked из произвольного объекта (сырой IDB или уже нормализованная запись). */
+function logsHealthRecordShell(sensorId, rawLike) {
+  const out = { id: sensorId, userhide: Boolean(rawLike?.userhide) };
+  if (rawLike?.lastChecked != null) out.lastChecked = rawLike.lastChecked;
+  return out;
+}
+
+/** Копирует только вложенные объекты по ключам YYYY-MM-DD. */
+function copyDayEntriesFrom(source, target) {
+  if (!source || typeof source !== "object") return;
+  for (const k of Object.keys(source)) {
+    if (isDateKey(k) && source[k] && typeof source[k] === "object") {
+      target[k] = source[k];
     }
+  }
+}
+
+const sensorsIdbSchema = idbschemas?.Sensors;
+const sensorsIdbDbName = sensorsIdbSchema?.dbname ?? null;
+const logsHealthStoreKey = sensorsIdbSchema?.logsHealthStore;
+const logsHealthStoreName =
+  typeof logsHealthStoreKey === "string" &&
+  logsHealthStoreKey.length > 0 &&
+  sensorsIdbSchema?.stores?.[logsHealthStoreKey]
+    ? logsHealthStoreKey
+    : null;
+
+function defaultLogsHealthUi() {
+  return Object.fromEntries(HEALTH_DAY_KEYS.map((key) => [key, { healthy: true }]));
+}
+
+/** Дефолтное тело категории в записи дня (IDB), до мержа из логов. */
+const HEALTHY_DAY_EMPTY_BY_CATEGORY = {
+  climate: { 
+    isHealthy: true, 
+    rh100TooLong: false, 
+    noChange: false, 
+    instantJumps: false 
+  },
+  noise: {
+    isHealthy: true,
+    avgMaxSame: false,
+    longFlatline80: false,
+    noChange: false,
+    tooLow: false,
+  },
+  pm: {
+    isHealthy: true,
+    alwaysZeroPM25: false,
+    impossiblePM: false,
+    instantJumps: false,
+    lowRatio: false,
+    stableStd: false,
+  },
+};
+
+/** Пустая запись дня */
+function healthyDayEntry() {
+  return {
+    ...Object.fromEntries(
+      HEALTH_DAY_KEYS.map((key) => [key, { ...HEALTHY_DAY_EMPTY_BY_CATEGORY[key] }])
+    ),
+    userhide: false,
+  };
+}
+
+function buildDayEntry(dayLogs) {
+  if (!dayLogs || dayLogs.length < 2) {
+    return healthyDayEntry();
+  }
+  return {
+    ...Object.fromEntries(
+      HEALTH_DAY_KEYS.map((key) => [
+        key,
+        dayCategoryFromChecks(HEALTH_CHECKS_BY_CATEGORY[key](dayLogs)),
+      ])
+    ),
+    userhide: false,
+  };
+}
+
+function partitionLogsByDay(logArr) {
+  const map = new Map();
+  if (!Array.isArray(logArr)) return map;
+  for (const item of logArr) {
+    const ts = item?.timestamp;
+    if (ts === undefined || ts === null) continue;
+    const ms = ts < 1e12 ? ts * 1000 : ts;
+    const day = dayISO(ms);
+    if (!map.has(day)) map.set(day, []);
+    map.get(day).push(item);
+  }
+  for (const arr of map.values()) {
+    arr.sort((a, b) => a.timestamp - b.timestamp);
+  }
+  return map;
+}
+
+/** Запись из IDB: id, userhide, lastChecked?, только ключи YYYY-MM-DD → объект дня. */
+function normalizeRecord(raw, sensorId) {
+  const out = logsHealthRecordShell(sensorId, raw);
+  if (raw && typeof raw === "object") copyDayEntriesFrom(raw, out);
+  return out;
+}
+
+function scrubRecordForPut(rec) {
+  const out = logsHealthRecordShell(rec.id, rec);
+  copyDayEntriesFrom(rec, out);
+  return out;
+}
+
+/**
+ * Агрегат для UI (Chart / AQI): по видимым датам; userhide на сенсоре или на дне глушит предупреждения.
+ */
+export function aggregateLogsHealthForVisible(record, visibleDates) {
+  if (!record || record.userhide) return defaultLogsHealthUi();
+  const dates =
+    Array.isArray(visibleDates) && visibleDates.length > 0
+      ? visibleDates
+      : Object.keys(record).filter(isDateKey).sort();
+  if (!dates.length) return defaultLogsHealthUi();
+
+  const ok = Object.fromEntries(HEALTH_DAY_KEYS.map((key) => [key, true]));
+  const categoryLooksHealthy = (cat) =>
+    !cat || typeof cat !== "object" || cat.isHealthy !== false;
+
+  for (const date of dates) {
+    const day = record[date];
+    if (!day || typeof day !== "object" || day.userhide) continue;
+    for (const key of HEALTH_DAY_KEYS) {
+      if (!categoryLooksHealthy(day[key])) ok[key] = false;
+    }
+  }
+  return Object.fromEntries(HEALTH_DAY_KEYS.map((key) => [key, { healthy: ok[key] }]));
+}
+
+function resolveVisibleDates(logs, context) {
+  const { currentDate, timelineMode } = context || {};
+  if (currentDate) {
+    return enumeratePeriodDates(currentDate, timelineMode || "day");
+  }
+  const map = partitionLogsByDay(Array.isArray(logs) ? logs : []);
+  return [...map.keys()].sort();
+}
+
+/**
+ * Мержит health по дням из логов: пересчитываем только если в IDB нет дня или день — сегодня.
+ * @returns {{ record: object, changed: boolean }}
+ */
+function dayNeedsMergeFromLogs(dayKey, existingDay, todayIso) {
+  return dayKey === todayIso || !existingDay || typeof existingDay !== "object";
+}
+
+function mergeLogsIntoRecord(existing, fullLogs, sensorId, todayIso) {
+  let changed = false;
+  const out = {
+    ...existing,
+    id: sensorId,
+    userhide: Boolean(existing.userhide),
+  };
+
+  const partition = partitionLogsByDay(fullLogs);
+
+  for (const [d, dayLogs] of partition) {
+    if (!dayNeedsMergeFromLogs(d, out[d], todayIso)) continue;
+    const built = buildDayEntry(dayLogs);
+    built.userhide = out[d]?.userhide === true;
+    out[d] = built;
+    changed = true;
+  }
+  if (partition.has(todayIso)) {
+    out.lastChecked = Date.now();
+    changed = true;
+  }
+  return { record: out, changed };
+}
+
+async function getRecentLogsForHealth(sensorId) {
+  const now = Math.floor(Date.now() / 1000);
+  const ONE_WEEK_AGO = now - 7 * 24 * 60 * 60;
+
+  try {
+    const logs = await getSensorData(sensorId, ONE_WEEK_AGO, now, "remote");
+    return Array.isArray(logs) ? logs : [];
+  } catch (error) {
+    console.error(`Error fetching logs for sensor ${sensorId}:`, error);
+    return [];
+  }
+}
+
+async function expandedLogsForHealth(sensorId, logs) {
+  const recentLogs = await getRecentLogsForHealth(sensorId);
+  if (!Array.isArray(logs) || logs.length === 0) {
+    return recentLogs;
+  }
+  const merged = [...logs, ...recentLogs];
+  const byTs = new Map();
+  for (const item of merged) {
+    const ts = item?.timestamp;
+    if (ts !== undefined && ts !== null) byTs.set(ts, item);
+  }
+  return Array.from(byTs.values()).sort((a, b) => a.timestamp - b.timestamp);
+}
+
+async function readLogsHealthRecord(sensorId) {
+  const raw = await IDBgetByKey(sensorsIdbDbName, logsHealthStoreName, sensorId);
+  return normalizeRecord(raw, sensorId);
+}
+
+function idbPutLogsHealth(record) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const fail = (msg, err) => {
+      if (settled) return;
+      settled = true;
+      console.error(msg, err || "");
+      reject(err || new Error(msg));
+    };
+    const timer = globalThis.setTimeout(() => {
+      fail(
+        "logsHealth IDB: транзакция не открылась (нет стора / IndexedDB). Проверьте dbversion и logsHealthStore в idb-schemas."
+      );
+    }, 5000);
+
+    IDBworkflow(sensorsIdbDbName, logsHealthStoreName, "readwrite", (store) => {
+      globalThis.clearTimeout(timer);
+      if (settled) return;
+      const payload = scrubRecordForPut(record);
+      const request = store.put(payload);
+      request.onsuccess = () => {
+        if (settled) return;
+        settled = true;
+        notifyDBChange(sensorsIdbDbName, logsHealthStoreName);
+        resolve();
+      };
+      request.onerror = (e) => fail("logsHealth IDB: put error", e);
+    });
+  });
+}
+
+async function getOrCheckLogsHealth(sensorId, logs, context) {
+  if (!sensorsIdbDbName || !logsHealthStoreName) {
+    syncLogsHealthMeta(sensorId, null);
+    return defaultLogsHealthUi();
+  }
+
+  const visibleDates = resolveVisibleDates(logs, context);
+  let record = await readLogsHealthRecord(sensorId);
+  const todayIso = dayISO();
+  const hasClientLogs = Array.isArray(logs) && logs.length >= 1;
+
+  if (hasClientLogs) {
+    const { record: merged, changed } = mergeLogsIntoRecord(record, logs, sensorId, todayIso);
+    record = merged;
+    if (changed) {
+      await idbPutLogsHealth(record);
+    }
+  }
+
+  syncLogsHealthMeta(sensorId, record, visibleDates, context);
+  return aggregateLogsHealthForVisible(record, visibleDates);
+}
+
+export async function checkAndSaveLogsHealth(sensorId, logs = null, context = {}) {
+  if (!sensorsIdbDbName || !logsHealthStoreName) {
+    console.warn("Sensors IDB: schema or logsHealthStore / stores entry missing in idb-schemas");
+    syncLogsHealthMeta(sensorId, null);
+    return defaultLogsHealthUi();
+  }
+
+  try {
+    const expanded = await expandedLogsForHealth(sensorId, logs);
+    let record = await readLogsHealthRecord(sensorId);
+    const todayIso = dayISO();
+
+    if (expanded.length >= 1) {
+      const { record: merged, changed } = mergeLogsIntoRecord(record, expanded, sensorId, todayIso);
+      record = merged;
+      if (changed) {
+        await idbPutLogsHealth(record);
+      }
+    }
+
+    const visibleDates = resolveVisibleDates(expanded, context);
+    syncLogsHealthMeta(sensorId, record, visibleDates, context);
+    return aggregateLogsHealthForVisible(record, visibleDates);
+  } catch (error) {
+    console.error(`Error checking logs health for sensor ${sensorId}:`, error);
+    syncLogsHealthMeta(sensorId, null);
+    return defaultLogsHealthUi();
+  }
+}
+
+/** Агрегат healthy по категориям для UI (useLogsHealth / loadLogsHealth). */
+const logsHealthShared = ref(null);
+const logsHealthLoadingShared = ref(false);
+const logsHealthErrorShared = ref(null);
+
+/** userhide по сенсору + флаг userhide по дням в видимом периоде (для UI). */
+const logsHealthMetaShared = ref({
+  sensorId: null,
+  userhide: false,
+  anyVisibleDayUserhide: false,
+});
+
+function syncLogsHealthMeta(sensorId, record, visibleDates, context) {
+  if (!sensorId) {
+    logsHealthMetaShared.value = {
+      sensorId: null,
+      userhide: false,
+      anyVisibleDayUserhide: false,
+    };
+    return;
+  }
+  let anyVisibleDayUserhide = false;
+  if (record) {
+    if (Array.isArray(visibleDates) && visibleDates.length > 0) {
+      anyVisibleDayUserhide = visibleDates.some((d) => record[d]?.userhide === true);
+    }
+    // Запасной вариант: те же границы, что у таймлайна (неделя/месяц), без зависимости от enumeratePeriodDates
+    if (!anyVisibleDayUserhide && context?.currentDate) {
+      const mode = context.timelineMode === "realtime" ? "day" : context.timelineMode || "day";
+      const { start, end } = getPeriodBounds(context.currentDate, mode);
+      const lo = dayISO(start * 1000);
+      const hi = dayISO(end * 1000);
+      for (const k of Object.keys(record)) {
+        if (!isDateKey(k)) continue;
+        if (k >= lo && k <= hi && record[k]?.userhide === true) {
+          anyVisibleDayUserhide = true;
+          break;
+        }
+      }
+    }
+  }
+  logsHealthMetaShared.value = {
+    sensorId,
+    userhide: Boolean(record?.userhide),
+    anyVisibleDayUserhide,
+  };
+}
+
+async function runLogsHealthUiTask(sensorId, fetchLogsHealth, errorMessage) {
+  if (!sensorId) {
+    logsHealthShared.value = null;
+    syncLogsHealthMeta(null, null);
+    return;
+  }
+
+  logsHealthLoadingShared.value = true;
+  logsHealthErrorShared.value = null;
+
+  try {
+    logsHealthShared.value = await fetchLogsHealth();
+  } catch (err) {
+    console.error(errorMessage, err);
+    logsHealthErrorShared.value = err;
+    logsHealthShared.value = null;
+    syncLogsHealthMeta(null, null);
+  } finally {
+    logsHealthLoadingShared.value = false;
+  }
+}
+
+export async function loadLogsHealth(sensorId, logs = null, context = {}) {
+  return runLogsHealthUiTask(
+    sensorId,
+    () => getOrCheckLogsHealth(sensorId, logs, context),
+    "Error loading logs health:"
+  );
+}
+
+export async function refreshLogsHealth(sensorId, logs = null, context = {}) {
+  return runLogsHealthUiTask(
+    sensorId,
+    () => checkAndSaveLogsHealth(sensorId, logs, context),
+    "Error refreshing logs health:"
+  );
+}
+
+/** Скрыть предупреждения для всего сенсора (все даты). */
+export async function setLogsHealthSensorUserHide(sensorId, hidden) {
+  if (!sensorsIdbDbName || !logsHealthStoreName || !sensorId) return;
+  const record = await readLogsHealthRecord(sensorId);
+  record.userhide = Boolean(hidden);
+  await idbPutLogsHealth(record);
+  syncLogsHealthMeta(sensorId, record);
+}
+
+/** Снять userhide на сенсоре и на всех днях записи logsHealth для этого датчика. */
+export async function clearAllLogsHealthUserHide(sensorId) {
+  if (!sensorsIdbDbName || !logsHealthStoreName || !sensorId) return;
+  const record = await readLogsHealthRecord(sensorId);
+  record.userhide = false;
+  for (const k of Object.keys(record)) {
+    if (!isDateKey(k)) continue;
+    const day = record[k];
+    if (!day || typeof day !== "object") continue;
+    record[k] = { ...day, userhide: false };
+  }
+  await idbPutLogsHealth(record);
+  syncLogsHealthMeta(sensorId, record);
+}
+
+/** Скрыть предупреждения для одной даты YYYY-MM-DD. */
+export async function setLogsHealthDayUserHide(sensorId, dayIso, hidden) {
+  if (!sensorsIdbDbName || !logsHealthStoreName || !sensorId || !isDateKey(dayIso)) return;
+  const record = await readLogsHealthRecord(sensorId);
+  const prev = record[dayIso] && typeof record[dayIso] === "object" ? record[dayIso] : healthyDayEntry();
+  record[dayIso] = { ...prev, userhide: Boolean(hidden) };
+  await idbPutLogsHealth(record);
+}
+
+/**
+ * Реактивное состояние проверки качества логов (IndexedDB + окно логов).
+ * Модульные refs — несколько компонентов видят одни и те же данные.
+ */
+export function useLogsHealth() {
+  return {
+    logsHealth: logsHealthShared,
+    logsHealthMeta: logsHealthMetaShared,
+    isLoading: logsHealthLoadingShared,
+    error: logsHealthErrorShared,
+    loadLogsHealth,
+    refreshLogsHealth,
   };
 }
