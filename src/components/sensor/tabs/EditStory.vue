@@ -139,6 +139,7 @@ import { settings } from "@config";
 import { useAccounts } from "@/composables/useAccounts";
 import { useMap } from "@/composables/useMap";
 import { usePolkadotApi } from "robonomics-interface-vue";
+import { stringToHex, hexToU8a } from "@polkadot/util";
 import Keyring from "@polkadot/keyring";
 import { datalog } from "robonomics-interface";
 import { dayISO } from "@/utils/date";
@@ -503,8 +504,7 @@ async function saveStory() {
     instance.account.setSender(pair);
     instance.account.useSubscription(pair.address);
 
-    const call = datalog.action.write(
-      instance.api,
+    const dataStory = stringToHex(
       JSON.stringify({
         message,
         sensor: props.sensorId,
@@ -514,6 +514,15 @@ async function saveStory() {
         i: ICON_CODE_BY_ID[selectedIcon.id] || selectedIcon.id,
       })
     );
+
+    if (hexToU8a(data).byteLength > 512) {
+      statusType.value = "error";
+      statusMessage.value = "Unsupported characters were used or the comment is too long.";
+      isSubmitting.value = false;
+      return;
+    }
+
+    const call = datalog.action.write(instance.api, dataStory);
 
     const nonce = await instance.api.rpc.system.accountNextIndex(pair.address);
     const res = await instance.account.signAndSend(call, { nonce });

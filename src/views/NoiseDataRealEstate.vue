@@ -6,6 +6,7 @@
         'How a month of noise monitoring with Altruist can strengthen your position in rent or purchase negotiations. Real examples from Limassol, Cyprus.'
       )
     "
+    pageImage="/og-noise-data.webp"
   />
   <PageTextLayout>
     <h1>{{ $t("Noise Data for Real Estate: Negotiate with Facts, Not Feelings") }}</h1>
@@ -56,7 +57,13 @@
       </p>
 
       <h3>{{ $t("Neapoli (Molos area) — noisy") }}</h3>
-      <p><img :src="imageNeapoli" alt="Noise data from Neapoli, Limassol — peaks above 90 dB" class="pagetext-fullwidth-image" /></p>
+      <p>
+        <img
+          :src="imageNeapoli"
+          alt="Noise data from Neapoli, Limassol — peaks above 90 dB"
+          class="pagetext-fullwidth-image"
+        />
+      </p>
       <p>
         {{
           $t(
@@ -66,7 +73,13 @@
       </p>
 
       <h3>{{ $t("Germasogeia — quiet") }}</h3>
-      <p><img :src="imageGermasogeia" alt="Noise data from Germasogeia — stable 50-60 dB" class="pagetext-fullwidth-image" /></p>
+      <p>
+        <img
+          :src="imageGermasogeia"
+          alt="Noise data from Germasogeia — stable 50-60 dB"
+          class="pagetext-fullwidth-image"
+        />
+      </p>
       <p>
         {{
           $t(
@@ -106,11 +119,7 @@
       <h2>{{ $t("How to Try This Yourself") }}</h2>
       <ol>
         <li>
-          {{
-            $t(
-              "Mount an Altruist sensor on your balcony or outside your window."
-            )
-          }}
+          {{ $t("Mount an Altruist sensor on your balcony or outside your window.") }}
         </li>
         <li>
           {{
@@ -127,11 +136,7 @@
           }}
         </li>
         <li>
-          {{
-            $t(
-              "Present the graphs at your next negotiation. Let the data speak."
-            )
-          }}
+          {{ $t("Present the graphs at your next negotiation. Let the data speak.") }}
         </li>
       </ol>
     </section>

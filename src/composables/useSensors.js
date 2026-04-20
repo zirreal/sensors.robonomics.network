@@ -18,6 +18,7 @@ import {
   getCachedAddress,
   getSensorOwner,
   getSensorData,
+  getSensorBundle,
 } from "../utils/map/sensors/requests";
 import { getAddress } from "../utils/utils";
 import { hasValidCoordinates } from "../utils/utils";
@@ -44,6 +45,13 @@ const createDefaultLogsProgress = () => ({
 
 const logsProgress = ref(createDefaultLogsProgress());
 
+// In-memory cache for bundle payloads (fast UI toggles).
+// Key: `${sensorId}:${start}:${end}`
+const bundleCache = new Map();
+
+// Shared popup state (must be global so Sensor popup + Footer + Main share the same ref)
+const sensorPoint = ref(null);
+
 export function useSensors(localeComputed) {
   const mapState = useMap();
   const { idbBookmarks } = useBookmarks();
@@ -51,7 +59,6 @@ export function useSensors(localeComputed) {
   const route = useRoute();
 
   // Локальное состояние компонента
-  const sensorPoint = ref(null);
   const recentlyClosed = ref({ id: null, until: 0 });
 
   const resetLogsProgress = () => {
@@ -143,6 +150,8 @@ export function useSensors(localeComputed) {
         data: { ...existingSensor.data, ...(data.data || {}) }, // Мержим данные!
         logs: data.logs !== undefined ? data.logs : existingSensor.logs ?? null,
         owner: data.owner !== undefined ? data.owner : existingSensor.owner,
+        bundle: data.bundle !== undefined ? data.bundle : existingSensor.bundle,
+        kind: data.kind !== undefined ? data.kind : existingSensor.kind,
       };
 
       // Создаем унифицированную точку с мерженными данными
@@ -157,6 +166,8 @@ export function useSensors(localeComputed) {
         data: data.data || {},
         logs: data.logs ?? null,
         owner: data.owner || null,
+        bundle: data.bundle || null,
+        kind: data.kind || null,
       });
       existingSensors.push(sensorData);
     }
@@ -322,6 +333,237 @@ export function useSensors(localeComputed) {
   };
 
   /**
+   * Ensures logs for a sensor inside the currently opened bundle are loaded.
+   * Used for multi-layer sensors (urban/insight) where `displaySensorId` can differ
+   * from the base popup sensor id.
+   */
+  const ensureBundleLogs = async (targetSensorId) => {
+    try {
+      if (!targetSensorId) return;
+      if (!sensorPoint.value?.bundle) return;
+
+      const b = sensorPoint.value.bundle || {};
+      const data = b?.data || {};
+      const hasKey = Object.prototype.hasOwnProperty.call(data, targetSensorId);
+
+      // If bundle already contains this sensor logs (even empty),
+      // render immediately and skip slow history fetch.
+      if (hasKey && Array.isArray(data?.[targetSensorId])) {
+        return;
+      }
+
+      // Compute current bounds based on timeline mode
+      const timelineMode = mapState.timelineMode.value;
+      let start, end;
+      if (timelineMode === "day") {
+        const bounds = dayBoundsUnix(mapState.currentDate.value);
+        start = bounds.start;
+        end = bounds.end;
+      } else {
+        const bounds = getPeriodBounds(mapState.currentDate.value, timelineMode);
+        start = bounds.start;
+        end = bounds.end;
+      }
+
+      const logs = await getSensorDataWithCache(
+        targetSensorId,
+        start,
+        end,
+        mapState.currentProvider.value,
+        null,
+        null
+      );
+
+      if (!Array.isArray(logs)) return;
+
+      const nextBundle = {
+        ...(b || {}),
+        data: {
+          ...(b?.data || {}),
+          [targetSensorId]: logs,
+        },
+      };
+
+      // Optionally update logsCount for ownerSensors list (for UI filtering)
+      if (Array.isArray(nextBundle.ownerSensors)) {
+        nextBundle.ownerSensors = nextBundle.ownerSensors.map((s) => {
+          if (s?.sensor_id !== targetSensorId) return s;
+          return { ...s, logsCount: logs.length };
+        });
+      }
+
+      sensorPoint.value = {
+        ...sensorPoint.value,
+        bundle: nextBundle,
+      };
+    } catch (error) {
+      console.warn("ensureBundleLogs failed:", error);
+    }
+  };
+
+  const setBundleLayerSensor = (kind, sensorId) => {
+    if (!sensorId) return;
+    if (!sensorPoint.value) return;
+
+    const b = sensorPoint.value.bundle || {};
+    const layers = { ...(b.layers || {}) };
+
+    if (kind === "insight") {
+      layers.insight = sensorId;
+      if (!layers.urban) layers.urban = sensorPoint.value.sensor_id;
+    } else {
+      // default bucket = urban
+      layers.urban = sensorId;
+      if (!layers.insight && b?.layers?.insight) layers.insight = b.layers.insight;
+    }
+
+    sensorPoint.value = {
+      ...sensorPoint.value,
+      bundle: {
+        ...b,
+        layers,
+      },
+    };
+  };
+
+  const ensureBundleDataKey = (sensorId) => {
+    if (!sensorId) return;
+    if (!sensorPoint.value?.bundle) return;
+    const b = sensorPoint.value.bundle || {};
+    const data = b.data && typeof b.data === "object" ? b.data : {};
+    if (Object.prototype.hasOwnProperty.call(data, sensorId)) return;
+    sensorPoint.value = {
+      ...sensorPoint.value,
+      bundle: {
+        ...b,
+        data: {
+          ...data,
+          // null = loading placeholder; [] = loaded empty; logs[] = loaded
+          [sensorId]: null,
+        },
+      },
+    };
+  };
+
+  const detectKindFromLogs = (logs) => {
+    if (!Array.isArray(logs) || logs.length === 0) return null;
+    let hasCo2 = false;
+    let hasUrban = false;
+    for (const item of logs) {
+      const d = item?.data || {};
+      if (d.co2 !== undefined && d.co2 !== null) hasCo2 = true;
+      // Urban signals: noise OR PM (many sensors don't send noise)
+      if (d.noiseavg !== undefined && d.noiseavg !== null) hasUrban = true;
+      if (d.noisemax !== undefined && d.noisemax !== null) hasUrban = true;
+      if (d.pm25 !== undefined && d.pm25 !== null) hasUrban = true;
+      if (d.pm10 !== undefined && d.pm10 !== null) hasUrban = true;
+      if (hasCo2 && hasUrban) break;
+    }
+    // Prefer urban when both present (some devices may bundle mixed payloads)
+    if (hasUrban) return "urban";
+    if (hasCo2) return "insight";
+    return null;
+  };
+
+  const loadBundleForPopup = async (baseSensorId) => {
+    try {
+      if (!baseSensorId) return;
+      if (!isSensorOpen(baseSensorId)) return;
+
+      const timelineMode = mapState.timelineMode.value;
+      let start, end;
+      if (timelineMode === "day") {
+        const bounds = dayBoundsUnix(mapState.currentDate.value);
+        start = bounds.start;
+        end = bounds.end;
+      } else {
+        const bounds = getPeriodBounds(mapState.currentDate.value, timelineMode);
+        start = bounds.start;
+        end = bounds.end;
+      }
+
+      const cacheKey = `${baseSensorId}:${start}:${end}`;
+      let bundlePayload = bundleCache.get(cacheKey);
+      if (!bundlePayload) {
+        const ac = new AbortController();
+        const t = setTimeout(() => ac.abort(), 12000);
+        try {
+          bundlePayload = await getSensorBundle(baseSensorId, start, end, ac.signal);
+        } finally {
+          clearTimeout(t);
+        }
+        if (bundlePayload) {
+          bundleCache.set(cacheKey, bundlePayload);
+        }
+      }
+      if (!bundlePayload) return;
+      if (!isSensorOpen(baseSensorId)) return;
+
+      const sensorIds = Array.isArray(bundlePayload.sensors) ? bundlePayload.sensors : [];
+      const uniqueIds = Array.from(new Set([baseSensorId, ...sensorIds].filter(Boolean)));
+      if (uniqueIds.length <= 1) return;
+
+      const bundleData =
+        bundlePayload.data && typeof bundlePayload.data === "object" ? bundlePayload.data : {};
+
+      const ownerSensors = [];
+      let insightId = null;
+      const ownerId = bundlePayload?.owner || null;
+
+      for (const sid of uniqueIds) {
+        const logs = Array.isArray(bundleData?.[sid]) ? bundleData[sid] : null;
+        const logsCount = Array.isArray(logs) ? logs.length : 0;
+        const detected = logsCount > 0 ? detectKindFromLogs(logs) : null;
+
+        let kind = detected || "sensor";
+        if (sid === baseSensorId) kind = "urban";
+        if (kind === "sensor" && ownerId && sid === ownerId && sid !== baseSensorId) {
+          const hasKey =
+            bundleData && typeof bundleData === "object"
+              ? Object.prototype.hasOwnProperty.call(bundleData, sid)
+              : false;
+          if (logsCount > 0 || hasKey) kind = "insight";
+        }
+
+        // Pick an Insight layer only when we are sure it's Insight.
+        if (!insightId && kind === "insight") {
+          insightId = sid;
+        }
+
+        ownerSensors.push({
+          sensor_id: sid,
+          kind,
+          logsCount,
+          ...(sid === baseSensorId ? { geo: sensorPoint.value?.geo } : {}),
+        });
+      }
+
+      // Pick "first available" sensors fast:
+      // - keep baseSensorId as urban
+      // - choose insight as the smallest non-empty preloaded series detected as insight
+      const layers = {
+        urban: baseSensorId,
+        ...(insightId ? { insight: insightId } : {}),
+      };
+
+      const nextBundle = {
+        ownerSensors,
+        layers,
+        data: bundleData,
+        loading: false,
+      };
+
+      sensorPoint.value = {
+        ...sensorPoint.value,
+        kind: sensorPoint.value?.kind || "urban",
+        bundle: nextBundle,
+      };
+    } catch (error) {
+      console.warn("loadBundleForPopup failed:", error);
+    }
+  };
+
+  /**
    * Открывает попап сенсора с данными и адресом
    * @param {Object} point - Данные сенсора
    * @param {string} point.sensor_id - ID сенсора
@@ -341,20 +583,11 @@ export function useSensors(localeComputed) {
       return;
     }
 
-    // If user just closed this popup, ignore late async updates to avoid reopening.
-    if (
-      recentlyClosed.value?.id &&
-      recentlyClosed.value.id === point.sensor_id &&
-      Date.now() < (recentlyClosed.value.until || 0)
-    ) {
-      return;
-    }
-
     // If URL no longer points to this sensor (e.g. popup was closed),
     // don't reopen it from stale async updates.
-    if (route.query.sensor !== point.sensor_id) {
-      return;
-    }
+    // IMPORTANT: do NOT block opening a popup due to "recently closed" —
+    // it can prevent fast switching between sensors.
+    if (route.query.sensor !== point.sensor_id) return;
 
     try {
       isUpdatingPopup.value = true;
@@ -410,6 +643,10 @@ export function useSensors(localeComputed) {
           mapState.mapinactive.value = true;
         }
 
+        // Preserve existing bundle when updating popup due to address/geo changes.
+        // Otherwise the Urban/Insight toggle can "disappear" after async address resolves.
+        const prevBundle = !isNewPopup ? sensorPoint.value?.bundle || null : null;
+
         // Если логи есть в foundSensor, добавляем их в point
         // НО: если массив пустой, не копируем - оставляем null,
         // чтобы различать "не загружено" (null) и "загружено, но пусто" ([])
@@ -434,6 +671,27 @@ export function useSensors(localeComputed) {
           zoom: point.zoom,
         });
 
+        // Restore existing bundle if we already had one (avoid flicker/disappear).
+        if (prevBundle) {
+          sensorPoint.value = { ...sensorPoint.value, bundle: prevBundle };
+        } else {
+          try {
+            sensorPoint.value = {
+              ...sensorPoint.value,
+              bundle: {
+                layers: { urban: point.sensor_id },
+                ownerSensors: [
+                  { sensor_id: point.sensor_id, kind: "urban", logsCount: 0, geo: point.geo },
+                ],
+                data: {},
+                fetched: {},
+                loading: true,
+              },
+            };
+          } catch {
+          }
+        }
+
         // sensors
         setSensorData(point.sensor_id, {
           geo: point.geo,
@@ -444,6 +702,10 @@ export function useSensors(localeComputed) {
         // Устанавливаем активный маркер и двигаем карту
         setActiveMarker(point.sensor_id);
       }
+
+      // Load owner-sensors bundle (urban/insight) lazily, if possible.
+      // This is what enables the Urban/Insight toggle in the popup.
+      loadBundleForPopup(point.sensor_id);
 
       // Обновляем логи асинхронно для быстрого открытия попапа
       // Для remote: если логи уже загружены (массив), не делаем повторный запрос
@@ -483,9 +745,12 @@ export function useSensors(localeComputed) {
       data: basePoint.data || {},
       address: basePoint.address || null,
       owner: basePoint.owner || null,
+      kind: basePoint.kind || null,
       isBookmarked: basePoint.isBookmarked || false,
       logs: basePoint.logs ?? null,
       iconLocal: pinned_sensors[basePoint.sensor_id]?.icon || null,
+      // Optional bundle for multi-sensor (urban/insight) view
+      bundle: basePoint.bundle || null,
     };
 
     // Вычисляем значение и isEmpty только если нужно
@@ -716,7 +981,8 @@ export function useSensors(localeComputed) {
       const { sensors: sensorsData, sensorsNoLocation: sensorsNoLocationData } = await getSensors(
         start,
         end,
-        mapState.currentProvider.value
+        mapState.currentProvider.value,
+        mapState.currentUnit.value
       );
 
       // Проверяем, не был ли запрос отменен
@@ -885,6 +1151,11 @@ export function useSensors(localeComputed) {
   const getSensorType = (point) => {
     if (!point) return "diy";
 
+    // If kind is explicitly provided (e.g. from the urban list/bundle), respect it over heuristics.
+    if (point.kind) {
+      return point.kind;
+    }
+
     // Если нет owner -> 'diy'
     if (!point.owner) {
       return "diy";
@@ -950,6 +1221,9 @@ export function useSensors(localeComputed) {
     clearSensors,
     clearSensorLogs,
     getSensorType,
+    ensureBundleLogs,
+    setBundleLayerSensor,
+    ensureBundleDataKey,
   };
 }
 

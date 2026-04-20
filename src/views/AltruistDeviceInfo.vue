@@ -6,6 +6,7 @@
         'Two-module environment monitoring kit for indoors and outdoors. Open-source hardware and software for those who care about health, sleep quality, and the air they breathe.'
       )
     "
+    pageImage="/og-altruist-info.webp"
   />
   <PageTextLayout>
     <div class="deviceinfo">

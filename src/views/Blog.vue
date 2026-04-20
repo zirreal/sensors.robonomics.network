@@ -6,6 +6,7 @@
         'Curious about your environmental insights? So are we.Measure it, test it, and have fun discovering what’s floating around you.'
       )
     "
+    pageImage="/og-blog.webp"
   />
   <PageTextLayout>
     <div class="blog-list">

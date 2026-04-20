@@ -69,7 +69,10 @@ function parseFrontmatter(frontmatterRaw) {
       } catch {
         fm[key] = raw;
       }
-    } else if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
+    } else if (
+      (raw.startsWith('"') && raw.endsWith('"')) ||
+      (raw.startsWith("'") && raw.endsWith("'"))
+    ) {
       fm[key] = raw.slice(1, -1);
     } else {
       fm[key] = raw;
@@ -169,4 +172,3 @@ run().catch((e) => {
   console.error(e);
   process.exitCode = 1;
 });
-

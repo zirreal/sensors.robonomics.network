@@ -26,6 +26,33 @@
       </button>
     </section>
 
+    <section
+      v-if="hasBundleToggle"
+      class="layer-toggle"
+      role="group"
+      aria-label="Urban / Insight toggle"
+    >
+      <button
+        type="button"
+        class="layer-toggle__btn"
+        :class="{ active: activeLayer === 'urban' }"
+        :disabled="!hasUrbanLayer"
+        @click.prevent="setLayer('urban')"
+      >
+        Urban
+      </button>
+      <button
+        type="button"
+        class="layer-toggle__btn"
+        :class="{ active: activeLayer === 'insight' }"
+        :disabled="!hasInsightLayer"
+        @click.prevent="setLayer('insight')"
+      >
+        <template v-if="isBundleLoading">Insight…</template>
+        <template v-else>Insight</template>
+      </button>
+    </section>
+
     <!-- <div class="sensor-info-desc">Here you'll see some custom description</div> -->
 
     <div class="sensor-panel">
@@ -45,6 +72,15 @@
         :title="t('sensorpopup.edit') || 'Edit'"
       >
         <font-awesome-icon icon="fa-regular fa-pen-to-square" />
+      </button>
+      <button
+        v-if="ownerSensorsList.length"
+        class="panel-button"
+        :class="{ active: activeTab === 'owners' }"
+        @click.prevent="activeTab = 'owners'"
+        :title="'Owner sensors'"
+      >
+        <font-awesome-icon icon="fa-solid fa-layer-group" />
       </button>
       <button
         class="panel-button"
@@ -98,7 +134,7 @@
             }}
           </div>
         </div>
-        <Analytics :point="point" :log="log" />
+        <Analytics :point="displayPoint" :log="displayLogFast" />
       </div>
 
       <div v-show="activeTab === 'details'" class="tab-content details-tab">
@@ -110,7 +146,12 @@
                 <span>{{ t("sensorpopup.bookmarkbutton") || "Bookmark" }}</span>
               </span>
             </template>
-            <Bookmark v-if="sensor_id" :id="sensor_id" :address="point?.address" :geo="geo" />
+            <Bookmark
+              v-if="displaySensorId"
+              :id="displaySensorId"
+              :address="point?.address"
+              :geo="displayGeo"
+            />
           </Accordion>
 
           <Accordion>
@@ -120,7 +161,7 @@
                 <span>{{ t("sensorpopup.infotitle") || "Info" }}</span>
               </span>
             </template>
-            <Info :sensor-id="sensor_id" :owner="owner" :geo="geo" />
+            <Info :sensor-id="displaySensorId" :owner="owner" :geo="displayGeo" />
           </Accordion>
 
           <Accordion>
@@ -130,17 +171,42 @@
                 <span>{{ t("sensorpopup.sharedefault") || "Share" }}</span>
               </span>
             </template>
-            <ShareLink :log="log" :point="point" />
+            <ShareLink :log="displayLog || []" :point="displayPoint" />
           </Accordion>
+        </div>
+      </div>
+
+      <div v-if="activeTab === 'owners'" class="tab-content">
+        <div class="owner-sensors__header">
+          <div class="owner-sensors__title">Owner sensors</div>
+          <div class="owner-sensors__subtitle">{{ ownerSensorsList.length }} shown</div>
+        </div>
+        <div class="owner-sensors">
+          <button
+            v-for="s in ownerSensorsList"
+            :key="s.sensor_id"
+            type="button"
+            class="owner-sensors__card"
+            :class="{ active: s.sensor_id === displaySensorId }"
+            @click.prevent="openOwnerSensor(s)"
+          >
+            <div class="owner-sensors__top">
+              <span class="owner-sensors__badge" :data-kind="s.kind">{{ kindLabel(s.kind) }}</span>
+              <span class="owner-sensors__id">{{ collapseId(s.sensor_id) }}</span>
+            </div>
+            <div class="owner-sensors__meta">
+              <span class="owner-sensors__hint"> {{ s.logsCount }} pts </span>
+            </div>
+          </button>
         </div>
       </div>
 
       <div v-if="isAccountsEnabled && activeTab === 'edit'" class="tab-content">
         <EditStory
-          v-if="sensor_id"
-          :sensor-id="sensor_id"
+          v-if="displaySensorId"
+          :sensor-id="displaySensorId"
           :owner="owner"
-          :geo="geo"
+          :geo="displayGeo"
           @open-chart="activeTab = 'chart'"
         />
       </div>
@@ -183,6 +249,8 @@ const mapState = useMap();
 const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
 const sensorsUI = useSensors(localeComputed);
 
+const point = computed(() => props.point?.value ?? props.point ?? null);
+
 // Активная вкладка
 const activeTab = ref("chart");
 
@@ -208,7 +276,7 @@ function iconColor(id) {
 }
 
 const activeStories = computed(() => {
-  const sid = sensor_id.value;
+  const sid = displaySensorId.value || sensor_id.value;
   const date = mapState.currentDate?.value;
   if (!sid || !date) return [];
   const list = getStoriesForSensor(sid);
@@ -244,8 +312,11 @@ const activeStories = computed(() => {
 
 // Порядок табов для навигации клавиатурой (edit только если accounts включен)
 const tabsOrder = computed(() => {
-  if (isAccountsEnabled.value) return ["chart", "edit", "details"];
-  return ["chart", "details"];
+  const base = ["chart"];
+  if (isAccountsEnabled.value) base.push("edit");
+  if (ownerSensorsList.value.length) base.push("owners");
+  base.push("details");
+  return base;
 });
 
 // Функция для переключения табов клавиатурой
@@ -281,7 +352,7 @@ const handleKeydown = (event) => {
 
 const sensor_id = computed(() => {
   // sensor_id всегда приходит из props.point (обрабатывается в Main.vue)
-  return props.point?.sensor_id || null;
+  return point.value?.sensor_id || null;
 });
 
 // Аватарка сенсора на основе ID
@@ -309,16 +380,182 @@ watch(
 
 const geo = computed(() => {
   // Координаты всегда приходят из props.point.geo (обрабатывается в Main.vue)
-  return props.point?.geo || { lat: 0, lng: 0 };
+  return point.value?.geo || { lat: 0, lng: 0 };
 });
 
-const owner = computed(() => props.point?.owner || null);
+const owner = computed(() => point.value?.owner || null);
+
+const bundle = computed(() => point.value?.bundle || null);
+const hasUrbanLayer = computed(() => !!bundle.value?.layers?.urban);
+const getBundleLogsCount = (sensorId) => {
+  if (!sensorId) return 0;
+  const dataBySensor =
+    bundle.value?.data && typeof bundle.value.data === "object" ? bundle.value.data : {};
+  const entry = dataBySensor?.[sensorId];
+  if (Array.isArray(entry)) return entry.length;
+  const list = bundle.value?.ownerSensors;
+  if (Array.isArray(list)) {
+    const hit = list.find((s) => s?.sensor_id === sensorId);
+    if (typeof hit?.logsCount === "number") return hit.logsCount;
+  }
+  return 0;
+};
+const hasInsightLayer = computed(() => {
+  return !!bundle.value?.layers?.insight;
+});
+const isBundleLoading = computed(() => !!bundle.value?.loading);
+const hasBundleToggle = computed(() => hasUrbanLayer.value && hasInsightLayer.value);
+
+const activeLayer = ref("urban");
+const selectedSensorId = ref(null);
+const lastNonNullLogs = ref(null);
+
+watch(
+  () => point.value?.sensor_id,
+  () => {
+    // Reset selection only when the opened marker/sensor changes.
+    selectedSensorId.value = null;
+    const layers = bundle.value?.layers;
+    if (!layers) return;
+    if (layers.urban) activeLayer.value = "urban";
+    else if (layers.insight) activeLayer.value = "insight";
+  },
+  { immediate: true }
+);
+
+const setLayer = (layer) => {
+  if (layer === "urban" && !hasUrbanLayer.value) return;
+  if (layer === "insight" && !hasInsightLayer.value) return;
+  activeLayer.value = layer;
+  const layers = bundle.value?.layers || {};
+
+  // Helper: prefer an Insight sensor that already has data.
+  const pickBestInsightId = () => {
+    const list = ownerSensorsList.value;
+    if (!Array.isArray(list)) return layers.insight || null;
+    const dataBySensor =
+      bundle.value?.data && typeof bundle.value.data === "object" ? bundle.value.data : {};
+    const effectiveCount = (s) => {
+      const direct = typeof s?.logsCount === "number" ? s.logsCount : 0;
+      if (direct > 0) return direct;
+      const sid = s?.sensor_id;
+      const entry = sid ? dataBySensor?.[sid] : null;
+      return Array.isArray(entry) ? entry.length : 0;
+    };
+    const insightSensors = list.filter((s) => s?.kind === "insight" && s?.sensor_id);
+    if (!insightSensors.length) return layers.insight || null;
+    insightSensors.sort((a, b) => effectiveCount(b) - effectiveCount(a));
+    return insightSensors[0]?.sensor_id || layers.insight || null;
+  };
+
+  // Sync explicit selection with the layer id (and ensure it's the best available).
+  if (layer === "urban" && layers.urban) selectedSensorId.value = layers.urban;
+  if (layer === "insight") selectedSensorId.value = pickBestInsightId();
+};
+
+const displaySensorId = computed(() => {
+  if (selectedSensorId.value) return selectedSensorId.value;
+  const layers = bundle.value?.layers;
+  if (!layers) return sensor_id.value;
+  if (activeLayer.value === "insight") return layers.insight || layers.urban || sensor_id.value;
+  return layers.urban || layers.insight || sensor_id.value;
+});
+
+watch(
+  displaySensorId,
+  async (sid) => {
+    if (!sid) return;
+    // Load logs for the currently selected layer sensor id (urban/insight)
+    sensorsUI.ensureBundleLogs?.(sid);
+  },
+  { immediate: true }
+);
+
+const ownerSensorsList = computed(() => {
+  const list = bundle.value?.ownerSensors;
+  const raw = Array.isArray(list) ? [...list] : [];
+  // Hide sensors with no data for the current period (stable UI),
+  // but we will always add the "main" clicked Urban sensor below.
+  const effectiveLogsCount = (s) => getBundleLogsCount(s?.sensor_id);
+  const baseId = point.value?.sensor_id;
+  const arr = raw.filter((s) => effectiveLogsCount(s) > 0);
+  if (baseId && !arr.some((s) => s?.sensor_id === baseId)) {
+    arr.unshift({
+      sensor_id: baseId,
+      kind: "urban",
+      logsCount: Array.isArray(point.value?.logs) ? point.value.logs.length : 0,
+      geo: point.value?.geo,
+    });
+  }
+  return arr;
+});
+
+const displayGeo = computed(() => {
+  const sid = displaySensorId.value;
+  const match = ownerSensorsList.value.find((s) => s.sensor_id === sid);
+  return match?.geo || geo.value;
+});
+
+const displayPoint = computed(() => {
+  const sid = displaySensorId.value;
+  const dataBySensor = bundle.value?.data || {};
+  const hasBundleKey =
+    sid && dataBySensor && Object.prototype.hasOwnProperty.call(dataBySensor, sid);
+  const bundleEntry = hasBundleKey ? dataBySensor?.[sid] : undefined; // can be null (loading), [] or logs[]
+  const bundleLogs = Array.isArray(bundleEntry) ? bundleEntry : null;
+  // If bundle explicitly contains this sensor logs (even empty), use it so the UI can show "No data".
+  // If bundle contains null => show skeleton (loading).
+  // If switching to another sensor and no bundle key exists yet => show skeleton instead of previous chart.
+  let logs = hasBundleKey
+    ? bundleLogs
+    : sid && sid !== point.value?.sensor_id
+    ? null
+    : point.value?.logs;
+
+  // Reduce chart flashing: while new layer logs are loading (null),
+  // keep last rendered logs so Chart component doesn't unmount/remount.
+  if (logs === null && Array.isArray(lastNonNullLogs.value) && lastNonNullLogs.value.length > 0) {
+    logs = lastNonNullLogs.value;
+  }
+  return {
+    ...(point.value || {}),
+    sensor_id: sid,
+    geo: displayGeo.value,
+    logs: Array.isArray(logs) ? logs : null,
+  };
+});
 
 // Гарантируем, что logs всегда массив
-const log = computed(() => (Array.isArray(props.point?.logs) ? props.point.logs : null));
+const displayLog = computed(() =>
+  Array.isArray(displayPoint.value?.logs) ? displayPoint.value.logs : null
+);
+
+watch(
+  displayLog,
+  (logs) => {
+    if (Array.isArray(logs) && logs.length > 0) {
+      lastNonNullLogs.value = logs;
+    }
+  },
+  { immediate: true }
+);
+
+const downsampleLog = (logs, maxPoints = 2500) => {
+  if (!Array.isArray(logs)) return logs;
+  if (logs.length <= maxPoints) return logs;
+  const step = Math.ceil(logs.length / maxPoints);
+  const out = [];
+  for (let i = 0; i < logs.length; i += step) out.push(logs[i]);
+  return out;
+};
+
+const displayLogFast = computed(() => downsampleLog(displayLog.value));
+
+// Back-compat for existing template checks (icon link visibility)
+const log = computed(() => displayLog.value);
 
 // Вычисляем тип сенсора используя функцию из composable
-const sensorType = computed(() => sensorsUI.getSensorType(props.point));
+const sensorType = computed(() => sensorsUI.getSensorType(displayPoint.value));
 
 // Вычисляем путь к изображению типа сенсора
 const sensorTypeImage = computed(() => {
@@ -349,6 +586,32 @@ const closesensor = () => {
   emit("close");
 };
 
+const collapseId = (id) => {
+  const s = String(id || "");
+  if (s.length <= 12) return s;
+  return `${s.slice(0, 6)}…${s.slice(-4)}`;
+};
+
+const kindLabel = (kind) => {
+  if (kind === "urban") return "Urban";
+  if (kind === "insight") return "Insight";
+  return "Sensor";
+};
+
+const openOwnerSensor = (s) => {
+  if (!s?.sensor_id) return;
+  selectedSensorId.value = s.sensor_id;
+  const layers = bundle.value?.layers || {};
+  const isInsight =
+    s.kind === "insight" || (layers.insight && String(layers.insight) === String(s.sensor_id));
+  activeLayer.value = isInsight ? "insight" : "urban";
+
+  // Ensure UI shows "loading" immediately instead of previous chart.
+  sensorsUI.ensureBundleDataKey?.(s.sensor_id);
+  sensorsUI.ensureBundleLogs?.(s.sensor_id);
+  activeTab.value = "chart";
+};
+
 onMounted(() => {
   // Инициализация компонента
   // Добавляем обработчик клавиатуры для переключения табов
@@ -366,7 +629,7 @@ watch(
   (newDate) => {
     if (newDate) {
       // Очищаем логи при смене даты
-      sensorsUI.clearSensorLogs(props.point?.sensor_id);
+      sensorsUI.clearSensorLogs(point.value?.sensor_id);
     }
   }
 );
@@ -400,6 +663,147 @@ watch(
   align-items: center;
 }
 /* - Заголовок сенсора: тип, выбор даты, кнопка закрыть */
+
+.layer-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: calc(var(--gap) * 1);
+  margin-bottom: calc(var(--gap) * 1);
+}
+
+.layer-toggle__btn {
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: rgba(0, 0, 0, 0.02);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.layer-toggle__btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
+
+.layer-toggle__btn.active {
+  border-color: rgba(80, 120, 255, 0.55);
+  background: rgba(80, 120, 255, 0.12);
+  box-shadow: 0 0 0 1px rgba(80, 120, 255, 0.18);
+}
+
+.layer-toggle__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.owner-sensors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.owner-sensors__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 6px 2px;
+}
+
+.owner-sensors__title {
+  font-weight: 900;
+  margin: 0;
+  opacity: 0.85;
+}
+
+.owner-sensors__subtitle {
+  font-size: 0.85em;
+  font-weight: 800;
+  opacity: 0.55;
+}
+
+@media screen and (width < 520px) {
+  .owner-sensors {
+    grid-template-columns: 1fr;
+  }
+}
+
+.owner-sensors__card {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.75);
+  padding: 10px 12px;
+  border-radius: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.owner-sensors__card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.owner-sensors__card.active {
+  border-color: rgba(80, 120, 255, 0.55);
+  box-shadow: 0 0 0 1px rgba(80, 120, 255, 0.18);
+  background: rgba(80, 120, 255, 0.06);
+}
+
+.owner-sensors__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.owner-sensors__badge {
+  font-size: 0.78em;
+  font-weight: 900;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.03);
+  letter-spacing: 0.01em;
+}
+
+.owner-sensors__badge[data-kind="urban"] {
+  background: rgba(130, 90, 255, 0.12);
+  border-color: rgba(130, 90, 255, 0.22);
+}
+
+.owner-sensors__badge[data-kind="insight"] {
+  background: rgba(176, 138, 122, 0.14);
+  border-color: rgba(176, 138, 122, 0.26);
+}
+
+.owner-sensors__id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 0.85em;
+  opacity: 0.78;
+}
+
+.owner-sensors__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.owner-sensors__hint {
+  font-size: 0.85em;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.owner-sensors__hint.muted {
+  opacity: 0.5;
+}
 
 .popup-js.active {
   container: popup / inline-size;

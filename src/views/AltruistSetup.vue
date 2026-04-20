@@ -6,6 +6,7 @@
         'Step-by-step setup instructions for Altruist Urban outdoor sensor and Altruist Insight indoor monitor. Connect to Wi-Fi, configure GPS, and join the open sensor map.'
       )
     "
+    pageImage="/og-altruist-setup.webp"
   />
   <PageTextLayout>
     <h1>{{ $t("Altruist Setup Guide") }}</h1>

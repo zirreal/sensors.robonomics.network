@@ -6,7 +6,7 @@
         'At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”.'
       )
     "
-    pageImage="/og-timeline.webp"
+    pageImage="/og-altruist-timeline.webp"
   />
   <PageTextLayout>
     <h1>{{ $t("7 Years of Altruism") }}</h1>
