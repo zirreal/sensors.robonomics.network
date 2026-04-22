@@ -6,13 +6,14 @@
         'Curious about your environmental insights? So are we.Measure it, test it, and have fun discovering what’s floating around you.'
       )
     "
+    pageImage="/og-blog.webp"
   />
   <PageTextLayout>
     <div class="blog-list">
-      <header class="blog-list__header">
-        <div class="blog-list__eyebrow">sensors.social</div>
-        <h1 class="blog-list__title">{{ $t("Blog") }}</h1>
-        <p class="blog-list__subtitle">
+      <header class="pagetext-header">
+        <div class="pagetext-eyebrow">sensors.social</div>
+        <h1 class="pagetext-title">{{ $t("Blog") }}</h1>
+        <p class="pagetext-subtitle">
           {{
             $t(
               "Curious about your environmental insights? So are we. Measure it, test it, and have fun discovering what’s floating around you."
@@ -25,7 +26,7 @@
           v-for="post in posts"
           :key="post.slug"
           :to="`/blog/${post.slug}`"
-          class="blog-list__card"
+          class="blog-list__card ui-surface"
         >
           <img :src="post.cover_image" />
 
@@ -70,8 +71,11 @@ const posts = computed(() => {
     const coverImageRaw = frontmatter.cover_image;
     const cover_image = coverImageRaw
       ? (() => {
-          const normalized = coverImageRaw.startsWith("./") ? coverImageRaw.slice(2) : coverImageRaw;
-          if (import.meta.env.PROD && normalized.startsWith("images/")) return `/blog/${slug}/${normalized}`;
+          const normalized = coverImageRaw.startsWith("./")
+            ? coverImageRaw.slice(2)
+            : coverImageRaw;
+          if (import.meta.env.PROD && normalized.startsWith("images/"))
+            return `/blog/${slug}/${normalized}`;
           return new URL(coverImageRaw, new URL(p, import.meta.url)).href;
         })()
       : "";
@@ -103,35 +107,8 @@ console.log();
   padding-bottom: calc(var(--gap) * 1.5);
 }
 
-.blog-list__header {
-  margin: 0 auto;
-  margin-bottom: calc(var(--gap) * 1.5);
-  max-width: 76ch;
-  text-align: center;
-  padding-bottom: calc(var(--gap) * 0.9);
-  border-bottom: 3px dotted var(--surface-border);
-}
-
-.blog-list__eyebrow {
-  display: inline-block;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-size: calc(var(--font-size) * 0.82);
-  color: color-mix(in srgb, var(--app-textcolor), transparent 35%);
-  margin-bottom: calc(var(--gap) * 0.25);
-}
-
-.blog-list__title {
-  margin: 0;
-  line-height: 1.05;
-}
-
-.blog-list__subtitle {
-  margin: calc(var(--gap) * 0.65) 0 0;
-  color: color-mix(in srgb, var(--app-textcolor), transparent 32%);
-  font-size: calc(var(--font-size) * 1.12);
-  line-height: 1.45;
+.blog-list .pagetext-header {
+  max-width: 52ch;
 }
 
 .blog-list__grid {
@@ -153,12 +130,6 @@ console.log();
 
   text-decoration: none;
   color: inherit;
-
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  background: color-mix(in srgb, var(--app-bodybg), transparent 8%);
-  border: 1px solid color-mix(in srgb, var(--color-gray), transparent 15%);
-  transition: border-color 180ms ease, background-color 180ms ease, filter 180ms ease;
 }
 
 .blog-list__card::before {
@@ -195,8 +166,6 @@ console.log();
 
 .blog-list__card:hover,
 .blog-list__card:focus-visible {
-  background: color-mix(in srgb, var(--app-bodybg), transparent 2%);
-  border-color: color-mix(in srgb, var(--surface-border), transparent 0%);
   outline: none;
   color: inherit;
 }
@@ -270,21 +239,13 @@ console.log();
 
 @media (prefers-color-scheme: dark) {
   .blog-list__card {
-    background: color-mix(in srgb, var(--app-bodybg), transparent 10%);
-    border-color: rgba(255, 255, 255, 0.16);
-  }
-
-  .blog-list__card:hover,
-  .blog-list__card:focus-visible {
-    border-color: rgba(255, 255, 255, 0.26);
+    --ui-surface-bg: color-mix(in srgb, var(--app-bodybg), transparent 10%);
+    --ui-surface-border: rgba(255, 255, 255, 0.16);
+    --ui-surface-border-hover: rgba(255, 255, 255, 0.26);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .blog-list__card {
-    transition: none;
-  }
-
   .blog-list__card img {
     transition: none;
   }

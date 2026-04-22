@@ -9,58 +9,60 @@
       class="gif"
     />
 
-    <table>
-      <thead>
-        <tr>
-          <th>{{ $t("Model") }}</th>
-          <th v-for="(device, i) in deviceHeaders" :key="'name-' + i">
-            {{ device.name }}
-          </th>
-        </tr>
-        <tr>
-          <th>{{ $t("Photo") }}</th>
-          <th v-for="(device, i) in deviceHeaders" :key="'img-' + i">
-            <img :src="device.img" :alt="device.name + ' device'" class="device-photo" />
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(row, rowIndex) in tableData" :key="rowIndex">
-          <td>{{ row.feature }}</td>
-          <td
-            v-for="(value, i) in [
-              row.altruist,
-              row.purpleair,
-              row.airgradient,
-              row.netatmo,
-              row.airvisual,
-            ]"
-            :key="i"
-            :class="getMarkClass(value.mark)"
-          >
-            <template v-if="isMobile">
-              <div class="device-mobile-label">
-                <img
-                  :src="deviceHeaders[i].img"
-                  :alt="deviceHeaders[i].name"
-                  class="device-label-img"
-                />
-                <span class="device-label-title">{{ deviceHeaders[i].name }}</span>
-              </div>
-            </template>
+    <div class="compare-table">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ $t("Model") }}</th>
+            <th v-for="(device, i) in deviceHeaders" :key="'name-' + i">
+              {{ device.name }}
+            </th>
+          </tr>
+          <tr>
+            <th>{{ $t("Photo") }}</th>
+            <th v-for="(device, i) in deviceHeaders" :key="'img-' + i">
+              <img :src="device.img" :alt="device.name + ' device'" class="device-photo" />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(row, rowIndex) in tableData" :key="rowIndex">
+            <td>{{ row.feature }}</td>
+            <td
+              v-for="(value, i) in [
+                row.altruist,
+                row.purpleair,
+                row.airgradient,
+                row.netatmo,
+                row.airvisual,
+              ]"
+              :key="i"
+              :class="getMarkClass(value.mark)"
+            >
+              <template v-if="isMobile">
+                <div class="device-mobile-label">
+                  <img
+                    :src="deviceHeaders[i].img"
+                    :alt="deviceHeaders[i].name"
+                    class="device-label-img"
+                  />
+                  <span class="device-label-title">{{ deviceHeaders[i].name }}</span>
+                </div>
+              </template>
 
-            <template v-if="row.feature === 'Price'">
-              <a :href="priceLinks[i]" target="_blank"
-                ><b>{{ formatValue(value) }}</b></a
-              >
-            </template>
-            <template v-else>
-              {{ formatValue(value) }}
-            </template>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+              <template v-if="row.feature === 'Price'">
+                <a :href="priceLinks[i]" target="_blank"
+                  ><b>{{ formatValue(value) }}</b></a
+                >
+              </template>
+              <template v-else>
+                {{ formatValue(value) }}
+              </template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 </template>
 
@@ -278,6 +280,32 @@ onUnmounted(() => window.removeEventListener("resize", updateMobile));
 </script>
 
 <style scoped>
+.compare-table {
+  width: 100%;
+  max-width: 100%;
+  margin: calc(var(--gap) * 1.25) 0;
+}
+
+@media (width >= 1000px) {
+  .compare-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  margin: 0;
+}
+
+@media (width >= 1000px) {
+  table {
+    min-width: 1320px;
+  }
+}
+
 .device-photo,
 .device-label-img {
   display: inline-block;
@@ -332,7 +360,24 @@ h2 {
   }
 }
 
+/* When table is horizontally scrollable, avoid sticky interactions */
+@media (width >= 1000px) {
+  h2 {
+    position: static;
+  }
+
+  thead tr:first-child th {
+    position: static;
+  }
+}
+
 @media (width < 1000px) {
+  .compare-table {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
   table,
   thead,
   tbody,
@@ -349,6 +394,9 @@ h2 {
   tr {
     margin-bottom: calc(var(--gap) * 2);
     /* border-bottom: 2px solid var(--app-bordercolor); */
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   td {

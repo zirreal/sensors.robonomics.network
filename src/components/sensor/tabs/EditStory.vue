@@ -139,6 +139,7 @@ import { settings } from "@config";
 import { useAccounts } from "@/composables/useAccounts";
 import { useMap } from "@/composables/useMap";
 import { usePolkadotApi } from "robonomics-interface-vue";
+import { stringToHex, hexToU8a } from "@polkadot/util";
 import Keyring from "@polkadot/keyring";
 import { datalog } from "robonomics-interface";
 import { dayISO } from "@/utils/date";
@@ -305,6 +306,7 @@ async function refreshAuthState() {
   try {
     await accountStore.getAccounts();
   } catch {
+    // silent
   } finally {
     isCheckingAuth.value = false;
   }
@@ -443,7 +445,7 @@ async function refreshBackendStory() {
   return false;
 }
 
-async function waitForBackendIndexing({ sensorId, timeoutMs = 45000 }) {
+async function waitForBackendIndexing({ timeoutMs = 45000 }) {
   const start = Date.now();
   let delay = 1500;
   while (Date.now() - start < timeoutMs) {
@@ -503,8 +505,7 @@ async function saveStory() {
     instance.account.setSender(pair);
     instance.account.useSubscription(pair.address);
 
-    const call = datalog.action.write(
-      instance.api,
+    const dataStory = stringToHex(
       JSON.stringify({
         message,
         sensor: props.sensorId,
@@ -514,6 +515,15 @@ async function saveStory() {
         i: ICON_CODE_BY_ID[selectedIcon.id] || selectedIcon.id,
       })
     );
+
+    if (hexToU8a(data).byteLength > 512) {
+      statusType.value = "error";
+      statusMessage.value = "Unsupported characters were used or the comment is too long.";
+      isSubmitting.value = false;
+      return;
+    }
+
+    const call = datalog.action.write(instance.api, dataStory);
 
     const nonce = await instance.api.rpc.system.accountNextIndex(pair.address);
     const res = await instance.account.signAndSend(call, { nonce });
@@ -598,7 +608,9 @@ function storyLink(story) {
 async function openStoryDate(story) {
   try {
     sessionStorage.setItem("story_nav_set_date", "1");
-  } catch {}
+  } catch {
+    // silent
+  }
   await router.push(storyLink(story));
   // Ensure user immediately sees the date change in the chart.
   emit("open-chart");
@@ -617,6 +629,7 @@ function formatDate(value) {
 .story-editor {
   display: grid;
   gap: calc(var(--gap) * 0.7);
+  padding-bottom: calc(var(--gap) * 2 + env(safe-area-inset-bottom, 0px));
 }
 
 .story-hero h3 {

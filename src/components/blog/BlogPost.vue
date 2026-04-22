@@ -22,7 +22,7 @@
         {{ postAbstract }}
       </p>
 
-      <div class="blog-post__content">
+      <div class="blog-post__content text-all">
         <component :is="postComponent" />
       </div>
     </article>
@@ -363,146 +363,10 @@ p.blog-post__meta {
 }
 
 .blog-post__content {
-  font-size: calc(var(--font-size) * 1.15);
-  line-height: 1.8;
-  color: var(--app-textcolor);
-}
-
-.blog-post__content :deep(table) {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  margin: calc(var(--gap) * 1.25) 0;
-  font-size: 1em;
-}
-
-.blog-post__content :deep(th),
-.blog-post__content :deep(td) {
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--surface-border-soft);
-  vertical-align: top;
-  font-size: 1em;
-  overflow-wrap: anywhere;
-  word-break: normal;
-  hyphens: auto;
-}
-
-.blog-post__content :deep(th) {
-  text-align: left;
-  font-weight: 800;
-  background: color-mix(in srgb, var(--app-textcolor), transparent 96%);
-}
-
-.blog-post__content :deep(tr:nth-child(even) td) {
-  background: color-mix(in srgb, var(--app-textcolor), transparent 98%);
-}
-
-.blog-post__content :deep(caption) {
-  caption-side: bottom;
-  text-align: left;
-  margin-top: 0.5rem;
-  color: color-mix(in srgb, var(--app-textcolor), transparent 35%);
-  font-size: 0.95em;
-}
-
-.blog-post__content :deep(h1),
-.blog-post__content :deep(h2),
-.blog-post__content :deep(h3) {
-  margin-top: 2em;
-  margin-bottom: 0.5em;
-}
-
-.blog-post__content :deep(h2) {
-  border-bottom: 1px solid var(--surface-border-soft);
-  padding-bottom: 6px;
-}
-
-.blog-post__content :deep(p) {
-  margin: 1em 0;
-}
-
-.blog-post__content :deep(a) {
-  color: var(--color-link);
-  text-decoration: none;
-}
-
-.blog-post__content :deep(a:hover) {
-  text-decoration: underline;
-}
-
-.blog-post__content :deep(pre) {
-  background: rgba(15, 23, 42, 1);
-  color: #e5e7eb;
-  padding: calc(var(--gap) * 1);
-  border-radius: 8px;
-  overflow-x: auto;
-}
-
-.blog-post__content :deep(code) {
-  background: rgba(0, 0, 0, 0.04);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.blog-post__content :deep(img) {
-  display: block;
-  width: 100%;
-  height: auto;
-  cursor: default;
-  border: 1px solid var(--surface-border-soft);
-}
-
-.blog-post__content :deep(blockquote) {
-  border-left: 4px solid var(--color-link);
-  padding-left: calc(var(--gap) * 1);
-  color: color-mix(in srgb, var(--app-textcolor), transparent 35%);
-  margin: calc(var(--gap) * 1.25) 0;
-}
-
-.blog-post__content :deep(ul) {
-  padding-left: calc(var(--gap) * 1.25);
-}
-
-.blog-post__content :deep(li) {
-  margin: 6px 0;
-}
-
-@media (max-width: 630px) {
-  .blog-post__content :deep(table) {
-    font-size: 0.85em;
-    display: block;
-    max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    table-layout: auto;
-    scrollbar-width: thin;
-  }
-
-  .blog-post__content :deep(table::-webkit-scrollbar) {
-    height: 8px;
-  }
-
-  .blog-post__content :deep(table::-webkit-scrollbar-thumb) {
-    background: color-mix(in srgb, var(--app-textcolor), transparent 75%);
-    border-radius: 999px;
-  }
-
-  .blog-post__content :deep(table::-webkit-scrollbar-track) {
-    background: transparent;
-  }
-
-  .blog-post__content :deep(th),
-  .blog-post__content :deep(td) {
-    padding: 0.45rem 0.55rem !important;
-    font-size: 1em !important;
-    white-space: nowrap;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .blog-post__content :deep(code) {
-    background: rgba(255, 255, 255, 0.08);
-  }
+  /* text-all typography is shared in `src/assets/styles/layout.css` */
+  max-width: 76ch;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

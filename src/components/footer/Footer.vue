@@ -41,7 +41,7 @@
       <input type="date" v-model="start" :max="maxDate" :disabled="realtime" />
 
       <!-- выбор измерения -->
-      <select v-model="type" v-if="sensorsUI.sensors.length > 0 && availableOptions?.length > 0">
+      <select v-model="type" v-if="availableOptions?.length > 0">
         <option v-for="opt in availableOptions" :key="opt.value" :value="opt.value">
           {{ opt.name }}
         </option>

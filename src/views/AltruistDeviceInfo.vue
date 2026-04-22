@@ -6,25 +6,30 @@
         'Two-module environment monitoring kit for indoors and outdoors. Open-source hardware and software for those who care about health, sleep quality, and the air they breathe.'
       )
     "
+    pageImage="/og-altruist-info.webp"
   />
   <PageTextLayout>
-    <div class="deviceinfo">
-      <h1>{{ $t("Altruist & sensors.social") }}</h1>
-
-      <section class="pagetext-highlight">
-        <p>
-          {{
-            $t("You track your pulse and sleep quality. Now learn about your living environment.")
-          }}
-        </p>
-        <p>
-          {{
-            $t(
-              "Two-module environment monitoring kit for indoors and outdoors — for those who care about health."
-            )
-          }}
-        </p>
-      </section>
+    <div class="deviceinfo pagetext-prose">
+      <header class="pagetext-header">
+        <div class="pagetext-eyebrow">sensors.social</div>
+        <h1 class="pagetext-title">{{ $t("Altruist & sensors.social") }}</h1>
+        <div class="pagetext-subtitle">
+          <p>
+            {{
+              $t(
+                "You track your pulse and sleep quality. Now learn about your living environment."
+              )
+            }}
+          </p>
+          <p>
+            {{
+              $t(
+                "Two-module environment monitoring kit for indoors and outdoors — for those who care about health."
+              )
+            }}
+          </p>
+        </div>
+      </header>
 
       <section>
         <h2>{{ $t("The Challenge: Measure Your Living Environment") }}</h2>
@@ -415,7 +420,7 @@
       <section>
         <h2>{{ $t("Architecture: From Sensor to User") }}</h2>
 
-        <div class="pre-scroll">
+        <div class="pagetext-pre-scroll">
           <pre>
 Altruist (Urban + Insight)
     |
@@ -493,99 +498,7 @@ onMounted(() => {
 
 <style scoped>
 :global(.container-pagetext) > .deviceinfo {
-  --font-size: 1.2rem !important;
   max-width: 100%;
-  overflow-x: hidden; /* prevent accidental sideways page scroll */
 }
 
-@media (width < 800px) {
-  :global(.container-pagetext) > .deviceinfo {
-    --font-size: 1.02rem !important;
-  }
-}
-
-.pagetext-highlight {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 16px;
-  background: rgba(0, 0, 0, 0.02);
-  padding: calc(var(--gap) * 0.9);
-}
-
-.pagetext-highlight p:last-child {
-  margin-bottom: 0;
-}
-
-.pagetext-highlight a {
-  font-weight: 900;
-}
-
-.table-scroll table {
-  border-collapse: collapse;
-  background: #fff;
-}
-
-.table-scroll th,
-.table-scroll td {
-  padding: calc(var(--gap) * 0.7);
-  border-right: 1px solid rgba(0, 0, 0, 0.06);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  vertical-align: top;
-}
-
-.table-scroll th:last-child,
-.table-scroll td:last-child {
-  border-right: 0;
-}
-
-.table-scroll thead th {
-  position: sticky;
-  top: 0;
-  background: #fff;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
-  font-weight: 900;
-}
-
-.table-scroll tbody tr:nth-child(even) td {
-  background: rgba(0, 0, 0, 0.015);
-}
-
-.pre-scroll {
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.015));
-}
-
-.pre-scroll pre {
-  font-size: 0.95em;
-  line-height: 1.35;
-}
-
-.table-scroll {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 14px;
-  margin-bottom: var(--gap);
-}
-
-.table-scroll table {
-  min-width: 900px;
-}
-
-.pre-scroll {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.03);
-  padding: calc(var(--gap) * 0.75);
-  margin-bottom: var(--gap);
-}
-
-.pre-scroll pre {
-  margin: 0;
-  white-space: pre;
-}
 </style>

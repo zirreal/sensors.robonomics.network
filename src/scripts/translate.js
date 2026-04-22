@@ -26,7 +26,7 @@ const loadLanguagesFromIndex = async () => {
 
 // CONFIG
 const LANGUAGES_FALLBACK = ["en", "ru"];
-const SKIP_KEYS = []; // Add keys to skip here
+const SKIP_KEYS = ["details.nativeShareNotAvailable"]; // Add keys to skip here
 const PRESERVE_KEYS = [
   "Climate",
   "Daily Recap",
@@ -45,11 +45,14 @@ const PRESERVE_KEYS = [
   "Open",
   "Posted",
   "Publish",
+  "Save",
   "Login",
   "Stories",
-  "Accounts", 
+  "Accounts",
   "Account",
-  "Blog"
+  "Blog",
+  "Name",
+  "Optional",
 ];
 const TRANSLATION_FILES_DIR = "src/translate";
 const CACHE_FILE = "src/scripts/openai-cache.json";

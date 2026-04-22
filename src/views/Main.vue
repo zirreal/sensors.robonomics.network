@@ -6,7 +6,7 @@
   />
   <Header />
 
-  <Stories />
+  <Stories v-if="settings.SERVICES?.stories" />
 
   <Sensor
     v-if="sensorsUI.isSensor"
@@ -286,7 +286,7 @@ watch(
           // Ищем полные данные сенсора в sensorsUI.sensors
           const fullSensorData = sensorsUI.sensors.find((s) => s.sensor_id === liveSensorId);
           // Сохраняем адрес из текущего sensorPoint, если он есть
-          const existingAddress = sensorsUI.sensorPoint?.address;
+          const existingAddress = sensorsUI.sensorPoint?.value?.address;
           const point = sensorsUI.formatPointForSensor(
             fullSensorData || {
               sensor_id: liveSensorId,
@@ -311,7 +311,7 @@ watch(
       // Ищем полные данные сенсора в sensorsUI.sensors
       const fullSensorData = sensorsUI.sensors.find((s) => s.sensor_id === newQuery.sensor);
       // Сохраняем адрес из текущего sensorPoint, если он есть
-      const existingAddress = sensorsUI.sensorPoint?.address;
+      const existingAddress = sensorsUI.sensorPoint?.value?.address;
       const point = sensorsUI.formatPointForSensor(
         fullSensorData || {
           sensor_id: newQuery.sensor,

@@ -21,6 +21,7 @@ body {
 
 a {
   color: var(--app-buttoncolor);
+  transition: color 0.3s ease-in-out;
 }
 
 a:hover {
@@ -275,7 +276,8 @@ input:disabled {
   position: relative;
 }
 
-.button-round-outline-labeled, .button-round-outline-labeled:hover {
+.button-round-outline-labeled,
+.button-round-outline-labeled:hover {
   width: auto;
   padding: 0 0.5rem;
   gap: 0.5rem;

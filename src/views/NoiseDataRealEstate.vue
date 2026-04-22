@@ -6,22 +6,26 @@
         'How a month of noise monitoring with Altruist can strengthen your position in rent or purchase negotiations. Real examples from Limassol, Cyprus.'
       )
     "
+    pageImage="/og-noise-data.webp"
   />
   <PageTextLayout>
-    <h1>{{ $t("Noise Data for Real Estate: Negotiate with Facts, Not Feelings") }}</h1>
+    <div class="pagetext-prose">
+      <header class="pagetext-header">
+        <div class="pagetext-eyebrow">sensors.social</div>
+        <h1 class="pagetext-title">
+          {{ $t("Noise Data for Real Estate: Negotiate with Facts, Not Feelings") }}
+        </h1>
+        <p class="pagetext-subtitle">
+          {{
+            $t(
+              'Saying "the construction is loud" is an opinion. Showing a month-long noise graph with daily peaks above 90 dB is evidence. We believe real sensor data fundamentally changes the context of housing negotiations — whether you are renting or buying.'
+            )
+          }}
+        </p>
+      </header>
 
-    <section class="pagetext-highlight">
-      <p>
-        {{
-          $t(
-            'Saying "the construction is loud" is an opinion. Showing a month-long noise graph with daily peaks above 90 dB is evidence. We believe real sensor data fundamentally changes the context of housing negotiations — whether you are renting or buying.'
-          )
-        }}
-      </p>
-    </section>
-
-    <section>
-      <h2>{{ $t("The Hypothesis") }}</h2>
+      <section>
+        <h2>{{ $t("The Hypothesis") }}</h2>
       <p>
         {{
           $t(
@@ -56,7 +60,13 @@
       </p>
 
       <h3>{{ $t("Neapoli (Molos area) — noisy") }}</h3>
-      <p><img :src="imageNeapoli" alt="Noise data from Neapoli, Limassol — peaks above 90 dB" class="pagetext-fullwidth-image" /></p>
+      <p>
+        <img
+          :src="imageNeapoli"
+          alt="Noise data from Neapoli, Limassol — peaks above 90 dB"
+          class="pagetext-fullwidth-image"
+        />
+      </p>
       <p>
         {{
           $t(
@@ -66,7 +76,13 @@
       </p>
 
       <h3>{{ $t("Germasogeia — quiet") }}</h3>
-      <p><img :src="imageGermasogeia" alt="Noise data from Germasogeia — stable 50-60 dB" class="pagetext-fullwidth-image" /></p>
+      <p>
+        <img
+          :src="imageGermasogeia"
+          alt="Noise data from Germasogeia — stable 50-60 dB"
+          class="pagetext-fullwidth-image"
+        />
+      </p>
       <p>
         {{
           $t(
@@ -106,11 +122,7 @@
       <h2>{{ $t("How to Try This Yourself") }}</h2>
       <ol>
         <li>
-          {{
-            $t(
-              "Mount an Altruist sensor on your balcony or outside your window."
-            )
-          }}
+          {{ $t("Mount an Altruist sensor on your balcony or outside your window.") }}
         </li>
         <li>
           {{
@@ -127,24 +139,21 @@
           }}
         </li>
         <li>
-          {{
-            $t(
-              "Present the graphs at your next negotiation. Let the data speak."
-            )
-          }}
+          {{ $t("Present the graphs at your next negotiation. Let the data speak.") }}
         </li>
       </ol>
     </section>
 
-    <section class="pagetext-highlight">
-      <p>
-        {{
-          $t(
-            "Want to try this approach? Get an Altruist sensor, mount it on your balcony, and collect a month of data. Then use the graphs in your next housing negotiation — and see how facts change the conversation."
-          )
-        }}
-      </p>
-    </section>
+      <section class="pagetext-highlight">
+        <p>
+          {{
+            $t(
+              "Want to try this approach? Get an Altruist sensor, mount it on your balcony, and collect a month of data. Then use the graphs in your next housing negotiation — and see how facts change the conversation."
+            )
+          }}
+        </p>
+      </section>
+    </div>
   </PageTextLayout>
 </template>
 

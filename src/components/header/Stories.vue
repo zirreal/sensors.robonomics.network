@@ -200,8 +200,7 @@ function storyLink(story) {
   const type = suggestedType || mapState.currentUnit?.value || settings.MAP.measure;
   const ts = story?.timestamp;
   const derivedDay =
-    story?.date ||
-    (ts != null && !Number.isNaN(Number(ts)) ? dayISO(Number(ts)) : null);
+    story?.date || (ts != null && !Number.isNaN(Number(ts)) ? dayISO(Number(ts)) : null);
 
   return {
     name: "main",
@@ -309,7 +308,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-
 .stories-bar {
   position: sticky;
   top: calc(var(--app-inputheight) + var(--gap));
@@ -364,7 +362,6 @@ onBeforeUnmount(() => {
   height: 50%;
 }
 
-
 @media screen and (max-width: 460px) {
   .stories-nav {
     display: none;
@@ -380,5 +377,4 @@ onBeforeUnmount(() => {
     gap: calc(var(--gap) * 2);
   }
 }
-
 </style>

@@ -44,7 +44,7 @@
           class="button button-outlined narrow-hide"
         >
           <font-awesome-icon icon="fa-brands fa-x-twitter" aria-hidden="true" />
-          <span>Latest updates</span>
+          <span>{{ $t("Latest updates") }}</span>
         </a>
 
         <div id="about" class="popover popover-top-right" popover>
@@ -77,6 +77,10 @@
             <router-link class="navtile" to="/altruist-device-info/">
               <font-awesome-icon class="navfa" icon="fa-solid fa-circle-info" />
               <span>{{ $t("Altruist device info") }}</span>
+            </router-link>
+            <router-link class="navtile" to="/where-to-buy/">
+              <font-awesome-icon class="navfa" icon="fa-regular fa-credit-card" />
+              <span>{{ $t("Where to buy") }}</span>
             </router-link>
             <router-link class="navtile" to="/altruist-use-cases/">
               <img class="navimg" :src="urbanIcon" alt="" aria-hidden="true" />
@@ -139,11 +143,13 @@
           :class="{ active: bookmarksCount > 0 }"
           popovertarget="bookmarks"
         >
-        <font-awesome-icon icon="fa-solid fa-bookmark"/>
+          <font-awesome-icon icon="fa-solid fa-bookmark" />
           <!-- <font-awesome-icon
             :icon="bookmarksCount > 0 ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'"
           /> -->
-          <span class="button-round-outline__badge" v-if="bookmarksCount > 0">{{ bookmarksCount }}</span>
+          <span class="button-round-outline__badge" v-if="bookmarksCount > 0">{{
+            bookmarksCount
+          }}</span>
         </button>
 
         <Login v-if="settings.SERVICES.accounts" />
@@ -288,6 +294,19 @@ header > * {
   background-color: var(--app-bodybg);
 }
 
+@media screen and (max-width: 460px) {
+  .latest-updates span {
+    display: none;
+  }
+
+  .latest-updates {
+    padding-left: calc(var(--gap) * 0.75);
+    padding-right: calc(var(--gap) * 0.75);
+    min-width: 2.6rem;
+    justify-content: center;
+  }
+}
+
 .appicon {
   border-radius: 0.5rem;
   display: block;
@@ -333,7 +352,7 @@ header > * {
   margin-bottom: 0;
   display: flex;
   align-items: center;
-  gap: calc(var(--gap) * 0.5);
+  gap: calc(var(--gap) * 0.8);
   padding: calc(var(--gap) * 0.7) calc(var(--gap) * 0.5);
   text-decoration: none;
   color: var(--color-blue);

@@ -132,11 +132,19 @@ export default {
       this.isEditing = true;
     },
 
+    cancelEditing() {
+      this.bookmarkname = this.savedBookmarkname;
+      this.isEditing = false;
+    },
+
     handleSubmit() {
       this.addbookmark();
     },
 
     async addbookmark() {
+      if (!this.bookmarkname) {
+        this.bookmarkname = (this.$props.address || this.$props.id || "").toString().trim();
+      }
       const bookmark = await this.findbookmark();
       const sensorElement = document.querySelector(`[data-id="${this.sensorId}"]`);
 
@@ -203,6 +211,7 @@ export default {
         this.bookmarkid = null;
         this.bookmarkname = "";
         this.isEditing = false;
+        this.savedBookmarkname = "";
         notifyDBChange(DB_NAME, STORE);
       } catch (error) {
         console.error("Error deleting bookmark:", error);

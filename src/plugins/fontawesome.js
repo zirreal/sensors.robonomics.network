@@ -28,6 +28,7 @@ import {
   faInfo,
   faIndustry,
   faInfinity,
+  faLayerGroup,
   faLink,
   faLocationArrow,
   faLocationDot,
@@ -64,6 +65,7 @@ import {
 } from "@fortawesome/free-regular-svg-icons";
 import { faXTwitter } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import { faCreditCard } from "@fortawesome/free-regular-svg-icons";
 
 library.add(
   faBars,
@@ -97,6 +99,7 @@ library.add(
   faHelmetSafety,
   faIndustry,
   faInfinity,
+  faLayerGroup,
   faLink,
   faLocationArrow,
   faLocationDot,
@@ -125,7 +128,8 @@ library.add(
   faPenToSquare,
   faTrash,
   faFloppyDisk,
-  faXTwitter
+  faXTwitter,
+  faCreditCard
 );
 
 export function useIcons(app) {
