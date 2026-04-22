@@ -9,7 +9,9 @@
     pageImage="/og-compare.webp"
   />
   <PageTextLayout>
-    <AltruistCompare gif />
+    <div class="pagetext-wide-1920 pagetext-no-text-all">
+      <AltruistCompare gif />
+    </div>
   </PageTextLayout>
 </template>
 

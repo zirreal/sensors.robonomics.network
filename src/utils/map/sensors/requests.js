@@ -12,6 +12,81 @@ const LIBP2P_PROVIDER = new Libp2pProvider(settings.LIBP2P);
 // Глобальный объект провайдера
 let providerObj = null;
 
+// --- Shared helpers (avoid duplication across map loaders) ---
+
+const toRad = (x) => (x * Math.PI) / 180;
+const distM = (a, b) => {
+  const lat1 = Number(a?.lat);
+  const lng1 = Number(a?.lng);
+  const lat2 = Number(b?.lat);
+  const lng2 = Number(b?.lng);
+  if (![lat1, lng1, lat2, lng2].every(Number.isFinite)) return Infinity;
+  const R = 6371000;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const s1 = Math.sin(dLat / 2);
+  const s2 = Math.sin(dLng / 2);
+  const q = s1 * s1 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * s2 * s2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(q)));
+};
+
+function attachCo2ToUrbanSensors(urbanSensors, co2Max, maxMatchMeters = 40) {
+  if (!Array.isArray(urbanSensors) || urbanSensors.length === 0) return;
+  const bestByUrbanId = new Map(); 
+
+  for (const [sid, item] of Object.entries(co2Max || {})) {
+    const v = item?.value;
+    if (v === null || v === undefined) continue;
+    const geo2 = item?.geo;
+    if (!geo2) continue;
+
+    let bestUrban = null;
+    let bestDist = Infinity;
+    for (const urban of urbanSensors) {
+      const d = distM(urban?.geo, geo2);
+      if (d < bestDist) {
+        bestDist = d;
+        bestUrban = urban;
+      }
+    }
+
+    if (!bestUrban || bestDist > maxMatchMeters) continue;
+    const prev = bestByUrbanId.get(bestUrban.sensor_id);
+    if (!prev || bestDist < prev.dist) {
+      bestByUrbanId.set(bestUrban.sensor_id, { dist: bestDist, insightId: sid, value: v });
+    }
+  }
+
+  for (const urban of urbanSensors) {
+    const match = bestByUrbanId.get(urban.sensor_id);
+    if (!match) continue;
+    urban.maxdata = { ...(urban.maxdata || {}), co2: match.value };
+    urban.bundle = {
+      ...(urban.bundle || {}),
+      layers: {
+        ...(urban.bundle?.layers || {}),
+        urban: urban.sensor_id,
+        insight: match.insightId,
+      },
+    };
+  }
+}
+
+async function loadCo2ValuesForPeriod(start, end) {
+  const nowEnd = Math.floor(Date.now() / 1000);
+  const nowStart = nowEnd - 60 * 60; // 1h window: good chance to include a recent CO2 point
+
+  const last = await REMOTE_PROVIDER.lastValuesForPeriod(nowStart, nowEnd, "co2");
+  if (last && typeof last === "object" && Object.keys(last).length > 0) return last;
+
+  const max = await REMOTE_PROVIDER.maxValuesForPeriod(nowStart, nowEnd, "co2");
+  if (max && typeof max === "object" && Object.keys(max).length > 0) return max;
+
+  // Final fallback: keep legacy behavior (selected window), but only if it yields anything.
+  const legacy = await REMOTE_PROVIDER.maxValuesForPeriod(start, end, "co2");
+  return legacy && typeof legacy === "object" ? legacy : {};
+}
+
 // Импортируем утилиты для работы с IndexedDB
 import {
   IDBworkflow,
@@ -31,78 +106,20 @@ import {
  * @returns {Array} обновленный массив сенсоров с maxdata
  */
 export async function getMaxData(start, end, unit, sensors) {
-  // CO2 is stored on Insight sensors, but the map shows Urban sensors.
-  // For CO2 mode, we color Urban sensors by CO2 maxdata where available,
-  // and only compute insight pairing lazily in the popup.
   if (String(unit || "").toLowerCase() === "co2" && Array.isArray(sensors) && sensors.length > 0) {
     try {
-      const co2Max = await REMOTE_PROVIDER.maxValuesForPeriod(start, end, "co2");
-
-      const toRad = (x) => (x * Math.PI) / 180;
-      const distM = (a, b) => {
-        const lat1 = Number(a?.lat);
-        const lng1 = Number(a?.lng);
-        const lat2 = Number(b?.lat);
-        const lng2 = Number(b?.lng);
-        if (![lat1, lng1, lat2, lng2].every(Number.isFinite)) return Infinity;
-        const R = 6371000;
-        const dLat = toRad(lat2 - lat1);
-        const dLng = toRad(lng2 - lng1);
-        const s1 = Math.sin(dLat / 2);
-        const s2 = Math.sin(dLng / 2);
-        const q = s1 * s1 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * s2 * s2;
-        return 2 * R * Math.asin(Math.min(1, Math.sqrt(q)));
-      };
-
-      const MAX_MATCH_METERS = 40;
-      const bestByUrbanId = new Map();
-
-      // For each CO2-capable sensor, find the nearest urban marker and keep the closest match only.
-      for (const [sid, item] of Object.entries(co2Max || {})) {
-        const v = item?.value;
-        if (v === null || v === undefined) continue;
-        const geo2 = item?.geo;
-        if (!geo2) continue;
-
-        let bestUrban = null;
-        let bestDist = Infinity;
-        for (const urban of sensors) {
-          const d = distM(urban?.geo, geo2);
-          if (d < bestDist) {
-            bestDist = d;
-            bestUrban = urban;
-          }
-        }
-
-        if (!bestUrban || bestDist > MAX_MATCH_METERS) continue;
-        const prev = bestByUrbanId.get(bestUrban.sensor_id);
-        if (!prev || bestDist < prev.dist) {
-          bestByUrbanId.set(bestUrban.sensor_id, { dist: bestDist, insightId: sid, value: v });
-        }
-      }
-
-      for (const urban of sensors) {
-        const match = bestByUrbanId.get(urban.sensor_id);
-        if (!match) continue;
-        urban.maxdata = { ...(urban.maxdata || {}), co2: match.value };
-        urban.bundle = {
-          ...(urban.bundle || {}),
-          layers: {
-            ...(urban.bundle?.layers || {}),
-            urban: urban.sensor_id,
-            insight: match.insightId,
+      const co2Values = await loadCo2ValuesForPeriod(start, end);
+      const updated = sensors.map((s) => {
+        const sid = s?.sensor_id;
+        const v = sid && co2Values?.[sid] ? co2Values[sid].value : undefined;
+        return {
+          ...s,
+          maxdata: {
+            ...(s?.maxdata || {}),
+            co2: v !== undefined ? v : s?.maxdata?.co2 ?? null,
           },
         };
-      }
-
-      const updated = sensors.map((s) => ({
-        ...s,
-        maxdata: {
-          ...(s?.maxdata || {}),
-          // If we didn't find a matching insight, keep null so it stays grey
-          co2: s?.maxdata?.co2 ?? null,
-        },
-      }));
+      });
 
       return updated;
     } catch (e) {
@@ -163,13 +180,8 @@ export async function getSensors(start, end, provider = "remote", unit = null) {
   } else {
     const normalizedUnit = unit ? String(unit).toLowerCase() : null;
 
-    // Default (non-CO2): for remote we use the urban list
     const payload = await REMOTE_PROVIDER.getSensorsForPeriod(start, end);
-    const historyData = Array.isArray(payload) ? payload : payload?.result;
-
-    // Optional "bundle" data from API (if present).
-    // We keep it flexible because upstream schema may change.
-    const sensorsBundle = !Array.isArray(payload) ? payload?.sensors : null;
+    const historyData = Array.isArray(payload) ? payload : [];
 
     // Обрабатываем данные прямо здесь
     const sensors = [];
@@ -193,46 +205,8 @@ export async function getSensors(start, end, provider = "remote", unit = null) {
         donated_by: sensorData.donated_by || null,
         owner: sensorData.owner || null,
         timestamp: sensorData.timestamp || null,
-        kind: "urban",
         bundle: null,
       };
-      
-      try {
-        if (sensorsBundle && sensorData.sensor_id) {
-          const entry = sensorsBundle?.[sensorData.sensor_id];
-          if (Array.isArray(entry)) {
-            const ownerSensors = entry;
-            const insightCandidate =
-              ownerSensors.find((s) => s?.kind === "insight" && s?.sensor_id) ||
-              ownerSensors.find((s) => s?.type === "insight" && s?.sensor_id) ||
-              null;
-            sensorInfo.bundle = {
-              ownerSensors,
-              layers: {
-                urban: sensorData.sensor_id,
-                ...(insightCandidate?.sensor_id ? { insight: insightCandidate.sensor_id } : {}),
-              },
-            };
-          } else if (entry && typeof entry === "object") {
-            // Accept already-shaped bundles.
-            if (entry.ownerSensors || entry.layers || entry.data) {
-              const layers = entry.layers || {};
-              sensorInfo.bundle = {
-                ...entry,
-                layers: {
-                  urban: layers.urban || sensorData.sensor_id,
-                  ...(layers.insight ? { insight: layers.insight } : {}),
-                },
-              };
-            } else {
-              // Unknown object shape, keep under ownerSensors if plausible.
-              sensorInfo.bundle = { ownerSensors: entry?.ownerSensors || [] };
-            }
-          }
-        }
-      } catch {
-        // ignore bundle parsing errors
-      }
 
       if (!hasValidCoordinates({ lat, lng })) {
         // Сенсоры с нулевыми координатами
@@ -251,67 +225,15 @@ export async function getSensors(start, end, provider = "remote", unit = null) {
     const boundedSensors = filterByBounds(filteredSensors, bounds);
     const boundedNoLoc = filterByBounds(filteredSensorsNoLocation, bounds);
 
-    // CO2 view: keep urban points, but enrich them with CO2 values from related Insight sensors.
-    // Fast path: load CO2 maxdata once and apply it to urban points by id.
     if (normalizedUnit === "co2" && boundedSensors.length > 0) {
       try {
-        const co2Max = await REMOTE_PROVIDER.maxValuesForPeriod(start, end, "co2");
-        const toRad = (x) => (x * Math.PI) / 180;
-        const distM = (a, b) => {
-          const lat1 = Number(a?.lat);
-          const lng1 = Number(a?.lng);
-          const lat2 = Number(b?.lat);
-          const lng2 = Number(b?.lng);
-          if (![lat1, lng1, lat2, lng2].every(Number.isFinite)) return Infinity;
-          const R = 6371000;
-          const dLat = toRad(lat2 - lat1);
-          const dLng = toRad(lng2 - lng1);
-          const s1 = Math.sin(dLat / 2);
-          const s2 = Math.sin(dLng / 2);
-          const q = s1 * s1 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * s2 * s2;
-          return 2 * R * Math.asin(Math.min(1, Math.sqrt(q)));
-        };
-
-        const MAX_MATCH_METERS = 40;
-        const bestByUrbanId = new Map(); 
-
-        for (const [sid, item] of Object.entries(co2Max || {})) {
-          const v = item?.value;
-          if (v === null || v === undefined) continue;
-          const geo2 = item?.geo;
-          if (!geo2) continue;
-
-          let bestUrban = null;
-          let bestDist = Infinity;
-          for (const urban of boundedSensors) {
-            const d = distM(urban?.geo, geo2);
-            if (d < bestDist) {
-              bestDist = d;
-              bestUrban = urban;
-            }
-          }
-
-          if (!bestUrban || bestDist > MAX_MATCH_METERS) continue;
-          const prev = bestByUrbanId.get(bestUrban.sensor_id);
-          if (!prev || bestDist < prev.dist) {
-            bestByUrbanId.set(bestUrban.sensor_id, { dist: bestDist, insightId: sid, value: v });
-          }
-        }
-
-        for (const urban of boundedSensors) {
-          const match = bestByUrbanId.get(urban.sensor_id);
-          if (!match) {
-            urban.maxdata = { ...(urban.maxdata || {}), co2: urban?.maxdata?.co2 ?? null };
-            continue;
-          }
-          urban.maxdata = { ...(urban.maxdata || {}), co2: match.value };
-          urban.bundle = {
-            ...(urban.bundle || {}),
-            layers: {
-              ...(urban.bundle?.layers || {}),
-              urban: urban.sensor_id,
-              insight: match.insightId,
-            },
+        const co2Values = await loadCo2ValuesForPeriod(start, end);
+        for (const s of boundedSensors) {
+          const sid = s?.sensor_id;
+          const v = sid && co2Values?.[sid] ? co2Values[sid].value : undefined;
+          s.maxdata = {
+            ...(s.maxdata || {}),
+            co2: v !== undefined ? v : s?.maxdata?.co2 ?? null,
           };
         }
       } catch (e) {
@@ -326,20 +248,6 @@ export async function getSensors(start, end, provider = "remote", unit = null) {
   }
 }
 
-
-export async function getSensorBundleForPeriod(sensorId, start, end) {
-  if (!sensorId) return null;
-  try {
-    const result = await fetchJson(
-      `${settings.REMOTE_PROVIDER}api/v2/sensor/${sensorId}/${start}/${end}`,
-      { cache: "no-store" }
-    );
-    return result?.sensor || null;
-  } catch (error) {
-    console.warn("Failed to load sensor bundle:", error);
-    return null;
-  }
-}
 
 export async function getSensorBundle(sensorId, startTimestamp, endTimestamp, signal = null) {
   if (!sensorId) return null;

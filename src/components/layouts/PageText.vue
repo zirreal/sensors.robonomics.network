@@ -70,62 +70,6 @@ import ReleaseInfo from "../../components/ReleaseInfo.vue";
 </script>
 
 <style>
-.container-pagetext {
-  flex: 1 0 auto;
-  padding: calc(var(--gap) * 5) calc(var(--gap) * 3) calc(var(--gap) * 3);
-  margin: 0 auto;
-  max-width: 1400px;
-  width: 100vw;
-}
-
-.container-pagetext > * {
-  --font-size: 1.3rem;
-  --gap: 1.7rem;
-  line-height: 1.5;
-}
-
-@media (width < 800px) {
-  .container-pagetext > * {
-    --gap: 1.4rem;
-  }
-}
-
-.container-pagetext section:not(:last-child) {
-  margin-bottom: calc(var(--gap) * 3);
-}
-
-.container-pagetext ul {
-  list-style: initial;
-  margin-left: var(--gap);
-}
-
-.container-pagetext ol {
-  list-style: decimal;
-  margin-left: var(--gap);
-}
-
-.pagetext-highlight {
-  font-weight: 900;
-  /* font-size: 1.08em; */
-  line-height: 1.55;
-}
-
-.pagetext-highlight p {
-  font-size: calc(var(--font-size) * 1.15);
-  line-height: inherit;
-}
-
-.pagetext-fullwidth-image {
-  display: block;
-  width: 100vw;
-  max-width: 100vw;
-  position: relative;
-  left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
-}
-
 .buySensor.footer {
   margin-bottom: 0 !important;
 }

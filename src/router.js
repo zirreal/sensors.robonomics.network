@@ -5,6 +5,7 @@ import AltruistTimeline from "./views/AltruistTimeline.vue";
 import AltruistUseCases from "./views/AltruistUseCases.vue";
 import AltruistDeviceInfo from "./views/AltruistDeviceInfo.vue";
 import AltruistSetup from "./views/AltruistSetup.vue";
+import WhereToBuy from "./views/WhereToBuy.vue";
 import ConstructionMonitoring from "./views/ConstructionMonitoring.vue";
 import NoiseDataRealEstate from "./views/NoiseDataRealEstate.vue";
 import Login from "./views/Login.vue";
@@ -64,6 +65,11 @@ const router = createRouter({
       path: "/altruist-setup/",
       name: "altruist-setup",
       component: AltruistSetup,
+    },
+    {
+      path: "/where-to-buy/",
+      name: "where-to-buy",
+      component: WhereToBuy,
     },
     {
       path: "/construction-monitoring/",

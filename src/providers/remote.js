@@ -71,7 +71,7 @@ class Provider {
 
   async getHistoryBySensor(sensor) {
     try {
-      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/v2/sensor/${sensor}`, {
+      const result = await fetchJson(`${settings.REMOTE_PROVIDER}api/sensor/${sensor}`, {
         cache: "no-store",
       });
       return result?.result || [];
@@ -83,7 +83,7 @@ class Provider {
   async getHistoryPeriodBySensor(sensor, start, end) {
     try {
       const result = await fetchJson(
-        `${settings.REMOTE_PROVIDER}api/v2/sensor/${sensor}/${start}/${end}`,
+        `${settings.REMOTE_PROVIDER}api/sensor/${sensor}/${start}/${end}`,
         { cache: "no-store" }
       );
       return result?.result || [];
@@ -95,13 +95,12 @@ class Provider {
   async getSensorsForPeriod(start, end) {
     try {
       const result = await fetchJson(
-        `${settings.REMOTE_PROVIDER}api/v2/sensor/urban/${start}/${end}`,
+        `${settings.REMOTE_PROVIDER}api/v2/sensor/list/${start}/${end}`,
         { cache: "no-store" }
       );
-      // Keep full payload (it may include extra keys like `sensors`)
-      return result || { result: [] };
+      return result?.result || [];
     } catch {
-      return { result: [] };
+      return [];
     }
   }
 

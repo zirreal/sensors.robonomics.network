@@ -15,18 +15,19 @@
   <Accordion>
     <template #title>Advanced sharing</template>
     <div class="sharelink-settings">
-      <div class="sharelink-settings-item">
-        <div>
-          <label>
-            <input type="checkbox" v-model="includeProvider" />
-            {{ t("sensorpopup.provider") || "Provider" }}
-          </label>
+      <div>
+        <div class="sharelink-settings-item">
+          <div>
+            <label>
+              <input type="checkbox" v-model="includeProvider" />
+              {{ t("sensorpopup.provider") || "Provider" }}
+            </label>
+          </div>
+          <select v-model="selectedProvider" :disabled="!includeProvider">
+            <option value="realtime">Realtime</option>
+            <option value="remote">Remote</option>
+          </select>
         </div>
-        <select v-model="selectedProvider" :disabled="!includeProvider">
-          <option value="realtime">Realtime</option>
-          <option value="remote">Remote</option>
-        </select>
-      </div>
 
         <div class="sharelink-settings-item">
           <div>
@@ -66,16 +67,16 @@
   </Accordion>
 
   <div class="og-preview-card" v-if="ogPreviewData">
-      <div class="og-preview-image">
-        <img :src="ogPreviewData.image" :alt="ogPreviewData.title" />
-      </div>
-      <div class="og-preview-content">
-        <div class="og-preview-site">{{ ogPreviewData.siteName }}</div>
-        <div class="og-preview-title">{{ ogPreviewData.title }}</div>
-        <div class="og-preview-description">{{ ogPreviewData.description }}</div>
-        <div class="og-preview-url">{{ ogPreviewData.url }}</div>
-      </div>
+    <div class="og-preview-image">
+      <img :src="ogPreviewData.image" :alt="ogPreviewData.title" />
     </div>
+    <div class="og-preview-content">
+      <div class="og-preview-site">{{ ogPreviewData.siteName }}</div>
+      <div class="og-preview-title">{{ ogPreviewData.title }}</div>
+      <div class="og-preview-description">{{ ogPreviewData.description }}</div>
+      <div class="og-preview-url">{{ ogPreviewData.url }}</div>
+    </div>
+  </div>
 </template>
 
 <script setup>

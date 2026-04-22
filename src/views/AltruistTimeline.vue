@@ -9,58 +9,60 @@
     pageImage="/og-altruist-timeline.webp"
   />
   <PageTextLayout>
-    <h1>{{ $t("7 Years of Altruism") }}</h1>
-    <section class="pagetext-highlight">
-      <p>
-        {{
-          $t(
-            "At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”."
-          )
-        }}
-      </p>
-    </section>
+    <div class="pagetext-prose">
+      <header class="pagetext-header">
+        <div class="pagetext-eyebrow">sensors.social</div>
+        <h1 class="pagetext-title">{{ $t("7 Years of Altruism") }}</h1>
+        <p class="pagetext-subtitle">
+          {{
+            $t(
+              "At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”."
+            )
+          }}
+        </p>
+      </header>
 
-    <section>
-      <img
-        alt=""
-        class="pagetext-fullwidth-image"
-        src="../assets/images/pages/altruist-timeline/timeline.webp"
-      />
-    </section>
+      <section>
+        <img
+          alt=""
+          class="pagetext-fullwidth-image"
+          src="../assets/images/pages/altruist-timeline/timeline.webp"
+        />
+      </section>
 
-    <section>
-      <p>
-        {{
-          $t(
-            "Altruist is a two-module air quality sensor that will be useful for residents of large cities, home automation enthusiasts, and those who want to create their own local environmental monitoring community anywhere in the world. Altruist has many advantages in its class of devices, which we’ll discuss separately, but in this publication, we want to tell the story leading up to the launch of this consumer product — a unique and fascinating story!"
-          )
-        }}
-      </p>
-    </section>
+      <section>
+        <p>
+          {{
+            $t(
+              "Altruist is a two-module air quality sensor that will be useful for residents of large cities, home automation enthusiasts, and those who want to create their own local environmental monitoring community anywhere in the world. Altruist has many advantages in its class of devices, which we’ll discuss separately, but in this publication, we want to tell the story leading up to the launch of this consumer product — a unique and fascinating story!"
+            )
+          }}
+        </p>
+      </section>
 
-    <section>
-      <h2>
-        {{
-          $t(
-            "Year 2017: The 1st R&D – Air Quality Measurement on Playgrounds in an Industrial City"
-          )
-        }}
-      </h2>
-      <p>
-        {{
-          $t(
-            "In the winter of 2017–2018, Robonomics engineers purchased professional air quality sensors certified for the European market, which allowed detailed analysis of air quality for specific impurities, such as NOx, SOx — typical of car and factory emissions. The sensor also measured dust particles in the air and basic environmental parameters."
-          )
-        }}
-      </p>
-      <p>
-        {{
-          $t(
-            "The uniqueness of this sensor — which might seem funny in 2025 — was that in 2017 it was still difficult to find well-known sensors with IoT modules for cloud data transfer. The Spanish manufacturer Libelium offered expensive sensors, but we decided to buy them to develop software for real-time connection of the sensor to an information page and a cloud database — that was the experiment. Thus, for the first time, we started monitoring air quality using modern methods, which, unlike state systems at that time, allowed data to be collected not manually and more frequently than twice a day, and sensors could be placed almost anywhere — for example, on a lamppost in a residential courtyard at a playground."
-          )
-        }}
-      </p>
-    </section>
+      <section>
+        <h2>
+          {{
+            $t(
+              "Year 2017: The 1st R&D – Air Quality Measurement on Playgrounds in an Industrial City"
+            )
+          }}
+        </h2>
+        <p>
+          {{
+            $t(
+              "In the winter of 2017–2018, Robonomics engineers purchased professional air quality sensors certified for the European market, which allowed detailed analysis of air quality for specific impurities, such as NOx, SOx — typical of car and factory emissions. The sensor also measured dust particles in the air and basic environmental parameters."
+            )
+          }}
+        </p>
+        <p>
+          {{
+            $t(
+              "The uniqueness of this sensor — which might seem funny in 2025 — was that in 2017 it was still difficult to find well-known sensors with IoT modules for cloud data transfer. The Spanish manufacturer Libelium offered expensive sensors, but we decided to buy them to develop software for real-time connection of the sensor to an information page and a cloud database — that was the experiment. Thus, for the first time, we started monitoring air quality using modern methods, which, unlike state systems at that time, allowed data to be collected not manually and more frequently than twice a day, and sensors could be placed almost anywhere — for example, on a lamppost in a residential courtyard at a playground."
+            )
+          }}
+        </p>
+      </section>
 
     <section>
       <h2>
@@ -182,7 +184,11 @@
       </p>
     </section>
 
-    <AltruistCompare />
+    </div>
+
+    <div class="pagetext-wide-1920 pagetext-no-text-all">
+      <AltruistCompare />
+    </div>
   </PageTextLayout>
 </template>
 

@@ -1,10 +1,8 @@
 export default {
   "header.title": "Web3 открытая сеть датчиков",
-  "header.text1":
-    "Добро пожаловать в открытую сеть датчиков, которая построена на open-source принципах и поддерживается энтузиастами (см.",
+  "header.text1": "Добро пожаловать в открытую сеть датчиков, которая построена на open-source принципах и поддерживается энтузиастами (см.",
   "header.link1": "the free will of individuals). ",
-  "header.text2":
-    "Карта предлагает два разных уровня децентрализации: прямая peer-to-peer связь датчиков и блокчейн для сбора и хранения истории показаний с датчиков.",
+  "header.text2": "Карта предлагает два разных уровня децентрализации: прямая peer-to-peer связь датчиков и блокчейн для сбора и хранения истории показаний с датчиков.",
   "header.link2": "тут",
   "header.text3": "можно ознакомиться более подробно с технической стороной.",
   "measures.title": "Информация об измерениях воздуха",
@@ -14,12 +12,8 @@ export default {
   "history.title": "Экспорт данных",
   "history.reports": "Отчёты",
   "history.button": "Скачать csv файл",
-  "history.currentDay": "Текущий день",
-  "history.currentMonth": "За прошедший месяц",
-  "history.chooseDates": "Свой диапазон дат",
-  notice_with_fz:
-    "Указанные данные не являются юридически значимой информацией для общего пользования и специальной информацией в соответствии с федеральным законом от 19.07.1998 г. no 113-фз «О гидрометеорологической службе»",
-  notice_without_fz: "Указанные данные не являются юридически значимой информацией.",
+  "notice_with_fz": "Указанные данные не являются юридически значимой информацией для общего пользования и специальной информацией в соответствии с федеральным законом от 19.07.1998 г. no 113-фз «О гидрометеорологической службе»",
+  "notice_without_fz": "Указанные данные не являются юридически значимой информацией.",
   "sensorpopup.infotitle": "Подробная информация",
   "sensorpopup.bookmarkplaceholder": "Сохранить этот сенсор в закладки",
   "sensorpopup.bookmarkbutton": "Сохранить в закладки",
@@ -35,7 +29,6 @@ export default {
   "sensorpopup.type": "Тип измерения",
   "sensorpopup.date": "Дата",
   "sensorpopup.copyLink": "Скопировать ссылку",
-  "sensorpopup.linkPreview": "Предпросмотр ссылки",
   "sensorpopup.allStories": "Все истории",
   "messagepopup.infotitle": "Информация о сообщении",
   "messagepopup.infotime": "Опубликовано",
@@ -49,18 +42,17 @@ export default {
   "scales.title": "Единицы измерения",
   "scales.upto": "до",
   "scales.above": "выше",
-  showlocation: "Показать моё местоположение",
-  locationloading: "Пытаемся получить вашу геопозицию",
-  geolocationdefault: "Геолокация установлена ​​по умолчанию",
-  geolocationfromparams: "Геолокация установлена из параметров URL",
-  geolocationlocal: "Геолокация устанавливается на основе локальных данных",
-  geolocationisdetermined: "Геолокация определена",
-  geolocationerror: "Геолокация не установлена [код -",
-  geolocationnotavailable: "Геолокация недоступна",
-  geolocationdefaultsetup: "устанавливается позиция по умолчанию...",
+  "showlocation": "Показать моё местоположение",
+  "locationloading": "Пытаемся получить вашу геопозицию",
+  "geolocationdefault": "Геолокация установлена ​​по умолчанию",
+  "geolocationfromparams": "Геолокация установлена из параметров URL",
+  "geolocationlocal": "Геолокация устанавливается на основе локальных данных",
+  "geolocationisdetermined": "Геолокация определена",
+  "geolocationerror": "Геолокация не установлена [код -",
+  "geolocationnotavailable": "Геолокация недоступна",
+  "geolocationdefaultsetup": "устанавливается позиция по умолчанию...",
   "privacypolicy.title": "Политика конфиденциальности",
-  "privacypolicy.description":
-    "В этой политике описывается информация, которую мы собираем у вас, как мы ее используем и на каком юридическом основании. Также рассматривается, передается ли эта информация и каким образом, а также ваши права и выборы в отношении предоставленных данных.",
+  "privacypolicy.description": "В этой политике описывается информация, которую мы собираем у вас, как мы ее используем и на каком юридическом основании. Также рассматривается, передается ли эта информация и каким образом, а также ваши права и выборы в отношении предоставленных данных.",
   "privacypolicy.subtitle1": "Где те надоедливые всплывающие окна о согласии на файлы cookie?",
   "privacypolicy.text1": "Нам не требуется согласие на файлы cookie, потому что:",
   "privacypolicy.listitem1": "Файлы cookie для отслеживания не используются",
@@ -68,169 +60,119 @@ export default {
   "privacypolicy.listitem3": "Посетители не отслеживаются на других веб-сайтах",
   "privacypolicy.listitem4": "Пользователь не может быть отслежен в разные дни на одном сайте",
   "privacypolicy.subtitle2": "Что мы собираем и получаем",
-  "privacypolicy.text2":
-    "Чтобы предоставить вам наилучший пользовательский опыт на наших сайтах, нам необходимо собирать и обрабатывать определенную информацию. В зависимости от того, как вы используете наши сервисы, это может включать:",
+  "privacypolicy.text2": "Чтобы предоставить вам наилучший пользовательский опыт на наших сайтах, нам необходимо собирать и обрабатывать определенную информацию. В зависимости от того, как вы используете наши сервисы, это может включать:",
   "privacypolicy.listitem5bold": "Связь с нами по электронной почте",
-  "privacypolicy.listitem5":
-    "— например, когда вы заполняете наши формы, отправляете нам вопросы или комментарии, либо сообщаете о проблеме, мы собираем ваше имя, адрес электронной почты, сообщение и т. д. Мы используем эти данные исключительно для ответа на ваши запросы.",
+  "privacypolicy.listitem5": "— например, когда вы заполняете наши формы, отправляете нам вопросы или комментарии, либо сообщаете о проблеме, мы собираем ваше имя, адрес электронной почты, сообщение и т. д. Мы используем эти данные исключительно для ответа на ваши запросы.",
   "privacypolicy.listitem6bold": "Данные об использовании",
-  "privacypolicy.listitem6text1":
-    "— когда вы посещаете наш сайт, мы сохраняем: URL, с которого вы пришли, веб-страницы нашего сайта, которые вы посещаете, дату и продолжительность посещения, ваш анонимизированный IP-адрес, характеристики устройства (тип устройства, операционная система, разрешение экрана, язык, страна вашего местоположения и тип веб-браузера), которые вы использовали во время посещения, а также",
+  "privacypolicy.listitem6text1": "— когда вы посещаете наш сайт, мы сохраняем: URL, с которого вы пришли, веб-страницы нашего сайта, которые вы посещаете, дату и продолжительность посещения, ваш анонимизированный IP-адрес, характеристики устройства (тип устройства, операционная система, разрешение экрана, язык, страна вашего местоположения и тип веб-браузера), которые вы использовали во время посещения, а также",
   "privacypolicy.listitem6link1": "другие",
-  "privacypolicy.listitem6text2":
-    "неперсональные данные. Мы обрабатываем эти данные об использовании только на нашем сервере, не передавая их третьим сторонам с помощью",
+  "privacypolicy.listitem6text2": "неперсональные данные. Мы обрабатываем эти данные об использовании только на нашем сервере, не передавая их третьим сторонам с помощью",
   "privacypolicy.listitem6link2": "Matomo",
-  "privacypolicy.listitem6text3":
-    "— платформы веб-аналитики, которая дает нам 100% владение данными. Эта аналитика помогает нам улучшать пользовательский опыт на нашем сайте и выявлять любое злоупотребление.",
+  "privacypolicy.listitem6text3": "— платформы веб-аналитики, которая дает нам 100% владение данными. Эта аналитика помогает нам улучшать пользовательский опыт на нашем сайте и выявлять любое злоупотребление.",
   "privacypolicy.listitem7bold": "Неперсонифицированные файлы cookie",
-  "privacypolicy.listitem7":
-    "— мы используем файлы cookie без отслеживания (небольшие файлы данных, передаваемые на компьютеры или устройства сайтами) для ведения записей и улучшения функциональности нашего сайта. Вы можете отключить или ограничить передачу этих файлов cookie, изменив настройки веб-браузера или отказавшись от них на этой странице в форме ниже. Уже сохраненные файлы cookie можно удалить в любое время.",
+  "privacypolicy.listitem7": "— мы используем файлы cookie без отслеживания (небольшие файлы данных, передаваемые на компьютеры или устройства сайтами) для ведения записей и улучшения функциональности нашего сайта. Вы можете отключить или ограничить передачу этих файлов cookie, изменив настройки веб-браузера или отказавшись от них на этой странице в форме ниже. Уже сохраненные файлы cookie можно удалить в любое время.",
   "privacypolicy.subtitle3": "Ваши права",
-  "privacypolicy.text3":
-    "Вы имеете право быть проинформированными о персональных данных, обрабатываемых Matomo, а также право на исправление, удаление и ограничение обработки. Вы также имеете право запросить у нас структурированный, стандартный и машиночитаемый формат персональных данных, которые вы нам предоставили.",
-  "privacypolicy.text4":
-    "Мы можем идентифицировать вас только по вашему адресу электронной почты и можем выполнить ваш запрос и предоставить информацию только в том случае, если у нас есть ваши персональные данные в результате вашего обращения к нам и/или использования нашего сайта или сервиса. Мы не можем предоставлять, исправлять или удалять данные, которые мы храним от имени наших пользователей или клиентов.",
-  "privacypolicy.text5":
-    "Чтобы воспользоваться любым из прав, упомянутых в этой Политике конфиденциальности, и/или в случае вопросов или комментариев, касающихся использования персональных данных, вы можете связаться с нами.",
-  "privacypolicy.text6":
-    "Кроме того, вы имеете право подать жалобу в орган по защите данных в вашей юрисдикции.",
+  "privacypolicy.text3": "Вы имеете право быть проинформированными о персональных данных, обрабатываемых Matomo, а также право на исправление, удаление и ограничение обработки. Вы также имеете право запросить у нас структурированный, стандартный и машиночитаемый формат персональных данных, которые вы нам предоставили.",
+  "privacypolicy.text4": "Мы можем идентифицировать вас только по вашему адресу электронной почты и можем выполнить ваш запрос и предоставить информацию только в том случае, если у нас есть ваши персональные данные в результате вашего обращения к нам и/или использования нашего сайта или сервиса. Мы не можем предоставлять, исправлять или удалять данные, которые мы храним от имени наших пользователей или клиентов.",
+  "privacypolicy.text5": "Чтобы воспользоваться любым из прав, упомянутых в этой Политике конфиденциальности, и/или в случае вопросов или комментариев, касающихся использования персональных данных, вы можете связаться с нами.",
+  "privacypolicy.text6": "Кроме того, вы имеете право подать жалобу в орган по защите данных в вашей юрисдикции.",
   "privacypolicy.subtitle4": "Хранение данных",
-  "privacypolicy.text7":
-    "Мы будем хранить вашу информацию столько, сколько необходимо для предоставления вам услуг или в соответствии с этой Политикой. Мы также будем хранить и использовать эту информацию в целях, изложенных в данной Политике, а также в той мере, в какой это необходимо для выполнения наших юридических обязательств, разрешения споров, соблюдения наших соглашений и защиты законных прав Robonomics Cloud.",
-  "privacypolicy.text8":
-    "Мы также собираем и храним агрегированные, анонимизированные или псевдонимизированные данные, которые можем хранить неограниченное время для защиты безопасности нашего сайта, улучшения наших сервисов или выполнения юридических обязательств.",
+  "privacypolicy.text7": "Мы будем хранить вашу информацию столько, сколько необходимо для предоставления вам услуг или в соответствии с этой Политикой. Мы также будем хранить и использовать эту информацию в целях, изложенных в данной Политике, а также в той мере, в какой это необходимо для выполнения наших юридических обязательств, разрешения споров, соблюдения наших соглашений и защиты законных прав Robonomics Cloud.",
+  "privacypolicy.text8": "Мы также собираем и храним агрегированные, анонимизированные или псевдонимизированные данные, которые можем хранить неограниченное время для защиты безопасности нашего сайта, улучшения наших сервисов или выполнения юридических обязательств.",
   "privacypolicy.matomooptout": "Отказ от отслеживания на сайте",
-  "privacypolicy.matomodescription":
-    "Вы можете отказаться от отслеживания нашей аналитикой Matomo ниже:",
-  "privacypolicy.matomolabel1":
-    "В данный момент вы отказались от отслеживания. Нажмите здесь, чтобы включить его.",
-  "privacypolicy.matomotext1":
-    "Отказ от отслеживания завершен; ваши визиты на этот сайт не будут записываться инструментом веб-аналитики. Обратите внимание, что если вы очистите файлы cookie, удалите cookie отказа или смените компьютер или веб-браузер, вам придется снова выполнить процедуру отказа.",
+  "privacypolicy.matomodescription": "Вы можете отказаться от отслеживания нашей аналитикой Matomo ниже:",
+  "privacypolicy.matomolabel1": "В данный момент вы отказались от отслеживания. Нажмите здесь, чтобы включить его.",
+  "privacypolicy.matomotext1": "Отказ от отслеживания завершен; ваши визиты на этот сайт не будут записываться инструментом веб-аналитики. Обратите внимание, что если вы очистите файлы cookie, удалите cookie отказа или смените компьютер или веб-браузер, вам придется снова выполнить процедуру отказа.",
   "privacypolicy.matomotext2": "Нажмите ниже, чтобы включить отслеживание:",
-  "privacypolicy.matomolabel2":
-    "В данный момент вы участвуете в отслеживании. Нажмите здесь, чтобы отказаться.",
-  "privacypolicy.matomotext3":
-    "Вы можете отказаться от назначения вашему компьютеру уникального идентификационного номера веб-аналитики, чтобы избежать сбора и анализа данных на этом сайте.",
-  "privacypolicy.matomotext4":
-    "Чтобы сделать этот выбор, нажмите ниже, чтобы получить файл cookie отказа",
+  "privacypolicy.matomolabel2": "В данный момент вы участвуете в отслеживании. Нажмите здесь, чтобы отказаться.",
+  "privacypolicy.matomotext3": "Вы можете отказаться от назначения вашему компьютеру уникального идентификационного номера веб-аналитики, чтобы избежать сбора и анализа данных на этом сайте.",
+  "privacypolicy.matomotext4": "Чтобы сделать этот выбор, нажмите ниже, чтобы получить файл cookie отказа",
+  "Where to buy Altruist": "Где купить Altruist",
+  "Official and partner purchase options for Altruist devices by region.": "Официальные и партнёрские варианты покупки устройств Altruist по регионам.",
+  "Where to buy air monitor Altruist": "Где купить Altruist",
+  "Two-module environment monitoring kit for indoors and outdoors — for those who care about health.": "Комплект мониторинга среды снаружи и внутри для тех, кто заботится о здоровье.",
+  "Coming soon": "Скоро",
+  "CY": "CY",
+  "RU & CIS": "RU & CIS",
+  "Worldwide": "Worldwide",
+  "Europe": "Europe",
+  "Yandex Market": "Яндекс Маркет",
+  "Cyberpunks Shop": "Cyberpunks Shop",
+  "Altruist Air Quality Sensors with Installation & Setup on Cyprus": "Датчики качества воздуха Altruist с установкой и настройкой на Кипре",
+  "Various options of buying Altruist: Urban only, Urban & Insight, etc.": "Различные варианты покупки Altruist: только Urban, Urban & Insight и т.д.",
+  "Our online-shop with various options available. Worldwide delivery.": "Наш онлайн-магазин с разными вариантами. Доставка по всему миру.",
+  "Amazon DE with delivery all over Europe.": "Amazon DE с доставкой по всей Европе.",
   "Dust & Particles": "Пыль и частицы",
-  Noise: "Шум",
-  Climate: "Климат",
-  Pressure: "Давление",
+  "Noise": "Шум",
+  "Climate": "Климат",
+  "Pressure": "Давление",
   "Who Altruist Was Created For": "Для кого был создан Альтруист",
-  "Monitoring the environment involves plenty of pitfalls, making the job far harder than it looks at first glance. Our team—the creators of Altruist and the open-source project sensors.social—has spent seven years studying and working in this field, and we hope our experience will pleasantly surprise you and give you a practical tool for adapting to the conditions in which you and your loved ones live. Below we explain which main user groups Altruist is designed for…":
-    "Мониторинг окружающей среды подразумевает множество подводных камней, делая работу намного сложнее, чем она кажется на первый взгляд. Наша команда - создатели Altruist и открытого проекта sensors.social - провела семь лет, изучая и работая в этой области, и мы надеемся, что наш опыт приятно вас удивит и даст вам практический инструмент для адаптации к условиям, в которых живут вы и ваши близкие. Ниже мы объясняем, для каких основных групп пользователей предназначен Altruist…",
-  "Who Altruist Was Created For - Sensors use cases":
-    "Для кого был создан Альтруист - примеры использования сенсоров",
-  "You live in a big city or an ecologically challenged region":
-    "Вы живете в большом городе или в экологически неблагоприятном регионе",
-  "Think of it as a little adventure: getting to know your city better. The top-priority reason to buy a home air-quality station is to gain solid knowledge of what is happening indoors and outside throughout the year so you can adapt accordingly.":
-    "Считайте это небольшим приключением: узнайте ваш город лучше. Приоритетной причиной для покупки домашней станции контроля качества воздуха является получение уверенных знаний о том, что происходит в помещении и снаружи в течение года, чтобы вы могли соответствующим образом адаптироваться.",
-  "There’s always something to worry about, but it’s best not to let the extremes—“nothing is happening” vs. “everything is definitely bad”—take root. After seven years working with citizen air-quality monitoring around the world, we can assure you that personal, quantitative monitoring shows the real situation right where you live. After a year with Altruist you will see, in clear graphs with insights from the developers, how air quality varies by time of day, season, the operation of waste-incineration plants, industrial sites, power stations, seasonal fires, dust storms… and you’ll form an objective view of what is happening right outside your window—and adapt to it.":
-    'Всегда есть повод для беспокойства, но лучше не позволять крайностям - "ничего не происходит" против "все определенно плохо" - укорениться. После семи лет работы с мониторингом качества воздуха гражданами по всему миру, мы можем уверить вас, что персональный количественный мониторинг показывает реальную ситуацию прямо там, где вы живете. После года с Altruist вы увидите на ясных графиках со сложными аналитическими выводами от разработчиков, как качество воздуха меняется в зависимости от времени суток, сезона, работы мусоросжигательных заводов, промышленных предприятий, электростанций, сезонных пожаров, пылевых бурь... и вы сформируете объективную картину того, что происходит прямо за окном вашего дома и будете адаптироваться к этому.',
+  "Monitoring the environment involves plenty of pitfalls, making the job far harder than it looks at first glance. Our team—the creators of Altruist and the open-source project sensors.social—has spent seven years studying and working in this field, and we hope our experience will pleasantly surprise you and give you a practical tool for adapting to the conditions in which you and your loved ones live. Below we explain which main user groups Altruist is designed for…": "Мониторинг окружающей среды подразумевает множество подводных камней, делая работу намного сложнее, чем она кажется на первый взгляд. Наша команда - создатели Altruist и открытого проекта sensors.social - провела семь лет, изучая и работая в этой области, и мы надеемся, что наш опыт приятно вас удивит и даст вам практический инструмент для адаптации к условиям, в которых живут вы и ваши близкие. Ниже мы объясняем, для каких основных групп пользователей предназначен Altruist…",
+  "Who Altruist Was Created For - Sensors use cases": "Для кого был создан Альтруист - примеры использования сенсоров",
+  "You live in a big city or an ecologically challenged region": "Вы живете в большом городе или в экологически неблагоприятном регионе",
+  "Think of it as a little adventure: getting to know your city better. The top-priority reason to buy a home air-quality station is to gain solid knowledge of what is happening indoors and outside throughout the year so you can adapt accordingly.": "Считайте это небольшим приключением: узнайте ваш город лучше. Приоритетной причиной для покупки домашней станции контроля качества воздуха является получение уверенных знаний о том, что происходит в помещении и снаружи в течение года, чтобы вы могли соответствующим образом адаптироваться.",
+  "There’s always something to worry about, but it’s best not to let the extremes—“nothing is happening” vs. “everything is definitely bad”—take root. After seven years working with citizen air-quality monitoring around the world, we can assure you that personal, quantitative monitoring shows the real situation right where you live. After a year with Altruist you will see, in clear graphs with insights from the developers, how air quality varies by time of day, season, the operation of waste-incineration plants, industrial sites, power stations, seasonal fires, dust storms… and you’ll form an objective view of what is happening right outside your window—and adapt to it.": "Всегда есть повод для беспокойства, но лучше не позволять крайностям - \"ничего не происходит\" против \"все определенно плохо\" - укорениться. После семи лет работы с мониторингом качества воздуха гражданами по всему миру, мы можем уверить вас, что персональный количественный мониторинг показывает реальную ситуацию прямо там, где вы живете. После года с Altruist вы увидите на ясных графиках со сложными аналитическими выводами от разработчиков, как качество воздуха меняется в зависимости от времени суток, сезона, работы мусоросжигательных заводов, промышленных предприятий, электростанций, сезонных пожаров, пылевых бурь... и вы сформируете объективную картину того, что происходит прямо за окном вашего дома и будете адаптироваться к этому.",
   "Altruist features for urban conditions": "Характеристики альтруиста для городских условий",
   "Street-grade particle sensor": "Датчик частиц уличного класса",
-  "tough enough to hang outside yet still fine indoors. If you mount Altruist Urban outside your window it won’t “choke” after the first sand truck rumbles past.":
-    'достаточно прочный для использования на улице, но также подходит для помещений. Если вы установите Altruist Urban снаружи окна, он не "задохнется" после проезда первого песчаного грузовика.',
+  "tough enough to hang outside yet still fine indoors. If you mount Altruist Urban outside your window it won’t “choke” after the first sand truck rumbles past.": "достаточно прочный для использования на улице, но также подходит для помещений. Если вы установите Altruist Urban снаружи окна, он не \"задохнется\" после проезда первого песчаного грузовика.",
   "Outdoor noise measurement": "Измерение шума на улице",
-  "Altruist is currently the only product in its class that adds a city-grade noise sensor, covering another important urban factor.":
-    "Альтруист - в настоящее время единственный продукт в своем классе, который добавляет шумовой датчик городского уровня, охватывая еще один важный городской фактор.",
-  "You or your loved ones have allergies or bronchial asthma":
-    "Вы или ваши близкие страдаете от аллергии или бронхиальной астмы",
-  "Some of Altruist’s developers suffer from house-dust allergy; one of us spent childhood in hospital every few weeks with asthma attacks. Life is harder for such people, so it is especially important to help them control indoor air quality.":
-    "Некоторые разработчики Altruist страдают от аллергии на домашнюю пыль; один из нас проводил детство в больнице каждые несколько недель из-за астматических приступов. Жизнь для таких людей сложнее, поэтому особенно важно помочь им контролировать качество воздуха в помещении.",
-  "How Altruist helps allergy and asthma sufferers":
-    "Как Altruist помогает людям, страдающим от аллергии и астмы",
+  "Altruist is currently the only product in its class that adds a city-grade noise sensor, covering another important urban factor.": "Альтруист - в настоящее время единственный продукт в своем классе, который добавляет шумовой датчик городского уровня, охватывая еще один важный городской фактор.",
+  "You or your loved ones have allergies or bronchial asthma": "Вы или ваши близкие страдаете от аллергии или бронхиальной астмы",
+  "Some of Altruist’s developers suffer from house-dust allergy; one of us spent childhood in hospital every few weeks with asthma attacks. Life is harder for such people, so it is especially important to help them control indoor air quality.": "Некоторые разработчики Altruist страдают от аллергии на домашнюю пыль; один из нас проводил детство в больнице каждые несколько недель из-за астматических приступов. Жизнь для таких людей сложнее, поэтому особенно важно помочь им контролировать качество воздуха в помещении.",
+  "How Altruist helps allergy and asthma sufferers": "Как Altruist помогает людям, страдающим от аллергии и астмы",
   "Room profiling": "Профилирование комнаты",
-  "for particulate matter and humidity: in the first week you will get 24-hour snapshots with highlighted insights—graphs that let you compare rooms instead of staring at bare numbers.":
-    "для твердых частиц и влажности: в первую неделю вы получите 24-часовые снимки с выделенными идеями - графики, которые позволяют вам сравнивать комнаты, а не просто смотреть на голые цифры.",
+  "for particulate matter and humidity: in the first week you will get 24-hour snapshots with highlighted insights—graphs that let you compare rooms instead of staring at bare numbers.": "для твердых частиц и влажности: в первую неделю вы получите 24-часовые снимки с выделенными идеями - графики, которые позволяют вам сравнивать комнаты, а не просто смотреть на голые цифры.",
   "Ventilation hints": "Советы по вентиляции",
-  "an Altruist on the balcony or even on a windowsill will warn you when outdoor air is bad so you can close the windows, turn on the purifier and postpone walks until traffic or a dust storm subsides.":
-    "Альтруист на балконе или даже на подоконнике предупредит вас, когда воздух на улице станет плохим, чтобы вы могли закрыть окна, включить очиститель воздуха и отложить прогулки до тех пор, пока не утихнет движение или пыльная буря.",
+  "an Altruist on the balcony or even on a windowsill will warn you when outdoor air is bad so you can close the windows, turn on the purifier and postpone walks until traffic or a dust storm subsides.": "Альтруист на балконе или даже на подоконнике предупредит вас, когда воздух на улице станет плохим, чтобы вы могли закрыть окна, включить очиститель воздуха и отложить прогулки до тех пор, пока не утихнет движение или пыльная буря.",
   "Children’s rooms": "Детские комнаты",
-  "place a unit there to spot dust problems early and reduce the risk of developing dust allergy.":
-    "разместите устройство там, чтобы вовремя обнаруживать проблемы с пылью и снизить риск развития аллергии на пыль.",
+  "place a unit there to spot dust problems early and reduce the risk of developing dust allergy.": "разместите устройство там, чтобы вовремя обнаруживать проблемы с пылью и снизить риск развития аллергии на пыль.",
   "You are building a smart home": "Вы строите умный дом",
-  "Most of our team are engineers who automate their homes. We provide an official integration in Home Assistant Store so you can add Altruist to your local smart-home setup in two clicks, plus ready-made automation blueprints that need no coding.":
-    "Большинство нашей команды - инженеры, которые автоматизируют свои дома. Мы предоставляем официальную интеграцию в Home Assistant Store, так что вы можете добавить Altruist в свою локальную систему умного дома всего в два клика, а также готовые к использованию схемы автоматизации, которые не требуют кодирования.",
-  "How Altruist is useful for a DIY smart-home engineer":
-    "Как Альтруист может быть полезен инженеру по созданию умного дома своими руками",
+  "Most of our team are engineers who automate their homes. We provide an official integration in Home Assistant Store so you can add Altruist to your local smart-home setup in two clicks, plus ready-made automation blueprints that need no coding.": "Большинство нашей команды - инженеры, которые автоматизируют свои дома. Мы предоставляем официальную интеграцию в Home Assistant Store, так что вы можете добавить Altruist в свою локальную систему умного дома всего в два клика, а также готовые к использованию схемы автоматизации, которые не требуют кодирования.",
+  "How Altruist is useful for a DIY smart-home engineer": "Как Альтруист может быть полезен инженеру по созданию умного дома своими руками",
   "RGB lamp indicator": "Индикатор лампы RGB",
-  "link any parameter to a smart bulb so your room quietly signals changes (no need to turn the whole living-room red just because Grandpa lights his pipe on the balcony).":
-    "свяжите любой параметр со светящейся лампой, чтобы ваша комната тихо сигнализировала об изменениях (нет необходимости окрашивать весь гостиную в красный цвет только потому, что дедушка зажег свою трубку на балконе).",
+  "link any parameter to a smart bulb so your room quietly signals changes (no need to turn the whole living-room red just because Grandpa lights his pipe on the balcony).": "свяжите любой параметр со светящейся лампой, чтобы ваша комната тихо сигнализировала об изменениях (нет необходимости окрашивать весь гостиную в красный цвет только потому, что дедушка зажег свою трубку на балконе).",
   "Air-purifier trigger": "Триггер очистителя воздуха",
-  "start a purifier inside whenever the outdoor unit detects smoke or dust.":
-    "запустите очиститель внутри, когда наружный блок обнаруживает дым или пыль.",
+  "start a purifier inside whenever the outdoor unit detects smoke or dust.": "запустите очиститель внутри, когда наружный блок обнаруживает дым или пыль.",
   "Air-conditioner control": "Управление кондиционером",
-  "react automatically to rising outdoor humidity or temperature at dawn.":
-    "автоматически реагировать на повышение внешней влажности или температуры на рассвете.",
-  "You like to support community initiatives independent of governments and corporations":
-    "Вам нравится поддерживать общественные инициативы, независимые от правительства и корпораций.",
-  "Become a data source and join other Altruists to build a citizen network monitoring environmental issues in your region. The developers have open-sourced the entire sensors.social backend so local communities can launch an independent sensor map.":
-    "Станьте источником данных и присоединяйтесь к другим альтруистам для создания сети гражданского мониторинга экологических проблем в вашем регионе. Разработчики открыли исходный код всего бэкенда sensors.social, чтобы местные сообщества могли запустить независимую карту сенсоров.",
+  "react automatically to rising outdoor humidity or temperature at dawn.": "автоматически реагировать на повышение внешней влажности или температуры на рассвете.",
+  "You like to support community initiatives independent of governments and corporations": "Вам нравится поддерживать общественные инициативы, независимые от правительства и корпораций.",
+  "Become a data source and join other Altruists to build a citizen network monitoring environmental issues in your region. The developers have open-sourced the entire sensors.social backend so local communities can launch an independent sensor map.": "Станьте источником данных и присоединяйтесь к другим альтруистам для создания сети гражданского мониторинга экологических проблем в вашем регионе. Разработчики открыли исходный код всего бэкенда sensors.social, чтобы местные сообщества могли запустить независимую карту сенсоров.",
   "How Altruist helps independent monitoring": "Как Altruist помогает независимому мониторингу",
   "Trusted hardware": "Надежное оборудование",
-  "open-source and field-tested by thousands of users, easy to recommend to neighbours.":
-    "открытый исходный код и проверенный на практике тысячами пользователей, легко рекомендовать соседям.",
+  "open-source and field-tested by thousands of users, easy to recommend to neighbours.": "открытый исходный код и проверенный на практике тысячами пользователей, легко рекомендовать соседям.",
   "Your own map in one day": "Ваша собственная карта за один день",
-  "clone the GitHub repo, deploy on any domain and run a fully independent service that even the Altruist developers can’t interfere with.":
-    "клонируйте репозиторий GitHub, разверните на любом домене и запустите полностью независимый сервис, с которым даже разработчики Altruist не смогут вмешаться.",
-  "The most fascinating lesson from seven years of experiments is the sheer diversity of motives, methods and analysis styles in environmental monitoring—from health concerns to activism, from outdated test tubes to high-end sampling stations, from smiley-faces to daily graphs. It all makes the task far more complex than it first appears, but we hope our team’s perspective embodied in Altruist and sensors.social will delight you and give you a useful tool for adapting to your environment.":
-    "Самым увлекательным уроком семилетних экспериментов является огромное разнообразие мотивов, методов и стилей анализа в области мониторинга окружающей среды - от заботы о здоровье до активизма, от устаревших пробирок до передовых станций отбора проб, от улыбающихся лиц до ежедневных графиков. Все это делает задачу гораздо сложнее, чем она кажется на первый взгляд, но мы надеемся, что перспектива нашей команды, воплощенная в Altruist и sensors.social, вас порадует и предоставит вам полезный инструмент для адаптации к вашей среде.",
+  "clone the GitHub repo, deploy on any domain and run a fully independent service that even the Altruist developers can’t interfere with.": "клонируйте репозиторий GitHub, разверните на любом домене и запустите полностью независимый сервис, с которым даже разработчики Altruist не смогут вмешаться.",
+  "The most fascinating lesson from seven years of experiments is the sheer diversity of motives, methods and analysis styles in environmental monitoring—from health concerns to activism, from outdated test tubes to high-end sampling stations, from smiley-faces to daily graphs. It all makes the task far more complex than it first appears, but we hope our team’s perspective embodied in Altruist and sensors.social will delight you and give you a useful tool for adapting to your environment.": "Самым увлекательным уроком семилетних экспериментов является огромное разнообразие мотивов, методов и стилей анализа в области мониторинга окружающей среды - от заботы о здоровье до активизма, от устаревших пробирок до передовых станций отбора проб, от улыбающихся лиц до ежедневных графиков. Все это делает задачу гораздо сложнее, чем она кажется на первый взгляд, но мы надеемся, что перспектива нашей команды, воплощенная в Altruist и sensors.social, вас порадует и предоставит вам полезный инструмент для адаптации к вашей среде.",
   "Air quality measurements information": "Информация о измерениях качества воздуха",
-  "Sensors.social Air Quality Map — an interactive tool for viewing, analyzing, and comparing real-time air quality data from sensors. Get up-to-date information on air conditions in your area.":
-    "Карта качества воздуха Sensors.social — интерактивный инструмент для просмотра, анализа и сравнения данных о качестве воздуха в режиме реального времени от сенсоров. Получайте актуальную информацию о состоянии воздуха в вашем регионе.",
-  "Compare table for Altruist with other air quality sensors":
-    "Сравните таблицу для Altruist с другими датчиками качества воздуха",
-  "Explore the advantages and special features of each sensor and choose the one that best suits your needs!":
-    "Изучите преимущества и особенности каждого датчика и выберите тот, который наиболее соответствует вашим потребностям!",
+  "Sensors.social Air Quality Map — an interactive tool for viewing, analyzing, and comparing real-time air quality data from sensors. Get up-to-date information on air conditions in your area.": "Карта качества воздуха Sensors.social — интерактивный инструмент для просмотра, анализа и сравнения данных о качестве воздуха в режиме реального времени от сенсоров. Получайте актуальную информацию о состоянии воздуха в вашем регионе.",
+  "Compare table for Altruist with other air quality sensors": "Сравните таблицу для Altruist с другими датчиками качества воздуха",
+  "Explore the advantages and special features of each sensor and choose the one that best suits your needs!": "Изучите преимущества и особенности каждого датчика и выберите тот, который наиболее соответствует вашим потребностям!",
   "7 Years of Altruism - Altruist Timeline": "7 лет альтруизма - Хронология Альтруиста",
-  "At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”.":
-    'В конце июля 2025 года команда разработчиков открытого исходного кода, работающих над экосистемой устройств для умного дома, представит свой первый продукт в запланированной линейке устройств для умного дома на год - потребительское устройство под названием "Альтруист".',
+  "At the end of July 2025, a team of open source developers working on a smart home device ecosystem will present their first product in a planned line of smart home devices for the year — a consumer device called “Altruist”.": "В конце июля 2025 года команда разработчиков открытого исходного кода, работающих над экосистемой устройств для умного дома, представит свой первый продукт в запланированной линейке устройств для умного дома на год - потребительское устройство под названием \"Альтруист\".",
   "7 Years of Altruism": "7 лет альтруизма",
-  "Altruist is a two-module air quality sensor that will be useful for residents of large cities, home automation enthusiasts, and those who want to create their own local environmental monitoring community anywhere in the world. Altruist has many advantages in its class of devices, which we’ll discuss separately, but in this publication, we want to tell the story leading up to the launch of this consumer product — a unique and fascinating story!":
-    "Альтруист - это двухмодульный датчик качества воздуха, который будет полезен жителям больших городов, энтузиастам домашней автоматизации и тем, кто хочет создать свое собственное локальное сообщество по мониторингу окружающей среды в любой точке мира. У Альтруиста множество преимуществ среди устройств своего класса, которые мы обсудим отдельно, но в этой публикации мы хотим рассказать историю, приведшую к запуску этого потребительского продукта - уникальную и увлекательную историю!",
-  "Year 2017: The 1st R&D – Air Quality Measurement on Playgrounds in an Industrial City":
-    "Год 2017: 1-е исследование и разработка - измерение качества воздуха на детских площадках в промышленном городе",
-  "In the winter of 2017–2018, Robonomics engineers purchased professional air quality sensors certified for the European market, which allowed detailed analysis of air quality for specific impurities, such as NOx, SOx — typical of car and factory emissions. The sensor also measured dust particles in the air and basic environmental parameters.":
-    "Зимой 2017-2018 года инженеры Robonomics приобрели профессиональные датчики качества воздуха, сертифицированные для европейского рынка, что позволило провести детальный анализ качества воздуха на наличие конкретных загрязнителей, таких как NOx, SOx — типичных для автомобильных и заводских выбросов. Датчик также измерял количество пылинок в воздухе и основные параметры окружающей среды.",
-  "The uniqueness of this sensor — which might seem funny in 2025 — was that in 2017 it was still difficult to find well-known sensors with IoT modules for cloud data transfer. The Spanish manufacturer Libelium offered expensive sensors, but we decided to buy them to develop software for real-time connection of the sensor to an information page and a cloud database — that was the experiment. Thus, for the first time, we started monitoring air quality using modern methods, which, unlike state systems at that time, allowed data to be collected not manually and more frequently than twice a day, and sensors could be placed almost anywhere — for example, on a lamppost in a residential courtyard at a playground.":
-    "Уникальностью этого датчика — что может показаться смешным в 2025 году — было то, что в 2017 году было все еще сложно найти известные датчики с IoT-модулями для передачи данных в облако. Испанский производитель Libelium предлагал дорогие датчики, но мы решили их купить для разработки программного обеспечения для реального времени подключения датчика к информационной странице и облачной базе данных — это был эксперимент. Таким образом, впервые мы начали контроль качества воздуха с помощью современных методов, которые, в отличие от государственных систем в то время, позволяли собирать данные не вручную и чаще двух раз в день, а датчики можно было разместить почти где угодно — например, на фонарном столбе в жилом дворе на детской площадке.",
-  "Year 2018: The Problem of Trust in Society and Searching for Alternatives for Citizen Monitoring":
-    "Год 2018: Проблема доверия в обществе и поиск альтернатив для контроля со стороны граждан",
-  "Realizing that no matter what we did, we could not motivate citizens to equip playgrounds with sensors using funds from house maintenance fees and provide them with an online service for residents, we started looking for an alternative to our initial idea. This is how we found a project from Stuttgart (also an industrial region with an automotive industry, like Tolyatti on the Volga, where we did our tests). Luftdaten or sensors.community was already, in our view, the first successful citizen monitoring project, whose organizational approach helped overcome the public trust issue for sensor data. The idea was that instead of expensive monitoring funded by an entire building, you could offer individual enthusiasts a DIY kit to build a home air quality station, dramatically reducing both costs and complexity. By then, the project already had thousands of users in Europe. Inspired by their approach and considering our own experience from the previous year, we continued developing the open source online service, shifting towards a sensor map instead of a local air quality portal for residential courtyards.":
-    "Осознав, что независимо от наших действий, мы не смогли мотивировать граждан оснастить детские площадки датчиками за счет средств от платы за содержание дома и предоставить им онлайн-сервис для жителей, мы начали искать альтернативу нашей первоначальной идее. Так мы нашли проект из Штутгарта (также промышленный регион с автомобильной промышленностью, как Тольятти на Волге, где мы проводили наши тесты). Luftdaten или sensors.community уже, на наш взгляд, был первым успешным проектом мониторинга граждан, организационный подход которого помог преодолеть проблему доверия общественности к данным датчиков. Идея заключалась в том, что вместо дорогого мониторинга, финансируемого всем зданием, можно предложить отдельным энтузиастам DIY-набор для создания станции качества воздуха в домашних условиях, что значительно снизит как стоимость, так и сложность. К тому времени у проекта уже были тысячи пользователей в Европе. Вдохновленные их подходом и располагая нашим собственным опытом из предыдущего года, мы продолжили разработку открытого онлайн-сервиса, переключившись на карту датчиков вместо местного портала качества воздуха для жилых дворов.",
-  "Year 2019: Three Cool R&D Projects in Air and Water Quality Monitoring":
-    "Год 2019: Три интересных проекта в области исследований и разработок по мониторингу качества воздуха и воды",
-  "By mid-2018, we began experimenting with affordable, but high-quality dust sensors without detailed analysis of specific substances. We also tried futuristic mobility scenarios for environmental sensors.":
-    "К середине 2018 года мы начали экспериментировать с доступными, но высококачественными датчиками пыли без детального анализа конкретных веществ. Мы также попробовали футуристические сценарии мобильности для экологических датчиков.",
-  "Over about 12–14 months, we deployed dozens of sensors in city billboards in Tolyatti, created a solar-powered water drone capable of analyzing water quality online in a similar way, and conducted experiments with ecologists to test the hypothesis that air quality sensors on aerial drones could be used in hard-to-reach areas, such as around landfill sites.":
-    "Примерно за 12-14 месяцев мы развернули десятки датчиков на городских билбордах в Тольятти, создали солнечный водный дрон, способный анализировать качество воды онлайн аналогичным образом, и провели эксперименты с экологами для проверки гипотезы о том, что датчики качества воздуха на воздушных дронах могут использоваться в труднодоступных местах, например, вокруг свалок.",
-  "Our water drone project was ultimately chosen as a showcase at the largest IoT World Congress in Europe, in Barcelona in 2019. The billboard sensors proved reliable and gave the first insights during city pollution events, as data came from many points across the city.":
-    "Наш проект водного дрона в итоге был выбран для демонстрации на крупнейшем в Европе конгрессе IoT в Барселоне в 2019 году. Датчики на билбордах оказались надежными и дали первые представления во время событий загрязнения в городе, так как данные поступали с многих точек по всему городу.",
-  "We even managed to arrange for a certified mobile laboratory to visit for detailed analysis when we detected sustained particle exceedances from 2–3 neighboring sensors. But in 2019, COVID started, and almost all activity except laboratory work had to be stopped for a while…":
-    "Мы даже смогли организовать визит сертифицированной мобильной лаборатории для детального анализа, когда обнаружили продолжительное превышение частиц с 2-3 соседних датчиков. Но в 2019 году начался COVID, и почти все деятельности, кроме лабораторной работы, пришлось на время остановить…",
-  "Year 2021: Launching the sensors.social Prototype and Showcasing at the UN COP25 Platform":
-    "Год 2021: Запуск прототипа sensors.social и демонстрация на платформе UN COP25",
-  "By early 2021, the Altruist developer team, together with partners, launched an initiative to create an open environmental data repository that could potentially replace audit checks in the MRV (monitoring, reporting, verification) field. We hope to return to the UN platform in a few years and show how sensor networks, without human involvement, can verify sustainable emissions reduction — or, on the contrary, prove the opposite regardless of company claims in your region.":
-    "К началу 2021 года команда разработчиков Altruist вместе с партнерами запустила инициативу по созданию открытого репозитория экологических данных, который потенциально может заменить проверки аудита в области MRV (мониторинг, отчетность, верификация). Мы надеемся вернуться на платформу ООН через несколько лет и показать, как сети датчиков, без участия человека, могут проверять устойчивое сокращение выбросов — или, наоборот, доказывать обратное, вне зависимости от заявлений компаний в вашем регионе.",
-  "We also started focusing on the quality of sensor network architecture with mapping. We developed an architecture allowing the creation of federated sensor networks based on Altruist, providing great freedom for local communities to set up their own services as needed, and released all the code on GitHub. Today, sensors.social serves as a reference implementation, available for anyone in the world to create their own sensor network.":
-    "Мы также начали сосредотачиваться на качестве архитектуры сенсорной сети с маппингом. Мы разработали архитектуру, позволяющую создавать федеративные сенсорные сети на основе Altruist, предоставляющую большую свободу местным сообществам для установки своих собственных услуг по мере необходимости, и опубликовали весь код на GitHub. Сегодня sensors.social служит образцовой реализацией, доступной для всех в мире для создания своей собственной сенсорной сети.",
-  "Over the past four years, we have made dozens of software releases necessary to build a user sensor network without corporate clouds. Today, sensors.social is both one of the most complex examples of sensor network integration and at the same time…":
-    "За последние четыре года мы выпустили десятки версий программного обеспечения, необходимых для создания сети пользовательских датчиков без корпоративных облаков. Сегодня sensors.social является одним из самых сложных примеров интеграции сети датчиков и одновременно…",
-  "Having built involvement in civic sensor networks, sensor maps, and analytics online services, we decided to develop our own sensor device, rather than assembling them from kits for each user who wanted to join the project.":
-    "Построив участие в гражданских сетях сенсоров, картах сенсоров и аналитических онлайн-сервисах, мы решили разработать собственное сенсорное устройство, а не собирать их из наборов для каждого пользователя, который хотел присоединиться к проекту.",
-  "This took us three years, about seven design iterations — ordering PCB manufacturing from Chinese factories, assembling cases, and testing in real conditions. As a result, by mid-2025, the two-module Altruist air quality sensor is ready for sale on online platforms.":
-    "Это заняло у нас три года, около семи итераций дизайна - заказ производства печатных плат у китайских фабрик, сборка корпусов и тестирование в реальных условиях. В итоге, к середине 2025 года, двухмодульный датчик качества воздуха Altruist готов к продаже на онлайн-платформах.",
+  "Altruist is a two-module air quality sensor that will be useful for residents of large cities, home automation enthusiasts, and those who want to create their own local environmental monitoring community anywhere in the world. Altruist has many advantages in its class of devices, which we’ll discuss separately, but in this publication, we want to tell the story leading up to the launch of this consumer product — a unique and fascinating story!": "Альтруист - это двухмодульный датчик качества воздуха, который будет полезен жителям больших городов, энтузиастам домашней автоматизации и тем, кто хочет создать свое собственное локальное сообщество по мониторингу окружающей среды в любой точке мира. У Альтруиста множество преимуществ среди устройств своего класса, которые мы обсудим отдельно, но в этой публикации мы хотим рассказать историю, приведшую к запуску этого потребительского продукта - уникальную и увлекательную историю!",
+  "Year 2017: The 1st R&D – Air Quality Measurement on Playgrounds in an Industrial City": "Год 2017: 1-е исследование и разработка - измерение качества воздуха на детских площадках в промышленном городе",
+  "In the winter of 2017–2018, Robonomics engineers purchased professional air quality sensors certified for the European market, which allowed detailed analysis of air quality for specific impurities, such as NOx, SOx — typical of car and factory emissions. The sensor also measured dust particles in the air and basic environmental parameters.": "Зимой 2017-2018 года инженеры Robonomics приобрели профессиональные датчики качества воздуха, сертифицированные для европейского рынка, что позволило провести детальный анализ качества воздуха на наличие конкретных загрязнителей, таких как NOx, SOx — типичных для автомобильных и заводских выбросов. Датчик также измерял количество пылинок в воздухе и основные параметры окружающей среды.",
+  "The uniqueness of this sensor — which might seem funny in 2025 — was that in 2017 it was still difficult to find well-known sensors with IoT modules for cloud data transfer. The Spanish manufacturer Libelium offered expensive sensors, but we decided to buy them to develop software for real-time connection of the sensor to an information page and a cloud database — that was the experiment. Thus, for the first time, we started monitoring air quality using modern methods, which, unlike state systems at that time, allowed data to be collected not manually and more frequently than twice a day, and sensors could be placed almost anywhere — for example, on a lamppost in a residential courtyard at a playground.": "Уникальностью этого датчика — что может показаться смешным в 2025 году — было то, что в 2017 году было все еще сложно найти известные датчики с IoT-модулями для передачи данных в облако. Испанский производитель Libelium предлагал дорогие датчики, но мы решили их купить для разработки программного обеспечения для реального времени подключения датчика к информационной странице и облачной базе данных — это был эксперимент. Таким образом, впервые мы начали контроль качества воздуха с помощью современных методов, которые, в отличие от государственных систем в то время, позволяли собирать данные не вручную и чаще двух раз в день, а датчики можно было разместить почти где угодно — например, на фонарном столбе в жилом дворе на детской площадке.",
+  "Year 2018: The Problem of Trust in Society and Searching for Alternatives for Citizen Monitoring": "Год 2018: Проблема доверия в обществе и поиск альтернатив для контроля со стороны граждан",
+  "Realizing that no matter what we did, we could not motivate citizens to equip playgrounds with sensors using funds from house maintenance fees and provide them with an online service for residents, we started looking for an alternative to our initial idea. This is how we found a project from Stuttgart (also an industrial region with an automotive industry, like Tolyatti on the Volga, where we did our tests). Luftdaten or sensors.community was already, in our view, the first successful citizen monitoring project, whose organizational approach helped overcome the public trust issue for sensor data. The idea was that instead of expensive monitoring funded by an entire building, you could offer individual enthusiasts a DIY kit to build a home air quality station, dramatically reducing both costs and complexity. By then, the project already had thousands of users in Europe. Inspired by their approach and considering our own experience from the previous year, we continued developing the open source online service, shifting towards a sensor map instead of a local air quality portal for residential courtyards.": "Осознав, что независимо от наших действий, мы не смогли мотивировать граждан оснастить детские площадки датчиками за счет средств от платы за содержание дома и предоставить им онлайн-сервис для жителей, мы начали искать альтернативу нашей первоначальной идее. Так мы нашли проект из Штутгарта (также промышленный регион с автомобильной промышленностью, как Тольятти на Волге, где мы проводили наши тесты). Luftdaten или sensors.community уже, на наш взгляд, был первым успешным проектом мониторинга граждан, организационный подход которого помог преодолеть проблему доверия общественности к данным датчиков. Идея заключалась в том, что вместо дорогого мониторинга, финансируемого всем зданием, можно предложить отдельным энтузиастам DIY-набор для создания станции качества воздуха в домашних условиях, что значительно снизит как стоимость, так и сложность. К тому времени у проекта уже были тысячи пользователей в Европе. Вдохновленные их подходом и располагая нашим собственным опытом из предыдущего года, мы продолжили разработку открытого онлайн-сервиса, переключившись на карту датчиков вместо местного портала качества воздуха для жилых дворов.",
+  "Year 2019: Three Cool R&D Projects in Air and Water Quality Monitoring": "Год 2019: Три интересных проекта в области исследований и разработок по мониторингу качества воздуха и воды",
+  "By mid-2018, we began experimenting with affordable, but high-quality dust sensors without detailed analysis of specific substances. We also tried futuristic mobility scenarios for environmental sensors.": "К середине 2018 года мы начали экспериментировать с доступными, но высококачественными датчиками пыли без детального анализа конкретных веществ. Мы также попробовали футуристические сценарии мобильности для экологических датчиков.",
+  "Over about 12–14 months, we deployed dozens of sensors in city billboards in Tolyatti, created a solar-powered water drone capable of analyzing water quality online in a similar way, and conducted experiments with ecologists to test the hypothesis that air quality sensors on aerial drones could be used in hard-to-reach areas, such as around landfill sites.": "Примерно за 12-14 месяцев мы развернули десятки датчиков на городских билбордах в Тольятти, создали солнечный водный дрон, способный анализировать качество воды онлайн аналогичным образом, и провели эксперименты с экологами для проверки гипотезы о том, что датчики качества воздуха на воздушных дронах могут использоваться в труднодоступных местах, например, вокруг свалок.",
+  "Our water drone project was ultimately chosen as a showcase at the largest IoT World Congress in Europe, in Barcelona in 2019. The billboard sensors proved reliable and gave the first insights during city pollution events, as data came from many points across the city.": "Наш проект водного дрона в итоге был выбран для демонстрации на крупнейшем в Европе конгрессе IoT в Барселоне в 2019 году. Датчики на билбордах оказались надежными и дали первые представления во время событий загрязнения в городе, так как данные поступали с многих точек по всему городу.",
+  "We even managed to arrange for a certified mobile laboratory to visit for detailed analysis when we detected sustained particle exceedances from 2–3 neighboring sensors. But in 2019, COVID started, and almost all activity except laboratory work had to be stopped for a while…": "Мы даже смогли организовать визит сертифицированной мобильной лаборатории для детального анализа, когда обнаружили продолжительное превышение частиц с 2-3 соседних датчиков. Но в 2019 году начался COVID, и почти все деятельности, кроме лабораторной работы, пришлось на время остановить…",
+  "Year 2021: Launching the sensors.social Prototype and Showcasing at the UN COP25 Platform": "Год 2021: Запуск прототипа sensors.social и демонстрация на платформе UN COP25",
+  "By early 2021, the Altruist developer team, together with partners, launched an initiative to create an open environmental data repository that could potentially replace audit checks in the MRV (monitoring, reporting, verification) field. We hope to return to the UN platform in a few years and show how sensor networks, without human involvement, can verify sustainable emissions reduction — or, on the contrary, prove the opposite regardless of company claims in your region.": "К началу 2021 года команда разработчиков Altruist вместе с партнерами запустила инициативу по созданию открытого репозитория экологических данных, который потенциально может заменить проверки аудита в области MRV (мониторинг, отчетность, верификация). Мы надеемся вернуться на платформу ООН через несколько лет и показать, как сети датчиков, без участия человека, могут проверять устойчивое сокращение выбросов — или, наоборот, доказывать обратное, вне зависимости от заявлений компаний в вашем регионе.",
+  "We also started focusing on the quality of sensor network architecture with mapping. We developed an architecture allowing the creation of federated sensor networks based on Altruist, providing great freedom for local communities to set up their own services as needed, and released all the code on GitHub. Today, sensors.social serves as a reference implementation, available for anyone in the world to create their own sensor network.": "Мы также начали сосредотачиваться на качестве архитектуры сенсорной сети с маппингом. Мы разработали архитектуру, позволяющую создавать федеративные сенсорные сети на основе Altruist, предоставляющую большую свободу местным сообществам для установки своих собственных услуг по мере необходимости, и опубликовали весь код на GitHub. Сегодня sensors.social служит образцовой реализацией, доступной для всех в мире для создания своей собственной сенсорной сети.",
+  "Over the past four years, we have made dozens of software releases necessary to build a user sensor network without corporate clouds. Today, sensors.social is both one of the most complex examples of sensor network integration and at the same time…": "За последние четыре года мы выпустили десятки версий программного обеспечения, необходимых для создания сети пользовательских датчиков без корпоративных облаков. Сегодня sensors.social является одним из самых сложных примеров интеграции сети датчиков и одновременно…",
+  "Having built involvement in civic sensor networks, sensor maps, and analytics online services, we decided to develop our own sensor device, rather than assembling them from kits for each user who wanted to join the project.": "Построив участие в гражданских сетях сенсоров, картах сенсоров и аналитических онлайн-сервисах, мы решили разработать собственное сенсорное устройство, а не собирать их из наборов для каждого пользователя, который хотел присоединиться к проекту.",
+  "This took us three years, about seven design iterations — ordering PCB manufacturing from Chinese factories, assembling cases, and testing in real conditions. As a result, by mid-2025, the two-module Altruist air quality sensor is ready for sale on online platforms.": "Это заняло у нас три года, около семи итераций дизайна - заказ производства печатных плат у китайских фабрик, сборка корпусов и тестирование в реальных условиях. В итоге, к середине 2025 года, двухмодульный датчик качества воздуха Altruist готов к продаже на онлайн-платформах.",
   "What’s Next?": "Что дальше?",
-  "Soon, we will launch on Indiegogo, and then we want to make the Altruist sensor available worldwide through online platforms like Amazon, as well as on regional distributor websites. Check the “devices” section at robonomics.network, select “Altruist”, and purchase it in the way that is most convenient for you.":
-    'Скоро мы запустимся на Indiegogo, а затем хотим сделать датчик Altruist доступным по всему миру через онлайн-платформы, такие как Amazon, а также на веб-сайтах региональных дистрибьюторов. Проверьте раздел "устройства" на robonomics.network, выберите "Altruist" и приобретите его таким образом, который вам наиболее удобен.',
+  "Soon, we will launch on Indiegogo, and then we want to make the Altruist sensor available worldwide through online platforms like Amazon, as well as on regional distributor websites. Check the “devices” section at robonomics.network, select “Altruist”, and purchase it in the way that is most convenient for you.": "Скоро мы запустимся на Indiegogo, а затем хотим сделать датчик Altruist доступным по всему миру через онлайн-платформы, такие как Amazon, а также на веб-сайтах региональных дистрибьюторов. Проверьте раздел \"устройства\" на robonomics.network, выберите \"Altruist\" и приобретите его таким образом, который вам наиболее удобен.",
   "Find out who Altruist was designed for": "Узнайте, для кого был создан Altruist",
   "on this page": "на этой странице",
-  "Years 2022–2025: Hardware Design and the Start of Altruist Dev Kit Sales":
-    "Годы 2022-2025: Проектирование оборудования и начало продаж набора для разработчиков Altruist Dev Kit",
-  "The summer of 2018 was a real test for us! We prepared our first report on the development of a 24/7 civic monitoring mechanism based on modern open source internet technologies and wanted to present the results of a one-year trial from a single playground in an industrial city. But things did not go as expected. In local social network groups, our report was met with a wave of criticism, insults, and all kinds of accusations! The problem was that citizens did not like the fact that in a specific city area, near water, far from factories, the air turned out to be not that bad, which angered residents of less environmentally favorable areas. They accused us of being hired by the government to prepare such a report, called us corrupt, claimed we were spending some federal budget (even though everything was paid for by the project team). So, a huge amount of criticism, and no focus on the software we developed or discussion of the data website. Only criticism of where the measurements were taken.":
-    "Лето 2018 года стало для нас настоящим испытанием! Мы подготовили свой первый отчет о разработке механизма гражданского мониторинга 24/7 на основе современных открытых интернет-технологий и хотели представить результаты однолетнего испытания на одной площадке в промышленном городе. Но все пошло не так, как ожидалось. В местных группах в социальных сетях, наш отчет был встречен волной критики, оскорблений и всех видов обвинений! Проблема была в том, что горожанам не понравился тот факт, что в определенном районе города, возле воды, вдали от заводов, воздух оказался не таким уж плохим, что вызвало гнев жителей менее экологически благоприятных районов. Они обвинили нас в том, что мы были наняты правительством, чтобы подготовить такой отчет, назвали нас коррупционерами, утверждая, что мы тратим некоторые федеральные средства (хотя все было оплачено командой проекта). Таким образом, огромное количество критики, и вовсе нет акцента на разработанном нами программном обеспечении или обсуждении сайта с данными. Только критика мест, где были проведены измерения.",
+  "Years 2022–2025: Hardware Design and the Start of Altruist Dev Kit Sales": "Годы 2022-2025: Проектирование оборудования и начало продаж набора для разработчиков Altruist Dev Kit",
+  "The summer of 2018 was a real test for us! We prepared our first report on the development of a 24/7 civic monitoring mechanism based on modern open source internet technologies and wanted to present the results of a one-year trial from a single playground in an industrial city. But things did not go as expected. In local social network groups, our report was met with a wave of criticism, insults, and all kinds of accusations! The problem was that citizens did not like the fact that in a specific city area, near water, far from factories, the air turned out to be not that bad, which angered residents of less environmentally favorable areas. They accused us of being hired by the government to prepare such a report, called us corrupt, claimed we were spending some federal budget (even though everything was paid for by the project team). So, a huge amount of criticism, and no focus on the software we developed or discussion of the data website. Only criticism of where the measurements were taken.": "Лето 2018 года стало для нас настоящим испытанием! Мы подготовили свой первый отчет о разработке механизма гражданского мониторинга 24/7 на основе современных открытых интернет-технологий и хотели представить результаты однолетнего испытания на одной площадке в промышленном городе. Но все пошло не так, как ожидалось. В местных группах в социальных сетях, наш отчет был встречен волной критики, оскорблений и всех видов обвинений! Проблема была в том, что горожанам не понравился тот факт, что в определенном районе города, возле воды, вдали от заводов, воздух оказался не таким уж плохим, что вызвало гнев жителей менее экологически благоприятных районов. Они обвинили нас в том, что мы были наняты правительством, чтобы подготовить такой отчет, назвали нас коррупционерами, утверждая, что мы тратим некоторые федеральные средства (хотя все было оплачено командой проекта). Таким образом, огромное количество критики, и вовсе нет акцента на разработанном нами программном обеспечении или обсуждении сайта с данными. Только критика мест, где были проведены измерения.",
   "Dual-module, outdoor and indoor": "Двухмодульный, для использования на улице и в помещении",
   "Can be outdoor or indoor": "Может быть на улице или в помещении",
   "Two separate modules": "Два отдельных модуля",
@@ -239,11 +181,9 @@ export default {
   "Only indoor": "Только в помещении",
   "Indoor CO2": "Внутренний CO2",
   "User Interface on Device": "Пользовательский интерфейс на устройстве",
-  "LED indication on Urban + E-ink screen on Insight":
-    "Индикация LED на Urban + E-ink экран на Insight",
+  "LED indication on Urban + E-ink screen on Insight": "Индикация LED на Urban + E-ink экран на Insight",
   "Only LED strip": "Только LED-лента",
-  "LED indication and small screen on Indoor":
-    "Светодиодная индикация и маленький экран на внутренней стороне",
+  "LED indication and small screen on Indoor": "Светодиодная индикация и маленький экран на внутренней стороне",
   "LED indication on Outdoor and LCD screen on Pro": "Индикация LED на улице и LCD экран на Pro",
   "microSD Support": "Поддержка microSD",
   "Power Connector": "Коннектор питания",
@@ -263,8 +203,7 @@ export default {
   "Mandatory Cloud Connection": "Обязательное Подключение к Облаку",
   "Local Device Management via IP": "Управление локальным устройством через IP",
   "Full control over settings": "Полный контроль над настройками",
-  "Most functions are not available, settings only via corporate cloud":
-    "Большинство функций недоступны, настройка возможна только через корпоративное облако",
+  "Most functions are not available, settings only via corporate cloud": "Большинство функций недоступны, настройка возможна только через корпоративное облако",
   "No, but available via Home Assistant": "Нет, но доступно через Home Assistant",
   "No, only in the app": "Нет, только в приложении",
   "Online Air Quality Map by Community": "Онлайн-карта качества воздуха по сообществам",
@@ -272,27 +211,24 @@ export default {
   "Yes, main entry point to view data": "Да, основная точка входа для просмотра данных",
   "Home Assistant Integration": "Интеграция с Home Assistant",
   "Yes, only the HA addon is needed": "Да, требуется только дополнение HA",
-  "Yes, but limited API and cloud connection are required":
-    "Да, но требуются ограниченный API и подключение к облаку",
+  "Yes, but limited API and cloud connection are required": "Да, но требуются ограниченный API и подключение к облаку",
   "Yes, but only for Pro": "Да, но только для Pro",
   "Data Control and Ownership": "Контроль данных и владение ими",
-  "The user owns the data and controls its distribution":
-    "Пользователь владеет данными и контролирует их распространение",
-  "The company owns the data, but users can view and export it with some limitations":
-    "Компания владеет данными, но пользователи могут просматривать и экспортировать их с некоторыми ограничениями.",
+  "The user owns the data and controls its distribution": "Пользователь владеет данными и контролирует их распространение",
+  "The company owns the data, but users can view and export it with some limitations": "Компания владеет данными, но пользователи могут просматривать и экспортировать их с некоторыми ограничениями.",
   "Open Source and Hardware": "Открытое программное обеспечение и аппаратное обеспечение",
   "Custom Firmware and DIY-mods": "Пользовательская прошивка и DIY-модификации",
-  Model: "Модель",
-  Yes: "Да",
-  No: "Нет",
-  Housing: "Жилье",
+  "Model": "Модель",
+  "Yes": "Да",
+  "No": "Нет",
+  "Housing": "Жилье",
   "Altruist Urban & Insight": "Альтруист Урбан & Инсайт",
   "PurpleAir Zen": "Пурпурный Воздух Зен",
   "AirGradient Indoor & Outdoor": "AirGradient В помещении и на улице",
   "Netatmo Weather Station": "Метеостанция Netatmo",
   "AirVisual Pro & Outdoor": "AirVisual Pro и Outdoor",
-  Price: "Цена",
-  Type: "Тип",
+  "Price": "Цена",
+  "Type": "Тип",
   "Altruist use cases": "Сценарии использования Альтруиста",
   "Altruist timeline": "Временной отрезок Альтруиста",
   "Altruist compare": "Сравнение Альтруиста",
@@ -300,197 +236,145 @@ export default {
   "Air Sensor Comparison Table": "Таблица сравнения датчиков воздуха",
   "Map data": "Данные карты",
   "OpenStreetMap contributors": "Участники OpenStreetMap",
-  Photo: "Фотография",
+  "Photo": "Фотография",
   "Secured by": "Обеспечено защитой",
   "Daily Recap": "Ежедневная сводка",
-  Realtime: "В реальном времени",
-  RADIATION: "Радиация",
-  Good: "Хорошее",
-  Moderate: "Умеренное",
+  "Realtime": "В реальном времени",
+  "RADIATION": "Радиация",
+  "Good": "Хорошее",
+  "Moderate": "Умеренное",
   "Unhealthy for Sensitive Groups": "Вредное для чувствительных групп населения",
-  Unhealthy: "Вредное",
+  "Unhealthy": "Вредное",
   "Very Unhealthy": "Очень вредное",
-  Hazardous: "Опасное",
-  Today: "Сегодня",
+  "Hazardous": "Опасное",
+  "Today": "Сегодня",
   "Construction monitoring": "Мониторинг строительства",
-  "Construction Site Monitoring: Data Instead of Complaints":
-    "Мониторинг строительных площадок: данные вместо жалоб",
-  "Open sensor network for dust and noise control near construction sites. Continuous monitoring with open-source Altruist sensors, public data map, and citizen engagement.":
-    "Открытая сенсорная сеть для контроля пыли и шума вблизи строительных площадок. Непрерывный мониторинг с помощью open-source датчиков Altruist, публичная карта данных и вовлечение граждан.",
-  Problem: "Проблема",
+  "Construction Site Monitoring: Data Instead of Complaints": "Мониторинг строительных площадок: данные вместо жалоб",
+  "Open sensor network for dust and noise control near construction sites. Continuous monitoring with open-source Altruist sensors, public data map, and citizen engagement.": "Открытая сенсорная сеть для контроля пыли и шума вблизи строительных площадок. Непрерывный мониторинг с помощью open-source датчиков Altruist, публичная карта данных и вовлечение граждан.",
+  "Problem": "Проблема",
   "Air pollution is a health threat.": "Загрязнение воздуха — угроза здоровью.",
-  "Fine particulate matter (PM2.5) causes ~200,000 premature deaths per year in Europe (EEA, 2025).":
-    "Мелкодисперсная пыль (PM2.5) — причина ~200 000 преждевременных смертей в год в Европе (EEA, 2025).",
-  "Construction is one of the largest local sources.":
-    "Строительство — один из крупнейших локальных источников.",
-  "Up to 30% of urban coarse particulate (PM10) emissions in London (London Atmospheric Emissions Inventory, 2019).":
-    "До 30% городских выбросов крупной пыли (PM10) в Лондоне (London Atmospheric Emissions Inventory, 2019).",
+  "Fine particulate matter (PM2.5) causes ~200,000 premature deaths per year in Europe (EEA, 2025).": "Мелкодисперсная пыль (PM2.5) — причина ~200 000 преждевременных смертей в год в Европе (EEA, 2025).",
+  "Construction is one of the largest local sources.": "Строительство — один из крупнейших локальных источников.",
+  "Up to 30% of urban coarse particulate (PM10) emissions in London (London Atmospheric Emissions Inventory, 2019).": "До 30% городских выбросов крупной пыли (PM10) в Лондоне (London Atmospheric Emissions Inventory, 2019).",
   "EU is tightening limits by 2030.": "EU ужесточает лимиты к 2030.",
-  "Directive 2024/2881: PM10 drops from 40 to 20 µg/m³ (annual), PM2.5 from 25 to 10 µg/m³. All EU member states, including Cyprus, are required to implement the new standards.":
-    "Директива 2024/2881: PM10 снижается с 40 до 20 µg/m³ (годовой), PM2.5 — с 25 до 10 µg/m³. Все страны-члены EU, включая Кипр, обязаны имплементировать новые нормы.",
+  "Directive 2024/2881: PM10 drops from 40 to 20 µg/m³ (annual), PM2.5 from 25 to 10 µg/m³. All EU member states, including Cyprus, are required to implement the new standards.": "Директива 2024/2881: PM10 снижается с 40 до 20 µg/m³ (годовой), PM2.5 — с 25 до 10 µg/m³. Все страны-члены EU, включая Кипр, обязаны имплементировать новые нормы.",
   "Municipalities lack real-time data.": "Муниципалитеты не имеют real-time данных.",
-  "Control is episodic — measurements once or twice a month. Resident complaints are subjective and contain no measurements. Construction companies are not incentivized to reduce impact.":
-    "Контроль эпизодический — замеры 1–2 раза в месяц. Жалобы жителей субъективны и не содержат измерений. Застройщики не мотивированы снижать воздействие.",
-  "Global Practices: Why Cities Switched to Continuous Monitoring":
-    "Мировые практики: почему города перешли на непрерывный мониторинг",
-  London: "Лондон",
-  "a construction boom overwhelmed councils with resident complaints. Solution: mandatory PM10 sensors at site boundaries, real-time data publicly accessible. Result: at 190 µg/m³ dusty works stop automatically — no inspector needed.":
-    "строительный бум перегрузил советы жалобами жителей. Решение: обязательные датчики PM10 на границе площадки, данные в реальном времени публично доступны. Результат: при 190 µg/m³ пылящие работы останавливаются автоматически — без инспектора.",
-  Singapore: "Сингапур",
-  "dense urban fabric, construction noise unbearable in residential blocks. Developers required to monitor noise at their own expense. Fines up to SGD 50,000. Result: developers started managing noise themselves because it is cheaper than fines.":
-    "плотная застройка, шум от строек в жилых кварталах. Обязали застройщиков вести мониторинг шума за свой счёт. Штрафы до SGD 50 000. Результат: застройщики сами стали управлять шумом, потому что это дешевле штрафа.",
-  Seoul: "Сеул",
-  "citizens demanded air quality data. The city deployed tens of thousands of IoT sensors (S-DoT) — an open platform with public access. Result: decisions based on facts, not subjective assessments.":
-    "граждане потребовали данные о качестве воздуха. Город развернул десятки тысяч IoT-сенсоров (S-DoT) — открытая платформа с публичным доступом. Результат: решения на основе фактов, а не субъективных оценок.",
+  "Control is episodic — measurements once or twice a month. Resident complaints are subjective and contain no measurements. Construction companies are not incentivized to reduce impact.": "Контроль эпизодический — замеры 1–2 раза в месяц. Жалобы жителей субъективны и не содержат измерений. Застройщики не мотивированы снижать воздействие.",
+  "Global Practices: Why Cities Switched to Continuous Monitoring": "Мировые практики: почему города перешли на непрерывный мониторинг",
+  "London": "Лондон",
+  "a construction boom overwhelmed councils with resident complaints. Solution: mandatory PM10 sensors at site boundaries, real-time data publicly accessible. Result: at 190 µg/m³ dusty works stop automatically — no inspector needed.": "строительный бум перегрузил советы жалобами жителей. Решение: обязательные датчики PM10 на границе площадки, данные в реальном времени публично доступны. Результат: при 190 µg/m³ пылящие работы останавливаются автоматически — без инспектора.",
+  "Singapore": "Сингапур",
+  "dense urban fabric, construction noise unbearable in residential blocks. Developers required to monitor noise at their own expense. Fines up to SGD 50,000. Result: developers started managing noise themselves because it is cheaper than fines.": "плотная застройка, шум от строек в жилых кварталах. Обязали застройщиков вести мониторинг шума за свой счёт. Штрафы до SGD 50 000. Результат: застройщики сами стали управлять шумом, потому что это дешевле штрафа.",
+  "Seoul": "Сеул",
+  "citizens demanded air quality data. The city deployed tens of thousands of IoT sensors (S-DoT) — an open platform with public access. Result: decisions based on facts, not subjective assessments.": "граждане потребовали данные о качестве воздуха. Город развернул десятки тысяч IoT-сенсоров (S-DoT) — открытая платформа с публичным доступом. Результат: решения на основе фактов, а не субъективных оценок.",
   "Hong Kong": "Гонконг",
-  "construction incidents + air pollution triggered public pressure. 4S system mandatory since 2023: sensors, auto-alerts, auto-reports to the regulator.":
-    "серия инцидентов на стройках + загрязнение воздуха. 4S система обязательна с 2023: датчики, автоуведомления, автоотчёты регулятору.",
+  "construction incidents + air pollution triggered public pressure. 4S system mandatory since 2023: sensors, auto-alerts, auto-reports to the regulator.": "серия инцидентов на стройках + загрязнение воздуха. 4S система обязательна с 2023: датчики, автоуведомления, автоотчёты регулятору.",
   "Stuttgart / sensors.community (Luftdaten)": "Штутгарт / sensors.community (Luftdaten)",
-  "citizens frustrated by PM10 exceedances built their own sensor network. Started in 2015 with a handful of DIY sensors (ESP8266 + SDS011, ~EUR 30 each). Grew to tens of thousands of sensors in 70+ countries — the largest citizen air quality network in the world. Result: citizen-generated data pressured the city into driving bans and infrastructure changes.":
-    "граждане, недовольные превышениями PM10, создали собственную сеть датчиков. Начали в 2015 с нескольких DIY-датчиков (ESP8266 + SDS011, ~30 EUR за штуку). Выросли до десятков тысяч датчиков в 70+ странах — крупнейшая гражданская сеть мониторинга воздуха в мире. Результат: данные граждан заставили город ввести запреты на проезд и изменить инфраструктуру.",
-  "Common thread: in every case, citizen complaints were the trigger, and objective public data was the solution. The Luftdaten project proved that a bottom-up citizen network can scale faster and cheaper than any top-down B2B deployment.":
-    "Общее: во всех случаях толчком были жалобы граждан, а решением — объективные данные в публичном доступе. Проект Luftdaten доказал, что гражданская сеть «снизу вверх» масштабируется быстрее и дешевле, чем любое B2B-развертывание «сверху вниз».",
+  "citizens frustrated by PM10 exceedances built their own sensor network. Started in 2015 with a handful of DIY sensors (ESP8266 + SDS011, ~EUR 30 each). Grew to tens of thousands of sensors in 70+ countries — the largest citizen air quality network in the world. Result: citizen-generated data pressured the city into driving bans and infrastructure changes.": "граждане, недовольные превышениями PM10, создали собственную сеть датчиков. Начали в 2015 с нескольких DIY-датчиков (ESP8266 + SDS011, ~30 EUR за штуку). Выросли до десятков тысяч датчиков в 70+ странах — крупнейшая гражданская сеть мониторинга воздуха в мире. Результат: данные граждан заставили город ввести запреты на проезд и изменить инфраструктуру.",
+  "Common thread: in every case, citizen complaints were the trigger, and objective public data was the solution. The Luftdaten project proved that a bottom-up citizen network can scale faster and cheaper than any top-down B2B deployment.": "Общее: во всех случаях толчком были жалобы граждан, а решением — объективные данные в публичном доступе. Проект Luftdaten доказал, что гражданская сеть «снизу вверх» масштабируется быстрее и дешевле, чем любое B2B-развертывание «сверху вниз».",
   "KPI for Construction Companies": "KPI для застройщиков",
-  Zone: "Зона",
+  "Zone": "Зона",
   "PM10 (24h)": "PM10 (24ч)",
   "PM10 (1h peak)": "PM10 (1ч пик)",
   "Daytime noise": "Шум дневной",
   "Nighttime noise": "Шум ночной",
-  Green: "Зелёная",
-  Yellow: "Жёлтая",
-  Red: "Красная",
+  "Green": "Зелёная",
+  "Yellow": "Жёлтая",
+  "Red": "Красная",
   "Green zone — bonuses:": "Зелёная зона — бонусы:",
-  "expedited permits, density bonus 3–5%, reduced fees, environmental deposit refund.":
-    "ускоренные разрешения, density bonus 3–5%, снижение пошлин, возврат экологического депозита.",
+  "expedited permits, density bonus 3–5%, reduced fees, environmental deposit refund.": "ускоренные разрешения, density bonus 3–5%, снижение пошлин, возврат экологического депозита.",
   "Red zone — escalation:": "Красная зона — эскалация:",
   "warning → fine → stop-work order.": "предупреждение → штраф → stop-work order.",
   "Solution — Open Sensor Network": "Решение — открытая сенсорная сеть",
   "Open-source Altruist sensors:": "Open-source датчики Altruist:",
-  "PM2.5, PM10 (laser SDS011, periodic calibration against reference stations)":
-    "PM2.5, PM10 (лазерный SDS011, периодическая сверка с референсными станциями)",
+  "PM2.5, PM10 (laser SDS011, periodic calibration against reference stations)": "PM2.5, PM10 (лазерный SDS011, периодическая сверка с референсными станциями)",
   "Noise (MEMS microphone ICS-43434)": "Шум (MEMS-микрофон ICS-43434)",
   "Temperature, humidity, pressure (BME280)": "Температура, влажность, давление (BME280)",
   "Local operation without clouds.": "Локальная работа без облаков.",
-  "Data is stored on network nodes within the city — decentralized cryptographic verification. Historical data cannot be falsified retroactively.":
-    "Данные хранятся на узлах сети внутри города — децентрализованная криптографическая верификация. Исторические данные невозможно подделать задним числом.",
+  "Data is stored on network nodes within the city — decentralized cryptographic verification. Historical data cannot be falsified retroactively.": "Данные хранятся на узлах сети внутри города — децентрализованная криптографическая верификация. Исторические данные невозможно подделать задним числом.",
   "Open software — full auditability.": "Открытое ПО — полная аудируемость.",
-  "The municipality, developers, and residents can verify what is measured and how. No hidden algorithms.":
-    "Муниципалитет, застройщики и жители могут проверить, что и как измеряется. Нет скрытых алгоритмов.",
+  "The municipality, developers, and residents can verify what is measured and how. No hidden algorithms.": "Муниципалитет, застройщики и жители могут проверить, что и как измеряется. Нет скрытых алгоритмов.",
   "~EUR 250 per sensor.": "~250 EUR за датчик.",
-  "Open-source design and our custom architecture make the sensor network a public good — something corporate solutions cannot offer.":
-    "Open-source и разработанная нами архитектура делают сенсорную сеть публичным благом — то, что не могут дать корпоративные решения.",
+  "Open-source design and our custom architecture make the sensor network a public good — something corporate solutions cannot offer.": "Open-source и разработанная нами архитектура делают сенсорную сеть публичным благом — то, что не могут дать корпоративные решения.",
   "Civic Sensor Network: How It Works": "Гражданская сенсорная сеть: как это работает",
-  "Municipality — organizer, citizens — the network. Our model follows the proven sensors.community (Luftdaten) approach — citizen engagement instead of B2B contracts with monitoring companies.":
-    "Муниципалитет — организатор, граждане — сеть. Наша модель следует проверенному подходу sensors.community (Luftdaten) — вовлечение граждан вместо B2B-контрактов с мониторинговыми компаниями.",
-  "The municipality knows where construction will take place next year.":
-    "Муниципалитет знает, где будут стройки в следующем году.",
-  "Residents from buildings near the site request a free sensor — via a code on the website or in person at the municipality.":
-    "Жители из домов вокруг площадки запрашивают бесплатный датчик — по коду на сайте или лично в муниципалитете.",
-  "Mounting on a balcony or facade — the sensor connects to Wi-Fi and starts transmitting data.":
-    "Монтаж на балконе или фасаде — датчик подключается к Wi-Fi и начинает передавать данные.",
-  "Data automatically appears on the public map.":
-    "Данные автоматически появляются на публичной карте.",
+  "Municipality — organizer, citizens — the network. Our model follows the proven sensors.community (Luftdaten) approach — citizen engagement instead of B2B contracts with monitoring companies.": "Муниципалитет — организатор, граждане — сеть. Наша модель следует проверенному подходу sensors.community (Luftdaten) — вовлечение граждан вместо B2B-контрактов с мониторинговыми компаниями.",
+  "The municipality knows where construction will take place next year.": "Муниципалитет знает, где будут стройки в следующем году.",
+  "Residents from buildings near the site request a free sensor — via a code on the website or in person at the municipality.": "Жители из домов вокруг площадки запрашивают бесплатный датчик — по коду на сайте или лично в муниципалитете.",
+  "Mounting on a balcony or facade — the sensor connects to Wi-Fi and starts transmitting data.": "Монтаж на балконе или фасаде — датчик подключается к Wi-Fi и начинает передавать данные.",
+  "Data automatically appears on the public map.": "Данные автоматически появляются на публичной карте.",
   "Result:": "Результат:",
-  "a monitoring network built by residents, at minimal municipal cost (~EUR 250 × 10–20 sensors). Data on a municipal server, open-source software.":
-    "сеть мониторинга создаётся силами жителей, при минимальных затратах муниципалитета (~250 EUR × 10–20 датчиков). Данные на муниципальном сервере, ПО с открытым исходным кодом.",
+  "a monitoring network built by residents, at minimal municipal cost (~EUR 250 × 10–20 sensors). Data on a municipal server, open-source software.": "сеть мониторинга создаётся силами жителей, при минимальных затратах муниципалитета (~250 EUR × 10–20 датчиков). Данные на муниципальном сервере, ПО с открытым исходным кодом.",
   "Altruist device info": "Об устройстве Altruist",
-  "Altruist & sensors.social — Environment Monitoring Kit":
-    "Altruist & sensors.social — комплект мониторинга среды",
-  "Two-module environment monitoring kit for indoors and outdoors. Open-source hardware and software for those who care about health, sleep quality, and the air they breathe.":
-    "Двухмодульный комплект мониторинга среды снаружи и внутри. Открытое железо и ПО для тех, кто заботится о здоровье, качестве сна и воздухе, которым дышит.",
+  "Altruist & sensors.social — Environment Monitoring Kit": "Altruist & sensors.social — комплект мониторинга среды",
+  "Two-module environment monitoring kit for indoors and outdoors. Open-source hardware and software for those who care about health, sleep quality, and the air they breathe.": "Двухмодульный комплект мониторинга среды снаружи и внутри. Открытое железо и ПО для тех, кто заботится о здоровье, качестве сна и воздухе, которым дышит.",
   "Altruist & sensors.social": "Altruist & sensors.social",
-  "You track your pulse and sleep quality. Now learn about your living environment.":
-    "Вы следите за пульсом и качеством сна. Узнайте среду вашего обитания лучше.",
-  "Two-module environment monitoring kit for indoors and outdoors — for those who care about health.":
-    "Комплект мониторинга среды снаружи и внутри для тех, кто заботится о здоровье.",
+  "You track your pulse and sleep quality. Now learn about your living environment.": "Вы следите за пульсом и качеством сна. Узнайте среду вашего обитания лучше.",
   "The Challenge: Measure Your Living Environment": "Задача: измерить среду обитания",
-  "You track your pulse, HRV, sleep phases. To achieve the best recovery results — you need to account for sleep conditions and the environment you live in.":
-    "Вы следите за пульсом, HRV, фазами сна. Чтобы добиться лучших результатов по восстановлению — нужно учитывать условия сна и среду места проживания.",
-  Indoors: "Внутри дома",
-  Outdoors: "Снаружи",
-  "CO2 — the main indicator of stuffiness and sleep quality":
-    "CO2 — главный индикатор духоты и качества сна",
-  "Temperature and humidity — comfort and mold prevention":
-    "Температура и влажность — комфорт и профилактика плесени",
-  "Dust PM2.5/PM10 — know when it is safe to ventilate":
-    "Пыль PM2.5/PM10 — понять, когда безопасно проветривать",
-  "Noise — explain awakenings and assess your neighborhood":
-    "Шум — объяснить пробуждения и оценить район",
-  "Temperature and humidity — the full picture outside your window":
-    "Температура и влажность — полная картина за окном",
-  "This lets you make data-driven decisions: when to open windows, when to turn on the purifier, how to improve sleep.":
-    "Это позволит вам принимать решения на основе данных: когда открыть окна, когда включить очиститель, как улучшить сон.",
+  "You track your pulse, HRV, sleep phases. To achieve the best recovery results — you need to account for sleep conditions and the environment you live in.": "Вы следите за пульсом, HRV, фазами сна. Чтобы добиться лучших результатов по восстановлению — нужно учитывать условия сна и среду места проживания.",
+  "Indoors": "Внутри дома",
+  "Outdoors": "Снаружи",
+  "CO2 — the main indicator of stuffiness and sleep quality": "CO2 — главный индикатор духоты и качества сна",
+  "Temperature and humidity — comfort and mold prevention": "Температура и влажность — комфорт и профилактика плесени",
+  "Dust PM2.5/PM10 — know when it is safe to ventilate": "Пыль PM2.5/PM10 — понять, когда безопасно проветривать",
+  "Noise — explain awakenings and assess your neighborhood": "Шум — объяснить пробуждения и оценить район",
+  "Temperature and humidity — the full picture outside your window": "Температура и влажность — полная картина за окном",
+  "This lets you make data-driven decisions: when to open windows, when to turn on the purifier, how to improve sleep.": "Это позволит вам принимать решения на основе данных: когда открыть окна, когда включить очиститель, как улучшить сон.",
   "Solution: Altruist Bundle": "Решение: Altruist Bundle",
-  "Two modules — one picture of your living environment:":
-    "Два модуля — одна картина вашей среды обитания:",
+  "Two modules — one picture of your living environment:": "Два модуля — одна картина вашей среды обитания:",
   "Urban (balcony / roof)": "Urban (балкон / крыша)",
   "Dust PM2.5 / PM10 (SDS011)": "Пыль PM2.5 / PM10 (SDS011)",
   "Temperature and humidity": "Температура и влажность",
   "Noise level": "Уровень шума",
   "Atmospheric pressure": "Атмосферное давление",
   "Insight (bedroom / living room)": "Insight (спальня / гостиная)",
-  CO2: "CO2",
-  Temperature: "Температура",
-  Humidity: "Влажность",
-  "Key feature — indoor/outdoor comparison: when to ventilate and when to close the windows.":
-    "Ключевая функция — сравнение indoor/outdoor: когда проветрить, а когда закрыть окна.",
+  "CO2": "CO2",
+  "Temperature": "Температура",
+  "Humidity": "Влажность",
+  "Key feature — indoor/outdoor comparison: when to ventilate and when to close the windows.": "Ключевая функция — сравнение indoor/outdoor: когда проветрить, а когда закрыть окна.",
   "Market: No Such Product Exists": "Рынок: такого продукта нет",
-  Product: "Продукт",
-  Indoor: "Indoor",
-  Outdoor: "Outdoor",
-  Bundle: "Бандл",
+  "Product": "Продукт",
+  "Indoor": "Indoor",
+  "Outdoor": "Outdoor",
+  "Bundle": "Бандл",
   "Health link": "Health-связка",
-  noise: "шум",
-  pcs: "шт.",
-  "WHOOP, Oura, Garmin, Apple Watch — do not work with environmental sensors and have no plans to. Samsung Sleep Environment Report — indoor-only via SmartThings.":
-    "WHOOP, Oura, Garmin, Apple Watch — не работают с environmental-сенсорами и не планируют. Samsung Sleep Environment Report — indoor-only через SmartThings.",
+  "noise": "шум",
+  "pcs": "шт.",
+  "WHOOP, Oura, Garmin, Apple Watch — do not work with environmental sensors and have no plans to. Samsung Sleep Environment Report — indoor-only via SmartThings.": "WHOOP, Oura, Garmin, Apple Watch — не работают с environmental-сенсорами и не планируют. Samsung Sleep Environment Report — indoor-only через SmartThings.",
   "Who Needs Altruist": "Кому нужен Altruist",
   "Health tracking?": "Следите за здоровьем?",
-  "Wear a WHOOP, Oura, or sleep tracker — Altruist completes the picture. CO2 in the bedroom affects sleep depth. Outdoor noise explains awakenings. Dust triggers allergies and asthma.":
-    "Носите WHOOP, Oura или трекер сна — Altruist дополняет картину. CO2 в спальне влияет на глубину сна. Шум снаружи объясняет пробуждения. Пыль — триггер аллергии и астмы.",
+  "Wear a WHOOP, Oura, or sleep tracker — Altruist completes the picture. CO2 in the bedroom affects sleep depth. Outdoor noise explains awakenings. Dust triggers allergies and asthma.": "Носите WHOOP, Oura или трекер сна — Altruist дополняет картину. CO2 в спальне влияет на глубину сна. Шум снаружи объясняет пробуждения. Пыль — триггер аллергии и астмы.",
   "Asthma and allergies": "Астма и аллергия",
-  "PM2.5 < 30 µg/m³ in the bedroom. Rising outdoor dust → signal to close windows and turn on the purifier.":
-    "PM2.5 < 30 µg/m³ в спальне. Рост пыли снаружи → сигнал закрыть окна и включить очиститель.",
-  Children: "Дети",
-  "CO2 and dust in the nursery. Mold prevention through humidity control.":
-    "CO2 и пыль в детской. Профилактика плесени через контроль влажности.",
+  "PM2.5 < 30 µg/m³ in the bedroom. Rising outdoor dust → signal to close windows and turn on the purifier.": "PM2.5 < 30 µg/m³ в спальне. Рост пыли снаружи → сигнал закрыть окна и включить очиститель.",
+  "Children": "Дети",
+  "CO2 and dust in the nursery. Mold prevention through humidity control.": "CO2 и пыль в детской. Профилактика плесени через контроль влажности.",
   "Real estate": "Недвижимость",
-  Automation: "Автоматизация",
-  "Control air purifiers and air conditioners using indoor/outdoor sensor data.":
-    "Управление очистителями воздуха и кондиционерами по данным indoor/outdoor сенсоров.",
+  "Automation": "Автоматизация",
+  "Control air purifiers and air conditioners using indoor/outdoor sensor data.": "Управление очистителями воздуха и кондиционерами по данным indoor/outdoor сенсоров.",
   "Civic monitoring": "Гражданский мониторинг",
-  "Dust storms, industrial emissions, noise background. Data is available to everyone via the open map sensors.social.":
-    "Пылевые бури, промышленные выбросы, шумовой фон. Данные доступны всем через открытую карту sensors.social.",
-  Year: "Год",
-  Event: "Событие",
-  "First R&D — air quality measurement at playgrounds in an industrial city. Professional certified sensors, IoT cloud transmission.":
-    "Первый R&D — измерение воздуха на детских площадках промышленного города. Профессиональные сертифицированные сенсоры, IoT-передача в облако.",
-  "Trust problem: society rejects citizen monitoring data. Pivot to the Luftdaten/sensors.community model from Stuttgart — affordable DIY kits instead of expensive stations.":
-    "Проблема доверия: общество отвергает данные гражданского мониторинга. Разворот к модели Luftdaten/sensors.community из Штутгарта — доступные DIY-киты вместо дорогих станций.",
-  "Three R&D projects: dozens of sensors on city billboards, a solar water drone for water quality analysis, drones over landfills. Recognition at IoT World Congress in Barcelona.":
-    "Три R&D-проекта: десятки сенсоров на городских билбордах, солнечный водный дрон для анализа воды, дроны над свалками. Признание на IoT World Congress в Барселоне.",
-  "Launch of sensors.social prototype, showcase at UN COP25 platform. Federated sensor network architecture, all code on GitHub.":
-    "Запуск прототипа sensors.social, показ на площадке ООН COP25. Федеративная архитектура сенсорной сети, весь код на GitHub.",
-  "Custom hardware development: ~7 PCB iterations, manufacturing in China, assembly, field tests. By mid-2025 — the two-module Altruist is ready for sale.":
-    "Разработка собственного железа: ~7 итераций PCB, заказ в Китае, сборка, полевые тесты. К середине 2025 — двухмодульный Altruist готов к продажам.",
-  "Indiegogo, then Amazon and regional distributors. EU/US certification.":
-    "Indiegogo, затем Amazon и региональные дистрибьюторы. Сертификация EU/US.",
-  "Dozens of software releases over 4 years to build a user sensor network without corporate clouds. 120+ sensors on 4 continents.":
-    "Десятки релизов ПО за 4 года для построения пользовательской сенсорной сети без корпоративных облаков. 120+ сенсоров на 4 континентах.",
+  "Dust storms, industrial emissions, noise background. Data is available to everyone via the open map sensors.social.": "Пылевые бури, промышленные выбросы, шумовой фон. Данные доступны всем через открытую карту sensors.social.",
+  "Year": "Год",
+  "Event": "Событие",
+  "First R&D — air quality measurement at playgrounds in an industrial city. Professional certified sensors, IoT cloud transmission.": "Первый R&D — измерение воздуха на детских площадках промышленного города. Профессиональные сертифицированные сенсоры, IoT-передача в облако.",
+  "Trust problem: society rejects citizen monitoring data. Pivot to the Luftdaten/sensors.community model from Stuttgart — affordable DIY kits instead of expensive stations.": "Проблема доверия: общество отвергает данные гражданского мониторинга. Разворот к модели Luftdaten/sensors.community из Штутгарта — доступные DIY-киты вместо дорогих станций.",
+  "Three R&D projects: dozens of sensors on city billboards, a solar water drone for water quality analysis, drones over landfills. Recognition at IoT World Congress in Barcelona.": "Три R&D-проекта: десятки сенсоров на городских билбордах, солнечный водный дрон для анализа воды, дроны над свалками. Признание на IoT World Congress в Барселоне.",
+  "Launch of sensors.social prototype, showcase at UN COP25 platform. Federated sensor network architecture, all code on GitHub.": "Запуск прототипа sensors.social, показ на площадке ООН COP25. Федеративная архитектура сенсорной сети, весь код на GitHub.",
+  "Custom hardware development: ~7 PCB iterations, manufacturing in China, assembly, field tests. By mid-2025 — the two-module Altruist is ready for sale.": "Разработка собственного железа: ~7 итераций PCB, заказ в Китае, сборка, полевые тесты. К середине 2025 — двухмодульный Altruist готов к продажам.",
+  "Indiegogo, then Amazon and regional distributors. EU/US certification.": "Indiegogo, затем Amazon и региональные дистрибьюторы. Сертификация EU/US.",
+  "Dozens of software releases over 4 years to build a user sensor network without corporate clouds. 120+ sensors on 4 continents.": "Десятки релизов ПО за 4 года для построения пользовательской сенсорной сети без корпоративных облаков. 120+ сенсоров на 4 континентах.",
   "Open Stack": "Открытый стек",
-  Layer: "Слой",
-  Technology: "Технология",
-  Repository: "Репозиторий",
-  Device: "Устройство",
-  Connectivity: "Connectivity",
-  Blockchain: "Blockchain",
-  Analytics: "Аналитика",
-  dApp: "dApp",
-  Hardware: "Hardware",
-  models: "модели",
-  certificates: "сертификаты",
+  "Layer": "Слой",
+  "Technology": "Технология",
+  "Repository": "Репозиторий",
+  "Device": "Устройство",
+  "Connectivity": "Connectivity",
+  "Blockchain": "Blockchain",
+  "Analytics": "Аналитика",
+  "dApp": "dApp",
+  "Hardware": "Hardware",
+  "models": "модели",
+  "certificates": "сертификаты",
   "Firmware (web)": "Прошивка (web)",
-  Integrations: "Интеграции",
+  "Integrations": "Интеграции",
   "Home Assistant (local + Robonomics cloud)": "Home Assistant (локальное + Robonomics cloud)",
   "sensors.community (Luftdaten compatibility)": "sensors.community (совместимость с Luftdaten)",
   "Nova Wallet (mobile access)": "Nova Wallet (мобильный доступ)",
@@ -506,116 +390,79 @@ export default {
   "ESP32-C6 (RISC-V), open source": "ESP32-C6 (RISC-V), open source",
   "Firmware via browser (Web Serial)": "Прошивка через браузер (Web Serial)",
   "IoT subscription via XRT token": "IoT-подписка через XRT токен",
-  "The true picture of your living environment. Open hardware and code. Web3.":
-    "Правдивая картина вашей среды обитания. Открытое железо и код. Web3.",
+  "The true picture of your living environment. Open hardware and code. Web3.": "Правдивая картина вашей среды обитания. Открытое железо и код. Web3.",
   "Altruist Setup Guide — Urban & Insight": "Настройка Альтруист — Urban & Insight",
-  "Step-by-step setup instructions for Altruist Urban outdoor sensor and Altruist Insight indoor monitor. Connect to Wi-Fi, configure GPS, and join the open sensor map.":
-    "Пошаговая инструкция по настройке уличного датчика Altruist Urban и домашнего монитора Altruist Insight. Подключение к Wi-Fi, настройка GPS и добавление на открытую карту сенсоров.",
+  "Step-by-step setup instructions for Altruist Urban outdoor sensor and Altruist Insight indoor monitor. Connect to Wi-Fi, configure GPS, and join the open sensor map.": "Пошаговая инструкция по настройке уличного датчика Altruist Urban и домашнего монитора Altruist Insight. Подключение к Wi-Fi, настройка GPS и добавление на открытую карту сенсоров.",
   "Altruist Setup Guide": "Настройка Альтруиста",
-  "Follow these steps to set up your Altruist sensor and connect it to the open sensor network at sensors.social.":
-    "Следуйте этим шагам, чтобы настроить датчик Альтруист и подключить его к открытой сенсорной сети sensors.social.",
+  "Follow these steps to set up your Altruist sensor and connect it to the open sensor network at sensors.social.": "Следуйте этим шагам, чтобы настроить датчик Альтруист и подключить его к открытой сенсорной сети sensors.social.",
   "Altruist setup": "Настройка Альтруиста",
   "Set Up Your Altruist Urban": "Настройте Ваш Альтруист Урбан",
-  "Altruist Urban is an outdoor air quality monitor measuring particulate matter (PM2.5 / PM10), temperature, humidity, atmospheric pressure, and noise level.":
-    "Альтруист Урбан — уличный монитор качества воздуха, измеряющий частицы пыли (PM2.5 / PM10), температуру, влажность, атмосферное давление и уровень шума.",
+  "Altruist Urban is an outdoor air quality monitor measuring particulate matter (PM2.5 / PM10), temperature, humidity, atmospheric pressure, and noise level.": "Альтруист Урбан — уличный монитор качества воздуха, измеряющий частицы пыли (PM2.5 / PM10), температуру, влажность, атмосферное давление и уровень шума.",
   "Step 1 — Power": "Шаг 1 — Питание",
-  "Connect the sensor to a USB-C power source. Minimum requirement: 5V / 1A.":
-    "Подключите датчик к источнику питания USB-C. Минимальные требования: 5 В / 1 А.",
+  "Connect the sensor to a USB-C power source. Minimum requirement: 5V / 1A.": "Подключите датчик к источнику питания USB-C. Минимальные требования: 5 В / 1 А.",
   "Step 2 — Connect to the Altruist": "Шаг 2 — Подключитесь к Альтруисту",
-  "Scan the QR code with your phone camera, or find the Wi-Fi network «Altruist-xxxxxxxxx» in your device settings.":
-    "Отсканируйте QR-код камерой смартфона или найдите Wi-Fi сеть «Altruist-xxxxxxxxx» в настройках устройства.",
-  "The access point becomes active shortly after powering on.":
-    "Точка доступа будет активна вскоре после включения питания.",
+  "Scan the QR code with your phone camera, or find the Wi-Fi network «Altruist-xxxxxxxxx» in your device settings.": "Отсканируйте QR-код камерой смартфона или найдите Wi-Fi сеть «Altruist-xxxxxxxxx» в настройках устройства.",
+  "The access point becomes active shortly after powering on.": "Точка доступа будет активна вскоре после включения питания.",
   "Enter the password:": "Введите пароль:",
   "Step 3 — Connect to Your Wi-Fi": "Шаг 3 — Подключите к Вашей Wi-Fi сети",
   "Open your browser and go to": "Откройте браузер и перейдите по адресу",
-  "Enter your home Wi-Fi network name and password in «WIFI SETTINGS».":
-    "Введите имя и пароль вашей домашней Wi-Fi сети в разделе «WIFI SETTINGS».",
+  "Enter your home Wi-Fi network name and password in «WIFI SETTINGS».": "Введите имя и пароль вашей домашней Wi-Fi сети в разделе «WIFI SETTINGS».",
   "Click «Save configuration and restart».": "Нажмите «Save configuration and restart».",
-  "After restart the device shows status «CONNECTED!» and a new IP address (e.g. 192.168.10.3).":
-    "После перезагрузки устройство покажет статус «CONNECTED!» и новый IP-адрес (например, 192.168.10.3).",
+  "After restart the device shows status «CONNECTED!» and a new IP address (e.g. 192.168.10.3).": "После перезагрузки устройство покажет статус «CONNECTED!» и новый IP-адрес (например, 192.168.10.3).",
   "Copy the new IP address of the Altruist.": "Скопируйте новый IP-адрес Альтруиста.",
   "Step 4 — Connect to the Sensor Map": "Шаг 4 — Подключение к сенсорной карте",
-  "Open the new IP address in your browser. Click «Configuration».":
-    "Зайдите по новому IP-адресу в браузере. Откройте «Configuration».",
-  Use: "Используйте",
+  "Open the new IP address in your browser. Click «Configuration».": "Зайдите по новому IP-адресу в браузере. Откройте «Configuration».",
+  "Use": "Используйте",
   "to find coordinates by address.": "для поиска координат по адресу.",
-  "Done! After a few minutes your sensor will appear on the open sensor map at":
-    "Готово! Через несколько минут ваш сенсор появится на открытой карте сенсоров",
-  Mounting: "Монтаж крепления",
-  "You can mount the sensor on a vertical surface using the included holder.":
-    "Вы можете установить датчик на вертикальную поверхность с помощью держателя из комплекта.",
-  "Mounting is optional — the Altruist is stable on any flat horizontal surface.":
-    "Монтаж необязателен — Альтруист устойчив на ровной горизонтальной поверхности.",
-  "For UV protection from direct sunlight, we recommend an additional sun visor.":
-    "Для защиты от УФ-излучения солнечного света рекомендуем дополнительный солнцезащитный козырёк.",
-  "Wall mount (adhesive sticker): max height 3 m, operating temperature −10 °C to +35 °C.":
-    "Настенное крепление (на стикер): макс. высота 3 м, рабочая температура от −10 °C до +35 °C.",
+  "Done! After a few minutes your sensor will appear on the open sensor map at": "Готово! Через несколько минут ваш сенсор появится на открытой карте сенсоров",
+  "Mounting": "Монтаж крепления",
+  "You can mount the sensor on a vertical surface using the included holder.": "Вы можете установить датчик на вертикальную поверхность с помощью держателя из комплекта.",
+  "Mounting is optional — the Altruist is stable on any flat horizontal surface.": "Монтаж необязателен — Альтруист устойчив на ровной горизонтальной поверхности.",
+  "For UV protection from direct sunlight, we recommend an additional sun visor.": "Для защиты от УФ-излучения солнечного света рекомендуем дополнительный солнцезащитный козырёк.",
+  "Wall mount (adhesive sticker): max height 3 m, operating temperature −10 °C to +35 °C.": "Настенное крепление (на стикер): макс. высота 3 м, рабочая температура от −10 °C до +35 °C.",
   "Recommended installation height: 3 m or above.": "Рекомендуемая высота установки: от 3 м.",
   "Set Up Your Altruist Insight": "Настройте Ваш Альтруист Инсайт",
-  "Altruist Insight is an indoor air quality monitor with an e-ink display, measuring CO2, temperature, humidity, and atmospheric pressure.":
-    "Альтруист Инсайт — домашний монитор качества воздуха с e-ink дисплеем, измеряющий CO2, температуру, влажность и атмосферное давление.",
+  "Altruist Insight is an indoor air quality monitor with an e-ink display, measuring CO2, temperature, humidity, and atmospheric pressure.": "Альтруист Инсайт — домашний монитор качества воздуха с e-ink дисплеем, измеряющий CO2, температуру, влажность и атмосферное давление.",
   "E-ink Display": "E-ink дисплей",
-  "The display shows data from your Altruist Insight sensor and a connected Altruist Urban sensor on the same Wi-Fi network.":
-    "Дисплей показывает данные вашего датчика Инсайт и подключённого к той же Wi-Fi сети датчика Урбан.",
-  "LEDs around the perimeter indicate the current air quality level.":
-    "По периметру расположены светодиоды — индикатор уровня качества воздуха.",
-  "Three buttons on the back panel let you switch screens and browse data.":
-    "На задней стороне расположены три кнопки для переключения экранов и просмотра данных.",
+  "The display shows data from your Altruist Insight sensor and a connected Altruist Urban sensor on the same Wi-Fi network.": "Дисплей показывает данные вашего датчика Инсайт и подключённого к той же Wi-Fi сети датчика Урбан.",
+  "LEDs around the perimeter indicate the current air quality level.": "По периметру расположены светодиоды — индикатор уровня качества воздуха.",
+  "Three buttons on the back panel let you switch screens and browse data.": "На задней стороне расположены три кнопки для переключения экранов и просмотра данных.",
   "Connect to Home Assistant": "Подключите Альтруист к Умному Дому",
-  "Home Assistant integration lets you track air quality directly in your automation system. You can also create automation scenarios with other devices in your home.":
-    "Интеграция с Home Assistant позволяет отслеживать качество воздуха прямо в вашей системе автоматизации. Также вы можете создавать сценарии автоматизации с другими устройствами в доме.",
+  "Home Assistant integration lets you track air quality directly in your automation system. You can also create automation scenarios with other devices in your home.": "Интеграция с Home Assistant позволяет отслеживать качество воздуха прямо в вашей системе автоматизации. Также вы можете создавать сценарии автоматизации с другими устройствами в доме.",
   "Step-by-step guide:": "Пошаговое руководство:",
   "Technical Specifications": "Технические характеристики",
-  Wireless: "Беспроводное соединение",
+  "Wireless": "Беспроводное соединение",
   "In the box": "Комплектация",
-  "Temperature (°C/°F), Humidity (%), Pressure (hPa)":
-    "Температура (°C/°F), Влажность (%), Давление (гПа)",
+  "Temperature (°C/°F), Humidity (%), Pressure (hPa)": "Температура (°C/°F), Влажность (%), Давление (гПа)",
   "Noise (dB)": "Шум (дБ)",
-  "Sensor module, USB-A to USB-C cable, wall mount, double-sided tape (×2), external antenna, user manual":
-    "Датчик, кабель USB-A — USB-C, крепление на стену, двусторонний скотч (×2), внешняя антенна, руководство пользователя",
-  "Sensor module with e-ink display, USB-A to USB-C cable, user manual":
-    "Датчик с e-ink дисплеем, кабель USB-A — USB-C, руководство пользователя",
+  "Sensor module, USB-A to USB-C cable, wall mount, double-sided tape (×2), external antenna, user manual": "Датчик, кабель USB-A — USB-C, крепление на стену, двусторонний скотч (×2), внешняя антенна, руководство пользователя",
+  "Sensor module with e-ink display, USB-A to USB-C cable, user manual": "Датчик с e-ink дисплеем, кабель USB-A — USB-C, руководство пользователя",
   "Need help? Contact support:": "Нужна помощь? Обращайтесь в поддержку:",
   "Download PDF instruction": "Скачать PDF инструкцию",
   "Full setup diagram": "Полная схема настройки",
   "UV Cover": "УФ-козырёк",
   "UV Cover for Altruist Urban": "УФ-козырёк для Altruist Urban",
-  "Outdoor protection against sun and rain with UV resistance. Made from ASA plastic.":
-    "Защита от солнца и дождя с УФ-стойкостью. Изготовлен из пластика ASA.",
-  "1 Cover, 1 Wall mount, 2 Screws, 2 Double-sided tapes, 1 User manual":
-    "1 козырёк, 1 крепление, 2 шурупа, 2 двусторонних скотча, 1 инструкция",
+  "Outdoor protection against sun and rain with UV resistance. Made from ASA plastic.": "Защита от солнца и дождя с УФ-стойкостью. Изготовлен из пластика ASA.",
+  "1 Cover, 1 Wall mount, 2 Screws, 2 Double-sided tapes, 1 User manual": "1 козырёк, 1 крепление, 2 шурупа, 2 двусторонних скотча, 1 инструкция",
   "Download UV Cover instruction": "Скачать инструкцию УФ-козырька",
-  "Noise Data for Real Estate: Negotiate with Facts, Not Feelings":
-    "Данные о шуме для недвижимости: переговоры с фактами, а не с эмоциями",
-  "How a month of noise monitoring with Altruist can strengthen your position in rent or purchase negotiations. Real examples from Limassol, Cyprus.":
-    "Как месяц мониторинга шума с Altruist может укрепить вашу позицию в переговорах об аренде или покупке жилья. Реальные примеры из Лимасола, Кипр.",
+  "Noise Data for Real Estate: Negotiate with Facts, Not Feelings": "Данные о шуме для недвижимости: переговоры с фактами, а не с эмоциями",
+  "How a month of noise monitoring with Altruist can strengthen your position in rent or purchase negotiations. Real examples from Limassol, Cyprus.": "Как месяц мониторинга шума с Altruist может укрепить вашу позицию в переговорах об аренде или покупке жилья. Реальные примеры из Лимасола, Кипр.",
   "The Hypothesis": "Гипотеза",
   "Real Example: Two Neighborhoods in Limassol": "Реальный пример: два района Лимасола",
-  "Below are actual measurements from Altruist sensors installed on balconies of two residential buildings in Limassol, Cyprus. Both are premium-class properties — but the noise tells very different stories.":
-    "Ниже — реальные замеры с датчиков Altruist, установленных на балконах двух жилых домов в Лимасоле, Кипр. Оба — жильё премиум-класса, но шум рассказывает совершенно разные истории.",
+  "Below are actual measurements from Altruist sensors installed on balconies of two residential buildings in Limassol, Cyprus. Both are premium-class properties — but the noise tells very different stories.": "Ниже — реальные замеры с датчиков Altruist, установленных на балконах двух жилых домов в Лимасоле, Кипр. Оба — жильё премиум-класса, но шум рассказывает совершенно разные истории.",
   "Neapoli (Molos area) — noisy": "Неаполи (район Молоса) — шумно",
-  "Noise regularly exceeds 70 dB during the day and spikes above 90 dB — equivalent to standing next to a running lawnmower. The WHO considers prolonged exposure above 65 dB harmful to cardiovascular health.":
-    "Шум регулярно превышает 70 дБ днём и уходит выше 90 дБ — это как стоять рядом с работающей газонокосилкой. ВОЗ считает длительное воздействие выше 65 дБ вредным для сердечно-сосудистого здоровья.",
+  "Noise regularly exceeds 70 dB during the day and spikes above 90 dB — equivalent to standing next to a running lawnmower. The WHO considers prolonged exposure above 65 dB harmful to cardiovascular health.": "Шум регулярно превышает 70 дБ днём и уходит выше 90 дБ — это как стоять рядом с работающей газонокосилкой. ВОЗ считает длительное воздействие выше 65 дБ вредным для сердечно-сосудистого здоровья.",
   "Germasogeia — quiet": "Гермасойя — тихо",
-  "Daytime noise stays within a comfortable 50–60 dB range. This is the sound level of a normal conversation — perfectly acceptable for residential living.":
-    "Дневной шум держится в комфортном диапазоне 50–60 дБ. Это уровень обычного разговора — вполне приемлемо для жилья.",
-  "Same city, similar building class — but entirely different quality of life. These graphs alone influenced a real decision about where to live.":
-    "Один город, схожий класс жилья — но совершенно разное качество жизни. Эти графики уже повлияли на реальное решение о выборе места проживания.",
+  "Daytime noise stays within a comfortable 50–60 dB range. This is the sound level of a normal conversation — perfectly acceptable for residential living.": "Дневной шум держится в комфортном диапазоне 50–60 дБ. Это уровень обычного разговора — вполне приемлемо для жилья.",
+  "Same city, similar building class — but entirely different quality of life. These graphs alone influenced a real decision about where to live.": "Один город, схожий класс жилья — но совершенно разное качество жизни. Эти графики уже повлияли на реальное решение о выборе места проживания.",
   "It Works Both Ways": "Работает в обе стороны",
-  "For property sales, we believe noise and air quality data from the balcony is already a must-have — like an energy efficiency certificate, but for livability.":
-    "Для продажи недвижимости, мы считаем, данные о шуме и качестве воздуха с балкона — уже must-have. Как энергетический сертификат, только про комфорт проживания.",
+  "For property sales, we believe noise and air quality data from the balcony is already a must-have — like an energy efficiency certificate, but for livability.": "Для продажи недвижимости, мы считаем, данные о шуме и качестве воздуха с балкона — уже must-have. Как энергетический сертификат, только про комфорт проживания.",
   "How to Try This Yourself": "Как попробовать самому",
-  "Mount an Altruist sensor on your balcony or outside your window.":
-    "Установите датчик Altruist на балконе или за окном.",
-  "Collect data for at least one month — the sensor measures noise, air quality, temperature, and humidity 24/7.":
-    "Собирайте данные минимум месяц — датчик измеряет шум, качество воздуха, температуру и влажность 24/7.",
-  "Your data appears on the public sensors.social map — accessible to anyone, verifiable, and tamper-proof.":
-    "Ваши данные появляются на публичной карте sensors.social — доступны всем, проверяемы и защищены от подделки.",
-  "Present the graphs at your next negotiation. Let the data speak.":
-    "Покажите графики на следующих переговорах. Пусть данные говорят сами.",
-  "Want to try this approach? Get an Altruist sensor, mount it on your balcony, and collect a month of data. Then use the graphs in your next housing negotiation — and see how facts change the conversation.":
-    "Хотите попробовать? Купите датчик Altruist, установите на балконе и соберите данные за месяц. Затем используйте графики на переговорах по жилью — и посмотрите, как факты меняют разговор.",
+  "Mount an Altruist sensor on your balcony or outside your window.": "Установите датчик Altruist на балконе или за окном.",
+  "Collect data for at least one month — the sensor measures noise, air quality, temperature, and humidity 24/7.": "Собирайте данные минимум месяц — датчик измеряет шум, качество воздуха, температуру и влажность 24/7.",
+  "Your data appears on the public sensors.social map — accessible to anyone, verifiable, and tamper-proof.": "Ваши данные появляются на публичной карте sensors.social — доступны всем, проверяемы и защищены от подделки.",
+  "Present the graphs at your next negotiation. Let the data speak.": "Покажите графики на следующих переговорах. Пусть данные говорят сами.",
+  "Want to try this approach? Get an Altruist sensor, mount it on your balcony, and collect a month of data. Then use the graphs in your next housing negotiation — and see how facts change the conversation.": "Хотите попробовать? Купите датчик Altruist, установите на балконе и соберите данные за месяц. Затем используйте графики на переговорах по жилью — и посмотрите, как факты меняют разговор.",
   "Noise data for real estate": "Данные о шуме для недвижимости",
   "-": "-",
   "Altruist Urban device": "Устройство Altruist Urban",
@@ -627,13 +474,12 @@ export default {
   "GPS configuration": "Конфигурация GPS",
   "Mounting instructions": "Инструкция по монтажу",
   "Home Assistant integration": "Интеграция с Home Assistant",
-  "Altruist Insight device": 'Устройство "Altruist Insight"',
+  "Altruist Insight device": "Устройство \"Altruist Insight\"",
   "Altruist Insight full setup diagram": "Диаграмма полной настройки Altruist Insight",
   "Power and connection": "Мощь и связь",
   "E-ink display": "E-ink дисплей",
   "UV Cover installation": "Установка защитного покрытия от УФ",
-  "Add an account using your 12-word seed phrase. “Keep me signed” stores it on this device.":
-    'Добавьте аккаунт, используя вашу seed фразу из 12 слов. "Оставить меня в системе" сохраняет его на этом устройстве.',
+  "Add an account using your 12-word seed phrase. “Keep me signed” stores it on this device.": "Добавьте аккаунт, используя вашу seed фразу из 12 слов. \"Оставить меня в системе\" сохраняет его на этом устройстве.",
   "Signed in": "Вошел в систему",
   "on this device": "на этом устройстве",
   "Add account": "Добавить аккаунт",
@@ -648,12 +494,10 @@ export default {
   "Keep me signed in (I trust this device)": "Оставить меня в системе (я доверяю этому устройству)",
   "Signed in as": "Вошел как",
   "center-on-user": "сфокусироваться-на-пользователе",
-  "Login ": "Вход",
   "Manage accounts": "Управление аккаунтами",
   "sensorpopup.edit": "редактировать",
   "No data available": "Нет доступных данных",
-  "Only sensor owner can add stories for this sensor.":
-    "Только владелец датчика может добавлять истории для этого датчика.",
+  "Only sensor owner can add stories for this sensor.": "Только владелец датчика может добавлять истории для этого датчика.",
   "Share your insights with the community!": "Поделитесь своими инсайтами с сообществом!",
   "Checking login state...": "Проверка состояния входа...",
   "Please login first.": "Пожалуйста, сначала войдите в систему.",
@@ -665,11 +509,9 @@ export default {
   "Pick an icon": "Выберите иконку",
   "Publishing…": "Публикация...",
   "Stories for this sensor": "Истории для этого сенсора",
-  "Missing account secret phrase for signing.":
-    "Отсутствует секретная фраза учетной записи для подписи.",
+  "Missing account secret phrase for signing.": "Отсутствует секретная фраза учетной записи для подписи.",
   "Sending story…": "Отправка истории…",
-  "This account has no subscription for this sensor.":
-    "У этого аккаунта нет подписки на этот датчик.",
+  "This account has no subscription for this sensor.": "У этого аккаунта нет подписки на этот датчик.",
   "Story sent": "Отправленная история",
   "Waiting for indexing…": "Ожидание индексации…",
   "Story sent. Waiting for indexing…": "Отправлена история. Ожидание индексации…",
@@ -677,43 +519,28 @@ export default {
   "Indexing may take a minute.": "Индексация может занять минуту.",
   "Story sent. Indexing may take a minute.": "История отправлена. Индексация может занять минуту.",
   "open-chart": "открытая диаграмма",
-  "seems to be wrong measured": "кажется, измерено неверно",
-  "probably something happened with your sensor": "вероятно, что-то случилось с вашим датчиком",
-  "logs_health_unhealthy_period":
-    "{groups}: за выбранный период данные могут измеряться неверно. Это может быть из-за неполадки датчика или неправильной настройки устройства.",
   "logs_health_device_hid_warnings": "Этот датчик отображает измерения как некорректные.",
   "logs_health_show_warnings_for_period": "Показать предупреждения для выбранного периода",
-  "Don't show any data warnings for this device": "Не показывать предупреждения о данных для этого устройства",
-  "Show data warnings again": "Снова показывать предупреждения о данных",
   "Altruist Urban": "Альтруистический город",
   "Altruist Insight": "Альтруистический взгляд",
-  "Add a short story about an unusual day — or browse recent stories for this sensor.":
-    "Добавьте ваш инсайт о необычном дне — или просмотрите недавние истории для этого датчика.",
-  "\\n":
-    "Вы не предоставили предложение для перевода. Пожалуйста, предоставьте предложение для перевода.",
-  "Curious about your environmental insights? So are we.Measure it, test it, and have fun discovering what’s floating around you.":
-    "Любопытно узнать больше о состоянии окружающей среды? Нам тоже. Измеряйте, проверяйте и с удовольствием узнавайте, что находится вокруг вас в воздухе.",
-  "Curious about your environmental insights? So are we. Measure it, test it, and have fun discovering what’s floating around you.":
-    "Любопытно узнать больше о состоянии окружающей среды? Нам тоже. Измеряйте, проверяйте и с удовольствием узнавайте, что находится вокруг вас в воздухе.",
+  "\\n": "Вы не предоставили предложение для перевода. Пожалуйста, предоставьте предложение для перевода.",
+  "Curious about your environmental insights? So are we.Measure it, test it, and have fun discovering what’s floating around you.": "Любопытно узнать больше о состоянии окружающей среды? Нам тоже. Измеряйте, проверяйте и с удовольствием узнавайте, что находится вокруг вас в воздухе.",
+  "Curious about your environmental insights? So are we. Measure it, test it, and have fun discovering what’s floating around you.": "Любопытно узнать больше о состоянии окружающей среды? Нам тоже. Измеряйте, проверяйте и с удовольствием узнавайте, что находится вокруг вас в воздухе.",
   "← Back to Blog": "← Назад к блогу",
   "Post not found": "Пост не найден",
-  Open: "Открыть",
-  Posted: "Опубликовано",
-  Publish: "Опубликовать",
-  Login: "Войти",
-  Stories: "Истории",
-  Accounts: "Аккаунты",
-  account: "aккаунт",
-  Blog: "Блог",
-  "Stories for this day": "Истории на этот день",
-  "Not saved": "Не сохранено",
-  "realtime-now": "в реальном времени сейчас",
-  "remote-day": "удаленный день",
-  Name: "Название",
-  Optional: "Необязательно",
-  Save: "Сохранить",
+  "Open": "Открыть",
+  "Posted": "Опубликовано",
+  "Publish": "Опубликовать",
+  "Login": "Войти",
+  "Stories": "Истории",
+  "Accounts": "Аккаунты",
+  "account": "aккаунт",
+  "Blog": "Блог",
+  "Name": "Название",
+  "Optional": "Необязательно",
+  "Save": "Сохранить",
   "Latest updates": "Последние обновления",
-  "All seen": "Просмотрено",
   "Copy link to share": "Скопировать ссылку для обмена",
-  "Advanced sharing": "Расширенные возможности обмена ссылками",
+  "Two-module environment monitoring kit for indoors and outdoors — for those who care about health. You track your pulse, HRV, sleep phases. To achieve the best recovery results — you need to account for sleep conditions and the environment you live in.": "Двухмодульный комплект для мониторинга окружающей среды в помещении и на улице — для тех, кто заботится о своем здоровье. Вы отслеживаете свой пульс, вариабельность сердечного ритма, фазы сна. Чтобы добиться наилучших результатов восстановления — вам нужно учитывать условия сна и среду, в которой вы живете.",
+  "Where to buy": "Где купить"
 };

@@ -9,20 +9,23 @@
     pageImage="/og-noise-data.webp"
   />
   <PageTextLayout>
-    <h1>{{ $t("Noise Data for Real Estate: Negotiate with Facts, Not Feelings") }}</h1>
+    <div class="pagetext-prose">
+      <header class="pagetext-header">
+        <div class="pagetext-eyebrow">sensors.social</div>
+        <h1 class="pagetext-title">
+          {{ $t("Noise Data for Real Estate: Negotiate with Facts, Not Feelings") }}
+        </h1>
+        <p class="pagetext-subtitle">
+          {{
+            $t(
+              'Saying "the construction is loud" is an opinion. Showing a month-long noise graph with daily peaks above 90 dB is evidence. We believe real sensor data fundamentally changes the context of housing negotiations — whether you are renting or buying.'
+            )
+          }}
+        </p>
+      </header>
 
-    <section class="pagetext-highlight">
-      <p>
-        {{
-          $t(
-            'Saying "the construction is loud" is an opinion. Showing a month-long noise graph with daily peaks above 90 dB is evidence. We believe real sensor data fundamentally changes the context of housing negotiations — whether you are renting or buying.'
-          )
-        }}
-      </p>
-    </section>
-
-    <section>
-      <h2>{{ $t("The Hypothesis") }}</h2>
+      <section>
+        <h2>{{ $t("The Hypothesis") }}</h2>
       <p>
         {{
           $t(
@@ -141,15 +144,16 @@
       </ol>
     </section>
 
-    <section class="pagetext-highlight">
-      <p>
-        {{
-          $t(
-            "Want to try this approach? Get an Altruist sensor, mount it on your balcony, and collect a month of data. Then use the graphs in your next housing negotiation — and see how facts change the conversation."
-          )
-        }}
-      </p>
-    </section>
+      <section class="pagetext-highlight">
+        <p>
+          {{
+            $t(
+              "Want to try this approach? Get an Altruist sensor, mount it on your balcony, and collect a month of data. Then use the graphs in your next housing negotiation — and see how facts change the conversation."
+            )
+          }}
+        </p>
+      </section>
+    </div>
   </PageTextLayout>
 </template>
 

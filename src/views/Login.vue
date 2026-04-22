@@ -360,10 +360,6 @@ async function onSensorsToggle(acc, event) {
 </style>
 
 <style scoped>
-h3 {
-  margin-bottom: calc(var(--gap) * 0.4);
-}
-
 .login-page {
   display: grid;
   gap: calc(var(--gap) * 0.8);

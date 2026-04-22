@@ -26,8 +26,9 @@
       </button>
     </section>
 
+    <!-- Urban/Insight toggle (temporarily hidden; keep logic intact) -->
     <section
-      v-if="hasBundleToggle"
+      v-if="false && hasBundleToggle"
       class="layer-toggle"
       role="group"
       aria-label="Urban / Insight toggle"
@@ -67,7 +68,7 @@
       </button>
 
       <button
-        v-if="isAccountsEnabled"
+        v-if="isAccountsEnabled && isStoriesEnabled"
         class="panel-button"
         :class="{ active: activeTab === 'edit' }"
         @click.prevent="activeTab = 'edit'"
@@ -88,11 +89,11 @@
         Info
       </button>
       <button
-        v-if="ownerSensorsList.length"
+        v-if="sensor_id"
         class="panel-button"
-        :class="{ active: activeTab === 'owners' }"
-        @click.prevent="activeTab = 'owners'"
-        :title="'Owner sensors'"
+        :class="{ active: activeTab === 'sharelink' }"
+        @click.prevent="activeTab = 'sharelink'"
+        :title="'Share'"
       >
         <font-awesome-icon icon="fa-solid fa-link" />
         Share
@@ -101,7 +102,7 @@
 
     <div class="scrollable-y">
       <div v-show="activeTab === 'chart'" class="tab-content chart-tab">
-        <div v-if="latestStoryInPeriod" class="story-day">
+        <div v-if="isStoriesEnabled && latestStoryInPeriod" class="story-day">
           <div class="story-day__content">
             <div
               class="story-day-icon"
@@ -122,7 +123,7 @@
             </div>
           </div>
           <button
-            v-if="isAccountsEnabled"
+            v-if="isStoriesEnabled && isAccountsEnabled"
             type="button"
             class="button button-round-outline"
             @click.prevent="activeTab = 'edit'"
@@ -136,7 +137,7 @@
         <Analytics :point="point" :log="log" />
       </div>
 
-      <div v-if="isAccountsEnabled && activeTab === 'edit'" class="tab-content">
+      <div v-if="isStoriesEnabled && isAccountsEnabled && activeTab === 'edit'" class="tab-content">
         <EditStory
           v-if="displaySensorId"
           :sensor-id="displaySensorId"
@@ -199,6 +200,7 @@ const activeTab = ref("chart");
 
 // Проверяем, включен ли сервис accounts
 const isAccountsEnabled = computed(() => settings?.SERVICES?.accounts === true);
+const isStoriesEnabled = computed(() => settings?.SERVICES?.stories !== false);
 
 const ICON_COLORS = {
   heat: "#ff6b6b",
@@ -301,7 +303,7 @@ const sensorStoriesTotalCount = computed(() => {
 // Порядок табов для навигации клавиатурой (edit только если accounts включен)
 const tabsOrder = computed(() => {
   const base = ["chart"];
-  if (isAccountsEnabled.value) base.push("edit");
+  if (isAccountsEnabled.value && isStoriesEnabled.value) base.push("edit");
   if (ownerSensorsList.value.length) base.push("owners");
   base.push("details");
   return base;

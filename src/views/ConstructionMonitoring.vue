@@ -9,20 +9,21 @@
     pageImage="/og-construction.webp"
   />
   <PageTextLayout>
-    <h1>{{ $t("Construction Site Monitoring: Data Instead of Complaints") }}</h1>
+    <div class="pagetext-prose">
+      <header class="pagetext-header">
+        <div class="pagetext-eyebrow">sensors.social</div>
+        <h1 class="pagetext-title">{{ $t("Construction Site Monitoring: Data Instead of Complaints") }}</h1>
+        <p class="pagetext-subtitle">
+          {{
+            $t(
+              "Open sensor network for dust and noise control near construction sites. Continuous monitoring with open-source Altruist sensors, public data map, and citizen engagement."
+            )
+          }}
+        </p>
+      </header>
 
-    <section class="pagetext-highlight">
-      <p>
-        {{
-          $t(
-            "Open sensor network for dust and noise control near construction sites. Continuous monitoring with open-source Altruist sensors, public data map, and citizen engagement."
-          )
-        }}
-      </p>
-    </section>
-
-    <section>
-      <h2>{{ $t("Problem") }}</h2>
+      <section>
+        <h2>{{ $t("Problem") }}</h2>
 
       <p>
         <b>{{ $t("Air pollution is a health threat.") }}</b>
@@ -217,8 +218,8 @@
       </p>
     </section>
 
-    <section>
-      <h2>{{ $t("Civic Sensor Network: How It Works") }}</h2>
+      <section>
+        <h2>{{ $t("Civic Sensor Network: How It Works") }}</h2>
 
       <p class="pagetext-highlight">
         {{
@@ -270,7 +271,8 @@
           )
         }}
       </p>
-    </section>
+      </section>
+    </div>
   </PageTextLayout>
 </template>
 

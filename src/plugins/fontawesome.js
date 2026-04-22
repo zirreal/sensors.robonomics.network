@@ -65,6 +65,7 @@ import {
 } from "@fortawesome/free-regular-svg-icons";
 import { faXTwitter } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import { faCreditCard } from "@fortawesome/free-regular-svg-icons";
 
 library.add(
   faBars,
@@ -127,7 +128,8 @@ library.add(
   faPenToSquare,
   faTrash,
   faFloppyDisk,
-  faXTwitter
+  faXTwitter,
+  faCreditCard
 );
 
 export function useIcons(app) {

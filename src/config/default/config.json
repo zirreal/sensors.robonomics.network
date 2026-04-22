@@ -32,7 +32,8 @@
   },
   "SERVICES": {
     "accounts": true,
-    "messages": true
+    "messages": true,
+    "stories": true
   },
   "DEFAULT_TYPE_PROVIDER": "remote",
   "VALID_DATA_PROVIDERS": {

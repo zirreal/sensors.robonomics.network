@@ -22,6 +22,7 @@ import { getAddress } from "../utils/utils";
 import { hasValidCoordinates } from "../utils/utils";
 import { dayISO, dayBoundsUnix, getPeriodBounds } from "@/utils/date";
 import { loadLogsHealth } from "../utils/calculations/sensor/logs_health.js";
+import { detectKindFromLogs } from "@/utils/sensors/detectKindFromLogs";
 
 /** API отдаёт -1 для pm25/pm10 как «нет значения» — убираем поле из точки лога. */
 const PM_LOG_KEYS = ["pm25", "pm10"];
@@ -536,26 +537,6 @@ export function useSensors(localeComputed) {
     };
   };
 
-  const detectKindFromLogs = (logs) => {
-    if (!Array.isArray(logs) || logs.length === 0) return null;
-    let hasCo2 = false;
-    let hasUrban = false;
-    for (const item of logs) {
-      const d = item?.data || {};
-      if (d.co2 !== undefined && d.co2 !== null) hasCo2 = true;
-      // Urban signals: noise OR PM (many sensors don't send noise)
-      if (d.noiseavg !== undefined && d.noiseavg !== null) hasUrban = true;
-      if (d.noisemax !== undefined && d.noisemax !== null) hasUrban = true;
-      if (d.pm25 !== undefined && d.pm25 !== null) hasUrban = true;
-      if (d.pm10 !== undefined && d.pm10 !== null) hasUrban = true;
-      if (hasCo2 && hasUrban) break;
-    }
-    // Prefer urban when both present (some devices may bundle mixed payloads)
-    if (hasUrban) return "urban";
-    if (hasCo2) return "insight";
-    return null;
-  };
-
   const loadBundleForPopup = async (baseSensorId) => {
     try {
       if (!baseSensorId) return;
@@ -775,7 +756,6 @@ export function useSensors(localeComputed) {
                   { sensor_id: point.sensor_id, kind: "urban", logsCount: 0, geo: point.geo },
                 ],
                 data: {},
-                fetched: {},
                 loading: true,
               },
             };

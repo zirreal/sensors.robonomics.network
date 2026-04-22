@@ -78,6 +78,10 @@
               <font-awesome-icon class="navfa" icon="fa-solid fa-circle-info" />
               <span>{{ $t("Altruist device info") }}</span>
             </router-link>
+            <router-link class="navtile" to="/where-to-buy/">
+              <font-awesome-icon class="navfa" icon="fa-regular fa-credit-card" />
+              <span>{{ $t("Where to buy") }}</span>
+            </router-link>
             <router-link class="navtile" to="/altruist-use-cases/">
               <img class="navimg" :src="urbanIcon" alt="" aria-hidden="true" />
               <span>{{ $t("Altruist use cases") }}</span>
@@ -348,7 +352,7 @@ header > * {
   margin-bottom: 0;
   display: flex;
   align-items: center;
-  gap: calc(var(--gap) * 0.5);
+  gap: calc(var(--gap) * 0.8);
   padding: calc(var(--gap) * 0.7) calc(var(--gap) * 0.5);
   text-decoration: none;
   color: var(--color-blue);
