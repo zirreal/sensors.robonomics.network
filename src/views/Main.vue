@@ -112,10 +112,22 @@ const onRealtimePoint = async (point) => {
 
   // Если попап открыт для этого сенсора, обновляем его
   if (sensorsUI.isSensorOpen(point.sensor_id)) {
+    const prevLogs = Array.isArray(sensorsUI.sensorPoint.value?.logs)
+      ? sensorsUI.sensorPoint.value.logs
+      : [];
+    const hasTimestamp = Number.isFinite(point?.timestamp);
+    const alreadyExists =
+      hasTimestamp && prevLogs.some((item) => Number(item?.timestamp) === Number(point.timestamp));
+    const nextLogs =
+      hasTimestamp && !alreadyExists
+        ? [...prevLogs, { timestamp: point.timestamp, data: point.data }]
+        : prevLogs;
+
     // Обновляем sensorPoint с новыми данными
     sensorsUI.sensorPoint.value = {
       ...sensorsUI.sensorPoint.value,
       data: point.data,
+      logs: nextLogs,
     };
 
     // Обновляем логи для открытого сенсора

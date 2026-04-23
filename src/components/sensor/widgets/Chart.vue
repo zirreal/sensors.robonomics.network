@@ -78,6 +78,7 @@ Highcharts.setOptions({
 const props = defineProps({
   log: { type: Array, default: () => [] },
 });
+const safeLog = computed(() => (Array.isArray(props.log) ? props.log : []));
 
 const route = useRoute();
 const router = useRouter();
@@ -499,7 +500,7 @@ const chartOptions = computed(() => ({
  * @param {string} legendKey - Ключ легенды (если null, используется activeLegendKey или первый доступный)
  */
 const updateChart = async (log, legendKey = null) => {
-  if (!chartRef.value || !log.length) return;
+  if (!chartRef.value || !Array.isArray(log) || log.length === 0) return;
 
   // Предотвращаем конкурирующие обновления
   if (isUpdatingChart.value) return;
@@ -1092,7 +1093,7 @@ function onLegendClick(legendKey) {
 // Основной watcher для обновления графика при изменении данных, легенды или периода
 watch(
   [
-    () => props.log,
+    () => safeLog.value,
     () => activeLegendKey.value,
     () => mapState.timelineMode.value,
     () => mapState.currentDate.value,
@@ -1112,7 +1113,7 @@ watch(
       clearChartInstantly();
     }
 
-    if (!log.length) return;
+    if (!Array.isArray(log) || log.length === 0) return;
 
     // Ждем пока UNITS_FOUND заполнится данными
     if (UNITS_FOUND.value.size === 0) return;
@@ -1124,11 +1125,11 @@ watch(
 
 // Realtime обновления при добавлении новых данных
 watch(
-  () => props.log.length,
+  () => safeLog.value.length,
   async (newLen, oldLen) => {
     if (!isRealtime.value || newLen <= oldLen || !chartRef.value || isUpdatingChart.value) return;
 
-    await updateChart(props.log);
+    await updateChart(safeLog.value);
   }
 );
 
@@ -1136,19 +1137,19 @@ watch(
 watch(
   () => mapState.timelineMode.value,
   async (newMode, oldMode) => {
-    if (newMode !== oldMode && chartRef.value && props.log.length > 0) {
+    if (newMode !== oldMode && chartRef.value && safeLog.value.length > 0) {
       // Очищаем кэш серий при смене режима таймлайна
       seriesCache.clear();
 
       // Принудительно обновляем график при смене режима таймлайна
-      await updateChart(props.log, activeLegendKey.value);
+      await updateChart(safeLog.value, activeLegendKey.value);
     }
   }
 );
 
 // Обновление найденных единиц измерения и графика при изменении данных
 watch(
-  () => props.log,
+  () => safeLog.value,
   (newLog) => {
     // Обновляем список найденных единиц измерения
     if (newLog.length) {
@@ -1182,8 +1183,8 @@ watch(
     const cur = mapState.currentUnit.value;
 
     // Если есть данные и график еще не отрисован, принудительно обновляем
-    if (props.log.length > 0 && chartRef.value && !isUpdatingChart.value) {
-      updateChart(props.log);
+    if (safeLog.value.length > 0 && chartRef.value && !isUpdatingChart.value) {
+      updateChart(safeLog.value);
     }
 
     // Check if current unit is available
@@ -1217,12 +1218,12 @@ onMounted(async () => {
   await nextTick();
 
   if (
-    props.log.length > 0 &&
+    safeLog.value.length > 0 &&
     chartRef.value &&
     UNITS_FOUND.value.size > 0 &&
     !isUpdatingChart.value
   ) {
-    updateChart(props.log);
+    updateChart(safeLog.value);
   }
 });
 </script>
