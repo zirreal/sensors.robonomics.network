@@ -162,7 +162,14 @@ watch(
 watch(
   () => mapState.timelineMode.value,
   async (newMode, oldMode) => {
-    if (newMode !== oldMode && mapState.currentProvider.value === "remote" && route.query.sensor) {
+    // При переходе realtime -> day/week/month загрузка уже запускается через route.query watcher
+    // (providerChanged), иначе получаем дублирующий запрос логов.
+    if (
+      newMode !== oldMode &&
+      oldMode !== "realtime" &&
+      mapState.currentProvider.value === "remote" &&
+      route.query.sensor
+    ) {
       // Отписываемся от realtime провайдера перед загрузкой новых данных
       if (unwatchRealtime) {
         unsubscribeRealtime(unwatchRealtime);
