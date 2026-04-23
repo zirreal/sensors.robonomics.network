@@ -91,7 +91,12 @@ export async function getAddress(lat, lng, language = "en") {
   } catch {}
 
   // Если не удалось получить адрес, возвращаем координаты
-  return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+  const latNum = Number(lat);
+  const lngNum = Number(lng);
+  if (Number.isFinite(latNum) && Number.isFinite(lngNum)) {
+    return `${latNum.toFixed(6)}, ${lngNum.toFixed(6)}`;
+  }
+  return `${String(lat)}, ${String(lng)}`;
 }
 
 /**
