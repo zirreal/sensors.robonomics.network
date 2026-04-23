@@ -26,34 +26,6 @@
       </button>
     </section>
 
-    <!-- Urban/Insight toggle (temporarily hidden; keep logic intact) -->
-    <section
-      v-if="false && hasBundleToggle"
-      class="layer-toggle"
-      role="group"
-      aria-label="Urban / Insight toggle"
-    >
-      <button
-        type="button"
-        class="layer-toggle__btn"
-        :class="{ active: activeLayer === 'urban' }"
-        :disabled="!hasUrbanLayer"
-        @click.prevent="setLayer('urban')"
-      >
-        Urban
-      </button>
-      <button
-        type="button"
-        class="layer-toggle__btn"
-        :class="{ active: activeLayer === 'insight' }"
-        :disabled="!hasInsightLayer"
-        @click.prevent="setLayer('insight')"
-      >
-        <template v-if="isBundleLoading">Insight…</template>
-        <template v-else>Insight</template>
-      </button>
-    </section>
-
     <!-- <div class="sensor-info-desc">Here you'll see some custom description</div> -->
 
     <div class="sensor-panel">
@@ -68,7 +40,7 @@
       </button>
 
       <button
-        v-if="isAccountsEnabled && isStoriesEnabled"
+        v-if="isAccountsEnabled"
         class="panel-button"
         :class="{ active: activeTab === 'edit' }"
         @click.prevent="activeTab = 'edit'"
@@ -79,7 +51,6 @@
       </button>
 
       <button
-        v-if="isAccountsEnabled"
         class="panel-button"
         :class="{ active: activeTab === 'info' }"
         @click.prevent="activeTab = 'info'"
@@ -89,11 +60,10 @@
         Info
       </button>
       <button
-        v-if="sensor_id"
         class="panel-button"
         :class="{ active: activeTab === 'sharelink' }"
         @click.prevent="activeTab = 'sharelink'"
-        :title="'Share'"
+        :title="t('sensorpopup.sharedefault')"
       >
         <font-awesome-icon icon="fa-solid fa-link" />
         Share
@@ -102,7 +72,7 @@
 
     <div class="scrollable-y">
       <div v-show="activeTab === 'chart'" class="tab-content chart-tab">
-        <div v-if="isStoriesEnabled && latestStoryInPeriod" class="story-day">
+        <div v-if="latestStoryInPeriod" class="story-day">
           <div class="story-day__content">
             <div
               class="story-day-icon"
@@ -123,7 +93,7 @@
             </div>
           </div>
           <button
-            v-if="isStoriesEnabled && isAccountsEnabled"
+            v-if="isAccountsEnabled"
             type="button"
             class="button button-round-outline"
             @click.prevent="activeTab = 'edit'"
@@ -137,12 +107,12 @@
         <Analytics :point="point" :log="log" />
       </div>
 
-      <div v-if="isStoriesEnabled && isAccountsEnabled && activeTab === 'edit'" class="tab-content">
+      <div v-if="isAccountsEnabled && activeTab === 'edit'" class="tab-content">
         <EditStory
-          v-if="displaySensorId"
-          :sensor-id="displaySensorId"
+          v-if="sensor_id"
+          :sensor-id="sensor_id"
           :owner="owner"
-          :geo="displayGeo"
+          :geo="geo"
           @open-chart="activeTab = 'chart'"
         />
       </div>
@@ -173,7 +143,6 @@ import Analytics from "./tabs/Analytics.vue";
 import Info from "./tabs/Info.vue";
 import ShareLink from "./tabs/ShareLink.vue";
 import EditStory from "./tabs/EditStory.vue";
-import Accordion from "../controls/Accordion.vue";
 
 // Импортируем изображения типов сенсоров
 import diyIcon from "@/assets/images/sensorTypes/DIY.svg";
@@ -189,18 +158,16 @@ const emit = defineEmits(["close"]);
 
 const { t, locale } = useI18n();
 const mapState = useMap();
+const { idbBookmarks } = useBookmarks();
 
 const localeComputed = computed(() => localStorage.getItem("locale") || locale.value || "en");
 const sensorsUI = useSensors(localeComputed);
-
-const point = computed(() => props.point?.value ?? props.point ?? null);
 
 // Активная вкладка
 const activeTab = ref("chart");
 
 // Проверяем, включен ли сервис accounts
 const isAccountsEnabled = computed(() => settings?.SERVICES?.accounts === true);
-const isStoriesEnabled = computed(() => settings?.SERVICES?.stories !== false);
 
 const ICON_COLORS = {
   heat: "#ff6b6b",
@@ -302,25 +269,17 @@ const sensorStoriesTotalCount = computed(() => {
 
 // Порядок табов для навигации клавиатурой (edit только если accounts включен)
 const tabsOrder = computed(() => {
-  const base = ["chart"];
-  if (isAccountsEnabled.value && isStoriesEnabled.value) base.push("edit");
-  if (ownerSensorsList.value.length) base.push("owners");
-  base.push("details");
+  const base = ["chart", "info", "sharelink", "bookmarks"];
+  if (isAccountsEnabled.value) {
+    base.push("edit");
+  }
   return base;
 });
 
 // Функция для переключения табов клавиатурой
 const handleKeydown = (event) => {
-  const target = event?.target;
-  const tag = target?.tagName ? String(target.tagName).toLowerCase() : "";
-  const isTypingTarget =
-    tag === "input" || tag === "textarea" || tag === "select" || target?.isContentEditable === true;
-
   // Проверяем, что нажата стрелка влево или вправо
   if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-    // Don't hijack arrows while the user types/edits text.
-    if (isTypingTarget || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-
     // Предотвращаем стандартное поведение (прокрутку страницы)
     event.preventDefault();
 
@@ -342,7 +301,7 @@ const handleKeydown = (event) => {
 
 const sensor_id = computed(() => {
   // sensor_id всегда приходит из props.point (обрабатывается в Main.vue)
-  return point.value?.sensor_id || null;
+  return props.point?.sensor_id || null;
 });
 
 // Аватарка сенсора на основе ID
@@ -370,182 +329,22 @@ watch(
 
 const geo = computed(() => {
   // Координаты всегда приходят из props.point.geo (обрабатывается в Main.vue)
-  return point.value?.geo || { lat: 0, lng: 0 };
+  return props.point?.geo || { lat: 0, lng: 0 };
 });
 
-const owner = computed(() => point.value?.owner || null);
+const owner = computed(() => props.point?.owner || null);
 
-const bundle = computed(() => point.value?.bundle || null);
-const hasUrbanLayer = computed(() => !!bundle.value?.layers?.urban);
-const getBundleLogsCount = (sensorId) => {
-  if (!sensorId) return 0;
-  const dataBySensor =
-    bundle.value?.data && typeof bundle.value.data === "object" ? bundle.value.data : {};
-  const entry = dataBySensor?.[sensorId];
-  if (Array.isArray(entry)) return entry.length;
-  const list = bundle.value?.ownerSensors;
-  if (Array.isArray(list)) {
-    const hit = list.find((s) => s?.sensor_id === sensorId);
-    if (typeof hit?.logsCount === "number") return hit.logsCount;
-  }
-  return 0;
-};
-const hasInsightLayer = computed(() => {
-  return !!bundle.value?.layers?.insight;
-});
-const isBundleLoading = computed(() => !!bundle.value?.loading);
-const hasBundleToggle = computed(() => hasUrbanLayer.value && hasInsightLayer.value);
-
-const activeLayer = ref("urban");
-const selectedSensorId = ref(null);
-const lastNonNullLogs = ref(null);
-
-watch(
-  () => point.value?.sensor_id,
-  () => {
-    // Reset selection only when the opened marker/sensor changes.
-    selectedSensorId.value = null;
-    const layers = bundle.value?.layers;
-    if (!layers) return;
-    if (layers.urban) activeLayer.value = "urban";
-    else if (layers.insight) activeLayer.value = "insight";
-  },
-  { immediate: true }
-);
-
-const setLayer = (layer) => {
-  if (layer === "urban" && !hasUrbanLayer.value) return;
-  if (layer === "insight" && !hasInsightLayer.value) return;
-  activeLayer.value = layer;
-  const layers = bundle.value?.layers || {};
-
-  // Helper: prefer an Insight sensor that already has data.
-  const pickBestInsightId = () => {
-    const list = ownerSensorsList.value;
-    if (!Array.isArray(list)) return layers.insight || null;
-    const dataBySensor =
-      bundle.value?.data && typeof bundle.value.data === "object" ? bundle.value.data : {};
-    const effectiveCount = (s) => {
-      const direct = typeof s?.logsCount === "number" ? s.logsCount : 0;
-      if (direct > 0) return direct;
-      const sid = s?.sensor_id;
-      const entry = sid ? dataBySensor?.[sid] : null;
-      return Array.isArray(entry) ? entry.length : 0;
-    };
-    const insightSensors = list.filter((s) => s?.kind === "insight" && s?.sensor_id);
-    if (!insightSensors.length) return layers.insight || null;
-    insightSensors.sort((a, b) => effectiveCount(b) - effectiveCount(a));
-    return insightSensors[0]?.sensor_id || layers.insight || null;
-  };
-
-  // Sync explicit selection with the layer id (and ensure it's the best available).
-  if (layer === "urban" && layers.urban) selectedSensorId.value = layers.urban;
-  if (layer === "insight") selectedSensorId.value = pickBestInsightId();
-};
-
-const displaySensorId = computed(() => {
-  if (selectedSensorId.value) return selectedSensorId.value;
-  const layers = bundle.value?.layers;
-  if (!layers) return sensor_id.value;
-  if (activeLayer.value === "insight") return layers.insight || layers.urban || sensor_id.value;
-  return layers.urban || layers.insight || sensor_id.value;
-});
-
-watch(
-  displaySensorId,
-  async (sid) => {
-    if (!sid) return;
-    // Load logs for the currently selected layer sensor id (urban/insight)
-    sensorsUI.ensureBundleLogs?.(sid);
-  },
-  { immediate: true }
-);
-
-const ownerSensorsList = computed(() => {
-  const list = bundle.value?.ownerSensors;
-  const raw = Array.isArray(list) ? [...list] : [];
-  // Hide sensors with no data for the current period (stable UI),
-  // but we will always add the "main" clicked Urban sensor below.
-  const effectiveLogsCount = (s) => getBundleLogsCount(s?.sensor_id);
-  const baseId = point.value?.sensor_id;
-  const arr = raw.filter((s) => effectiveLogsCount(s) > 0);
-  if (baseId && !arr.some((s) => s?.sensor_id === baseId)) {
-    arr.unshift({
-      sensor_id: baseId,
-      kind: "urban",
-      logsCount: Array.isArray(point.value?.logs) ? point.value.logs.length : 0,
-      geo: point.value?.geo,
-    });
-  }
-  return arr;
-});
-
-const displayGeo = computed(() => {
-  const sid = displaySensorId.value;
-  const match = ownerSensorsList.value.find((s) => s.sensor_id === sid);
-  return match?.geo || geo.value;
-});
-
-const displayPoint = computed(() => {
-  const sid = displaySensorId.value;
-  const dataBySensor = bundle.value?.data || {};
-  const hasBundleKey =
-    sid && dataBySensor && Object.prototype.hasOwnProperty.call(dataBySensor, sid);
-  const bundleEntry = hasBundleKey ? dataBySensor?.[sid] : undefined; // can be null (loading), [] or logs[]
-  const bundleLogs = Array.isArray(bundleEntry) ? bundleEntry : null;
-  // If bundle explicitly contains this sensor logs (even empty), use it so the UI can show "No data".
-  // If bundle contains null => show skeleton (loading).
-  // If switching to another sensor and no bundle key exists yet => show skeleton instead of previous chart.
-  let logs = hasBundleKey
-    ? bundleLogs
-    : sid && sid !== point.value?.sensor_id
-    ? null
-    : point.value?.logs;
-
-  // Reduce chart flashing: while new layer logs are loading (null),
-  // keep last rendered logs so Chart component doesn't unmount/remount.
-  if (logs === null && Array.isArray(lastNonNullLogs.value) && lastNonNullLogs.value.length > 0) {
-    logs = lastNonNullLogs.value;
-  }
-  return {
-    ...(point.value || {}),
-    sensor_id: sid,
-    geo: displayGeo.value,
-    logs: Array.isArray(logs) ? logs : null,
-  };
+// Проверяем, добавлен ли сенсор в закладки
+const isBookmarked = computed(() => {
+  if (!sensor_id.value) return false;
+  return idbBookmarks.value?.some((bookmark) => bookmark.id === sensor_id.value) || false;
 });
 
 // Гарантируем, что logs всегда массив
-const displayLog = computed(() =>
-  Array.isArray(displayPoint.value?.logs) ? displayPoint.value.logs : null
-);
-
-watch(
-  displayLog,
-  (logs) => {
-    if (Array.isArray(logs) && logs.length > 0) {
-      lastNonNullLogs.value = logs;
-    }
-  },
-  { immediate: true }
-);
-
-const downsampleLog = (logs, maxPoints = 2500) => {
-  if (!Array.isArray(logs)) return logs;
-  if (logs.length <= maxPoints) return logs;
-  const step = Math.ceil(logs.length / maxPoints);
-  const out = [];
-  for (let i = 0; i < logs.length; i += step) out.push(logs[i]);
-  return out;
-};
-
-const displayLogFast = computed(() => downsampleLog(displayLog.value));
-
-// Back-compat for existing template checks (icon link visibility)
-const log = computed(() => displayLog.value);
+const log = computed(() => (Array.isArray(props.point?.logs) ? props.point.logs : null));
 
 // Вычисляем тип сенсора используя функцию из composable
-const sensorType = computed(() => sensorsUI.getSensorType(displayPoint.value));
+const sensorType = computed(() => sensorsUI.getSensorType(props.point));
 
 // Вычисляем путь к изображению типа сенсора
 const sensorTypeImage = computed(() => {
@@ -620,7 +419,7 @@ watch(
   (newDate) => {
     if (newDate) {
       // Очищаем логи при смене даты
-      sensorsUI.clearSensorLogs(point.value?.sensor_id);
+      sensorsUI.clearSensorLogs(props.point?.sensor_id);
     }
   }
 );
@@ -655,147 +454,6 @@ watch(
 }
 /* - Заголовок сенсора: тип, выбор даты, кнопка закрыть */
 
-.layer-toggle {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: calc(var(--gap) * 1);
-  margin-bottom: calc(var(--gap) * 1);
-}
-
-.layer-toggle__btn {
-  border: 1px solid rgba(0, 0, 0, 0.14);
-  background: rgba(0, 0, 0, 0.02);
-  padding: 8px 12px;
-  border-radius: 999px;
-  font: inherit;
-  font-weight: 900;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
-}
-
-.layer-toggle__btn:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.04);
-  transform: translateY(-1px);
-}
-
-.layer-toggle__btn.active {
-  border-color: rgba(80, 120, 255, 0.55);
-  background: rgba(80, 120, 255, 0.12);
-  box-shadow: 0 0 0 1px rgba(80, 120, 255, 0.18);
-}
-
-.layer-toggle__btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.owner-sensors {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.owner-sensors__header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding: 6px 2px;
-}
-
-.owner-sensors__title {
-  font-weight: 900;
-  margin: 0;
-  opacity: 0.85;
-}
-
-.owner-sensors__subtitle {
-  font-size: 0.85em;
-  font-weight: 800;
-  opacity: 0.55;
-}
-
-@media screen and (width < 520px) {
-  .owner-sensors {
-    grid-template-columns: 1fr;
-  }
-}
-
-.owner-sensors__card {
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  background: rgba(255, 255, 255, 0.75);
-  padding: 10px 12px;
-  border-radius: 14px;
-  text-align: left;
-  cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.owner-sensors__card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
-}
-
-.owner-sensors__card.active {
-  border-color: rgba(80, 120, 255, 0.55);
-  box-shadow: 0 0 0 1px rgba(80, 120, 255, 0.18);
-  background: rgba(80, 120, 255, 0.06);
-}
-
-.owner-sensors__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-
-.owner-sensors__badge {
-  font-size: 0.78em;
-  font-weight: 900;
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  background: rgba(0, 0, 0, 0.03);
-  letter-spacing: 0.01em;
-}
-
-.owner-sensors__badge[data-kind="urban"] {
-  background: rgba(130, 90, 255, 0.12);
-  border-color: rgba(130, 90, 255, 0.22);
-}
-
-.owner-sensors__badge[data-kind="insight"] {
-  background: rgba(176, 138, 122, 0.14);
-  border-color: rgba(176, 138, 122, 0.26);
-}
-
-.owner-sensors__id {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
-  font-size: 0.85em;
-  opacity: 0.78;
-}
-
-.owner-sensors__meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.owner-sensors__hint {
-  font-size: 0.85em;
-  font-weight: 700;
-  opacity: 0.7;
-}
-
-.owner-sensors__hint.muted {
-  opacity: 0.5;
-}
-
 .popup-js.active {
   container: popup / inline-size;
   background: var(--color-light);
@@ -814,10 +472,7 @@ watch(
 }
 
 .scrollable-y {
-  max-height: 90%;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-bottom: calc(var(--gap) * 2 + env(safe-area-inset-bottom, 0px));
+  max-height: 85%;
 }
 
 /* Стили скелетона для заглушки графика */
@@ -874,11 +529,6 @@ watch(
     left: 0;
     width: 100%;
     top: 0;
-  }
-
-  .scrollable-y {
-    max-height: calc(100dvh - 170px);
-    padding-bottom: calc(var(--gap) * 3 + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -1019,32 +669,6 @@ watch(
   --tab-offset-y: calc(var(--gap) * 3);
   padding: var(--tab-offset-y) var(--tab-offset-x);
   position: relative;
-}
-
-.details-stack {
-  display: grid;
-  gap: calc(var(--gap) * 0.9);
-}
-
-.details-title {
-  display: inline-flex;
-  align-items: center;
-  gap: calc(var(--gap) * 0.6);
-  font-weight: 900;
-}
-
-.details-tab :deep(.accordion) {
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.12);
-}
-
-.details-tab :deep(.accordion__header) {
-  padding: calc(var(--gap) * 0.85) calc(var(--gap) * 1.2);
-}
-
-.details-tab :deep(.accordion__body) {
-  padding: calc(var(--gap) * 0.9) calc(var(--gap) * 1.2);
-  background: rgba(0, 0, 0, 0.015);
 }
 
 .chart-tab {
