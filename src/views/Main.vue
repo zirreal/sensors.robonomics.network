@@ -302,15 +302,10 @@ watch(
 
     // Обновляем попап сенсора при изменении sensor или при первом заходе с сенсором
     // Но не обновляем при переключении провайдера
-    if (
-      newQuery.sensor &&
-      sensorsUI.sensors.length > 0 &&
-      (sensorChanged || !oldQuery) &&
-      !providerChanged
-    ) {
-      // Ищем полные данные сенсора в sensorsUI.sensors
+    if (newQuery.sensor && (sensorChanged || !oldQuery) && !providerChanged) {
+      // In realtime mode `sensorsUI.sensors` can be empty on startup until pubsub points arrive.
+      // Still open/update popup using URL fallback, so logs loading can start immediately.
       const fullSensorData = sensorsUI.sensors.find((s) => s.sensor_id === newQuery.sensor);
-      // Сохраняем адрес из текущего sensorPoint, если он есть
       const existingAddress = sensorsUI.sensorPoint?.value?.address;
       const point = sensorsUI.formatPointForSensor(
         fullSensorData || {

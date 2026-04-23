@@ -149,7 +149,17 @@ const setPosFromURI = () => {
   const lat = route.query.lat || settings.MAP.position.lat;
   const lng = route.query.lng || settings.MAP.position.lng;
   const zoom = route.query.zoom || settings.MAP.zoom;
-  mapState.setMapSettings(route, router, { lat, lng, zoom });
+
+  // Guard against corrupted URL params (e.g. sensor_id accidentally written into lat)
+  const nLat = Number(lat);
+  const nLng = Number(lng);
+  const nZoom = Number(zoom);
+  if (!Number.isFinite(nLat) || !Number.isFinite(nLng) || !Number.isFinite(nZoom)) {
+    setPosDefault();
+    return;
+  }
+
+  mapState.setMapSettings(route, router, { lat: nLat, lng: nLng, zoom: nZoom });
 };
 
 // Устанавливает позицию карты по умолчанию из настроек

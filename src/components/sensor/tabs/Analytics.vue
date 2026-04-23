@@ -232,12 +232,11 @@ const showLogsHealthUserhideNotice = computed(
     logsHealthSensorUserHide.value
 );
 
-const showNoDataMessage = computed(
-  () =>
-    mapState.currentProvider.value === "remote" &&
-    Array.isArray(props.point?.logs) &&
-    props.point.logs.length === 0
-);
+const showNoDataMessage = computed(() => {
+  // "No data" should show for any provider once logs are loaded as an empty array.
+  // `null` means "still loading / not loaded".
+  return Array.isArray(props.log) && props.log.length === 0;
+});
 
 // Проверяем, здоровы ли данные PM (для отображения AQI)
 const isPMHealthy = computed(() => {
