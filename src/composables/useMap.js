@@ -40,13 +40,29 @@ const currentProvider = ref(
 const timelineMode = ref("day");
 
 export function useMap() {
+  const toFinite = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+
   const setmapposition = (lat, lng, zoom, save = true) => {
-    mapposition.value.lat = lat;
-    mapposition.value.lng = lng;
-    mapposition.value.zoom = zoom;
+    const nextLat = toFinite(lat);
+    const nextLng = toFinite(lng);
+    const nextZoom = toFinite(zoom);
+    if (nextLat === null || nextLng === null || nextZoom === null) {
+      // Ignore invalid coordinates (e.g. sensor_id accidentally written into lat)
+      return;
+    }
+
+    mapposition.value.lat = nextLat;
+    mapposition.value.lng = nextLng;
+    mapposition.value.zoom = nextZoom;
 
     if (save) {
-      localStorage.setItem("map-position", JSON.stringify({ lat, lng, zoom }));
+      localStorage.setItem(
+        "map-position",
+        JSON.stringify({ lat: nextLat, lng: nextLng, zoom: nextZoom })
+      );
     }
   };
 
@@ -168,18 +184,25 @@ export function useMap() {
 
     const currentDateValue = getPriorityValue(route.query.date, currentDate.value, null, dayISO());
 
-    const mapPositionValue = getPriorityValue(
-      route.query.lat && route.query.lng && route.query.zoom
+    const urlPos =
+      route.query.lat != null && route.query.lng != null && route.query.zoom != null
         ? {
             lat: route.query.lat,
             lng: route.query.lng,
             zoom: route.query.zoom,
           }
-        : null,
-      mapposition.value,
-      "map-position",
-      mapposition.value
-    );
+        : null;
+
+    const mapPositionValue = getPriorityValue(urlPos, mapposition.value, "map-position", mapposition.value);
+
+    // Normalize/validate lat/lng/zoom (URL and localStorage are strings)
+    const parsedLat = toFinite(mapPositionValue?.lat);
+    const parsedLng = toFinite(mapPositionValue?.lng);
+    const parsedZoom = toFinite(mapPositionValue?.zoom);
+    const safeMapPositionValue =
+      parsedLat === null || parsedLng === null || parsedZoom === null
+        ? mapposition.value
+        : { lat: parsedLat, lng: parsedLng, zoom: parsedZoom };
 
     const currentProviderValue = getPriorityValue(
       route.query.provider,
@@ -193,8 +216,13 @@ export function useMap() {
     setCurrentDate(currentDateValue);
     setCurrentProvider(currentProviderValue);
 
-    if (mapPositionValue && mapPositionValue !== mapposition.value) {
-      setmapposition(mapPositionValue.lat, mapPositionValue.lng, mapPositionValue.zoom, false);
+    if (safeMapPositionValue && safeMapPositionValue !== mapposition.value) {
+      setmapposition(
+        safeMapPositionValue.lat,
+        safeMapPositionValue.lng,
+        safeMapPositionValue.zoom,
+        false
+      );
     }
 
     // Синхронизируем URL если нужно
@@ -202,9 +230,9 @@ export function useMap() {
       route.query.type !== currentUnitValue ||
       route.query.date !== currentDateValue ||
       route.query.provider !== currentProviderValue ||
-      route.query.lat !== mapPositionValue.lat ||
-      route.query.lng !== mapPositionValue.lng ||
-      route.query.zoom !== mapPositionValue.zoom;
+      route.query.lat !== String(safeMapPositionValue.lat) ||
+      route.query.lng !== String(safeMapPositionValue.lng) ||
+      route.query.zoom !== String(safeMapPositionValue.zoom);
 
     if (urlNeedsUpdate) {
       const newQuery = {
@@ -212,9 +240,9 @@ export function useMap() {
         type: currentUnitValue,
         date: currentDateValue,
         provider: currentProviderValue,
-        lat: mapPositionValue.lat,
-        lng: mapPositionValue.lng,
-        zoom: mapPositionValue.zoom,
+        lat: safeMapPositionValue.lat,
+        lng: safeMapPositionValue.lng,
+        zoom: safeMapPositionValue.zoom,
       };
 
       // Сохраняем sensor если он есть в route.query
