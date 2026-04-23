@@ -112,10 +112,22 @@ const onRealtimePoint = async (point) => {
 
   // Если попап открыт для этого сенсора, обновляем его
   if (sensorsUI.isSensorOpen(point.sensor_id)) {
+    const prevLogs = Array.isArray(sensorsUI.sensorPoint.value?.logs)
+      ? sensorsUI.sensorPoint.value.logs
+      : [];
+    const hasTimestamp = Number.isFinite(point?.timestamp);
+    const alreadyExists =
+      hasTimestamp && prevLogs.some((item) => Number(item?.timestamp) === Number(point.timestamp));
+    const nextLogs =
+      hasTimestamp && !alreadyExists
+        ? [...prevLogs, { timestamp: point.timestamp, data: point.data }]
+        : prevLogs;
+
     // Обновляем sensorPoint с новыми данными
     sensorsUI.sensorPoint.value = {
       ...sensorsUI.sensorPoint.value,
       data: point.data,
+      logs: nextLogs,
     };
 
     // Обновляем логи для открытого сенсора
@@ -162,7 +174,14 @@ watch(
 watch(
   () => mapState.timelineMode.value,
   async (newMode, oldMode) => {
-    if (newMode !== oldMode && mapState.currentProvider.value === "remote" && route.query.sensor) {
+    // При переходе realtime -> day/week/month загрузка уже запускается через route.query watcher
+    // (providerChanged), иначе получаем дублирующий запрос логов.
+    if (
+      newMode !== oldMode &&
+      oldMode !== "realtime" &&
+      mapState.currentProvider.value === "remote" &&
+      route.query.sensor
+    ) {
       // Отписываемся от realtime провайдера перед загрузкой новых данных
       if (unwatchRealtime) {
         unsubscribeRealtime(unwatchRealtime);

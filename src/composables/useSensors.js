@@ -129,6 +129,7 @@ export function useSensors(localeComputed) {
   const resetLogsProgress = () => {
     logsProgress.value = createDefaultLogsProgress();
   };
+  let realtimeLogsLoadInFlight = false;
 
   const isUpdatingPopup = ref(false); // Флаг для предотвращения повторных вызовов updateSensorPopup
   const ownerPromises = new Map();
@@ -244,6 +245,14 @@ export function useSensors(localeComputed) {
    */
   const updateSensorLogs = async (sensorId) => {
     if (!isSensorOpen(sensorId)) return;
+    const isRealtimeMode = mapState.currentProvider.value === "realtime";
+
+    // В realtime onRealtimePoint может дергать updateSensorLogs на каждую входящую точку.
+    // Если API отвечает медленно, предыдущий запрос постоянно abort-ится следующим,
+    // и logs остаются в состоянии null (вечный skeleton). Поэтому допускаем только один
+    // активный запрос логов одновременно в realtime.
+    if (isRealtimeMode && realtimeLogsLoadInFlight) return;
+    if (isRealtimeMode) realtimeLogsLoadInFlight = true;
 
     // Для remote провайдера: если логи уже загружены (массив), не делаем повторный запрос
     // Логи обновляются только при смене даты/периода (через clearSensorLogs)
@@ -408,6 +417,10 @@ export function useSensors(localeComputed) {
         percent: logsProgress.value.percent,
         mode: mapState.timelineMode.value,
       };
+    } finally {
+      if (isRealtimeMode) {
+        realtimeLogsLoadInFlight = false;
+      }
     }
   };
 
