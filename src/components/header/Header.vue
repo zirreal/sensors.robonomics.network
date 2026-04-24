@@ -110,9 +110,17 @@
               <font-awesome-icon class="navfa" icon="fa-regular fa-newspaper" />
               <span>{{ $t("Blog") }}</span>
             </router-link>
+            <router-link class="navtile" to="/noise-data-real-estate/">
+              <font-awesome-icon class="navfa" icon="fa-solid fa-volume-high" />
+              <span>{{ $t("Noise data for real estate") }}</span>
+            </router-link>
             <router-link class="navtile" to="/privacy-policy/">
               <font-awesome-icon class="navfa" icon="fa-regular fa-file-lines" />
               <span>{{ $t("links.privacy") }}</span>
+            </router-link>
+            <router-link class="navtile" to="/support/">
+              <font-awesome-icon class="navfa" icon="fa-regular fa-comment" />
+              <span>{{ $t("Support") }}</span>
             </router-link>
           </section>
 

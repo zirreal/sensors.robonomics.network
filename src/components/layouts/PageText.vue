@@ -37,6 +37,9 @@
         <li>
           <router-link to="/privacy-policy">{{ $t("links.privacy") }}</router-link>
         </li>
+        <li>
+          <router-link to="/support">{{ $t("Support") }}</router-link>
+        </li>
       </ul>
     </nav>
     <section class="footer-section separate">

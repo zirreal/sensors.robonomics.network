@@ -38,6 +38,8 @@ export default {
   "bookmarks.listtitle": "Your bookmarked sensors",
   "bookmarks.listempty": "Save any sensor from the map here for quicker access",
   "links.measurement": "Measurements guide",
+  "Support": "Support",
+  "Write to us": "Write to us",
   "links.privacy": "Privacy policy",
   "scales.title": "Units of measurement",
   "scales.upto": "up to",
@@ -531,5 +533,10 @@ export default {
   "Latest updates": "Latest updates",
   "Copy link to share": "Copy link to share",
   "Two-module environment monitoring kit for indoors and outdoors — for those who care about health. You track your pulse, HRV, sleep phases. To achieve the best recovery results — you need to account for sleep conditions and the environment you live in.": "Two-module environment monitoring kit for indoors and outdoors — for those who care about health. You track your pulse, HRV, sleep phases. To achieve the best recovery results — you need to account for sleep conditions and the environment you live in.",
-  "Where to buy": "Where to buy"
+  "Where to buy": "Where to buy",
+  "Tell us what happened — we’ll reply to your email. The more details you share, the faster we can help.": "Tell us what happened — we’ll reply to your email. The more details you share, the faster we can help.",
+  "Write to us": "Write to us",
+  "If it’s a bug, include steps + what you expected.": "If it’s a bug, include steps + what you expected.",
+  "Sending…": "Sending…",
+  "Thanks! Your message was sent.": "Thanks! Your message was sent."
 };
