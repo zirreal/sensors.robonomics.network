@@ -92,6 +92,8 @@ const extractTranslationKeys = async () => {
 
   for (const file of files) {
     const content = fs.readFileSync(file, "utf-8");
+    // IMPORTANT: reset `lastIndex` when reusing global regex across strings
+    regex.lastIndex = 0;
     let match;
     while ((match = regex.exec(content))) {
       keys.add(match[1]);
