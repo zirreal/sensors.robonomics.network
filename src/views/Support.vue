@@ -68,7 +68,13 @@
               v-model.trim="comment"
               class="block"
               rows="6"
-              :placeholder="$t(commentPlaceholder)"
+              :placeholder="
+                topic === 'Altruist Sensor Support'
+                  ? $t('support.placeholder.altruist')
+                  : topic === 'Map Questions & Feedback'
+                    ? $t('support.placeholder.map')
+                    : $t('support.placeholder.other')
+              "
               :disabled="isSubmitting"
               required
               data-gsp-name="Comment"
@@ -124,16 +130,6 @@ const location = ref(typeof window !== "undefined" ? window.location.href : "");
 const isEmailValid = computed(() => {
   const value = String(email.value || "").trim();
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-});
-
-const commentPlaceholder = computed(() => {
-  if (topic.value === "Altruist Sensor Support") {
-    return "Having trouble setting up your Altruist or experiencing issues with your monitor? We're here to help.";
-  }
-  if (topic.value === "Map Questions & Feedback") {
-    return "Got questions about how the map works, or ideas on how to improve it? We'd love to hear from you.";
-  }
-  return "For real partnership ideas and general questions — not for job seekers or marketing outreach";
 });
 
 function notify(text) {
