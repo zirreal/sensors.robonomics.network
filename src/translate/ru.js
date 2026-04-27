@@ -38,6 +38,8 @@ export default {
   "bookmarks.listtitle": "Сохраненные датчики",
   "bookmarks.listempty": "Здесь вы можете сохранить датчики для быстрого просмотра",
   "links.measurement": "Руководство по измеренным показателям",
+  "Support": "Поддержка",
+  "Write to us": "Напишите нам",
   "links.privacy": "Политика конфиденциальности",
   "scales.title": "Единицы измерения",
   "scales.upto": "до",
@@ -542,5 +544,10 @@ export default {
   "Latest updates": "Последние обновления",
   "Copy link to share": "Скопировать ссылку для обмена",
   "Two-module environment monitoring kit for indoors and outdoors — for those who care about health. You track your pulse, HRV, sleep phases. To achieve the best recovery results — you need to account for sleep conditions and the environment you live in.": "Двухмодульный комплект для мониторинга окружающей среды в помещении и на улице — для тех, кто заботится о своем здоровье. Вы отслеживаете свой пульс, вариабельность сердечного ритма, фазы сна. Чтобы добиться наилучших результатов восстановления — вам нужно учитывать условия сна и среду, в которой вы живете.",
-  "Where to buy": "Где купить"
+  "Where to buy": "Где купить",
+  "Tell us what happened — we’ll reply to your email. The more details you share, the faster we can help.": "Расскажите нам, что произошло — мы ответим на вашу электронную почту. Чем больше деталей вы предоставите, тем быстрее мы сможем помочь.",
+  "Write to us": "Напишите нам",
+  "If it’s a bug, include steps + what you expected.": "Если это ошибка, укажите шаги + что вы ожидали.",
+  "Sending…": "Отправка…",
+  "Thanks! Your message was sent.": "Спасибо! Ваше сообщение было отправлено."
 };

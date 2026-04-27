@@ -11,6 +11,7 @@ import NoiseDataRealEstate from "./views/NoiseDataRealEstate.vue";
 import Login from "./views/Login.vue";
 import Main from "./views/Main.vue";
 import PrivacyPolicy from "./views/PrivacyPolicy.vue";
+import Support from "./views/Support.vue";
 // import SensorEmbed from "./views/SensorEmbed.vue";
 
 // blog
@@ -35,6 +36,11 @@ const router = createRouter({
       path: "/privacy-policy/",
       name: "privacy-policy",
       component: PrivacyPolicy,
+    },
+    {
+      path: "/support/",
+      name: "support",
+      component: Support,
     },
     {
       path: "/air-measurements/",
